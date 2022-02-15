@@ -23,6 +23,10 @@
 
 apply plugin: 'com.android.application'
 
+ext {
+	xxpermissionsVersion = '5.2'
+}
+
 android {
 	compileSdkVersion versionCompiler
 
@@ -52,36 +56,20 @@ android {
 		}
 	}
 	packagingOptions {
-		exclude 'META-INF/DEPENDENCIES'
-		exclude 'META-INF/NOTICE'
-		exclude 'META-INF/LICENSE'
-		exclude 'META-INF/LICENSE.txt'
-		exclude 'META-INF/NOTICE.txt'
-	}
-	lintOptions {
-		// There are restricted packages used in some of POI code, e.g. java.awt or javax.imageio
-		// I could not exclude these in the
-		abortOnError false
+		resources {
+			excludes += ['META-INF/DEPENDENCIES', 'META-INF/NOTICE', 'META-INF/LICENSE', 'META-INF/LICENSE.txt', 'META-INF/NOTICE.txt']
+		}
 	}
 
-
-    buildToolsVersion '27.0.3'
 }
 
 dependencies {
     api 'com.android.support:multidex:1.0.3'
-	api 'com.android.support:recyclerview-v7:28.0.0-rc01'
+	api 'com.android.support:recyclerview-v7:28.0.0'
     implementation "com.android.support:support-v4:${supportLibVersion}"
-    //compile fileTree(dir: 'libs', include: ['*.jar'])
-    androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
-        //	exclude group: 'com.android.support', module: 'support-annotations'
-    })
-    testImplementation 'junit:junit:4.12'
-    //compile('org.apache.poi:poi-ooxml:3.17')
-    implementation project(':matisse')
     implementation "com.android.support:appcompat-v7:${supportLibVersion}"
-    api project(':usbCameraCommon')
-	implementation 'com.hjq:xxpermissions:5.2'
     implementation 'com.github.bumptech.glide:glide:4.7.1'
     implementation 'com.squareup.picasso:picasso:2.5.2'
+	implementation "com.hjq:xxpermissions:$xxpermissionsVersion"
+	api project(':usbCameraCommon')
 }

@@ -23,6 +23,7 @@
 package com.infiRay.XthermDemo;
 
 import android.animation.Animator;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
@@ -107,11 +108,6 @@ import com.serenegiant.widget.AutoFitTextureView;
 import com.serenegiant.widget.Camera2Helper;
 import com.serenegiant.widget.TouchPoint;
 import com.serenegiant.widget.UVCCameraTextureView;
-import com.zhihu.matisse.Matisse;
-import com.zhihu.matisse.MimeType;
-import com.zhihu.matisse.engine.impl.PicassoEngine;
-import com.zhihu.matisse.filter.Filter;
-import com.zhihu.matisse.filter.GifSizeFilter;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -1595,8 +1591,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                     }
                     break;
                 case R.id.imageview_thumbnail:
-
-                    if (PermissionCheck.hasReadExternalStorage(context) && PermissionCheck.hasWriteExternalStorage(context)) {
+                    /*if (PermissionCheck.hasReadExternalStorage(context) && PermissionCheck.hasWriteExternalStorage(context)) {
                         Matisse.from(MainActivity.this)
                                 .choose(MimeType.ofAll(), false)
                                 .theme(R.style.Matisse_Dracula)
@@ -1610,8 +1605,12 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                                 .forResult(REQUEST_CODE_CHOOSE);
                     } else {
                         checkPermissionWriteExternalStorage();
-                    }
-
+                    }*/
+                    Intent intent = new Intent();
+                    intent.setAction(Intent.ACTION_VIEW);
+                    intent.setType("image/*");
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
                     break;
             }
 
@@ -2296,7 +2295,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                 public void run() {
                     ViewAnimationHelper.fadeOut(mValueLayout, -1, 0, mViewAnimationListener);
                 }
-            }, 0);
+            });
         } else {
             try {
                 mValueLayout.setVisibility(View.GONE);
@@ -2420,7 +2419,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 
     }
 
-    @Nullable
+    /*@Nullable
     private Bitmap getThumbnail() {
         if (checkPermissionWriteExternalStorage()) {
             Uri uri = MediaStore.Files.getContentUri("external");
@@ -2470,7 +2469,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
         } else {
             return null;
         }
-    }
+    }*/
 
     /*private void refreshThumbnail() {
         Bitmap thumbnail = getThumbnail();
@@ -2635,12 +2634,12 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE_CHOOSE && resultCode == RESULT_OK) {
             //mAdapter.setData(Matisse.obtainResult(data), Matisse.obtainPathResult(data));
-            Log.e("OnActivityResult ", String.valueOf(Matisse.obtainOriginalState(data)));
+            //Log.e("OnActivityResult ", String.valueOf(Matisse.obtainOriginalState(data)));
         }
     }
 
 
-    private static class UriAdapter extends RecyclerView.Adapter<UriAdapter.UriViewHolder> {
+    /*private static class UriAdapter extends RecyclerView.Adapter<UriAdapter.UriViewHolder> {
 
         private List<Uri> mUris;
         private List<String> mPaths;
@@ -2682,7 +2681,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                 mPath = (TextView) contentView.findViewById(R.id.path);
             }
         }
-    }
+    }*/
 
     public static synchronized String getVersionName(Context context) {
         try {

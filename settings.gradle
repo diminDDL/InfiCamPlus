@@ -22,6 +22,5 @@
  */
 
 include ':libuvccamera'
-include ':matisse'
 include ':usbCameraCommon'
 include ':Xtherm'

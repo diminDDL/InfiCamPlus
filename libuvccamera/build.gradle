@@ -46,10 +46,8 @@ android {
 	sourceSets {
 		main {
 			jniLibs.srcDir 'src/main/libs'
-			jni.srcDirs = []
-		}
+        }
 	}
-    buildToolsVersion versionBuildTool
 }
 
 tasks.withType(JavaCompile) {

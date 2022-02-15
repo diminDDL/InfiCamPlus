@@ -44,12 +44,9 @@ android {
             signingConfig signingConfigs.debug
         }
     }
-    lintOptions {
-        // There are restricted packages used in some of POI code, e.g. java.awt or javax.imageio
-        // I could not exclude these in the
+    lint {
         abortOnError false
     }
-    buildToolsVersion '27.0.3'
 }
 
 dependencies {
