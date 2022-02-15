@@ -21,7 +21,7 @@
   ~  may have a different license, see the respective files.
   -->
 <resources>
-	<string name="app_name">Xtherm infrared</string>
+	<string name="app_name">NXTherm</string>
 	<string name="temp_setting">Thermometry setting</string>
 	<string name="image_setting">Image setting</string>
 	<string name="Palette_mode">Palette mode</string>

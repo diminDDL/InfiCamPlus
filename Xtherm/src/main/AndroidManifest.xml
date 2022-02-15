@@ -49,10 +49,6 @@
 		android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen" >
 		<!--android:theme="@android:style/Theme.NoTitleBar.Fullscreen">-->
-		<activity
-			android:name="com.tencent.bugly.beta.ui.BetaActivity"
-			android:configChanges="keyboardHidden|orientation|screenSize|locale"
-			android:theme="@android:style/Theme.Translucent" />
 
 		<activity
 			android:name="com.infiRay.XthermDemo.MainActivity"
