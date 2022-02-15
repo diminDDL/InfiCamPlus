@@ -607,11 +607,16 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                     }
                     // create texture and SurfaceTexture for input from camera
                     //            mTexId = mDrawer.initTex();
+
+                    // GL_NEAREST for nearest neighbor interpolation
+                    // GL_LINEAR for linear interpolation
+                    int mag_type = GLES20.GL_NEAREST;
+
                     int[] para = {4,
-                            GL_TEXTURE_EXTERNAL_OES, GLES20.GL_NEAREST, GLES20.GL_LINEAR, GLES20.GL_CLAMP_TO_EDGE,
-                            GL_TEXTURE_2D, GLES20.GL_NEAREST, GLES20.GL_LINEAR, GLES20.GL_CLAMP_TO_EDGE,
-                            GL_TEXTURE_2D, GLES20.GL_NEAREST, GLES20.GL_LINEAR, GLES20.GL_CLAMP_TO_EDGE,
-                            GL_TEXTURE_EXTERNAL_OES, GLES20.GL_NEAREST, GLES20.GL_LINEAR, GLES20.GL_CLAMP_TO_EDGE};
+                            GL_TEXTURE_EXTERNAL_OES, GLES20.GL_NEAREST, mag_type, GLES20.GL_CLAMP_TO_EDGE,
+                            GL_TEXTURE_2D, GLES20.GL_NEAREST, mag_type, GLES20.GL_CLAMP_TO_EDGE,
+                            GL_TEXTURE_2D, GLES20.GL_NEAREST, mag_type, GLES20.GL_CLAMP_TO_EDGE,
+                            GL_TEXTURE_EXTERNAL_OES, GLES20.GL_NEAREST, mag_type, GLES20.GL_CLAMP_TO_EDGE};
                     mTexIds = mDrawer.initTexes(para);
                     if (DEBUG) Log.v(TAG, "updatePreviewSurface:tex_id=" + mTexId);
                     mPreviewSurface = new SurfaceTexture(mTexIds[0]);
