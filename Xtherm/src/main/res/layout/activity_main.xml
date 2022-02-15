@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~  UVCCamera
+  ~  library and sample to access to UVC web camera on non-rooted Android device
+  ~
+  ~ Copyright (c) 2014-2017 saki t_saki@serenegiant.com
+  ~
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~   You may obtain a copy of the License at
+  ~
+  ~      http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~   Unless required by applicable law or agreed to in writing, software
+  ~   distributed under the License is distributed on an "AS IS" BASIS,
+  ~   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~   See the License for the specific language governing permissions and
+  ~   limitations under the License.
+  ~
+  ~  All files in the folder are under this Apache License, Version 2.0.
+  ~  Files in the libjpeg-turbo, libusb, libuvc, rapidjson folder
+  ~  may have a different license, see the respective files.
+  -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/RelativeLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#ff000000"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    tools:context="com.infiRay.XthermDemo.MainActivity"
+    tools:ignore="MergeRootFrame">
+
+    <LinearLayout
+        android:id="@+id/menu_layout"
+        android:layout_width="@dimen/dp_90"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="0dp"
+        android:layout_marginLeft="0dp"
+        android:layout_marginTop="0dp"
+        android:background="@mipmap/backleft"
+        android:orientation="vertical">
+
+        <ImageButton
+            android:id="@+id/imageview_thumbnail"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="0dp"
+            android:layout_weight="1"
+            android:adjustViewBounds="true"
+            android:background="#00000000"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:padding="0dp"
+            android:scaleType="fitCenter"
+            android:src="@mipmap/file" />
+
+        <ImageButton
+            android:id="@+id/button_camera"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="left"
+            android:layout_margin="0dp"
+            android:layout_weight="1"
+            android:adjustViewBounds="true"
+            android:background="#00000000"
+            android:padding="0dp"
+            android:scaleType="fitCenter"
+            android:src="@mipmap/camera1" />
+
+        <ImageButton
+            android:id="@+id/button_video"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="0dp"
+            android:layout_marginTop="0dp"
+            android:layout_weight="1"
+            android:adjustViewBounds="true"
+            android:background="#00000000"
+            android:padding="0dp"
+            android:scaleType="fitCenter"
+            android:src="@mipmap/video1" />
+
+
+    </LinearLayout>
+
+    <com.serenegiant.widget.UVCCameraTextureView
+        android:id="@+id/camera_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:layout_toRightOf="@id/menu_layout" />
+
+    <com.serenegiant.widget.AutoFitTextureView
+        android:id="@+id/textureView"
+        android:layout_width="480px"
+        android:visibility="invisible"
+        android:layout_toRightOf="@id/menu_layout"
+        android:layout_height="640px" />
+
+    <ImageView
+        android:id="@+id/frame_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@id/camera_view"
+        android:layout_alignLeft="@id/camera_view"
+        android:layout_alignRight="@id/camera_view"
+        android:layout_alignTop="@id/camera_view" />
+
+    <SurfaceView
+        android:id="@+id/surface_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/camera_view"
+        android:layout_alignLeft="@+id/camera_view"
+        android:layout_alignRight="@+id/camera_view"
+        android:layout_alignTop="@+id/camera_view" />
+
+    <LinearLayout
+        android:id="@+id/menu_palette_layout"
+        android:layout_width="@dimen/dp_37"
+        android:layout_height="match_parent"
+        android:layout_margin="0dp"
+        android:layout_toRightOf="@+id/camera_view"
+        android:background="@mipmap/backright"
+        android:orientation="vertical">
+
+        <ImageButton
+            android:id="@+id/button_temp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_gravity="center"
+            android:layout_marginBottom="0dp"
+            android:layout_marginTop="0dp"
+            android:layout_weight="1"
+            android:adjustViewBounds="true"
+            android:background="#00000000"
+            android:padding="0dp"
+            android:scaleType="centerInside"
+            android:src="@mipmap/temp1" />
+
+
+        <ImageButton
+            android:id="@+id/button_shut"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_gravity="center"
+            android:layout_marginBottom="0dp"
+            android:layout_marginTop="0dp"
+            android:layout_weight="1"
+            android:adjustViewBounds="true"
+            android:background="#00000000"
+            android:padding="0dp"
+            android:scaleType="centerInside"
+            android:src="@mipmap/shut1" />
+
+        <ImageButton
+            android:id="@+id/button_set"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_gravity="center"
+            android:layout_marginBottom="0dp"
+            android:layout_marginTop="0dp"
+            android:layout_weight="1"
+            android:adjustViewBounds="true"
+            android:background="#00000000"
+            android:padding="0dp"
+            android:scaleType="centerInside"
+            android:src="@mipmap/set1" />
+    </LinearLayout>
+
+
+    <SurfaceView
+        android:id="@+id/surfaceView_right"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:layout_toEndOf="@+id/camera_view" />
+
+
+    <LinearLayout
+        android:id="@+id/content_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:orientation="vertical"></LinearLayout>
+
+
+    <LinearLayout
+        android:id="@+id/rightmenu_list"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:orientation="vertical">
+
+        <include layout="@layout/new_settings"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+
+            />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/rl_tip"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#91353535"
+        android:orientation="vertical"
+        android:alpha="30"
+        android:visibility="gone">
+        <ImageView
+            android:id="@+id/iv_helpTip1"
+            android:layout_marginLeft="@dimen/dp_70"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_weight="1"
+            android:keepScreenOn="true"
+            android:scaleType="fitCenter"
+            android:src="@mipmap/tip_submit_thumbnail" />
+        <ImageView
+            android:id="@+id/iv_helpTip2"
+            android:layout_marginLeft="@dimen/dp_70"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_weight="1"
+            android:keepScreenOn="true"
+            android:scaleType="fitCenter"
+            android:src="@mipmap/tip_submit_camera" />
+        <ImageView
+            android:id="@+id/iv_helpTip3"
+            android:layout_marginLeft="@dimen/dp_70"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_weight="1"
+            android:keepScreenOn="true"
+            android:scaleType="fitCenter"
+            android:src="@mipmap/tip_submit_video" />
+    </LinearLayout>
+
+    <RelativeLayout
+        android:id="@+id/ll_tip_temp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#91353535"
+        android:orientation="vertical"
+        android:layout_alignRight="@+id/camera_view"
+        android:alpha="30"
+        android:visibility="gone">
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:keepScreenOn="true"
+            android:scaleType="fitCenter"
+            android:src="@mipmap/tip_submit_temp" />
+
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/rl_tip_setting1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#91353535"
+        android:gravity="right"
+        android:layout_alignRight="@+id/camera_view"
+        android:orientation="vertical"
+        android:alpha="30"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_weight="1"
+            android:keepScreenOn="true"
+            android:scaleType="fitCenter"
+            android:src="@mipmap/tip_submit_setting" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/rl_tip_kaka"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#91353535"
+        android:gravity="right"
+        android:layout_alignRight="@+id/camera_view"
+        android:orientation="vertical"
+        android:alpha="30"
+        android:visibility="gone">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_weight="1"
+            android:keepScreenOn="true"
+            android:scaleType="fitCenter"
+            android:src="@mipmap/tip_submit_kaka" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/rl_tip_setting"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#91353535"
+        android:gravity="right"
+        android:layout_alignRight="@+id/camera_view"
+        android:orientation="vertical"
+        android:alpha="30"
+        android:visibility="gone">
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:scaleType="centerInside"
+            android:layout_weight="1" />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:scaleType="centerInside"
+            android:layout_weight="1" />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_alignParentRight="true"
+            android:layout_weight="1"
+            android:keepScreenOn="true"
+            android:scaleType="center"
+            android:src="@mipmap/tip_submit_setting" />
+    </LinearLayout>
+
+    <RelativeLayout
+        android:id="@+id/ll_tip_temp1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#91353535"
+        android:gravity="right"
+        android:layout_alignRight="@+id/camera_view"
+        android:orientation="horizontal"
+        android:alpha="30"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true"
+            android:layout_weight="1"
+            android:keepScreenOn="true"
+            android:scaleType="center"
+            android:src="@mipmap/tip_submit_tempback" />
+    </RelativeLayout>
+
+</RelativeLayout>
