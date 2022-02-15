@@ -82,5 +82,6 @@
 <color name="switch_thumb_normal_material_dark">#ffbdbdbd</color>
 <color name="switch_thumb_normal_material_light">#fff1f1f1</color>
     <color name="white">#ffffffff</color>
+    <color name="WHITE">#ffffff</color>
+    <color name="BLACK">#000000</color>
 </resources>
-

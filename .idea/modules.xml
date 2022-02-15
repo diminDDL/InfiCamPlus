@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/UVCCameraProDemoLTS-v5.05.210730.iml" filepath="$PROJECT_DIR$/.idea/modules/UVCCameraProDemoLTS-v5.05.210730.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Xtherm/UVCCameraProDemoLTS-v5.05.210730.Xtherm.iml" filepath="$PROJECT_DIR$/.idea/modules/Xtherm/UVCCameraProDemoLTS-v5.05.210730.Xtherm.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/libuvccamera/UVCCameraProDemoLTS-v5.05.210730.libuvccamera.iml" filepath="$PROJECT_DIR$/.idea/modules/libuvccamera/UVCCameraProDemoLTS-v5.05.210730.libuvccamera.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/matisse/UVCCameraProDemoLTS-v5.05.210730.matisse.iml" filepath="$PROJECT_DIR$/.idea/modules/matisse/UVCCameraProDemoLTS-v5.05.210730.matisse.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/usbCameraCommon/UVCCameraProDemoLTS-v5.05.210730.usbCameraCommon.iml" filepath="$PROJECT_DIR$/.idea/modules/usbCameraCommon/UVCCameraProDemoLTS-v5.05.210730.usbCameraCommon.iml" />
+    </modules>
+  </component>
+</project>

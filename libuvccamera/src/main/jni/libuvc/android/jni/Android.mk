@@ -35,7 +35,7 @@
 ######################################################################
 # libuvc_static.a (static library with static link to libjpeg, libusb1.0)
 ######################################################################
-LOCAL_PATH	:= $(call my-dir)/../..
+LOCAL_PATH := $(call my-dir)/../..
 include $(CLEAR_VARS)
 
 LOCAL_C_INCLUDES += \
@@ -84,4 +84,4 @@ LOCAL_WHOLE_STATIC_LIBRARIES = libuvc_static
 LOCAL_DISABLE_FATAL_LINKER_WARNINGS := true
 
 LOCAL_MODULE := uvc
-include $(BUILD_SHARED_LIBRARY)
+include $(BUILD_STATIC_LIBRARY)

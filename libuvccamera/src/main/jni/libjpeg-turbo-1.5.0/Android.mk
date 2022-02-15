@@ -24,7 +24,7 @@
 ######################################################################
 # libjpeg-turbo1500_static.a
 ######################################################################
-LOCAL_PATH		:= $(call my-dir)
+LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 # CFLAGS := -Werror
@@ -52,7 +52,7 @@ LOCAL_CFLAGS += -DANDROID_NDK
 
 #このモジュールを外部モジュールとしてリンクする時のライブラリを指定
 
-LOCAL_ARM_MODE := arm
+#LOCAL_ARM_MODE := arm
 
 LOCAL_ASMFLAGS += -DELF
 
@@ -260,10 +260,10 @@ LOCAL_EXPORT_C_INCLUDES := \
 
 LOCAL_DISABLE_FATAL_LINKER_WARNINGS := true
 
-LOCAL_LDLIBS := -L$(SYSROOT)/usr/lib -ldl	# to avoid NDK issue(no need for static library)
+#LOCAL_LDLIBS := -L$(SYSROOT)/usr/lib -ldl	# to avoid NDK issue(no need for static library)
 
 LOCAL_WHOLE_STATIC_LIBRARIES = jpeg-turbo1500_static
 
 LOCAL_MODULE := jpeg-turbo1500
-include $(BUILD_SHARED_LIBRARY)
+include $(BUILD_STATIC_LIBRARY)
 
