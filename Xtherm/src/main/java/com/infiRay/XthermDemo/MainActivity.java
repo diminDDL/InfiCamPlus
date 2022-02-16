@@ -22,9 +22,12 @@
 
 package com.infiRay.XthermDemo;
 
-import android.animation.Animator;
+import static android.view.View.INVISIBLE;
+import static android.view.View.VISIBLE;
+import static java.lang.Math.abs;
+import static java.lang.Thread.sleep;
+
 import android.app.AlertDialog;
-import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -52,7 +55,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.annotation.NonNull;
 import android.support.v4.content.res.ResourcesCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -60,7 +62,6 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
-import android.view.ScaleGestureDetector;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -70,7 +71,6 @@ import android.view.View.OnLongClickListener;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -95,23 +95,16 @@ import com.serenegiant.usb.USBMonitor.UsbControlBlock;
 import com.serenegiant.usb.UVCCamera;
 import com.serenegiant.usbcameracommon.UVCCameraHandler;
 import com.serenegiant.utils.PermissionCheck;
-import com.serenegiant.utils.ViewAnimationHelper;
 import com.serenegiant.widget.AutoFitTextureView;
 import com.serenegiant.widget.Camera2Helper;
 import com.serenegiant.widget.TouchPoint;
 import com.serenegiant.widget.UVCCameraTextureView;
 
-import java.io.InputStream;
 import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
-
-import static android.view.View.INVISIBLE;
-import static android.view.View.VISIBLE;
-import static java.lang.Math.abs;
-import static java.lang.Thread.sleep;
 
 public final class MainActivity extends BaseActivity implements CameraDialog.CameraDialogParent {
     private static final boolean DEBUG = false;    // TODO set false on release
@@ -185,29 +178,24 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
     private Button saveButton;
     private LinearLayout mMenuRight;
     private ImageView mTempbutton, mZoomButton;
-    private View mValueLayout;
     private SeekBar emissivitySeekbar, correctionSeekbar, reflectionSeekbar, ambtempSeekbar, humiditySeekbar, distanceSeekbar;
     private int mLeft, mRight, mTop, mBottom;
     private int mRightSurfaceLeft, mRightSurfaceRight, mRightSurfaceTop, mRightSurfaceBottom;
     private int indexOfPoint = 0;
     private CopyOnWriteArrayList<TouchPoint> mTouchPoint;
     private int temperatureAnalysisMode;
-    private boolean isTemperaturing, isSettingBadPixel, needClearCanvas = false;
+    private boolean isTemperaturing, isSettingBadPixel;
     private Bitmap mCursorBlue, mCursorRed, mCursorYellow, mCursorGreen, mWatermarkLogo;
     private Bitmap icon, iconPalette; //建立一个空的图画板
-    private Canvas canvas, bitcanvas, paletteBitmapCanvas;//初始化画布绘制的图像到icon上
-    private Paint photoPaint, palettePaint; //建立画笔
+    private Canvas canvas;//初始化画布绘制的图像到icon上
+    private Paint photoPaint; //建立画笔
     int posx, posy;
-    private ByteUtil mByteUtil = new ByteUtil();
     private PopupWindow temperatureAnalysisWindow;
     volatile boolean isOnRecord;
-    private byte[] picTakeByteArray = new byte[640 * 512 * 4];
-
 
     public int currentapiVersion = 0;//现改用为平台类型
     private Context context;
     //	private BitmapDrawable mCursor;l
-    private float mFinalScale;
     private SharedPreferences sharedPreferences;
     private int UnitTemperature = 0, palette;
     private int TemperatureRange = 120;
@@ -248,28 +236,32 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 //            Log.e(TAG, "Language:" + language);
             switch (language) {
                 case -1:
-                    if (locale_language == "zh") {
-                        sharedPreferences.edit().putInt("Language", 0).commit();
-                    } else if (locale_language == "en") {
-                        sharedPreferences.edit().putInt("Language", 1).commit();
-                    } else if (locale_language == "ru") {
-                        sharedPreferences.edit().putInt("Language", 2).commit();
+                    switch (locale_language) {
+                        case "zh":
+                            sharedPreferences.edit().putInt("Language", 0).apply();
+                            break;
+                        case "en":
+                            sharedPreferences.edit().putInt("Language", 1).apply();
+                            break;
+                        case "ru":
+                            sharedPreferences.edit().putInt("Language", 2).apply();
+                            break;
                     }
                     break;
                 case 0:
-                    sharedPreferences.edit().putInt("Language", 0).commit();
+                    sharedPreferences.edit().putInt("Language", 0).apply();
                     configuration.locale = Locale.SIMPLIFIED_CHINESE;
                     configuration.setLayoutDirection(Locale.SIMPLIFIED_CHINESE);
                     getResources().updateConfiguration(configuration, metrics);
                     break;
                 case 1:
-                    sharedPreferences.edit().putInt("Language", 1).commit();
+                    sharedPreferences.edit().putInt("Language", 1).apply();
                     configuration.locale = Locale.ENGLISH;
                     configuration.setLayoutDirection(Locale.ENGLISH);
                     getResources().updateConfiguration(configuration, metrics);
                     break;
                 case 2:
-                    sharedPreferences.edit().putInt("Language", 2).commit();
+                    sharedPreferences.edit().putInt("Language", 2).apply();
                     configuration.locale = new Locale("ru", "RU");
                     getResources().updateConfiguration(configuration, metrics);
                     Log.e(TAG, "Language2:" + language);
@@ -289,62 +281,62 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
             if (DEBUG) Log.v(TAG, "onCreate:");
             setContentView(R.layout.activity_main);
 
-            mTextureView = (AutoFitTextureView) findViewById(R.id.textureView);
-            rightmenu = (LinearLayout) findViewById(R.id.rightmenu_list);
+            mTextureView = findViewById(R.id.textureView);
+            rightmenu = findViewById(R.id.rightmenu_list);
             rightmenu.setVisibility(INVISIBLE);
-            mCaptureButton = (ImageButton) findViewById(R.id.button_video);
+            mCaptureButton = findViewById(R.id.button_video);
             mCaptureButton.setOnClickListener(mOnClickListener);
             mCaptureButton.setVisibility(VISIBLE);
-            mSetButton = (ImageButton) findViewById(R.id.button_set);
+            mSetButton = findViewById(R.id.button_set);
             mSetButton.setOnClickListener(mOnClickListener);
             mSetButton.setVisibility(VISIBLE);
-            mThumbnailButton = (ImageButton) findViewById(R.id.imageview_thumbnail);
+            mThumbnailButton = findViewById(R.id.imageview_thumbnail);
             mThumbnailButton.setOnClickListener(mOnClickListener);
             mThumbnailButton.setVisibility(VISIBLE);
-            saveButton = (Button) findViewById(R.id.save_button);
+            saveButton = findViewById(R.id.save_button);
             saveButton.setOnClickListener(mOnClickListener);
-            paletteRadioGroup = (RadioGroup) findViewById(R.id.palette_radio_group);
+            paletteRadioGroup = findViewById(R.id.palette_radio_group);
             paletteRadioGroup.setOnCheckedChangeListener(mOnCheckedChangeListener);
-            languageRadioGroup = (RadioGroup) findViewById(R.id.language_radio_group);
+            languageRadioGroup = findViewById(R.id.language_radio_group);
             languageRadioGroup.setOnCheckedChangeListener(mOnCheckedChangeListener);
-            temperatureUnitsRadioGroup = (RadioGroup) findViewById(R.id.temperature_units_radio_group);
+            temperatureUnitsRadioGroup = findViewById(R.id.temperature_units_radio_group);
             temperatureUnitsRadioGroup.setOnCheckedChangeListener(mOnCheckedChangeListener);
-            emissivitySeekbar = (SeekBar) findViewById(R.id.emissivity_seekbar);
+            emissivitySeekbar = findViewById(R.id.emissivity_seekbar);
             emissivitySeekbar.setOnSeekBarChangeListener(mOnEmissivitySeekBarChangeListener);
-            emissivityText = (TextView) findViewById(R.id.emissivity_text);
-            correctionSeekbar = (SeekBar) findViewById(R.id.correction_seekbar);
+            emissivityText = findViewById(R.id.emissivity_text);
+            correctionSeekbar = findViewById(R.id.correction_seekbar);
             correctionSeekbar.setOnSeekBarChangeListener(mOnEmissivitySeekBarChangeListener);
-            correctionText = (TextView) findViewById(R.id.correction_text);
-            reflectionSeekbar = (SeekBar) findViewById(R.id.reflection_seekbar);
+            correctionText = findViewById(R.id.correction_text);
+            reflectionSeekbar = findViewById(R.id.reflection_seekbar);
             reflectionSeekbar.setOnSeekBarChangeListener(mOnEmissivitySeekBarChangeListener);
-            reflectionText = (TextView) findViewById(R.id.reflection_text);
-            ambtempSeekbar = (SeekBar) findViewById(R.id.amb_temp_seekbar);
+            reflectionText = findViewById(R.id.reflection_text);
+            ambtempSeekbar = findViewById(R.id.amb_temp_seekbar);
             ambtempSeekbar.setOnSeekBarChangeListener(mOnEmissivitySeekBarChangeListener);
-            ambtempText = (TextView) findViewById(R.id.amb_temp_text);
-            humiditySeekbar = (SeekBar) findViewById(R.id.humidity_seekbar);
+            ambtempText = findViewById(R.id.amb_temp_text);
+            humiditySeekbar = findViewById(R.id.humidity_seekbar);
             humiditySeekbar.setOnSeekBarChangeListener(mOnEmissivitySeekBarChangeListener);
-            mSysCameraSwitch = (Switch) findViewById(R.id.sys_camera_swtich);
+            mSysCameraSwitch = findViewById(R.id.sys_camera_swtich);
             mSysCameraSwitch.setOnCheckedChangeListener(mSwitchListener);
-            mWatermarkSwitch = (Switch) findViewById(R.id.watermark_swtich);
+            mWatermarkSwitch = findViewById(R.id.watermark_swtich);
             mWatermarkSwitch.setOnCheckedChangeListener(mSwitchListener);
-            humidityText = (TextView) findViewById(R.id.humidity_text);
-            distanceSeekbar = (SeekBar) findViewById(R.id.distance_seekbar);
+            humidityText = findViewById(R.id.humidity_text);
+            distanceSeekbar = findViewById(R.id.distance_seekbar);
             distanceSeekbar.setOnSeekBarChangeListener(mOnEmissivitySeekBarChangeListener);
-            distanceText = (TextView) findViewById(R.id.distance_text);
+            distanceText = findViewById(R.id.distance_text);
 
 
-            SN = (TextView) findViewById(R.id.product_SN);
-            PN = (TextView) findViewById(R.id.product_name);
-            sotfVersion = (TextView) findViewById(R.id.soft_version);
-            productSoftVersion = (TextView) findViewById(R.id.product_soft_version);
+            SN = findViewById(R.id.product_SN);
+            PN = findViewById(R.id.product_name);
+            sotfVersion = findViewById(R.id.soft_version);
+            productSoftVersion = findViewById(R.id.product_soft_version);
 
-            rl_tip = (LinearLayout) findViewById(R.id.rl_tip);
-            rl_tip_kaka = (LinearLayout) findViewById(R.id.rl_tip_kaka);
-            rl_tip_setting = (LinearLayout) findViewById(R.id.rl_tip_setting);
-            rl_tip_setting1 = (LinearLayout) findViewById(R.id.rl_tip_setting1);
-            menu_palette_layout = (LinearLayout) findViewById(R.id.menu_palette_layout);
-            ll_tip_temp = (RelativeLayout) findViewById(R.id.ll_tip_temp);
-            ll_tip_temp1 = (RelativeLayout) findViewById(R.id.ll_tip_temp1);
+            rl_tip = findViewById(R.id.rl_tip);
+            rl_tip_kaka = findViewById(R.id.rl_tip_kaka);
+            rl_tip_setting = findViewById(R.id.rl_tip_setting);
+            rl_tip_setting1 = findViewById(R.id.rl_tip_setting1);
+            menu_palette_layout = findViewById(R.id.menu_palette_layout);
+            ll_tip_temp = findViewById(R.id.ll_tip_temp);
+            ll_tip_temp1 = findViewById(R.id.ll_tip_temp1);
 
             rl_tip.setOnClickListener(new OnClickListener() {
                 @Override
@@ -379,7 +371,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
             rl_tip_setting.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    sharedPreferences.edit().putBoolean("isFirstRun", false).commit();
+                    sharedPreferences.edit().putBoolean("isFirstRun", false).apply();
                     rl_tip_setting.setVisibility(View.GONE);
                 }
             });
@@ -395,34 +387,33 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
             ll_tip_temp1.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    sharedPreferences.edit().putBoolean("isFirstRun", false).commit();
+                    sharedPreferences.edit().putBoolean("isFirstRun", false).apply();
                     ll_tip_temp1.setVisibility(View.GONE);
                 }
             });
-            mPhotographButton = (ImageButton) findViewById(R.id.button_camera);
+            mPhotographButton = findViewById(R.id.button_camera);
             mPhotographButton.setOnTouchListener(mChangPicListener);
             mPhotographButton.setOnClickListener(mOnClickListener);
             mPhotographButton.setVisibility(VISIBLE);
-            mImageView = (ImageView) findViewById(R.id.frame_image);
-            final UVCCameraTextureView view = (UVCCameraTextureView) findViewById(R.id.camera_view);
-            view.setOnLongClickListener(mOnLongClickListener);
+            mImageView = findViewById(R.id.frame_image);
+            final UVCCameraTextureView view = findViewById(R.id.camera_view);
             mUVCCameraView = view;
             mUVCCameraView.setAspectRatio(PREVIEW_WIDTH / (float) PREVIEW_HEIGHT);
-            mZoomButton = (ImageView) findViewById(R.id.button_shut);
+            mZoomButton = findViewById(R.id.button_shut);
             mZoomButton.setOnTouchListener(mChangPicListener);
             mZoomButton.setOnClickListener(mOnClickListener);
             mZoomButton.setVisibility(VISIBLE);
-            mMenuRight = (LinearLayout) findViewById(R.id.menu_layout);
-            mTempbutton = (ImageView) findViewById(R.id.button_temp);
+            mMenuRight = findViewById(R.id.menu_layout);
+            mTempbutton = findViewById(R.id.button_temp);
             mTempbutton.setOnClickListener(mOnClickListener);
             mTempbutton.setVisibility(VISIBLE);
-            mSfv = (SurfaceView) this.findViewById(R.id.surface_view);
+            mSfv = this.findViewById(R.id.surface_view);
             mSfh = mSfv.getHolder();
             mSfv.setZOrderOnTop(true);
             mSfh.setFormat(PixelFormat.TRANSLUCENT);
             mSfv.setOnTouchListener(listener);
-            mTouchPoint = new CopyOnWriteArrayList<TouchPoint>();
-            mRightSfv = (SurfaceView) this.findViewById(R.id.surfaceView_right);
+            mTouchPoint = new CopyOnWriteArrayList<>();
+            mRightSfv = this.findViewById(R.id.surfaceView_right);
             mRightSfh = mRightSfv.getHolder();
             mRightSfv.setZOrderOnTop(true);
             mRightSfh.setFormat(PixelFormat.TRANSLUCENT);
@@ -434,7 +425,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
             mCursorBlue = BitmapFactory.decodeResource(getResources(), R.mipmap.cursorblue);
             mCursorGreen = BitmapFactory.decodeResource(getResources(), R.mipmap.cursorgreen);
             mWatermarkLogo = BitmapFactory.decodeResource(getResources(), R.mipmap.xtherm);
-            mFinalScale = 1;
             matchBrand();
             mSendCommand = new sendCommand();
             XXPermissions.with(MainActivity.this)
@@ -472,10 +462,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
     public static boolean isZh(Context context) {
         Locale locale = context.getResources().getConfiguration().locale;
         String language = locale.getLanguage();
-        if (language.endsWith("zh"))
-            return true;
-        else
-            return false;
+        return language.endsWith("zh");
     }
 
     private final View.OnTouchListener mChangPicListener = new View.OnTouchListener() {
@@ -563,7 +550,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
         //System.exit(0);
         if (mUVCCameraView != null)
             mUVCCameraView.onPause();
-        needClearCanvas = true;
         isTemperaturing = false;
         //whenCloseClearCanvas();
         if (isOnRecord) {
@@ -608,8 +594,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
         isOpened = 0;
         super.onRestart();
     }
-
-    static AlertDialog dialog;
 
     @Override
     protected void onResume() {
@@ -718,12 +702,12 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
         tempPara = mCameraHandler.getTemperaturePara(128);
         Log.e(TAG, "getByteArrayTemperaturePara:" + tempPara[16] + "," + tempPara[17] + "," + tempPara[18] + "," + tempPara[19] + "," + tempPara[20] + "," + tempPara[21]);
 
-        Fix = mByteUtil.getFloat(tempPara, 0);
-        Refltmp = mByteUtil.getFloat(tempPara, 4);
-        Airtmp = mByteUtil.getFloat(tempPara, 8);
-        humi = mByteUtil.getFloat(tempPara, 12);
-        emiss = mByteUtil.getFloat(tempPara, 16);
-        distance = mByteUtil.getShort(tempPara, 20);
+        Fix = ByteUtil.getFloat(tempPara, 0);
+        Refltmp = ByteUtil.getFloat(tempPara, 4);
+        Airtmp = ByteUtil.getFloat(tempPara, 8);
+        humi = ByteUtil.getFloat(tempPara, 12);
+        emiss = ByteUtil.getFloat(tempPara, 16);
+        distance = ByteUtil.getShort(tempPara, 20);
         stFix = String.valueOf(Fix);
         stRefltmp = String.valueOf(Refltmp);
         stAirtmp = String.valueOf(Airtmp);
@@ -740,34 +724,25 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
             switch (id) {
                 case R.id.emissivity_seekbar:
                     float emiss = progress / 100.0f;
-                    String emissString = String.valueOf(emiss);
-                    emissivityText.setText(emissString);
+                    emissivityText.setText(String.valueOf(emiss));
                     break;
                 case R.id.correction_seekbar:
                     float correction = (progress - 30) / 10.0f;
-                    String correctionString = String.valueOf(correction);
-                    correctionText.setText(correctionString + "°C");
+                        correctionText.setText(correction + "°C");
                     break;
                 case R.id.reflection_seekbar:
                     int reflection = (progress - 10);
-                    String reflectionString = String.valueOf(reflection) + "°C";
-                    reflectionText.setText(reflectionString);
+                    reflectionText.setText(reflection + "°C");
                     break;
                 case R.id.amb_temp_seekbar:
                     int ambtemp = (progress - 10);
-                    String ambtempString = String.valueOf(ambtemp) + "°C";
-                    ambtempText.setText(ambtempString);
+                    ambtempText.setText(ambtemp + "°C");
                     break;
                 case R.id.humidity_seekbar:
-                    float humidity = progress / 100.0f;
-                    String humidityString = String.valueOf(humidity);
-                    humidityText.setText(humidityString);
+                    humidityText.setText(progress + "%");
                     break;
                 case R.id.distance_seekbar:
-                    int distance = progress;
-                    Log.e(TAG, "distance_seekbar:" + distance);
-                    String distanceString = String.valueOf(distance) + "m";
-                    distanceText.setText(distanceString);
+                    distanceText.setText(progress + "m");
                     break;
             }
         }
@@ -787,41 +762,41 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                     int currentProgressEm = seekBar.getProgress();
                     float fiputEm = currentProgressEm / 100.0f;
                     byte[] iputEm = new byte[4];
-                    mByteUtil.putFloat(iputEm, fiputEm, 0);
+                    ByteUtil.putFloat(iputEm, fiputEm, 0);
                     mSendCommand.sendFloatCommand(4 * 4, iputEm[0], iputEm[1], iputEm[2], iputEm[3], 20, 40, 60, 80, 120);
                     break;
                 case R.id.correction_seekbar:
                     int currentProgressCo = seekBar.getProgress();
                     float fiputCo = (currentProgressCo - 30) / 10.0f;
                     byte[] iputCo = new byte[4];
-                    mByteUtil.putFloat(iputCo, fiputCo, 0);
+                    ByteUtil.putFloat(iputCo, fiputCo, 0);
                     mSendCommand.sendFloatCommand(0 * 4, iputCo[0], iputCo[1], iputCo[2], iputCo[3], 20, 40, 60, 80, 120);
                     break;
                 case R.id.reflection_seekbar:
                     int currentProgressRe = seekBar.getProgress();
                     float fiputRe = currentProgressRe - 10.0f;
                     byte[] iputRe = new byte[4];
-                    mByteUtil.putFloat(iputRe, fiputRe, 0);
+                    ByteUtil.putFloat(iputRe, fiputRe, 0);
                     mSendCommand.sendFloatCommand(1 * 4, iputRe[0], iputRe[1], iputRe[2], iputRe[3], 20, 40, 60, 80, 120);
                     break;
                 case R.id.amb_temp_seekbar:
                     int currentProgressAm = seekBar.getProgress();
                     float fiputAm = currentProgressAm - 10.0f;
                     byte[] iputAm = new byte[4];
-                    mByteUtil.putFloat(iputAm, fiputAm, 0);
+                    ByteUtil.putFloat(iputAm, fiputAm, 0);
                     mSendCommand.sendFloatCommand(2 * 4, iputAm[0], iputAm[1], iputAm[2], iputAm[3], 20, 40, 60, 80, 120);
                     break;
                 case R.id.humidity_seekbar:
                     int currentProgressHu = seekBar.getProgress();
                     float fiputHu = currentProgressHu / 100.0f;
                     byte[] iputHu = new byte[4];
-                    mByteUtil.putFloat(iputHu, fiputHu, 0);
+                    ByteUtil.putFloat(iputHu, fiputHu, 0);
                     mSendCommand.sendFloatCommand(3 * 4, iputHu[0], iputHu[1], iputHu[2], iputHu[3], 20, 40, 60, 80, 120);
                     break;
                 case R.id.distance_seekbar:
                     int currentProgressDi = seekBar.getProgress();
                     byte[] bIputDi = new byte[4];
-                    mByteUtil.putInt(bIputDi, currentProgressDi, 0);
+                    ByteUtil.putInt(bIputDi, currentProgressDi, 0);
                     mSendCommand.sendShortCommand(5 * 4, bIputDi[0], bIputDi[1], 20, 40, 60);
                     break;
 
@@ -846,7 +821,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
         }
     }
 
-    private CompoundButton.OnCheckedChangeListener mSwitchListener = new CompoundButton.OnCheckedChangeListener() {
+    private final CompoundButton.OnCheckedChangeListener mSwitchListener = new CompoundButton.OnCheckedChangeListener() {
         @Override
         public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
             switch (compoundButton.getId()) {
@@ -897,15 +872,13 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                         isWatermark = 0;
                     }
                     mCameraHandler.watermarkOnOff(isWatermark);
-                    sharedPreferences.edit().putInt("Watermark", isWatermark).commit();
+                    sharedPreferences.edit().putInt("Watermark", isWatermark).apply();
                     break;
             }
         }
     };
-    float[] gravity = new float[3];//用来保存加速度传感器的值
-    float[] r = new float[9];//
+
     float[] geomagnetic = new float[3];//用来保存地磁传感器的值
-    float[] values = new float[3];//用来保存最终的结果
     private final SensorEventListener mSensorListener = new SensorEventListener() {
 
         @Override
@@ -921,13 +894,12 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
             if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
                 float x = event.values[SensorManager.DATA_X];
                 float y = event.values[SensorManager.DATA_Y];
-                float z = event.values[SensorManager.DATA_Z];
-                relayout(x, y, z);
+                relayout(x, y);
             }
         }
     };
 
-    protected void relayout(float x, float y, float z) {
+    protected void relayout(float x, float y) {
         Drawable drawable;
         if (x > -2.5 && x <= 2.5 && y > 7.5 && y <= 10 && oldRotation != 270) {
             drawable = ResourcesCompat.getDrawable(getResources(), R.mipmap.camera1left, null);
@@ -1010,51 +982,51 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
             switch (checkedId) {
                 case R.id.whitehot_radio_button:
                     mCameraHandler.changePalette(0);
-                    sharedPreferences.edit().putInt("palette", 0).commit();
+                    sharedPreferences.edit().putInt("palette", 0).apply();
                     break;
                 case R.id.blackhot_radio_button:
                     mCameraHandler.changePalette(1);
-                    sharedPreferences.edit().putInt("palette", 1).commit();
+                    sharedPreferences.edit().putInt("palette", 1).apply();
                     break;
                 case R.id.iron_rainbow_radio_button:
                     mCameraHandler.changePalette(2);
-                    sharedPreferences.edit().putInt("palette", 2).commit();
+                    sharedPreferences.edit().putInt("palette", 2).apply();
                     break;
                 case R.id.rainbow_radio_button:
                     mCameraHandler.changePalette(3);
-                    sharedPreferences.edit().putInt("palette", 3).commit();
+                    sharedPreferences.edit().putInt("palette", 3).apply();
                     break;
                 case R.id.three_primary_radio_button:
                     mCameraHandler.changePalette(4);
-                    sharedPreferences.edit().putInt("palette", 4).commit();
+                    sharedPreferences.edit().putInt("palette", 4).apply();
                     break;
                 case R.id.iron_gray_radio_button:
                     mCameraHandler.changePalette(5);
-                    sharedPreferences.edit().putInt("palette", 5).commit();
+                    sharedPreferences.edit().putInt("palette", 5).apply();
                     break;
                 case R.id.temperature_units_c_radio_button:
                     if (mUVCCameraView != null) {
                         mUVCCameraView.setUnitTemperature(0);
-                        sharedPreferences.edit().putInt("UnitTemperature", 0).commit();
+                        sharedPreferences.edit().putInt("UnitTemperature", 0).apply();
                     }
                     break;
                 case R.id.temperature_units_f_radio_button:
                     if (mUVCCameraView != null) {
                         mUVCCameraView.setUnitTemperature(1);
-                        sharedPreferences.edit().putInt("UnitTemperature", 1).commit();
+                        sharedPreferences.edit().putInt("UnitTemperature", 1).apply();
                     }
                     break;
                 case R.id.chinese_radio_button:
                     language = sharedPreferences.getInt("Language", -1);
                     if (language != 0) {
-                        sharedPreferences.edit().putInt("Language", 0).commit();
+                        sharedPreferences.edit().putInt("Language", 0).apply();
                         changeAppLanguage(Locale.SIMPLIFIED_CHINESE);
                     }
                     break;
                 case R.id.english_radio_button:
                     language = sharedPreferences.getInt("Language", -1);
                     if (language != 1) {
-                        sharedPreferences.edit().putInt("Language", 1).commit();
+                        sharedPreferences.edit().putInt("Language", 1).apply();
                         changeAppLanguage(Locale.ENGLISH);
                     }
                     break;
@@ -1154,9 +1126,9 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                             }
                             switch (language) {
                                 case -1:
-                                    if (locale_language == "zh") {
+                                    if (locale_language.equals("zh")) {
                                         languageRadioGroup.check(R.id.chinese_radio_button);
-                                    } else if (locale_language == "en") {
+                                    } else if (locale_language.equals("en")) {
                                         languageRadioGroup.check(R.id.english_radio_button);
                                     }
                                     break;
@@ -1167,11 +1139,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                                     languageRadioGroup.check(R.id.english_radio_button);
                                     break;
                             }
-                            if (isWatermark == 1) {
-                                mWatermarkSwitch.setChecked(true);
-                            } else {
-                                mWatermarkSwitch.setChecked(false);
-                            }
+                            mWatermarkSwitch.setChecked(isWatermark == 1);
 
                             getTempPara();
                             emissivityText.setText(stEmiss);
@@ -1344,7 +1312,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                         temperatureAnalysisWindow.dismiss();
                     } else {
                         isTemperaturing = false;
-                        needClearCanvas = true;
                         mCameraHandler.stopTemperaturing();
                         mTouchPoint.clear();
                         mUVCCameraView.setTouchPoint(mTouchPoint);
@@ -1396,7 +1363,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                         temperatureAnalysisWindow.dismiss();
                     } else {
                         isTemperaturing = false;
-                        needClearCanvas = true;
                         mCameraHandler.stopTemperaturing();
                         mTouchPoint.clear();
                         mUVCCameraView.setTouchPoint(mTouchPoint);
@@ -1450,7 +1416,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                         temperatureAnalysisWindow.dismiss();
                     } else {
                         isTemperaturing = false;
-                        needClearCanvas = true;
                         mCameraHandler.stopTemperaturing();
                         mTouchPoint.clear();
                         mUVCCameraView.setTouchPoint(mTouchPoint);
@@ -1491,7 +1456,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                                 }
                             }, 1500);
                             ChangeRangeButton.setImageDrawable(getResources().getDrawable(R.mipmap.range_120));
-                            temperatureAnalysisWindow.dismiss();
                         } else {
                             TemperatureRange = 120;
                             mCameraHandler.setTempRange(120);
@@ -1521,8 +1485,8 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                                 }
                             }, 1500);
                             ChangeRangeButton.setImageDrawable(getResources().getDrawable(R.mipmap.range_400));
-                            temperatureAnalysisWindow.dismiss();
                         }
+                        temperatureAnalysisWindow.dismiss();
                     }
                     break;
                 case R.id.imageview_thumbnail:
@@ -1699,12 +1663,11 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                                 TouchPoint LastTouch = mTouchPoint.get(mTouchPoint.size() - 1);
                                 LastTouch.x = currentPoint2.x;
                                 LastTouch.y = currentPoint2.y;
-                                mUVCCameraView.setTouchPoint(mTouchPoint);
                             } else {
                                 currentPoint2.numOfPoint = 1;
                                 mTouchPoint.add(currentPoint2);
-                                mUVCCameraView.setTouchPoint(mTouchPoint);
                             }
+                            mUVCCameraView.setTouchPoint(mTouchPoint);
 
                         }
 
@@ -1713,12 +1676,11 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                                 TouchPoint LastTouch = mTouchPoint.get(mTouchPoint.size() - 1);
                                 LastTouch.x = currentPoint2.x;
                                 LastTouch.y = currentPoint2.y;
-                                mUVCCameraView.setTouchPoint(mTouchPoint);
                             } else {
                                 currentPoint2.numOfPoint = 1;
                                 mTouchPoint.add(currentPoint2);
-                                mUVCCameraView.setTouchPoint(mTouchPoint);
                             }
+                            mUVCCameraView.setTouchPoint(mTouchPoint);
                         }
                         break;
                     case MotionEvent.ACTION_UP:
@@ -1733,22 +1695,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
             return true;
         }
 
-    };
-
-
-    /**
-     * capture still image when you long click on preview image(not on buttons)
-     */
-    private final OnLongClickListener mOnLongClickListener = new OnLongClickListener() {
-        @Override
-        public boolean onLongClick(final View view) {
-            switch (view.getId()) {
-                case R.id.camera_view:
-
-
-            }
-            return false;
-        }
     };
 
     private void startPreview() {
@@ -1766,11 +1712,8 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
         int iconPaletteWidth = abs(mRightSurfaceRight - mRightSurfaceLeft);
         int iconPaletteHeight = abs(mRightSurfaceBottom - mRightSurfaceTop);
         iconPalette = Bitmap.createBitmap(iconPaletteWidth > 0 ? iconPaletteWidth : 10, iconPaletteHeight > 0 ? iconPaletteHeight : 10, Bitmap.Config.ARGB_8888);
-        bitcanvas = new Canvas(icon);//初始化画布绘制的图像到icon上
-        paletteBitmapCanvas = new Canvas(iconPalette);
         //sfh.lockCanvas()
         photoPaint = new Paint(); //建立画笔
-        palettePaint = new Paint();
         //photoPaint.setStyle(Paint.Style.FILL);
         //dstHighTemp=new Rect(0,0,60,60);
         //dstLowTemp=new Rect(0,0,60,60);
@@ -1793,7 +1736,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 
             }
         });
-        updateItems();
+
     }
 
 
@@ -1864,10 +1807,9 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                 }, 1000, 380000);
 
                 isWatermark = sharedPreferences.getInt("Watermark", 1);
-                sharedPreferences.edit().putInt("Watermark", isWatermark).commit();
+                sharedPreferences.edit().putInt("Watermark", isWatermark).apply();
                 mCameraHandler.watermarkOnOff(isWatermark);
                 mUsbDevice = device;
-                updateItems();
                 isOpened = 1;
             }
         }
@@ -1890,7 +1832,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                     }
                 }, 0);
                 //setCameraButton(false);
-                updateItems();
             }
             timerEveryTime.cancel();
             icon.recycle();
@@ -1942,17 +1883,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
     }
 
     //================================================================================
-    private boolean isActive() {
-        return mCameraHandler != null && mCameraHandler.isOpened();
-    }
-
-    private boolean checkSupportFlag(final int flag) {
-        return mCameraHandler != null && mCameraHandler.checkSupportFlag(flag);
-    }
-
-    private int getValue(final int flag) {
-        return mCameraHandler != null ? mCameraHandler.getValue(flag) : 0;
-    }
 
     private int setValue(final int flag, final int value) {
         return mCameraHandler != null ? mCameraHandler.setValue(flag, value) : 0;
@@ -1964,20 +1894,12 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
         }
     }
 
-    private int resetValue(final int flag) {
-        return mCameraHandler != null ? mCameraHandler.resetValue(flag) : 0;
-    }
-
-    private void updateItems() {
-        runOnUiThread(mUpdateItemsOnUITask, 100);
-    }
-
     /*****************计时器*******************/
 
     //计时器
-    private Handler Timehandle = new Handler();
+    private final Handler Timehandle = new Handler();
     private long currentSecond = 0;//当前毫秒数
-    private Runnable timeRunable = new Runnable() {
+    private final Runnable timeRunable = new Runnable() {
         @Override
         public void run() {
 //            if (isOnRecord) {
@@ -2048,90 +1970,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
     }
 
     /*****************计时器*******************/
-
-    private final Runnable mUpdateItemsOnUITask = new Runnable() {
-        @Override
-        public void run() {
-            if (isFinishing()) return;
-//			final int visible_active = isActive() ? View.VISIBLE : View.INVISIBLE;
-//			mToolsLayout.setVisibility(visible_active);
-//			mBrightnessButton.setVisibility(
-//		    	checkSupportFlag(UVCCamera.PU_BRIGHTNESS)
-//		    	? visible_active : View.INVISIBLE);
-//			mContrastButton.setVisibility(
-//		    	checkSupportFlag(UVCCamera.PU_CONTRAST)
-//		    	? visible_active : View.INVISIBLE);
-        }
-    };
-
-    private int mSettingMode = -1;
-
-    /**
-     * 設定画面を非表示にする
-     *
-     * @param fadeOut trueならばフェードアウトさせる, falseなら即座に非表示にする
-     */
-    protected final void hideSetting(final boolean fadeOut) {
-        removeFromUiThread(mSettingHideTask);
-        if (fadeOut) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    ViewAnimationHelper.fadeOut(mValueLayout, -1, 0, mViewAnimationListener);
-                }
-            });
-        } else {
-            try {
-                mValueLayout.setVisibility(View.GONE);
-            } catch (final Exception e) {
-                // ignore
-            }
-            mSettingMode = -1;
-        }
-    }
-
-    protected final Runnable mSettingHideTask = new Runnable() {
-        @Override
-        public void run() {
-            hideSetting(true);
-        }
-    };
-
-
-    private final ViewAnimationHelper.ViewAnimationListener
-            mViewAnimationListener = new ViewAnimationHelper.ViewAnimationListener() {
-        @Override
-        public void onAnimationStart(@NonNull final Animator animator, @NonNull final View target, final int animationType) {
-//			if (DEBUG) Log.v(TAG, "onAnimationStart:");
-        }
-
-        @Override
-        public void onAnimationEnd(@NonNull final Animator animator, @NonNull final View target, final int animationType) {
-            final int id = target.getId();
-            switch (animationType) {
-                case ViewAnimationHelper.ANIMATION_FADE_IN:
-                case ViewAnimationHelper.ANIMATION_FADE_OUT: {
-                    final boolean fadeIn = animationType == ViewAnimationHelper.ANIMATION_FADE_IN;
-//                    if (id == R.id.value_layout) {
-//                        if (fadeIn) {
-//                            runOnUiThread(mSettingHideTask, SETTINGS_HIDE_DELAY_MS);
-//                        } else {
-//                            mValueLayout.setVisibility(View.GONE);
-//                            mSettingMode = -1;
-//                        }
-//                    } else if (!fadeIn) {
-////					target.setVisibility(View.GONE);
-//                    }
-                    break;
-                }
-            }
-        }
-
-        @Override
-        public void onAnimationCancel(@NonNull final Animator animator, @NonNull final View target, final int animationType) {
-//			if (DEBUG) Log.v(TAG, "onAnimationStart:");
-        }
-    };
 
     public void matchBrand() {
         brand = android.os.Build.BRAND;
@@ -2250,28 +2088,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 
         }
 
-        private void whenChangeTempPara() {
-            if (mCameraHandler != null) {
-                mCameraHandler.whenChangeTempPara();
-            }
-        }
-
-        public void sendByteCommand(int position, byte value0, int interval0) {
-            psitionAndValue0 = (position << 8) | (0x000000ff & value0);
-            Handler handler0 = new Handler();
-            handler0.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    mCameraHandler.setValue(UVCCamera.CTRL_ZOOM_ABS, psitionAndValue0);
-                }
-            }, interval0);
-            handler0.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    mCameraHandler.whenShutRefresh();
-                }
-            }, interval0 + 20);
-        }
     }
 
     @Override
