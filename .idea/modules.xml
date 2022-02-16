@@ -2,10 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/UVCCameraProDemoLTS-v5.05.210730.iml" filepath="$PROJECT_DIR$/.idea/modules/UVCCameraProDemoLTS-v5.05.210730.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Xtherm/UVCCameraProDemoLTS-v5.05.210730.Xtherm.iml" filepath="$PROJECT_DIR$/.idea/modules/Xtherm/UVCCameraProDemoLTS-v5.05.210730.Xtherm.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/libuvccamera/UVCCameraProDemoLTS-v5.05.210730.libuvccamera.iml" filepath="$PROJECT_DIR$/.idea/modules/libuvccamera/UVCCameraProDemoLTS-v5.05.210730.libuvccamera.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/usbCameraCommon/UVCCameraProDemoLTS-v5.05.210730.usbCameraCommon.iml" filepath="$PROJECT_DIR$/.idea/modules/usbCameraCommon/UVCCameraProDemoLTS-v5.05.210730.usbCameraCommon.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mat-xtherm.iml" filepath="$PROJECT_DIR$/.idea/modules/mat-xtherm.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Xtherm/mat-xtherm.Xtherm.iml" filepath="$PROJECT_DIR$/.idea/modules/Xtherm/mat-xtherm.Xtherm.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/libuvccamera/mat-xtherm.libuvccamera.iml" filepath="$PROJECT_DIR$/.idea/modules/libuvccamera/mat-xtherm.libuvccamera.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/usbCameraCommon/mat-xtherm.usbCameraCommon.iml" filepath="$PROJECT_DIR$/.idea/modules/usbCameraCommon/mat-xtherm.usbCameraCommon.iml" />
     </modules>
   </component>
 </project>
