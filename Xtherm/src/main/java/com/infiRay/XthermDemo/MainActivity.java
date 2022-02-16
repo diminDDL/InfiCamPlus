@@ -23,10 +23,8 @@
 package com.infiRay.XthermDemo;
 
 import android.animation.Animator;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
-import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -34,7 +32,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -51,16 +48,12 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.hardware.usb.UsbDevice;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.content.res.ResourcesCompat;
-import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
@@ -74,7 +67,6 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
-import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -109,14 +101,9 @@ import com.serenegiant.widget.Camera2Helper;
 import com.serenegiant.widget.TouchPoint;
 import com.serenegiant.widget.UVCCameraTextureView;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Locale;
-import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -127,15 +114,6 @@ import static java.lang.Math.abs;
 import static java.lang.Thread.sleep;
 
 public final class MainActivity extends BaseActivity implements CameraDialog.CameraDialogParent {
-    public static final String SYS_EMUI = "sys_emui";
-    public static final String SYS_MIUI = "sys_miui";
-    public static final String SYS_FLYME = "sys_flyme";
-    private static final String KEY_MIUI_VERSION_CODE = "ro.miui.ui.version.code";
-    private static final String KEY_MIUI_VERSION_NAME = "ro.miui.ui.version.name";
-    private static final String KEY_MIUI_INTERNAL_STORAGE = "ro.miui.internal.storage";
-    private static final String KEY_EMUI_API_LEVEL = "ro.build.hw_emui_api_level";
-    private static final String KEY_EMUI_VERSION = "ro.build.version.emui";
-    private static final String KEY_EMUI_CONFIG_HW_SYS_VERSION = "ro.confg.hw_systemversion";
     private static final boolean DEBUG = false;    // TODO set false on release
     private static final String TAG = "MainActivity";
     private static final int REQUEST_CODE_CHOOSE = 23;
@@ -181,7 +159,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
      */
     private UVCCameraTextureView mUVCCameraView;
 
-    /**
+    /*
      * for open&start / stop&close camera preview
      */
     //private ToggleButton mCameraButton;
@@ -192,61 +170,42 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
     private RadioGroup paletteRadioGroup, temperatureUnitsRadioGroup, languageRadioGroup;
     private TextView SN, PN, sotfVersion, productSoftVersion;
     private LinearLayout rightmenu;
-    private ImageButton mCaptureButton, mPhotographButton, mPalette, mSetButton;
+    private ImageButton mCaptureButton, mPhotographButton, mSetButton;
     private ImageButton pointModeButton, lineModeButton, rectangleModeButton, MakeReportButton, ChangeRangeButton;
     private Switch mSysCameraSwitch, mWatermarkSwitch;
     private ImageView mImageView;
     private ImageButton mThumbnailButton;
-    private boolean statusIsOff = true;
     private SurfaceView mSfv, mRightSfv;
     private String brand, model, hardware;
     private SurfaceHolder mSfh, mRightSfh;
-    private TextView emissivityText, correctionText, reflectionText, ambtempText, humidityText, distanceText, textMax, textMin;
+    private TextView emissivityText, correctionText, reflectionText, ambtempText, humidityText, distanceText;
     private float Fix = 0, Refltmp = 0, Airtmp = 0, humi = 0, emiss = 0;
     private short distance = 0;
     private String stFix, stRefltmp, stAirtmp, stHumi, stEmiss, stDistance, stProductSoftVersion;
     private Button saveButton;
-    private View mBrightnessButton, mContrastButton;
     private LinearLayout mMenuRight;
-    private ImageView mTempbutton, mZoomButton, mClearButton;
-    private View mResetButton;
-    private View mToolsLayout, mValueLayout;
-    private SeekBar mSettingSeekbar, emissivitySeekbar, correctionSeekbar, reflectionSeekbar, ambtempSeekbar, humiditySeekbar, distanceSeekbar;
-    private SeekBar highThrowSeekbar, lowThrowSeekbar, lowPlatSeekbar, highPlatSeekbar, orgSubGsHighSeekbar, orgSubGsLowSeekbar, sigmaDSeekbar, sigmaRSeekbar;
-    private TextView highThrowText, lowThrowText, lowPlatText, highPlatText, orgSubGsHighText, orgSubGsLowText, sigmaDText, sigmaRText;
-    private int highThrow, lowThrow, lowPlat, highPlat, OrgSubGsHigh, OrgSubGsLow, sigmaD, sigmaR;
+    private ImageView mTempbutton, mZoomButton;
+    private View mValueLayout;
+    private SeekBar emissivitySeekbar, correctionSeekbar, reflectionSeekbar, ambtempSeekbar, humiditySeekbar, distanceSeekbar;
     private int mLeft, mRight, mTop, mBottom;
     private int mRightSurfaceLeft, mRightSurfaceRight, mRightSurfaceTop, mRightSurfaceBottom;
     private int indexOfPoint = 0;
-    private int intTestx;
     private CopyOnWriteArrayList<TouchPoint> mTouchPoint;
     private int temperatureAnalysisMode;
     private boolean isTemperaturing, isSettingBadPixel, needClearCanvas = false;
     private Bitmap mCursorBlue, mCursorRed, mCursorYellow, mCursorGreen, mWatermarkLogo;
     private Bitmap icon, iconPalette; //建立一个空的图画板
-    private Canvas canvas, bitcanvas, paletteCanvas, paletteBitmapCanvas;//初始化画布绘制的图像到icon上
+    private Canvas canvas, bitcanvas, paletteBitmapCanvas;//初始化画布绘制的图像到icon上
     private Paint photoPaint, palettePaint; //建立画笔
-    private Rect dstHighTemp, dstLowTemp;//创建一个指定的新矩形的坐标
-    private int x1;
-    private int y1;
     int posx, posy;
-    private EditText iput0, iput1, iput2, iput3, iput4, iput5;
-    private Button butSure0, butSure1, butSure2, butSure3, butSure4, butSure5, butSetSave;
     private ByteUtil mByteUtil = new ByteUtil();
-    private PopupWindow popupWindow, temperatureAnalysisWindow, settingsWindows;
-    private int from = 0;
-    private LinearLayout mContentLayout;
+    private PopupWindow temperatureAnalysisWindow;
     volatile boolean isOnRecord;
     private byte[] picTakeByteArray = new byte[640 * 512 * 4];
 
 
     public int currentapiVersion = 0;//现改用为平台类型
-    private Fragment currentFragment = null;
-    private SettingFragment settingFragment;
-    private ScaleGestureDetector mScaleGestureDetector = null;
     private Context context;
-    private InputStream assetsInputStream;
-    private boolean isOnOff;
     //	private BitmapDrawable mCursor;l
     private float mFinalScale;
     private SharedPreferences sharedPreferences;
@@ -268,7 +227,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
     int oldRotation = 0;
     UsbDevice mUsbDevice;
     private AutoFitTextureView mTextureView;
-    private boolean isFirstRun, isAgreement;
+    private boolean isFirstRun;
     LinearLayout rl_tip, rl_tip_kaka, rl_tip_setting, menu_palette_layout, rl_tip_setting1;
     RelativeLayout ll_tip_temp, ll_tip_temp1;
     Boolean isT3 = false;
@@ -517,30 +476,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
             return true;
         else
             return false;
-    }
-
-    private String getFileName(File[] files) {
-        String str = "";
-        if (files != null) { // 先判断目录是否为空，否则会报空指针
-            for (File file : files) {
-                if (file.isDirectory()) {//检查此路径名的文件是否是一个目录(文件夹)
-                    Log.e("zeng", "若是文件目录。继续读1"
-                            + file.getName().toString() + file.getPath().toString());
-                    getFileName(file.listFiles());
-                    Log.e("zeng", "若是文件目录。继续读2"
-                            + file.getName().toString() + file.getPath().toString());
-                } else {
-                    String fileName = file.getName();
-                    if (fileName.endsWith(".txt")) {
-                        String s = fileName.substring(0, fileName.lastIndexOf(".")).toString();
-                        Log.e("zeng", "文件名txt：：   " + s);
-                        str += fileName.substring(0, fileName.lastIndexOf(".")) + "\n";
-                    }
-                }
-            }
-
-        }
-        return str;
     }
 
     private final View.OnTouchListener mChangPicListener = new View.OnTouchListener() {
@@ -1619,28 +1554,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
     };
 
     /**
-     * 添加或者显示碎片
-     *
-     * @param transaction
-     * @param fragment
-     */
-    private void addOrShowFragment(FragmentTransaction transaction,
-                                   Fragment fragment) {
-        if (currentFragment == fragment)
-            return;
-
-        if (!fragment.isAdded()) { // 如果当前fragment未被添加，则添加到Fragment管理器中
-            transaction.hide(currentFragment)
-                    .add(R.id.content_layout, fragment).commit();
-        } else {
-            transaction.hide(currentFragment).show(fragment).commit();
-        }
-
-        currentFragment = fragment;
-    }
-
-
-    /**
      * 更改应用语言
      *
      * @param locale
@@ -1705,67 +1618,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
         }
     }
 
-
-//			popupWindow.setTouchInterceptor(new View.OnTouchListener() {
-//				@Override
-//				public boolean onTouch(View v, MotionEvent event) {
-//				//	return false;   // 这里面拦截不到返回键
-//					switch (v.getId()) {
-//						case R.id.palette1:
-//							setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8800);
-//							popupWindow.dismiss();
-//							break;
-//						case R.id.palette2:
-//							setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8801);
-//							popupWindow.dismiss();
-//							break;
-//						case R.id.palette3:
-//							setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8802);
-//							popupWindow.dismiss();
-//							break;
-//						case R.id.palette4:
-//							setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8803);
-//							popupWindow.dismiss();
-//							break;
-//					}
-//			});
-
-
-
-
-	/*private void whenCloseClearCanvas() {
-        canvas = mSfh.lockCanvas();
-		try {
-			if (canvas != null) {
-				canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-				mSfh.unlockCanvasAndPost(canvas);
-
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		paletteCanvas = mRightSfh.lockCanvas();
-		try {
-			if (paletteCanvas != null) {
-				paletteCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-				mRightSfh.unlockCanvasAndPost(paletteCanvas);
-
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-	}*/
-    /**
-     * 点测温
-     */
-    float startX = 0;
-    float startY = 0;
-
-    float endX = 0;
-    float endY = 0;
     View.OnTouchListener listener = new View.OnTouchListener() {
         @Override
         public boolean onTouch(View view, MotionEvent event) {
@@ -1898,41 +1750,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
             return false;
         }
     };
-
-    private void setCameraButton(final boolean isOn) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-//				if (mCameraButton != null) {
-//					try {
-//						mCameraButton.setOnCheckedChangeListener(null);
-//						mCameraButton.setChecked(isOn);
-//					} finally {
-//						mCameraButton.setOnCheckedChangeListener(mOnCheckedChangeListener);
-//					}
-//				}
-                if (!isOn && (mCaptureButton != null)) {
-                    if (!isTemperaturing) {
-                        mTempbutton.setImageDrawable(getResources().getDrawable(R.mipmap.temp1));
-                    }
-                    if (!isOnRecord) {
-                        mCaptureButton.setImageDrawable(getResources().getDrawable(R.mipmap.video1));
-                    }
-                    mPhotographButton.setVisibility(INVISIBLE);
-                    mSetButton.setVisibility(INVISIBLE);
-                    mCaptureButton.setVisibility(INVISIBLE);
-                    mZoomButton.setVisibility(INVISIBLE);
-                    mTempbutton.setVisibility(INVISIBLE);
-                    mClearButton.setVisibility(INVISIBLE);
-                    mPalette.setVisibility(INVISIBLE);
-
-                    //textMax.setVisibility(View.INVISIBLE);
-                    //textMin.setVisibility(View.INVISIBLE);
-                }
-            }
-        }, 0);
-        updateItems();
-    }
 
     private void startPreview() {
         mLeft = mImageView.getLeft();
@@ -2250,39 +2067,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
     private int mSettingMode = -1;
 
     /**
-     * 設定画面を表示
-     *
-     * @param mode
-     */
-    private final void showSettings(final int mode) {
-        if (DEBUG) Log.v(TAG, String.format("showSettings:%08x", mode));
-        hideSetting(false);
-        if (isActive()) {
-            switch (mode) {
-                case UVCCamera.PU_BRIGHTNESS:
-                case UVCCamera.PU_CONTRAST:
-                    mSettingMode = mode;
-                    mSettingSeekbar.setProgress(getValue(mode));
-                    ViewAnimationHelper.fadeIn(mValueLayout, -1, 0, mViewAnimationListener);
-                    break;
-            }
-        }
-    }
-
-    private void resetSettings() {
-        if (isActive()) {
-            switch (mSettingMode) {
-                case UVCCamera.PU_BRIGHTNESS:
-                case UVCCamera.PU_CONTRAST:
-                    mSettingSeekbar.setProgress(resetValue(mSettingMode));
-                    break;
-            }
-        }
-        mSettingMode = -1;
-        ViewAnimationHelper.fadeOut(mValueLayout, -1, 0, mViewAnimationListener);
-    }
-
-    /**
      * 設定画面を非表示にする
      *
      * @param fadeOut trueならばフェードアウトさせる, falseなら即座に非表示にする
@@ -2349,34 +2133,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
         }
     };
 
-    public static String getSystem() {
-        String SYS = "";
-        try {
-            Properties prop = new Properties();
-            prop.load(new FileInputStream(new File(Environment.getRootDirectory(), "build.prop")));
-            if (prop.getProperty(KEY_MIUI_VERSION_CODE, null) != null
-                    || prop.getProperty(KEY_MIUI_VERSION_NAME, null) != null
-                    || prop.getProperty(KEY_MIUI_INTERNAL_STORAGE, null) != null) {
-                SYS = SYS_MIUI;//小米
-            } else if (prop.getProperty(KEY_EMUI_API_LEVEL, null) != null
-                    || prop.getProperty(KEY_EMUI_VERSION, null) != null
-                    || prop.getProperty(KEY_EMUI_CONFIG_HW_SYS_VERSION, null) != null) {
-                SYS = SYS_EMUI;//华为
-            } else if (getMeizuFlymeOSFlag().toLowerCase().contains("flyme")) {
-                SYS = SYS_FLYME;//魅族
-            }
-            ;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return SYS;
-        }
-        return SYS;
-    }
-
-    public static String getMeizuFlymeOSFlag() {
-        return getSystemProperty("ro.build.display.id", "");
-    }
-
     public void matchBrand() {
         brand = android.os.Build.BRAND;
         model = android.os.Build.MODEL;
@@ -2417,117 +2173,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
             currentapiVersion = 4;
         }
 
-    }
-
-    /*@Nullable
-    private Bitmap getThumbnail() {
-        if (checkPermissionWriteExternalStorage()) {
-            Uri uri = MediaStore.Files.getContentUri("external");
-            String[] PROJECTION = {
-                    MediaStore.Files.FileColumns._ID,
-                    MediaStore.MediaColumns.DISPLAY_NAME,
-                    MediaStore.MediaColumns.MIME_TYPE,
-                    MediaStore.MediaColumns.SIZE,
-                    "duration"};
-            String SELECTION_ALL =
-                    "(" + MediaStore.Files.FileColumns.MEDIA_TYPE + "=?"
-                            + " OR "
-                            + MediaStore.Files.FileColumns.MEDIA_TYPE + "=?)"
-                            + " AND " + "bucket_display_name" + "='XthermDemo'"
-                            + " AND " + MediaStore.MediaColumns.SIZE + ">0";
-//        String[] SELECTION_ALL_ARGS = {
-//                String.valueOf(MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE),
-//                String.valueOf(MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO),
-//        };
-            String[] SELECTION_ALL_ARGS = {
-                    String.valueOf(MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE),
-                    String.valueOf(MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO),
-            };
-            String ORDER_BY = MediaStore.Images.Media.DATE_TAKEN + " DESC";
-            ;
-            Cursor c = this.getContentResolver().query(uri, PROJECTION,
-                    SELECTION_ALL, SELECTION_ALL_ARGS, ORDER_BY);
-            if (c == null || c.getCount() == 0) {
-                return null;
-            }
-            c.moveToFirst();
-            String Id = c.getString(c.getColumnIndex(MediaStore.Files.FileColumns._ID));
-            c.close();
-            if (Id == null) {
-                return null;
-            }
-            long IdLong = Long.parseLong(Id);
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inDither = false;
-            options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-            Bitmap a = null;
-            a = MediaStore.Images.Thumbnails.getThumbnail(this.getContentResolver(), IdLong, MediaStore.Images.Thumbnails.MINI_KIND, options);
-            if (a == null) {
-                a = MediaStore.Video.Thumbnails.getThumbnail(this.getContentResolver(), IdLong, MediaStore.Images.Thumbnails.MINI_KIND, options);
-            }
-            return a;
-        } else {
-            return null;
-        }
-    }*/
-
-    /*private void refreshThumbnail() {
-        Bitmap thumbnail = getThumbnail();
-        int width = mThumbnailButton.getWidth();
-        Log.e(TAG, "mThumbnailButton.getWidth():" + width);
-        if (thumbnail != null) {
-            Bitmap circleBitmap = BitmapUtil.createCircleImage(thumbnail, mCaptureButton.getWidth(), mCaptureButton.getHeight(), mCaptureButton.getHeight() / 6);
-            Log.e(TAG, "mCaptureButton.getWidth():" + mCaptureButton.getWidth() + "mCaptureButton.getHeight():" + mCaptureButton.getHeight());
-            //mThumbnailButton.setImageBitmap(circleBitmap);
-            Bitmap target = Bitmap.createBitmap(270, 360, Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(target);
-            canvas.drawColor(Color.RED);
-            mThumbnailButton.setImageBitmap(circleBitmap);
-            mThumbnailButton.setAdjustViewBounds(true);
-            mThumbnailButton.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            Log.e(TAG, "mThumbnailButton.getWidth():" + mThumbnailButton.getWidth() + "mThumbnailButton.getHeight():" + mThumbnailButton.getHeight());
-        }
-    }*/
-
-    private static String getSystemProperty(String key, String defaultValue) {
-        try {
-            Class<?> clz = Class.forName("android.os.SystemProperties");
-            Method get = clz.getMethod("get", String.class, String.class);
-            return (String) get.invoke(clz, key, defaultValue);
-        } catch (Exception e) {
-        }
-        return defaultValue;
-    }
-
-    public class ScaleGestureListener implements ScaleGestureDetector.OnScaleGestureListener {
-
-        @Override
-        public boolean onScale(ScaleGestureDetector detector) {
-            //	float scale = getScale();
-            float scaleFactor = detector.getScaleFactor();
-            mFinalScale = mFinalScale * scaleFactor;
-            if (mFinalScale > 4) {
-                mFinalScale = 4;
-            } else if (mFinalScale < 1) {
-                mFinalScale = 1;
-            }
-            mUVCCameraView.setVertices(mFinalScale);
-            return false;
-
-        }
-
-
-        @Override
-        public boolean onScaleBegin(ScaleGestureDetector detector) {
-            // TODO Auto-generated method stub
-            //一定要返回true才会进入onScale()这个函数
-            return true;
-        }
-
-        @Override
-        public void onScaleEnd(ScaleGestureDetector detector) {
-            // TODO Auto-generated method stub
-        }
     }
 
     public class sendCommand {
@@ -2637,7 +2282,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
             //Log.e("OnActivityResult ", String.valueOf(Matisse.obtainOriginalState(data)));
         }
     }
-
 
     /*private static class UriAdapter extends RecyclerView.Adapter<UriAdapter.UriViewHolder> {
 
