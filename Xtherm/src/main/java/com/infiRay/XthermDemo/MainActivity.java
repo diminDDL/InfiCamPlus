@@ -208,7 +208,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
     private Configuration configuration;
     private int language, isWatermark;
     private boolean XthermAlreadyConnected = false;
-    //    private boolean camerapreview = false;
     private boolean isPreviewing = false;
     private SensorManager mSensorManager;
     private Sensor mSensorMagnetic, mAccelerometer;
@@ -324,7 +323,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
             distanceSeekbar.setOnSeekBarChangeListener(mOnEmissivitySeekBarChangeListener);
             distanceText = findViewById(R.id.distance_text);
 
-
             SN = findViewById(R.id.product_SN);
             PN = findViewById(R.id.product_name);
             sotfVersion = findViewById(R.id.soft_version);
@@ -342,11 +340,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                 @Override
                 public void onClick(View v) {
                     rl_tip.setVisibility(View.GONE);
-//                    if (isT3) {
-//                        rl_tip_setting1.setVisibility(View.VISIBLE);
-//                    } else {
                     ll_tip_temp.setVisibility(View.VISIBLE);
-//                    }
                 }
             });
             ll_tip_temp.setOnClickListener(new OnClickListener() {
@@ -360,12 +354,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                 @Override
                 public void onClick(View v) {
                     rl_tip_kaka.setVisibility(View.GONE);
-//                    if (isT3) {
-//                        ll_tip_temp1.setVisibility(View.VISIBLE);
-//                    } else {
                     rl_tip_setting.setVisibility(View.VISIBLE);
-//                    }
-
                 }
             });
             rl_tip_setting.setOnClickListener(new OnClickListener() {
@@ -509,12 +498,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
             return false;
         }
     };
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        Log.e(TAG, "onStart:");
-    }
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
@@ -749,7 +732,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
 
         @Override
         public void onStartTrackingTouch(SeekBar seekBar) {
-
+            // Intentionally empty.
         }
 
         //private TextView emissivityText,correctionText,reflectionText,ambtempText,humidityText,distanceText,textMax, textMin;
@@ -1160,43 +1143,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                             sotfVersion.setText(getVersionName(context));
                             productSoftVersion.setText(stProductSoftVersion);
 
-                            //highThrowSeekbar,lowThrowSeekbar,lowPlatSeekbar,highPlatSeekbar,orgSubGsHighSeekbar,orgSubGsLowSeekbar,sigmaDSeekbar,sigmaRSeekbar;
-                            //private TextView  highThrowText,lowThrowText,lowPlatText,highPlatText,orgSubGsHighText,orgSubGsLowText,sigmaDText,sigmaRText;
-//                        highThrow=mCameraHandler.getHighThrow();
-//                        highThrowSeekbar.setProgress(highThrow);
-//                        highThrowText.setText(String.valueOf(highThrow));
-//
-//                        lowThrow=mCameraHandler.getLowThrow();
-//                        lowThrowSeekbar.setProgress(lowThrow);
-//                        lowThrowText.setText(String.valueOf(lowThrow));
-//
-//                        highPlat=mCameraHandler.getHighPlat();
-//                        highPlatSeekbar.setProgress(highPlat);
-//                        highPlatText.setText(String.valueOf(highPlat));
-//
-//                        lowPlat=mCameraHandler.getLowPlat();
-//                        lowPlatSeekbar.setProgress(lowPlat);
-//                        lowPlatText.setText(String.valueOf(lowPlat));
-//
-//                        OrgSubGsHigh=mCameraHandler.getOrgSubGsHigh();
-//                        orgSubGsHighSeekbar.setProgress(OrgSubGsHigh);
-//                        orgSubGsHighText.setText(String.valueOf(OrgSubGsHigh));
-//
-//                        OrgSubGsLow=mCameraHandler.getOrgSubGsLow();
-//                        orgSubGsLowSeekbar.setProgress(OrgSubGsLow);
-//                        orgSubGsLowText.setText(String.valueOf(OrgSubGsLow));
-//
-//                        float sigmaDfloat=mCameraHandler.getSigmaD();
-//                        sigmaD=(int)(sigmaDfloat*10.0);
-//                        sigmaDSeekbar.setProgress(sigmaD);
-//                        sigmaDText.setText(String.valueOf(sigmaD));
-//
-//                        float sigmaRfloat=mCameraHandler.getSigmaR();
-//                        Log.e(TAG,"sigmaRfloat"+sigmaRfloat);
-//                        sigmaR=(int)(sigmaRfloat*10.0);
-//                        sigmaRSeekbar.setProgress(sigmaR);
-//                        sigmaRText.setText(String.valueOf(sigmaR));
-//                        rightmenu.setAlpha(0.9f);
                             rightmenu.setVisibility(VISIBLE);
                         } else {
                             Toast.makeText(getApplicationContext(), R.string.waittoclick, Toast.LENGTH_SHORT).show();
@@ -1207,41 +1153,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                         //setValue(UVCCamera.CTRL_ZOOM_ABS, 0x80ff);
                     }
 
-                    /*createSettingsPopupWindow();
-                    if (!settingsWindows.isShowing()) {
-                        //popupWindow.showAsDropDown(mTitleLayout,mContentLayout.getMeasuredWidth()/2,0);
-                        settingsWindows.showAtLocation(mTempbutton, Gravity.LEFT, mTempbutton.getWidth()+PixAndDpUtil.dip2px(context,10), 0);
-                        WindowManager.LayoutParams wlp = getWindow().getAttributes();
-                        wlp.alpha = 0.7f;
-                        getWindow().setAttributes(wlp);
-                    } else {
-                        settingsWindows.dismiss();
-                    }*/
                     break;
-                    /*if (mCameraHandler.isOpened()) {
-                        FragmentManager fragmentManager = getFragmentManager();
-                        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                        if (settingFragment == null) {
-                            settingFragment = new SettingFragment();
-                            fragmentTransaction.add(R.id.content_layout, settingFragment, "setting");
-                            fragmentTransaction.commit();
-                            fragmentTransaction.show(settingFragment);
-                            isSetting = true;
-                            settingFragment.setIsOnSetting(isSetting);
-                        } else {
-                            Fragment fragment = fragmentManager.findFragmentByTag("setting");
-                            fragmentTransaction.show(settingFragment);
-                            fragmentTransaction.commit();
-                            isSetting = true;
-                            settingFragment.setIsOnSetting(isSetting);
-                        }
-                        //				getFragmentManager().beginTransaction()
-                        //						.replace(R.id.content_layout, settingFragment).commit();
-                        //				getFragmentManager().beginTransaction().show(settingFragment);
-
-
-                    }
-                    break;*/
                 case R.id.save_button:
                     setValue(UVCCamera.CTRL_ZOOM_ABS, 0x80ff);
                     Toast.makeText(getApplicationContext(), "保存成功", Toast.LENGTH_SHORT).show();
@@ -1554,12 +1466,12 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
             // temperatureAnalysisWindow.setWidth(WindowManager.LayoutParams.WRAP_CONTENT);
             //temperatureAnalysisWindow.setContentView(contentView);
             //设置各个控件的点击响应
-            pointModeButton = (ImageButton) contentView.findViewById(R.id.point_mode_button);
-            lineModeButton = (ImageButton) contentView.findViewById(R.id.line_mode_button);
-            rectangleModeButton = (ImageButton) contentView.findViewById(R.id.rectangle_mode_button);
-            ChangeRangeButton = (ImageButton) contentView.findViewById(R.id.change_range_button);
+            pointModeButton = contentView.findViewById(R.id.point_mode_button);
+            lineModeButton = contentView.findViewById(R.id.line_mode_button);
+            rectangleModeButton = contentView.findViewById(R.id.rectangle_mode_button);
+            ChangeRangeButton = contentView.findViewById(R.id.change_range_button);
 
-            MakeReportButton = (ImageButton) contentView.findViewById(R.id.make_report_button);
+            MakeReportButton = contentView.findViewById(R.id.make_report_button);
             pointModeButton.setOnClickListener(mOnClickListener);
             lineModeButton.setOnClickListener(mOnClickListener);
             rectangleModeButton.setOnClickListener(mOnClickListener);
@@ -1785,13 +1697,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                         mCameraHandler.changePalette(palette);
                     }
                 }, 200);
-//            runOnUiThread(new Runnable() {
-//                              @Override
-//                              public void run() {
-//                                  refreshThumbnail();
-//                              }
-//                          }
-//                    , 500);
                 timerEveryTime = new Timer();
                 timerEveryTime.scheduleAtFixedRate(new TimerTask() {
                     @Override
@@ -2058,7 +1963,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                 }
             }, interval4);
 
-
         }
 
         public void sendShortCommand(int position, byte value0, byte value1, int interval0, int interval1, int interval2) {
@@ -2089,59 +1993,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
         }
 
     }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_CODE_CHOOSE && resultCode == RESULT_OK) {
-            //mAdapter.setData(Matisse.obtainResult(data), Matisse.obtainPathResult(data));
-            //Log.e("OnActivityResult ", String.valueOf(Matisse.obtainOriginalState(data)));
-        }
-    }
-
-    /*private static class UriAdapter extends RecyclerView.Adapter<UriAdapter.UriViewHolder> {
-
-        private List<Uri> mUris;
-        private List<String> mPaths;
-
-        void setData(List<Uri> uris, List<String> paths) {
-            mUris = uris;
-            mPaths = paths;
-            notifyDataSetChanged();
-        }
-
-        @Override
-        public UriViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            return new UriViewHolder(
-                    LayoutInflater.from(parent.getContext()).inflate(R.layout.uri_item, parent, false));
-        }
-
-        @Override
-        public void onBindViewHolder(UriViewHolder holder, int position) {
-            holder.mUri.setText(mUris.get(position).toString());
-            holder.mPath.setText(mPaths.get(position));
-
-            holder.mUri.setAlpha(position % 2 == 0 ? 1.0f : 0.54f);
-            holder.mPath.setAlpha(position % 2 == 0 ? 1.0f : 0.54f);
-        }
-
-        @Override
-        public int getItemCount() {
-            return mUris == null ? 0 : mUris.size();
-        }
-
-        static class UriViewHolder extends RecyclerView.ViewHolder {
-
-            private TextView mUri;
-            private TextView mPath;
-
-            UriViewHolder(View contentView) {
-                super(contentView);
-                mUri = (TextView) contentView.findViewById(R.id.uri);
-                mPath = (TextView) contentView.findViewById(R.id.path);
-            }
-        }
-    }*/
 
     public static synchronized String getVersionName(Context context) {
         try {
