@@ -1178,18 +1178,11 @@ public class UVCCamera {
 			nativeSetCameraLens(mNativePtr, mCameraLens);
 		}
 	}
-	public float DistanceFix(float inputTemp,float distance) {
-		return nativeDistanceFix(mNativePtr, inputTemp,distance);
-	}
-	public float ThermFix(float inputTemp,float distance) {
-		return nativeThermFix(mNativePtr, inputTemp,distance);
-	}
+
 	private static final native void nativeChangePalette(final long id_camera, int typeOfPalette);
 	private static final native void nativeSetTempRange(final long id_camera, int range);
 	private static final native void nativeSetShutterFix(final long id_camera, float mShutterFix);
 	private static final native void nativeSetCameraLens(final long id_camera, int mCameraLens);
-	private static final native float nativeDistanceFix(final long mNativePtr,float inputTemp,float distance);
-	private static final native float nativeThermFix(final long mNativePtr,float inputTemp,float distance);
 	private static final native int nativeSetCaptureDisplay(final long id_camera, final Surface surface);
 	private static final native int nativeStartStopTemp(final long id_camera, int startStop);
 	private static final native int nativeStartStopCapture(final long id_camera, int startStop);

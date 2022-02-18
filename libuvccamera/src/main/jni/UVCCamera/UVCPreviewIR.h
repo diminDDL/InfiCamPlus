@@ -210,8 +210,6 @@ public:
 	void setTempRange(int range);
 	void setShutterFix(float mShutterFix);
 	void setCameraLens(int mCameraLens);
-	float singlePointDistanceFix(float mInputTemp,float mDistance);
-	float singlePointThermFix(float mInputTemp,float mDistance);
 	int getByteArrayPicture(uint8_t* frame);
 	int getByteArrayTemperaturePara(uint8_t* para);
 	int setCaptureDisplay(ANativeWindow *capture_window);

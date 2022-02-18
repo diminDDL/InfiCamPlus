@@ -2220,8 +2220,6 @@ static JNINativeMethod methods[] = {
     { "nativeSetTempRange",		"(JI)V", (void *) nativeSetTempRange },
     { "nativeSetShutterFix",		"(JF)V", (void *) nativeSetShutterFix },
     { "nativeSetCameraLens",		"(JI)V", (void *) nativeSetCameraLens },
-    { "nativeDistanceFix",			"(JFF)F", (void *) nativeDistanceFix },
-    { "nativeThermFix",			"(JFF)F", (void *) nativeThermFix },
 	{ "nativeGetCtrlSupports",			"(J)J", (void *) nativeGetCtrlSupports },
 	{ "nativeGetProcSupports",			"(J)J", (void *) nativeGetProcSupports },
 

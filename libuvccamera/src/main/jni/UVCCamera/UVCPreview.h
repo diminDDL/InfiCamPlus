@@ -73,8 +73,6 @@ public:
 	virtual void setTempRange(int range)=0;
 	virtual void setShutterFix(float mShutterFix)=0;
 	virtual void setCameraLens(int mCameraLens)=0;
-	virtual float singlePointDistanceFix(float mInputTemp,float mDistance)=0;
-	virtual float singlePointThermFix(float mInputTemp,float mDistance)=0;
 	virtual int getByteArrayPicture(uint8_t* frame)=0;
 	virtual int getByteArrayTemperaturePara(uint8_t* para)=0;
 	virtual int setCaptureDisplay(ANativeWindow *capture_window)=0;

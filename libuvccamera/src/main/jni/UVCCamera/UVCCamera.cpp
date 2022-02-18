@@ -432,26 +432,7 @@ int UVCCamera::startCapture() {
         }
         EXIT();
  }
- float UVCCamera::DistanceFix(float inputTemp,float distance)
- {
-    ENTER();
-    float outputTemp=0;
-    if (mDeviceHandle)
-    {
-        outputTemp=mPreview->singlePointDistanceFix(inputTemp,distance);
-    }
-    RETURN(outputTemp, float);
- }
- float UVCCamera::ThermFix(float inputTemp,float distance)
-  {
-     ENTER();
-     float outputTemp=0;
-     if (mDeviceHandle)
-     {
-         outputTemp=mPreview->singlePointThermFix(inputTemp,distance);
-     }
-     RETURN(outputTemp, float);
-  }
+
 int UVCCamera::setCaptureDisplay(ANativeWindow *capture_window) {
 	ENTER();
 	int result = EXIT_FAILURE;

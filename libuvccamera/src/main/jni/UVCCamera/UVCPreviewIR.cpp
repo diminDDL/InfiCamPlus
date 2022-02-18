@@ -1382,19 +1382,3 @@ void UVCPreviewIR::setCameraLens(int mCameraLens){
     //LOGE("setCameraLens:%d\n",cameraLens);
     EXIT();
 }
-float UVCPreviewIR::singlePointDistanceFix(float mInputTemp,float mDistance)
-{
-    float outputTemp=0;
-    outputTemp=distanceFix(mInputTemp,mDistance,Airtmp,cameraLens);
-    return outputTemp;
-}
-float UVCPreviewIR::singlePointThermFix(float mInputTemp,float mDistance)
-{
-    float outputTemp=0;
-    short unsigned int output =0 ;
-    short unsigned int input=(short unsigned int)(mInputTemp*10+2731.5);
-    //LOGE("outTemp1:%f",mInputTemp);
-    outputTemp=thermFix((short unsigned int*)&input,1,(short unsigned int*)&output,Airtmp,Refltmp,emiss,1.0f,mDistance);
-    outputTemp = (output-2731.5f)/10.0f;
-    return outputTemp;
-}
