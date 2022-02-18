@@ -22,8 +22,6 @@ apply plugin: 'com.android.library'
  *  may have a different license, see the respective files.
  */
 
-import org.apache.tools.ant.taskdefs.condition.Os
-
 android {
 	compileSdkVersion versionCompiler
 
@@ -34,7 +32,7 @@ android {
 
     defaultConfig {
 		minSdkVersion 14
-		targetSdkVersion 14
+		targetSdkVersion 32
     }
 
     buildTypes {
@@ -48,51 +46,19 @@ android {
 			jniLibs.srcDir 'src/main/libs'
         }
 	}
-}
 
-tasks.withType(JavaCompile) {
-	compileTask -> compileTask.dependsOn ndkBuild
-}
+	ndkVersion '23.1.7779620'
 
-String getNdkBuildPath() {
-	Properties properties = new Properties()
-	properties.load(project.rootProject.file('local.properties').newDataInputStream())
-	def ndkBuildingDir = properties.getProperty("ndk.dir")
-	def ndkBuildPath = ndkBuildingDir
-	if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-		ndkBuildPath = ndkBuildingDir + '/ndk-build.cmd'
-	} else {
-		ndkBuildPath = ndkBuildingDir + '/ndk-build'
+	externalNativeBuild {
+		ndkBuild {
+			path file('src/main/jni/Android.mk')
+		}
 	}
-	return ndkBuildPath
-}
 
-task ndkBuild(type: Exec, description: 'Compile JNI source via NDK') {
-	println('executing ndkBuild')
-	def ndkBuildPath = getNdkBuildPath();
-	commandLine ndkBuildPath, '-j8', '-C', file('src/main').absolutePath
-}
-
-task ndkClean(type: Exec, description: 'clean JNI libraries') {
-	println('executing ndkBuild clean')
-	def ndkBuildPath = getNdkBuildPath();
-	commandLine ndkBuildPath, 'clean', '-C', file('src/main').absolutePath
-}
-
-clean.dependsOn 'ndkClean'
-
-dependencies {
-	api files('src/main/libs/classes.jar')
-	api fileTree(dir: new File(buildDir, 'libs'), include: '*.jar')
-	api "com.android.support:support-annotations:${supportLibVersion}"
-//	api("com.serenegiant:common:${commonLibVersion}") {
-//		exclude module: 'support-v4'
-//		exclude module: 'support-v7'
-//	}
-	implementation "com.android.support:appcompat-v7:${supportLibVersion}"
-//	api("com.serenegiant:common:${commonLibVersion}") {
-//		exclude module: 'support-v4'
-//		exclude module: 'support-v7'
-//
-//	}
+	dependencies {
+		api files('src/main/libs/classes.jar')
+		api fileTree(dir: new File(buildDir, 'libs'), include: '*.jar')
+		api "com.android.support:support-annotations:${supportLibVersion}"
+		implementation "com.android.support:appcompat-v7:${supportLibVersion}"
+	}
 }
