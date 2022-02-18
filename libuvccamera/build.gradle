@@ -22,6 +22,14 @@ apply plugin: 'com.android.library'
  *  may have a different license, see the respective files.
  */
 
+/*String getNdkBuildPath() {
+	Properties properties = new Properties()
+	properties.load(project.rootProject.file('local.properties').newDataInputStream())
+	def ndkBuildingDir = properties.getProperty("ndk.dir")
+	def ndkBuildPath = ndkBuildingDir + '/ndk-build'
+	return ndkBuildPath
+}*/
+
 android {
 	compileSdkVersion versionCompiler
 
@@ -33,6 +41,10 @@ android {
     defaultConfig {
 		minSdkVersion 14
 		targetSdkVersion 32
+
+		ndk {
+			moduleName "libuvccamera"
+		}
     }
 
     buildTypes {
@@ -41,19 +53,38 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
+
 	sourceSets {
 		main {
 			jniLibs.srcDir 'src/main/libs'
-        }
+		}
 	}
 
 	ndkVersion '23.1.7779620'
+
+	//clean.dependsOn 'ndkClean'
 
 	externalNativeBuild {
 		ndkBuild {
 			path file('src/main/jni/Android.mk')
 		}
 	}
+
+	/*tasks.withType(JavaCompile) {
+		compileTask -> compileTask.dependsOn ndkBuild
+	}
+
+	task ndkBuild(type: Exec, description: 'Compile JNI source via NDK') {
+		println('executing ndkBuild')
+		def ndkBuildPath = getNdkBuildPath();
+		commandLine ndkBuildPath, '-j8', '-C', file('src/main').absolutePath
+	}
+
+	task ndkClean(type: Exec, description: 'clean JNI libraries') {
+		println('executing ndkBuild clean')
+		def ndkBuildPath = getNdkBuildPath();
+		commandLine ndkBuildPath, 'clean', '-C', file('src/main').absolutePath
+	}*/
 
 	dependencies {
 		api files('src/main/libs/classes.jar')
