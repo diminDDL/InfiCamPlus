@@ -1174,7 +1174,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                     if (mCameraHandler.isOpened() && isTemperaturing) {
                         if (checkPermissionWriteExternalStorage()) {
                             //String path=
-                            mCameraHandler.makeReport();
                             temperatureAnalysisWindow.dismiss();
                             Toast.makeText(getApplication(), "报告生成成功，请去相册目录查看", Toast.LENGTH_SHORT).show();
                         }

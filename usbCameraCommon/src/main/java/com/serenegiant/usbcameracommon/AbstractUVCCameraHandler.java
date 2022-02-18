@@ -80,16 +80,6 @@ import java.nio.ByteBuffer;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.util.Units;
-import org.apache.poi.xwpf.usermodel.BreakType;
-import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
-import org.apache.poi.xwpf.usermodel.TextAlignment;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
-import org.apache.poi.xwpf.usermodel.XWPFParagraph;
-import org.apache.poi.xwpf.usermodel.XWPFRun;
-
-
 abstract class AbstractUVCCameraHandler extends Handler {
 	private static final boolean DEBUG = true;	// TODO set false on release
 	private static final String TAG = "AbsUVCCameraHandler";
@@ -119,7 +109,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
 	private static final int MSG_CHANGE_PALETTE=13;
 	private static final int MSG_SET_TEMPRANGE=14;
 	private static final int MSG_SET_SHUTTERFIX=28;
-	private static final int MSG_MAKE_REPORT = 15;
 	private static final int MSG_OPEN_SYS_CAMERA=16;
 	private static final int MSG_CLOSE_SYS_CAMERA=17;
     private static final int MSG_SET_HIGHTHROW=18;
@@ -310,10 +299,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		checkReleased();
 		sendEmptyMessage(MSG_CAPTURE_STILL);
 	}
-	public void makeReport() {
-		checkReleased();
-		sendEmptyMessage(MSG_MAKE_REPORT);
-	}
+
 	protected void captureStill(final String path) {
 		checkReleased();
 		sendMessage(obtainMessage(MSG_CAPTURE_STILL, path));
@@ -544,10 +530,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			case MSG_CAPTURE_STILL:
 				thread.handleCaptureStill((String)msg.obj);
 				break;
-			case MSG_MAKE_REPORT:
-				thread.handleMakeReport();
-				break;
-
 			case MSG_CAPTURE_START:
 				thread.handleStartRecording();
 				break;
@@ -977,143 +959,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			} catch (final Exception e) {
 				callOnError(e);
 			}
-		}
-
-		public void handleMakeReport() {
-			String data=MediaMuxerWrapper.getDateTimeString();
-			String title="Report"+data;
-			final File dirs = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), "XthermDemo");
-			dirs.mkdirs();
-			final File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)+"/"+"XthermDemo", title+".docx");
-			XWPFDocument m_Docx = new XWPFDocument();
-			XWPFParagraph p1 = m_Docx.createParagraph();
-			p1.setAlignment(ParagraphAlignment.CENTER);
-			//p1.setBorderBottom(Borders.DOUBLE);
-			//p1.setBorderTop(Borders.DOUBLE);
-
-			//p1.setBorderRight(Borders.DOUBLE);
-			//p1.setBorderLeft(Borders.DOUBLE);
-			//p1.setBorderBetween(Borders.SINGLE);
-
-			p1.setVerticalAlignment(TextAlignment.TOP);
-			XWPFRun r1 = p1.createRun();
-			r1.setFontSize(16);
-			r1.setBold(true);
-			r1.setText("Temperature Inspection Report\n");
-			r1.setFontFamily("Courier");
-			//r1.addBreak(BreakType.COLUMN);
-			//r1.setUnderline(UnderlinePatterns.DOT_DOT_DASH);
-			//r1.setTextPosition(100);
-
-
-			XWPFParagraph p4 = m_Docx.createParagraph();
-			p4.setAlignment(ParagraphAlignment.LEFT);
-			XWPFRun r4 = p4.createRun();
-			r4.setFontSize(12);
-			r4.setFontFamily("Courier");
-			r4.setBold(true);
-			r4.setText("Data:");
-			XWPFRun r401 = p4.createRun();
-			r401.setFontSize(12);
-			r401.setFontFamily("Courier");
-			r401.setBold(false);
-			r401.setText(data);
-			//r401.addBreak(BreakType.COLUMN);
-
-
-
-			XWPFParagraph p2 = m_Docx.createParagraph();
-			p2.setAlignment(ParagraphAlignment.CENTER);
-			XWPFRun r2 = p2.createRun();
-			//r2.addBreak();
-			int format=XWPFDocument.PICTURE_TYPE_PNG;
-
-			byte[] tempPara=mUVCCamera.getByteArrayTemperaturePara(128);
-			ByteUtil mByteUtil=new ByteUtil();
-			float Fix=ByteUtil.getFloat(tempPara,0);
-			float Refltmp=mByteUtil.getFloat(tempPara,4);
-			float Airtmp=mByteUtil.getFloat(tempPara,8);
-			float humi=mByteUtil.getFloat(tempPara,12);
-			float emiss=mByteUtil.getFloat(tempPara,16);
-			float distance=mByteUtil.getShort(tempPara,20);
-			String stFix=String.valueOf(Fix);
-			String stRefltmp=String.valueOf(Refltmp);
-			String stAirtmp=String.valueOf(Airtmp);
-			String stHumi=String.valueOf(humi);
-			String stEmiss=String.valueOf(emiss);
-			String stDistance=String.valueOf(distance);
-
-			ByteArrayOutputStream pngOut = new ByteArrayOutputStream();
-			float[] TempData=mWeakCameraView.get().GetTemperatureData();
-			final Bitmap bitmap = mWeakCameraView.get().captureStillImage();
-
-
-			float center=TempData[0];//center
-			float max=TempData[3];//max
-			float min=TempData[6];//min
-
-
-			bitmap.compress(Bitmap.CompressFormat.PNG, 100, pngOut);
-			//ByteArrayInputStream pngIn=new ByteArrayInputStream(pngOut.toByteArray());
-			InputStream pngIn=new ByteArrayInputStream(pngOut.toByteArray());
-
-
-
-			try {
-				r2.addPicture(pngIn, format, "aaa", Units.toEMU(384), Units.toEMU(288)); // 200x200 pixels
-			} catch (InvalidFormatException e) {
-				Log.e(TAG, "handleMakeReport:", e);
-			} catch (IOException e) {
-				Log.e(TAG, "handleMakeReport:", e);
-			}
-            XWPFRun r201 = p2.createRun();
-            r201.setFontSize(12);
-            r201.setFontFamily("Courier");
-            r201.setBold(false);
-            r201.setText("\n");
-
-			XWPFParagraph p3 = m_Docx.createParagraph();
-			p3.setAlignment(ParagraphAlignment.LEFT);
-			XWPFRun r3 = p3.createRun();
-			r3.setFontSize(12);
-			r3.setFontFamily("Courier");
-			r3.setBold(true);
-			r3.setText("Parameter:\n");
-			XWPFRun r301 = p3.createRun();
-			String summary="Correction:"+stFix+",Reflection:"+stRefltmp+",AmbTemp:"+stAirtmp+",Humidity:"+stHumi+",Emissivity:"+stEmiss+",Distance:"+stDistance;
-			r301.setFontSize(12);
-			r301.setBold(false);
-			r301.setFontFamily("Courier");
-			r301.setText(summary);
-			XWPFParagraph p5 = m_Docx.createParagraph();
-			p5.setAlignment(ParagraphAlignment.LEFT);
-            XWPFRun r5 = p5.createRun();
-			r5.setFontSize(12);
-			r5.setFontFamily("Courier");
-			r5.setBold(true);
-			r5.setText("Throughout the scene:\n");
-            XWPFRun r501 = p5.createRun();
-			r501.setFontSize(12);
-			r501.setFontFamily("Courier");
-			r501.setBold(false);
-            String scene="Center:"+center+",Max:"+max+",Min:"+min+"\n";
-			r501.setText(scene+"\n");
-
-
-			try (FileOutputStream out = new FileOutputStream(dir)) {
-				try {
-					m_Docx.write(out);
-					out.flush();
-					mHandler.sendMessage(mHandler.obtainMessage(MSG_MEDIA_UPDATE, dir.getPath()));
-				}
-				finally{
-					out.close();
-				}
-			} catch (IOException e) {
-				Log.e(TAG, "handleMakeReport:", e);
-			}
-
-
 		}
 
 		public void handleStartRecording() {
