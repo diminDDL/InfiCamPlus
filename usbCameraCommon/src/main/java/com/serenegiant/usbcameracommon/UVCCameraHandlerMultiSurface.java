@@ -111,7 +111,7 @@ public class UVCCameraHandlerMultiSurface extends AbstractUVCCameraHandler {
 			final Activity parent, final UVCCameraTextureView cameraView,
 			final int encoderType, final int width, final int height, final int format, final float bandwidthFactor) {
 
-		final CameraThread thread = new CameraThread(UVCCameraHandlerMultiSurface.class, parent, cameraView, encoderType, width, height, format, bandwidthFactor,null,0);
+		final CameraThread thread = new CameraThread(UVCCameraHandlerMultiSurface.class, parent, cameraView, encoderType, width, height, format, bandwidthFactor,null);
 		thread.start();
 		return (UVCCameraHandlerMultiSurface)thread.getHandler();
 	}

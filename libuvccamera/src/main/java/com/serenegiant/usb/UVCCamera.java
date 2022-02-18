@@ -112,7 +112,6 @@ public class UVCCamera {
 	public static final int STATUS_ATTRIBUTE_INFO_CHANGE = 0x01;
 	public static final int STATUS_ATTRIBUTE_FAILURE_CHANGE = 0x02;
 	public static final int STATUS_ATTRIBUTE_UNKNOWN = 0xff;
-	public    int platform;
 	private static boolean isLoaded;
 	static {
 		if (!isLoaded) {
@@ -177,8 +176,7 @@ public class UVCCamera {
      * the sonctructor of this class should be call within the thread that has a looper
      * (UI thread or a thread that called Looper.prepare)
      */
-    public UVCCamera(int platform) {
-		this.platform=platform;
+    public UVCCamera() {
     	mNativePtr = nativeCreate();
     	mSupportedSize = null;
 
@@ -210,7 +208,7 @@ public class UVCCamera {
     		mSupportedSize = nativeGetSupportedSize(mNativePtr);
 		}
 		nativeSetPreviewSize(mNativePtr, DEFAULT_PREVIEW_WIDTH, DEFAULT_PREVIEW_HEIGHT,
-			DEFAULT_PREVIEW_MIN_FPS, DEFAULT_PREVIEW_MAX_FPS, DEFAULT_PREVIEW_MODE, DEFAULT_BANDWIDTH,platform);
+			DEFAULT_PREVIEW_MIN_FPS, DEFAULT_PREVIEW_MAX_FPS, DEFAULT_PREVIEW_MODE, DEFAULT_BANDWIDTH);
     }
 
 	/**
@@ -308,8 +306,8 @@ public class UVCCamera {
 	 * @param width
 	   @param height
 	 */
-	public void setPreviewSize(final int width, final int height,final int currentAndroidVersion) {
-		setPreviewSize(width, height, DEFAULT_PREVIEW_MIN_FPS, DEFAULT_PREVIEW_MAX_FPS, mCurrentFrameFormat, mCurrentBandwidthFactor,currentAndroidVersion);
+	public void setPreviewSize(final int width, final int height) {
+		setPreviewSize(width, height, DEFAULT_PREVIEW_MIN_FPS, DEFAULT_PREVIEW_MAX_FPS, mCurrentFrameFormat, mCurrentBandwidthFactor);
 	}
 
 	/**
@@ -318,8 +316,8 @@ public class UVCCamera {
 	 * @param height
 	 * @param frameFormat either FRAME_FORMAT_YUYV(0) or FRAME_FORMAT_MJPEG(1)
 	 */
-	public void setPreviewSize(final int width, final int height, final int frameFormat,final int currentAndroidVersion) {
-		setPreviewSize(width, height, DEFAULT_PREVIEW_MIN_FPS, DEFAULT_PREVIEW_MAX_FPS, frameFormat, mCurrentBandwidthFactor,currentAndroidVersion);
+	public void setPreviewSize(final int width, final int height, final int frameFormat) {
+		setPreviewSize(width, height, DEFAULT_PREVIEW_MIN_FPS, DEFAULT_PREVIEW_MAX_FPS, frameFormat, mCurrentBandwidthFactor);
 	}
 	
 	/**
@@ -329,8 +327,8 @@ public class UVCCamera {
 	   @param frameFormat either FRAME_FORMAT_YUYV(0) or FRAME_FORMAT_MJPEG(1)
 	   @param bandwidth [0.0f,1.0f]
 	 */
-	public void setPreviewSize(final int width, final int height, final int frameFormat, final float bandwidth,final int currentAndroidVersion) {
-		setPreviewSize(width, height, DEFAULT_PREVIEW_MIN_FPS, DEFAULT_PREVIEW_MAX_FPS, frameFormat, bandwidth,currentAndroidVersion);
+	public void setPreviewSize(final int width, final int height, final int frameFormat, final float bandwidth) {
+		setPreviewSize(width, height, DEFAULT_PREVIEW_MIN_FPS, DEFAULT_PREVIEW_MAX_FPS, frameFormat, bandwidth);
 	}
 
 	/**
@@ -341,17 +339,15 @@ public class UVCCamera {
 	 * @param max_fps
 	 * @param frameFormat either FRAME_FORMAT_YUYV(0) or FRAME_FORMAT_MJPEG(1)
 	 * @param bandwidthFactor
-	 * @param currentAndroidVersion
 	 */
-	public void setPreviewSize(final int width, final int height, final int min_fps, final int max_fps, final int frameFormat, final float bandwidthFactor,final int currentAndroidVersion) {
+	public void setPreviewSize(final int width, final int height, final int min_fps, final int max_fps, final int frameFormat, final float bandwidthFactor) {
 		if ((width == 0) || (height == 0))
 			throw new IllegalArgumentException("invalid preview size");
 		if (mNativePtr != 0) {
-			final int result = nativeSetPreviewSize(mNativePtr, width, height, min_fps, max_fps, frameFormat, bandwidthFactor,currentAndroidVersion);
+			final int result = nativeSetPreviewSize(mNativePtr, width, height, min_fps, max_fps, frameFormat, bandwidthFactor);
 			if (result != 0)
 				throw new IllegalArgumentException("Failed to set preview size");
 			mCurrentFrameFormat = frameFormat;
-			platform=currentAndroidVersion;
 			mCurrentWidth = width;
 			mCurrentHeight = height;
 			mCurrentBandwidthFactor = bandwidthFactor;
@@ -1099,7 +1095,7 @@ public class UVCCamera {
 	private static final native int nativeSetStatusCallback(final long mNativePtr, final IStatusCallback callback);
 	private static final native int nativeSetButtonCallback(final long mNativePtr, final IButtonCallback callback);
 
-    private static final native int nativeSetPreviewSize(final long id_camera, final int width, final int height, final int min_fps, final int max_fps, final int mode, final float bandwidth,int currentAndroidVersion);
+    private static final native int nativeSetPreviewSize(final long id_camera, final int width, final int height, final int min_fps, final int max_fps, final int mode, final float bandwidth);
     private static final native String nativeGetSupportedSize(final long id_camera);
     private static final native int nativeStartPreview(final long id_camera);
     private static final native int nativeStopPreview(final long id_camera);

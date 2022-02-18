@@ -261,12 +261,12 @@ static jint nativeSetUserPalette(JNIEnv *env, jobject thiz,
 //======================================================================
 // プレビュー画面の大きさをセット
 static jint nativeSetPreviewSize(JNIEnv *env, jobject thiz,
-	ID_TYPE id_camera, jint width, jint height, jint min_fps, jint max_fps, jint mode, jfloat bandwidth,jint currentAndroidVersion) {
+	ID_TYPE id_camera, jint width, jint height, jint min_fps, jint max_fps, jint mode, jfloat bandwidth) {
 
 	ENTER();
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		return camera->setPreviewSize(width, height, min_fps, max_fps, mode, bandwidth,currentAndroidVersion);
+		return camera->setPreviewSize(width, height, min_fps, max_fps, mode, bandwidth);
 	}
 	RETURN(JNI_ERR, jint);
 }
@@ -440,29 +440,6 @@ static void nativeSetCameraLens(JNIEnv *env, jobject thiz,
 	 camera->setCameraLens(mCameraLens);
 	}
 	EXIT();
-}
-static jfloat nativeDistanceFix(JNIEnv *env, jobject thiz,
-                                ID_TYPE id_camera,jfloat inputTemp,
-                                jfloat distance){
-    ENTER();
-    jfloat outputTemp=0.0;
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
-	if (LIKELY(camera)) {
-        outputTemp=camera->DistanceFix(inputTemp,distance);
-	}
-    RETURN(outputTemp,jfloat);
-}
-
-static jfloat nativeThermFix(JNIEnv *env, jobject thiz,
-                                ID_TYPE id_camera,jfloat inputTemp,
-                                jfloat distance){
-    ENTER();
-    jfloat outputTemp=0.0;
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
-	if (LIKELY(camera)) {
-        outputTemp=camera->ThermFix(inputTemp,distance);
-	}
-    RETURN(outputTemp,jfloat);
 }
 //======================================================================
 // カメラコントロールでサポートしている機能を取得する
@@ -2203,7 +2180,7 @@ static JNINativeMethod methods[] = {
 	{ "nativeSetButtonCallback",		"(JLcom/serenegiant/usb/IButtonCallback;)I", (void *) nativeSetButtonCallback },
 
 	{ "nativeGetSupportedSize",			"(J)Ljava/lang/String;", (void *) nativeGetSupportedSize },
-	{ "nativeSetPreviewSize",			"(JIIIIIFI)I", (void *) nativeSetPreviewSize },
+	{ "nativeSetPreviewSize",			"(JIIIIIF)I", (void *) nativeSetPreviewSize },
 	{ "nativeStartPreview",				"(J)I", (void *) nativeStartPreview },
 	{ "nativeStopPreview",				"(J)I", (void *) nativeStopPreview },
 	{ "nativeSetPreviewDisplay",		"(JLandroid/view/Surface;)I", (void *) nativeSetPreviewDisplay },

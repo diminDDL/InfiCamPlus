@@ -138,7 +138,7 @@ UVCPreviewIR::~UVCPreviewIR() {
 inline const bool UVCPreviewIR::isRunning() const {return mIsRunning; }
 inline const bool UVCPreviewIR::isComputed() const {return mIsComputed; }
 
-int UVCPreviewIR::setPreviewSize(int width, int height, int min_fps, int max_fps, int mode, float bandwidth,int currentAndroidVersion) {
+int UVCPreviewIR::setPreviewSize(int width, int height, int min_fps, int max_fps, int mode, float bandwidth) {
 	ENTER();
 	////LOGE("setPreviewSize");
 	int result = 0;
@@ -156,7 +156,6 @@ int UVCPreviewIR::setPreviewSize(int width, int height, int min_fps, int max_fps
 			requestWidth, requestHeight, requestMinFps, requestMaxFps);
 	  ////LOGE("uvc_get_stream_ctrl_format_size_fps=%d", result);
 	}
-    mCurrentAndroidVersion=currentAndroidVersion;
 	RETURN(result, int);
 }
 
@@ -521,11 +520,6 @@ int UVCPreviewIR::prepare_preview(uvc_stream_ctrl_t *ctrl) {
         SimplePictureProcessingInitMidVar(irBuffers[0].midVar);
         irBuffers[0].destBuffer=(unsigned char*)calloc(requestWidth*(requestHeight-4)*4,sizeof(unsigned char));
     }
-    //mCurrentAndroidVersion=0;
-    //end -初始化高性能图像算法
-
-
-
 
     mInitData=new unsigned short[requestWidth*(requestHeight-4)+10];
 	result = uvc_get_stream_ctrl_format_size_fps(mDeviceHandle, ctrl,

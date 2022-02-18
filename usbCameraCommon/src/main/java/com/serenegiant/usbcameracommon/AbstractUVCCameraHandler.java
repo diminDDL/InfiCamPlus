@@ -626,7 +626,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		private final Set<CameraCallback> mCallbacks = new CopyOnWriteArraySet<CameraCallback>();
 		private int mWidth, mHeight, mPreviewMode;
 		private float mBandwidthFactor;
-		private int currentAndroidVersion;
 		private boolean mIsPreviewing;
 		private boolean mIsTemperaturing;
         private boolean mIsCapturing;
@@ -661,7 +660,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		CameraThread(final Class<? extends AbstractUVCCameraHandler> clazz,
 					 final Activity parent, final UVCCameraTextureView cameraView,
 					 final int encoderType, final int width, final int height, final int format,
-					 final float bandwidthFactor,ITemperatureCallback temperatureCallback,int androidVersion) {
+					 final float bandwidthFactor,ITemperatureCallback temperatureCallback) {
 
 			super("CameraThread");
 			mHandlerClass = clazz;
@@ -673,7 +672,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			System.setProperty("org.apache.poi.javax.xml.stream.XMLOutputFactory", "com.fasterxml.aalto.stax.OutputFactoryImpl");
 			System.setProperty("org.apache.poi.javax.xml.stream.XMLEventFactory", "com.fasterxml.aalto.stax.EventFactoryImpl");
 			CameraThreadTemperatureCallback=temperatureCallback;
-			currentAndroidVersion=androidVersion;
 			mPreviewMode = format;
 			mBandwidthFactor = bandwidthFactor;
 			mWeakParent = new WeakReference<Activity>(parent);
@@ -746,7 +744,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		//	handleClose();
 			try {
 				final UVCCamera camera;
-				camera = new UVCCamera(currentAndroidVersion);
+				camera = new UVCCamera();
 
 				camera.open(ctrlBlock);
 				synchronized (mSync) {
@@ -839,12 +837,12 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			if ((mUVCCamera == null) || mIsPreviewing) return;
 			Log.e(TAG, "handleStartPreview2 ");
 			try {
-				mUVCCamera.setPreviewSize(mWidth, mHeight, 1, 26, mPreviewMode, mBandwidthFactor,currentAndroidVersion);
+				mUVCCamera.setPreviewSize(mWidth, mHeight, 1, 26, mPreviewMode, mBandwidthFactor);
 				Log.e(TAG, "handleStartPreview3 mWidth: "+mWidth+"mHeight:"+mHeight);
 			} catch (final IllegalArgumentException e) {
 				try {
 					// fallback to YUV mode
-					mUVCCamera.setPreviewSize(mWidth, mHeight, 1,26, UVCCamera.DEFAULT_PREVIEW_MODE, mBandwidthFactor,currentAndroidVersion);
+					mUVCCamera.setPreviewSize(mWidth, mHeight, 1,26, UVCCamera.DEFAULT_PREVIEW_MODE, mBandwidthFactor);
 					Log.e(TAG, "handleStartPreview4");
 				} catch (final IllegalArgumentException e1) {
 					callOnError(e1);

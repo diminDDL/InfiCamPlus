@@ -59,7 +59,7 @@ public:
 	static const int START = 1;  // #1
     static const int STOP = 2;
     virtual void whenShutRefresh()=0;
-	virtual int setPreviewSize(int width, int height, int min_fps, int max_fps, int mode, float bandwidth ,int currentAndroidVersion)=0;
+	virtual int setPreviewSize(int width, int height, int min_fps, int max_fps, int mode, float bandwidth)=0;
 	virtual int setPreviewDisplay(ANativeWindow *preview_window)=0;
 	virtual int setFrameCallback(JNIEnv *env, jobject frame_callback_obj, int pixel_format)=0;
 	virtual int setTemperatureCallback(JNIEnv *env, jobject temperature_callback_obj)=0;

@@ -71,7 +71,6 @@ private:
 	uvc_frame_t *waitFrame();
 	int previewFormat;
 	size_t previewBytes;
-	int mCurrentAndroidVersion;
 	int copyToSurface(uint8_t *frameData, ANativeWindow **window);
 //
 	volatile bool mIsCapturing;
@@ -196,7 +195,7 @@ public:
 	UVCPreviewIR(uvc_device_handle_t *devh);
 	~UVCPreviewIR();
     void whenShutRefresh();
-	int setPreviewSize(int width, int height, int min_fps, int max_fps, int mode, float bandwidth ,int currentAndroidVersion);
+	int setPreviewSize(int width, int height, int min_fps, int max_fps, int mode, float bandwidth);
 	int setPreviewDisplay(ANativeWindow *preview_window);
 	int setFrameCallback(JNIEnv *env, jobject frame_callback_obj, int pixel_format);
 	int setTemperatureCallback(JNIEnv *env, jobject temperature_callback_obj);

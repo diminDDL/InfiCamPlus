@@ -45,7 +45,7 @@ public class UVCCameraHandler extends AbstractUVCCameraHandler {
 			final Activity parent, final UVCCameraTextureView cameraView,
 			final int width, final int height) {
 
-		return createHandler(parent, cameraView, 1, width, height, UVCCamera.FRAME_FORMAT_MJPEG, UVCCamera.DEFAULT_BANDWIDTH,null,0);
+		return createHandler(parent, cameraView, 1, width, height, UVCCamera.FRAME_FORMAT_MJPEG, UVCCamera.DEFAULT_BANDWIDTH,null);
 	}
 
 	/**
@@ -61,7 +61,7 @@ public class UVCCameraHandler extends AbstractUVCCameraHandler {
 			final Activity parent, final UVCCameraTextureView cameraView,
 			final int width, final int height, final float bandwidthFactor) {
 
-		return createHandler(parent, cameraView, 1, width, height, UVCCamera.FRAME_FORMAT_MJPEG,null,0);
+		return createHandler(parent, cameraView, 1, width, height, UVCCamera.FRAME_FORMAT_MJPEG,null);
 	}
 
 	/**
@@ -77,7 +77,7 @@ public class UVCCameraHandler extends AbstractUVCCameraHandler {
 			final Activity parent, final UVCCameraTextureView cameraView,
 			final int encoderType, final int width, final int height,ITemperatureCallback temperatureCallback) {
 
-		return createHandler(parent, cameraView, encoderType, width, height, UVCCamera.FRAME_FORMAT_MJPEG, UVCCamera.DEFAULT_BANDWIDTH,null,0);
+		return createHandler(parent, cameraView, encoderType, width, height, UVCCamera.FRAME_FORMAT_MJPEG, UVCCamera.DEFAULT_BANDWIDTH,null);
 	}
 
 	/**
@@ -92,9 +92,9 @@ public class UVCCameraHandler extends AbstractUVCCameraHandler {
 	 */
 	public static final UVCCameraHandler createHandler(
 			final Activity parent, final UVCCameraTextureView cameraView,
-			final int encoderType, final int width, final int height, final int format,ITemperatureCallback temperatureCallback,int androidVersion) {
+			final int encoderType, final int width, final int height, final int format,ITemperatureCallback temperatureCallback) {
 
-		return createHandler(parent, cameraView, encoderType, width, height, format, UVCCamera.DEFAULT_BANDWIDTH,temperatureCallback,androidVersion);
+		return createHandler(parent, cameraView, encoderType, width, height, format, UVCCamera.DEFAULT_BANDWIDTH,temperatureCallback);
 	}
 
 	/**
@@ -111,9 +111,9 @@ public class UVCCameraHandler extends AbstractUVCCameraHandler {
 	public static final UVCCameraHandler
 	createHandler(
 			final Activity parent, final UVCCameraTextureView cameraView,
-			final int encoderType, final int width, final int height, final int format, final float bandwidthFactor,ITemperatureCallback temperatureCallback,int androidVersion) {
+			final int encoderType, final int width, final int height, final int format, final float bandwidthFactor,ITemperatureCallback temperatureCallback) {
 
-		final CameraThread thread = new CameraThread(UVCCameraHandler.class, parent, cameraView, encoderType, width, height, format, bandwidthFactor,temperatureCallback,androidVersion);
+		final CameraThread thread = new CameraThread(UVCCameraHandler.class, parent, cameraView, encoderType, width, height, format, bandwidthFactor,temperatureCallback);
 		thread.start();
 		mUVCCameraHandler=(UVCCameraHandler)thread.getHandler();
 		return mUVCCameraHandler;

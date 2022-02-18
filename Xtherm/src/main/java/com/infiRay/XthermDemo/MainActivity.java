@@ -414,7 +414,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
             mCursorBlue = BitmapFactory.decodeResource(getResources(), R.mipmap.cursorblue);
             mCursorGreen = BitmapFactory.decodeResource(getResources(), R.mipmap.cursorgreen);
             mWatermarkLogo = BitmapFactory.decodeResource(getResources(), R.mipmap.xtherm);
-            matchBrand();
             mSendCommand = new sendCommand();
             XXPermissions.with(MainActivity.this)
                     .permission(Permission.RECORD_AUDIO)
@@ -428,7 +427,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                         @Override
                         public void hasPermission(List<String> granted, boolean isAll) {
                             mCameraHandler = UVCCameraHandler.createHandler(MainActivity.this, mUVCCameraView,
-                                    USE_SURFACE_ENCODER ? 0 : 1, PREVIEW_WIDTH, PREVIEW_HEIGHT, PREVIEW_MODE, null, currentapiVersion);
+                                    USE_SURFACE_ENCODER ? 0 : 1, PREVIEW_WIDTH, PREVIEW_HEIGHT, PREVIEW_MODE, null);
                             mUSBMonitor = new USBMonitor(MainActivity.this, mOnDeviceConnectListener);
                         }
 
@@ -1874,48 +1873,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
     }
 
     /*****************计时器*******************/
-
-    public void matchBrand() {
-        brand = android.os.Build.BRAND;
-        model = android.os.Build.MODEL;
-        hardware = android.os.Build.HARDWARE;
-        Log.e(TAG, "hardware:" + hardware);
-        Log.e(TAG, "brand:" + brand);
-        Log.e(TAG, "model:" + model);
-        if (hardware.matches("qcom")) {//1
-            if (true/*brand.contains("Xiaomi") || brand.contains("360") || brand.contains("Meizu")
-                    || brand.contains("SMARTISAN")*//*锤子*/) {
-                currentapiVersion = 1;
-                //System.loadLibrary("c++QCOM");
-                // System.loadLibrary("hardwareQCOM");
-                //System.loadLibrary("gslQCOM");
-                //System.loadLibrary("OpenCLQCOM");
-                //System.loadLibrary("GLES_maliQCOM");
-            } else {
-                currentapiVersion = 0;
-            }
-
-        } else if (hardware.matches("mt[0-9]*")) {//2
-            currentapiVersion = 0;
-        } else if (hardware.matches("hi[0-9]*")) {//3
-            Log.d(TAG, "his platform：" + brand);
-            if (true/*brand.contains("honor") || brand.contains("Huawei") || brand.contains("HUAWEI")||brand.contains("Honor")*/) {
-                currentapiVersion = 3;
-                // System.loadLibrary("c++HW");
-                //System.loadLibrary("hardwareHW");
-                // System.loadLibrary("GLES_maliHW");
-                // System.loadLibrary("OpenCLHW");
-            } else {
-                currentapiVersion = 0;
-            }
-
-        }
-        if (hardware.contains("cht")) {//x86
-            Log.d(TAG, "intel Cherry Trail");
-            currentapiVersion = 4;
-        }
-
-    }
 
     public class sendCommand {
         int psitionAndValue0 = 0, psitionAndValue1 = 0, psitionAndValue2 = 0, psitionAndValue3 = 0;
