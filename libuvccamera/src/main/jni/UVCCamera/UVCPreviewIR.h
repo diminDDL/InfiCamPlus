@@ -27,16 +27,9 @@
 
 #include "libUVCCamera.h"
 #include "UVCPreview.h"
-#ifdef _APPLE_
-#include <OpenCL/cl.h>
-#else
-#include <CL/cl.h>
-#endif
 #include <pthread.h>
 #include <android/native_window.h>
 #include "objectarray.h"
-#include "OpenCL_foundation.h"
-
 
 struct irBuffer//使用专业级图像算法所需要的缓存
 {
@@ -50,7 +43,6 @@ private:
 	inline const bool isComputed() const;
 	inline const bool isCapturing() const;
     unsigned short *mInitData;
-    OpenCL_foundation *myOpencl;
 	uvc_device_handle_t *mDeviceHandle;
 	float *mTemperatureMeasure;
 	//float TemperWhenShut,CoreTemperWhenShut,FpaTmpWhenShut;
