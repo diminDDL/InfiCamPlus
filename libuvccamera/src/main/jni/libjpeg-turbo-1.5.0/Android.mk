@@ -52,7 +52,7 @@ LOCAL_CFLAGS += -DANDROID_NDK
 
 #このモジュールを外部モジュールとしてリンクする時のライブラリを指定
 
-#LOCAL_ARM_MODE := arm
+LOCAL_ARM_MODE := arm
 
 LOCAL_ASMFLAGS += -DELF
 
@@ -206,8 +206,7 @@ LOCAL_SRC_FILES += \
 	simd/jquanti-sse2.asm \
 	simd/jchuff-sse2.asm \
 
-LOCAL_CFLAGS += \
-	-DSIZEOF_SIZE_T=4 \
+LOCAL_CFLAGS += -DSIZEOF_SIZE_T=4
 
 else ifeq ($(TARGET_ARCH_ABI),mips)
 

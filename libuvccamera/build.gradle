@@ -44,10 +44,19 @@ android {
 
 		ndk {
 			moduleName "libuvccamera"
+			abiFilters 'armeabi-v7a', 'arm64-v8a' // TODO fix x86 build
 		}
     }
 
-    buildTypes {
+	packagingOptions {
+		pickFirst "lib/**/libjpeg-turbo1500.so"
+		pickFirst "lib/**/libusb100.so"
+		pickFirst "lib/**/libuvc.so"
+		pickFirst "lib/**/libsimplePictureProcessing.so"
+		pickFirst "lib/**/libthermometry.so"
+	}
+
+	buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'

@@ -66,6 +66,9 @@ LOCAL_MODULE := thermometry
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
 LOCAL_SRC_FILES := ./libs/mips/libthermometry.so
 include $(PREBUILT_SHARED_LIBRARY)
+
+else
+$(error Target arch ABI not supported: $(TARGET_ARCH_ABI))
 endif
 
 
@@ -126,12 +129,9 @@ LOCAL_LDLIBS := -L$(SYSROOT)/usr/lib -ldl
 LOCAL_LDLIBS += -llog -lOpenSLES
 LOCAL_LDLIBS += -landroid -fopenmp
 
-
-
-
 LOCAL_SHARED_LIBRARIES += usb100 uvc thermometry simplePictureProcessing
 #LOCAL_ARM_MODE := arm
-//LOCAL_ALLOW_UNDEFINED_SYMBOLS := true
+#LOCAL_ALLOW_UNDEFINED_SYMBOLS := true
 LOCAL_SRC_FILES := \
 		_onload.cpp \
 		utilbase.cpp \
@@ -143,7 +143,6 @@ LOCAL_SRC_FILES := \
 		Parameters.cpp \
 		time_cal.cpp \
 		serenegiant_usb_UVCCamera.cpp
-
 
 LOCAL_MODULE    := UVCCamera
 include $(BUILD_SHARED_LIBRARY)
