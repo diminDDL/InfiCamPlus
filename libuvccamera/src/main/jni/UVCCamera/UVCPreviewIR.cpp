@@ -106,11 +106,9 @@ UVCPreviewIR::UVCPreviewIR(uvc_device_handle_t *devh)
 	pthread_cond_init(&temperature_sync,NULL);
 	pthread_mutex_init(&temperature_mutex,NULL);
 	EXIT();
-
 }
 
 UVCPreviewIR::~UVCPreviewIR() {
-
 	ENTER();
 ////LOGE("~UVCPreviewIR() 0");
 	if (mPreviewWindow)
@@ -913,6 +911,7 @@ int UVCPreviewIR:: getByteArrayPicture(uint8_t* frame)
 {
     return 0;
 }
+
 /*
 在这里可以返回测温相关参数
 fix       float 0-3
@@ -1054,7 +1053,6 @@ void UVCPreviewIR::do_temperature(JNIEnv *env)
 
 void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData)
 {
-
 	ENTER();
     unsigned short* orgData=(unsigned short *)HoldBuffer;
     unsigned short* fourLinePara=orgData+requestWidth*(requestHeight-4);//后四行参数
@@ -1125,9 +1123,7 @@ void UVCPreviewIR::whenShutRefresh()
 {
     pthread_mutex_lock(&temperature_mutex);
     {
-
         isNeedWriteTable=true;
-
     }
     pthread_mutex_unlock(&temperature_mutex);
 }

@@ -140,7 +140,6 @@ LOCAL_SRC_FILES := \
 		UVCPreviewIR.cpp \
 		UVCStatusCallback.cpp \
 		Parameters.cpp \
-		time_cal.cpp \
 		serenegiant_usb_UVCCamera.cpp
 
 LOCAL_MODULE    := UVCCamera
