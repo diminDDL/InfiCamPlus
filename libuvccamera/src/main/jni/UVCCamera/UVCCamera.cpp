@@ -297,16 +297,6 @@ int UVCCamera::startPreview() {
 	RETURN(result, int);
 }
 
-int UVCCamera::getByteArrayPicture(uint8_t* frame) {
-	ENTER();
-
-	int result = EXIT_FAILURE;
-	if (mDeviceHandle) {
-		return mPreview->getByteArrayPicture(frame);
-	}
-	RETURN(result, int);
-}
-
 int UVCCamera::getByteArrayTemperaturePara(uint8_t* para) {
 	ENTER();
     LOGE("UVCCamera::getByteArrayTemperaturePara");
