@@ -131,10 +131,10 @@ private:
     unsigned short miny1;
     unsigned short t_min;
     unsigned short t_avg;
-    unsigned char paletteIronRainbow[65536*3];//256*3 铁虹
+    unsigned char paletteIronRainbow[65536 * 3];
     unsigned char palette3[256*3];//256*3 彩虹1
-    unsigned char paletteRainbow[256*3];//224*3 彩虹2
-    unsigned char paletteHighRainbow[347*3];//448*3 高动态彩虹
+    unsigned char paletteRainbow[65536 * 3];
+    unsigned char paletteHighRainbow[65536 * 3];
     unsigned char paletteHighContrast[347 *3];//448*3 高对比彩虹
     unsigned char UserPalette[256*3];
 
