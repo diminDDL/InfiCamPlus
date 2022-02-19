@@ -275,7 +275,6 @@ public class BaseActivity extends AppCompatActivity
 	// 動的パーミッション要求時の要求コード
 	protected static final int REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE = 0x12345;
 	protected static final int REQUEST_PERMISSION_AUDIO_RECORDING = 0x234567;
-	protected static final int REQUEST_PERMISSION_NETWORK = 0x345678;
 	protected static final int REQUEST_PERMISSION_CAMERA = 0x537642;
 
 	/**
@@ -313,21 +312,6 @@ public class BaseActivity extends AppCompatActivity
 				R.string.per_title, R.string.per_audio,
 				new String[]{Manifest.permission.RECORD_AUDIO});
 			Log.e(TAG, "checkPermissionAudio: showDialog" );
-			return false;
-		}
-		return true;
-	}
-
-	/**
-	 * ネットワークアクセスのパーミッションが有るかどうかをチェック
-	 * なければ説明ダイアログを表示する
-	 * @return true ネットワークアクセスのパーミッションが有る
-	 */
-	protected boolean checkPermissionNetwork() {
-		if (!PermissionCheck.hasNetwork(this)) {
-			MessageDialogFragment.showDialog(this, REQUEST_PERMISSION_NETWORK,
-				R.string.per_title, R.string.permission_network_request,
-				new String[]{Manifest.permission.INTERNET});
 			return false;
 		}
 		return true;
