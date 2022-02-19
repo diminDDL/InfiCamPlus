@@ -193,7 +193,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
     private PopupWindow temperatureAnalysisWindow;
     volatile boolean isOnRecord;
 
-    public int currentapiVersion = 0;//现改用为平台类型
     private Context context;
     //	private BitmapDrawable mCursor;l
     private SharedPreferences sharedPreferences;
