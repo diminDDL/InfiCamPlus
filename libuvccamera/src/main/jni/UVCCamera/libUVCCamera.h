@@ -30,6 +30,5 @@
 #include "libuvc.h"
 #include "utilbase.h"
 #include "thermometry.h"
-#include "simplePictureProcessing.h"
 
 #endif /* LIBUVCCAMERA_H_ */

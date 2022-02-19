@@ -73,44 +73,6 @@ endif
 
 
 include $(CLEAR_VARS)
-ifeq ($(TARGET_ARCH_ABI),armeabi)
-LOCAL_MODULE := simplePictureProcessing
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
-LOCAL_SRC_FILES := ./libs/armeabi/libsimplePictureProcessing.so
-include $(PREBUILT_SHARED_LIBRARY)
-
-else ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
-LOCAL_MODULE := simplePictureProcessing
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
-LOCAL_SRC_FILES := ./libs/armeabi-v7a/libsimplePictureProcessing.so
-include $(PREBUILT_SHARED_LIBRARY)
-
-else ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
-LOCAL_MODULE := simplePictureProcessing
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
-LOCAL_SRC_FILES := ./libs/arm64-v8a/libsimplePictureProcessing.so
-include $(PREBUILT_SHARED_LIBRARY)
-
-else ifeq ($(TARGET_ARCH_ABI),x86_64)
-LOCAL_MODULE := simplePictureProcessing
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
-LOCAL_SRC_FILES := ./libs/x86_64/libsimplePictureProcessing.so
-include $(PREBUILT_SHARED_LIBRARY)
-
-else ifeq ($(TARGET_ARCH_ABI),x86)
-LOCAL_MODULE := simplePictureProcessing
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
-LOCAL_SRC_FILES := ./libs/x86/libsimplePictureProcessing.so
-include $(PREBUILT_SHARED_LIBRARY)
-
-else ifeq ($(TARGET_ARCH_ABI),mips)
-LOCAL_MODULE := simplePictureProcessing
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
-LOCAL_SRC_FILES := ./libs/mips/libsimplePictureProcessing.so
-include $(PREBUILT_SHARED_LIBRARY)
-endif
-
-include $(CLEAR_VARS)
 CFLAGS := -Werror
 
 LOCAL_C_INCLUDES := \
@@ -130,7 +92,7 @@ LOCAL_LDLIBS := -ldl
 LOCAL_LDLIBS += -llog -lOpenSLES
 LOCAL_LDLIBS += -landroid
 
-LOCAL_SHARED_LIBRARIES += usb100 uvc thermometry simplePictureProcessing
+LOCAL_SHARED_LIBRARIES += usb100 uvc thermometry
 #LOCAL_ARM_MODE := arm
 #LOCAL_ALLOW_UNDEFINED_SYMBOLS := true
 LOCAL_SRC_FILES := \

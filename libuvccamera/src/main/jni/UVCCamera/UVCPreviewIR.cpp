@@ -371,12 +371,16 @@ int UVCPreviewIR::prepare_preview(uvc_stream_ctrl_t *ctrl) {
     RgbaOutBuffer=new unsigned char[requestWidth*(requestHeight-4)*4];
     RgbaHoldBuffer=new unsigned char[requestWidth*(requestHeight-4)*4];
 
-
-    paletteIronRainbow = getPalette(0);//256*3 铁虹
-    palette3 = getPalette(1);//256*3 彩虹1
-    paletteRainbow = getPalette(2);//224*3 彩虹2
-    paletteHighRainbow = getPalette(3);//448*3 高动态彩虹
-    paletteHighContrast = getPalette(4);//448*3 高对比彩虹
+	for (int i = 0; i < sizeof(paletteIronRainbow); i += 3) {
+		double x = (double) i / (double) sizeof(paletteIronRainbow);
+		paletteIronRainbow[i + 0] = round(255 * sqrt(x));
+		paletteIronRainbow[i + 1] = round(255 * pow(x, 3));
+		paletteIronRainbow[i + 2] = round(255 * fmax(0, sin(2 * M_PI * x)));
+	}
+	memcpy(palette3, paletteIronRainbow, sizeof(palette3));
+	memcpy(paletteRainbow, paletteIronRainbow, sizeof(palette3));
+	memcpy(paletteHighRainbow, paletteIronRainbow, sizeof(palette3));
+	memcpy(paletteHighContrast, paletteIronRainbow, sizeof(palette3));
 
     mInitData=new unsigned short[requestWidth*(requestHeight-4)+10];
 	result = uvc_get_stream_ctrl_format_size_fps(mDeviceHandle, ctrl,
@@ -495,16 +499,16 @@ void UVCPreviewIR::do_preview(uvc_stream_ctrl_t *ctrl) {
                     amountPixels++;
                     maxy1=orgData[amountPixels];
                     amountPixels++;
-                    max=orgData[amountPixels];
+				t_max=orgData[amountPixels];
                     //printf("cpyPara  max:%d ",max);
                     amountPixels++;
                     minx1=orgData[amountPixels];
                     amountPixels++;
                     miny1=orgData[amountPixels];
                     amountPixels++;
-                    min=orgData[amountPixels];
+				t_min=orgData[amountPixels];
                     amountPixels++;
-                    avg=orgData[amountPixels];
+				t_avg=orgData[amountPixels];
                     //LOGE("waitPreviewFrame04");
                     draw_preview_one(HoldBuffer, &mPreviewWindow, NULL, 4);
                     tmp_buf=NULL;
@@ -607,11 +611,11 @@ void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow **window, 
 		 * 图像效果不及专业级算法，但是处理效率快，对主频几乎没要求
 		 *
 		 */
-		int ro = (max - min)>0?(max - min):1;
-		int avgSubMin=(avg-min)>0?(avg-min):1;
-		int maxSubAvg=(max-avg)>0?(max-avg):1;
-		int ro1=(avg-min)>97?97:(avg-min);
-		int ro2=(max-avg)>157?157:(max-avg);
+		int ro = (t_max - t_min) > 0 ? (t_max - t_min) : 1;
+		int avgSubMin= (t_avg - t_min) > 0 ? (t_avg - t_min) : 1;
+		int maxSubAvg= (t_max - t_avg) > 0 ? (t_max - t_avg) : 1;
+		int ro1= (t_avg - t_min) > 97 ? 97 : (t_avg - t_min);
+		int ro2= (t_max - t_avg) > 157 ? 157 : (t_max - t_avg);
 		switch (mTypeOfPalette)
 		{
 			case 0:
@@ -622,13 +626,13 @@ void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow **window, 
 						//printf("i:%d,j:%d\n",i,j);
 						//黑白：灰度值0-254单通道。 paletteIronRainbow：（0-254）×3三通道。两个都是255，所以使用254
 						int gray=0;
-						if(tmp_buf[i*requestWidth+j]>avg)
+						if(tmp_buf[i*requestWidth+j] > t_avg)
 						{
-							gray = (int)(ro2*(tmp_buf[i*requestWidth+j]-avg)/maxSubAvg+97);
+							gray = (int)(ro2 * (tmp_buf[i*requestWidth+j] - t_avg) / maxSubAvg + 97);
 						}
 						else
 						{
-							gray = (int)(ro1*(tmp_buf[i*requestWidth+j]-avg)/avgSubMin+97);
+							gray = (int)(ro1 * (tmp_buf[i*requestWidth+j] - t_avg) / avgSubMin + 97);
 						}
 						RgbaHoldBuffer[4*(i*requestWidth+j)]=(unsigned char)gray;
 						RgbaHoldBuffer[4*(i*requestWidth+j)+1]=(unsigned char)gray;
@@ -646,13 +650,13 @@ void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow **window, 
 					 //printf("i:%d,j:%d\n",i,j);
 					 //黑白：灰度值0-254单通道。 paletteIronRainbow：（0-254）×3三通道。两个都是255，所以使用254
 					 int gray=0;
-					 if(tmp_buf[i*requestWidth+j]>avg)
+					 if(tmp_buf[i*requestWidth+j] > t_avg)
 					 {
-						 gray = 255-(int)(ro2*(tmp_buf[i*requestWidth+j]-avg)/maxSubAvg+97);
+						 gray = 255-(int)(ro2 * (tmp_buf[i*requestWidth+j] - t_avg) / maxSubAvg + 97);
 					 }
 					 else
 					 {
-						 gray =255- (int)(ro1*(tmp_buf[i*requestWidth+j]-avg)/avgSubMin+97);
+						 gray = 255 - (int)(ro1 * (tmp_buf[i*requestWidth+j] - t_avg) / avgSubMin + 97);
 					 }
 					 RgbaHoldBuffer[4*(i*requestWidth+j)]=(unsigned char)gray;
 					 RgbaHoldBuffer[4*(i*requestWidth+j)+1]=(unsigned char)gray;
@@ -662,22 +666,16 @@ void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow **window, 
 			 }
 			break;
 			case 2:
-			  for(int i=0; i<requestHeight-4; i++)
+				ro1 = t_max - t_min;
+				for(int i=0; i<requestHeight-4; i++)
 				{
 					for(int j=0; j<requestWidth; j++)
 					{
 						//printf("i:%d,j:%d\n",i,j);
 						//黑白：灰度值0-254单通道。 paletteIronRainbow：（0-254）×3三通道。两个都是255，所以使用254
 						int gray=0;
-						 if(tmp_buf[i*requestWidth+j]>avg)
-						 {
-							 gray = (int)(ro2*(tmp_buf[i*requestWidth+j]-avg)/maxSubAvg+97);
-						 }
-						 else
-						 {
-							 gray = (int)(ro1*(tmp_buf[i*requestWidth+j]-avg)/avgSubMin+97);
-						 }
-						int paletteNum=3*gray;
+						gray = (int)(tmp_buf[i*requestWidth+j] - t_min) * 65535 / ro1;
+						int paletteNum = 3*gray;
 						RgbaHoldBuffer[4*(i*requestWidth+j)]=(unsigned char)paletteIronRainbow[paletteNum];
 						RgbaHoldBuffer[4*(i*requestWidth+j)+1]=(unsigned char)paletteIronRainbow[paletteNum+1];
 						RgbaHoldBuffer[4*(i*requestWidth+j)+2]=(unsigned char)paletteIronRainbow[paletteNum+2];
@@ -686,8 +684,8 @@ void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow **window, 
 				}
 			break;
 			case 3:
-			  ro1=(avg-min)>132?132:(avg-min);
-			  ro2=(max-avg)>214?214:(max-avg);
+			  ro1= (t_avg - t_min) > 132 ? 132 : (t_avg - t_min);
+			  ro2= (t_max - t_avg) > 214 ? 214 : (t_max - t_avg);
 			  for(int i=0; i<requestHeight-4; i++)
 				{
 					for(int j=0; j<requestWidth; j++)
@@ -695,13 +693,13 @@ void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow **window, 
 						//printf("i:%d,j:%d\n",i,j);
 						//黑白：灰度值0-254单通道。 paletteIronRainbow：（0-254）×3三通道。两个都是255，所以使用254
 						int gray=0;
-						 if(tmp_buf[i*requestWidth+j]>avg)
+						 if(tmp_buf[i*requestWidth+j] > t_avg)
 						 {
-							 gray = (int)(ro2*(tmp_buf[i*requestWidth+j]-avg)/maxSubAvg+132);
+							 gray = (int)(ro2 * (tmp_buf[i*requestWidth+j] - t_avg) / maxSubAvg + 132);
 						 }
 						 else
 						 {
-							 gray = (int)(ro1*(tmp_buf[i*requestWidth+j]-avg)/avgSubMin+132);
+							 gray = (int)(ro1 * (tmp_buf[i*requestWidth+j] - t_avg) / avgSubMin + 132);
 						 }
 						int paletteNum=3*gray;
 						RgbaHoldBuffer[4*(i*requestWidth+j)]=(unsigned char)paletteHighContrast[paletteNum];
@@ -712,8 +710,8 @@ void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow **window, 
 				}
 			break;
 			 case 4:
-			   ro1=(avg-min)>84?84:(avg-min);
-			   ro2=(max-avg)>136?136:(max-avg);
+			   ro1= (t_avg - t_min) > 84 ? 84 : (t_avg - t_min);
+			   ro2= (t_max - t_avg) > 136 ? 136 : (t_max - t_avg);
 			   for(int i=0; i<requestHeight-4; i++)
 				 {
 					 for(int j=0; j<requestWidth; j++)
@@ -721,13 +719,13 @@ void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow **window, 
 						 //printf("i:%d,j:%d\n",i,j);
 						 //黑白：灰度值0-254单通道。 paletteIronRainbow：（0-254）×3三通道。两个都是255，所以使用254
 						int gray=0;
-						 if(tmp_buf[i*requestWidth+j]>avg)
+						 if(tmp_buf[i*requestWidth+j] > t_avg)
 						 {
-							 gray = (int)(ro2*(tmp_buf[i*requestWidth+j]-avg)/maxSubAvg+84);
+							 gray = (int)(ro2 * (tmp_buf[i*requestWidth+j] - t_avg) / maxSubAvg + 84);
 						 }
 						 else
 						 {
-							 gray = (int)(ro1*(tmp_buf[i*requestWidth+j]-avg)/avgSubMin+84);
+							 gray = (int)(ro1 * (tmp_buf[i*requestWidth+j] - t_avg) / avgSubMin + 84);
 						 }
 						 int paletteNum=3*gray;
 						 RgbaHoldBuffer[4*(i*requestWidth+j)]=(unsigned char)paletteRainbow[paletteNum];
@@ -738,8 +736,8 @@ void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow **window, 
 				 }
 			 break;
 			 case 5:
-				ro1=(avg-min)>97?97:(avg-min);
-				ro2=(max-avg)>158?158:(max-avg);
+				ro1= (t_avg - t_min) > 97 ? 97 : (t_avg - t_min);
+				ro2= (t_max - t_avg) > 158 ? 158 : (t_max - t_avg);
 			   for(int i=0; i<requestHeight-4; i++)
 				 {
 					 for(int j=0; j<requestWidth; j++)
@@ -747,13 +745,13 @@ void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow **window, 
 						 //printf("i:%d,j:%d\n",i,j);
 						 //黑白：灰度值0-254单通道。 paletteIronRainbow：（0-254）×3三通道。两个都是255，所以使用254
 						  int gray=0;
-						  if(tmp_buf[i*requestWidth+j]>avg)
+						  if(tmp_buf[i*requestWidth+j] > t_avg)
 						  {
-							  gray = (int)(ro2*(tmp_buf[i*requestWidth+j]-avg)/maxSubAvg+97);
+							  gray = (int)(ro2 * (tmp_buf[i*requestWidth+j] - t_avg) / maxSubAvg + 97);
 						  }
 						  else
 						  {
-							  gray = (int)(ro1*(tmp_buf[i*requestWidth+j]-avg)/avgSubMin+97);
+							  gray = (int)(ro1 * (tmp_buf[i*requestWidth+j] - t_avg) / avgSubMin + 97);
 						  }
 						 int paletteNum=3*gray;
 						 RgbaHoldBuffer[4*(i*requestWidth+j)]=(unsigned char)palette3[paletteNum];
@@ -764,8 +762,8 @@ void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow **window, 
 				 }
 			 break;
 			 case 6:
-			 ro1=(avg-min)>97?97:(avg-min);
-			 ro2=(max-avg)>158?158:(max-avg);
+			 ro1= (t_avg - t_min) > 97 ? 97 : (t_avg - t_min);
+			 ro2= (t_max - t_avg) > 158 ? 158 : (t_max - t_avg);
 			  for(int i=0; i<requestHeight-4; i++)
 				 {
 					 for(int j=0; j<requestWidth; j++)
@@ -773,13 +771,13 @@ void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow **window, 
 						 //printf("i:%d,j:%d\n",i,j);
 						 //黑白：灰度值0-254单通道。 paletteIronRainbow：（0-254）×3三通道。两个都是255，所以使用254
 						 int gray=0;
-						   if(tmp_buf[i*requestWidth+j]>avg)
+						   if(tmp_buf[i*requestWidth+j] > t_avg)
 						   {
-							   gray = (int)(ro2*(tmp_buf[i*requestWidth+j]-avg)/maxSubAvg+97);
+							   gray = (int)(ro2 * (tmp_buf[i*requestWidth+j] - t_avg) / maxSubAvg + 97);
 						   }
 						   else
 						   {
-							   gray = (int)(ro1*(tmp_buf[i*requestWidth+j]-avg)/avgSubMin+97);
+							   gray = (int)(ro1 * (tmp_buf[i*requestWidth+j] - t_avg) / avgSubMin + 97);
 						   }
 						  int paletteNum=3*gray;
 						 RgbaHoldBuffer[4*(i*requestWidth+j)]=(unsigned char)UserPalette[paletteNum];
