@@ -115,7 +115,6 @@ public class UVCCamera {
 	private static boolean isLoaded;
 	static {
 		if (!isLoaded) {
-
 			//System.loadLibrary("jpeg-turbo1500");
 			System.loadLibrary("usb100");
 			System.loadLibrary("uvc");
@@ -172,6 +171,7 @@ public class UVCCamera {
     protected int mAnalogVideoStandardMin, mAnalogVideoStandardMax, mAnalogVideoStandardDef;
     protected int mAnalogVideoLockStateMin, mAnalogVideoLockStateMax, mAnalogVideoLockStateDef;
     // until here
+
     /**
      * the sonctructor of this class should be call within the thread that has a looper
      * (UI thread or a thread that called Looper.prepare)
@@ -179,7 +179,6 @@ public class UVCCamera {
     public UVCCamera() {
     	mNativePtr = nativeCreate();
     	mSupportedSize = null;
-
 	}
 
     /**
@@ -213,15 +212,6 @@ public class UVCCamera {
 
 	/**
 	 * set status callback
-	 * @param callback
-	 */
-	public void setStatusCallback(final IStatusCallback callback) {
-		if (mNativePtr != 0) {
-			nativeSetStatusCallback(mNativePtr, callback);
-		}
-	}
-	/**
-	 * set status callback
 	 *
 	 */
 	public void whenShutRefresh() {
@@ -229,26 +219,19 @@ public class UVCCamera {
 			nativeWhenShutRefresh(mNativePtr);
 		}
 	}
+
 	public void whenChangeTempPara() {
 		if (mNativePtr != 0) {
             nativeWhenShutRefresh(mNativePtr);
 		}
 	}
+
 	/**
 	 * onTemperatureCallback
 	 * @param temp
 	 */
 	public void  onTemperatureCallback(float temp){
 		Log.e("onTemperatureCallback:","temp="+temp);
-	}
-	/**
-	 * set button callback
-	 * @param callback
-	 */
-	public void setButtonCallback(final IButtonCallback callback) {
-		if (mNativePtr != 0) {
-			nativeSetButtonCallback(mNativePtr, callback);
-		}
 	}
 
     /**
@@ -275,13 +258,8 @@ public class UVCCamera {
 	public UsbDevice getDevice() {
 		return mCtrlBlock != null ? mCtrlBlock.getDevice() : null;
 	}
-
 	public String getDeviceName(){
 		return mCtrlBlock != null ? mCtrlBlock.getDeviceName() : null;
-	}
-
-	public UsbControlBlock getUsbControlBlock() {
-		return mCtrlBlock;
 	}
 
 	public synchronized String getSupportedSize() {
@@ -431,6 +409,7 @@ public class UVCCamera {
 			nativeSetFrameCallback(mNativePtr, callback, pixelFormat);
 		}
 	}
+
     /**
      * frame for take picture
      *
@@ -446,6 +425,7 @@ public class UVCCamera {
         }
         return status;
     }
+
 	/**
 	 * para of temp
 	 *
@@ -455,6 +435,7 @@ public class UVCCamera {
 		boolean status = false;
 		return nativeGetByteArrayTemperaturePara(mNativePtr, len);
 	}
+
 	/**
 	 * set ir temperature callback
 	 * @param callback
@@ -465,6 +446,7 @@ public class UVCCamera {
 			nativeSetTemperatureCallback(mNativePtr, callback);
 		}
 	}
+
     /**
      * start preview
      */
@@ -497,127 +479,6 @@ public class UVCCamera {
     	}
     }
 
-    // wrong result may return when you call this just after camera open.
-    // it is better to wait several hundreads millseconds.
-	public boolean checkSupportFlag(final long flag) {
-    	updateCameraParams();
-    	if ((flag & 0x80000000) == 0x80000000)
-    		return ((mProcSupports & flag) == (flag & 0x7ffffffF));
-    	else
-    		return (mControlSupports & flag) == flag;
-    }
-
-//================================================================================
-	public synchronized void setAutoFocus(final boolean autoFocus) {
-    	if (mNativePtr != 0) {
-    		nativeSetAutoFocus(mNativePtr, autoFocus);
-    	}
-    }
-
-	public synchronized boolean getAutoFocus() {
-    	boolean result = true;
-    	if (mNativePtr != 0) {
-    		result = nativeGetAutoFocus(mNativePtr) > 0;
-    	}
-    	return result;
-    }
-//================================================================================
-    /**
-     * @param focus [%]
-     */
-	public synchronized void setFocus(final int focus) {
-    	if (mNativePtr != 0) {
- 		   final float range = Math.abs(mFocusMax - mFocusMin);
- 		   if (range > 0)
- 			   nativeSetFocus(mNativePtr, (int)(focus / 100.f * range) + mFocusMin);
-    	}
-    }
-
-    /**
-     * @param focus_abs
-     * @return focus[%]
-     */
-	public synchronized int getFocus(final int focus_abs) {
-	   int result = 0;
-	   if (mNativePtr != 0) {
-		   nativeUpdateFocusLimit(mNativePtr);
-		   final float range = Math.abs(mFocusMax - mFocusMin);
-		   if (range > 0) {
-			   result = (int)((focus_abs - mFocusMin) * 100.f / range);
-		   }
-	   }
-	   return result;
-	}
-
-    /**
-     * @return focus[%]
-     */
-	public synchronized int getFocus() {
-    	return getFocus(nativeGetFocus(mNativePtr));
-    }
-
-	public synchronized void resetFocus() {
-    	if (mNativePtr != 0) {
-    		nativeSetFocus(mNativePtr, mFocusDef);
-    	}
-    }
-
-//================================================================================
-	public synchronized void setAutoWhiteBlance(final boolean autoWhiteBlance) {
-    	if (mNativePtr != 0) {
-    		nativeSetAutoWhiteBlance(mNativePtr, autoWhiteBlance);
-    	}
-    }
-
-	public synchronized boolean getAutoWhiteBlance() {
-    	boolean result = true;
-    	if (mNativePtr != 0) {
-    		result = nativeGetAutoWhiteBlance(mNativePtr) > 0;
-    	}
-    	return result;
-    }
-
-//================================================================================
-    /**
-     * @param whiteBlance [%]
-     */
-	public synchronized void setWhiteBlance(final int whiteBlance) {
-    	if (mNativePtr != 0) {
- 		   final float range = Math.abs(mWhiteBlanceMax - mWhiteBlanceMin);
- 		   if (range > 0)
- 			   nativeSetWhiteBlance(mNativePtr, (int)(whiteBlance / 100.f * range) + mWhiteBlanceMin);
-    	}
-    }
-
-    /**
-     * @param whiteBlance_abs
-     * @return whiteBlance[%]
-     */
-	public synchronized int getWhiteBlance(final int whiteBlance_abs) {
-	   int result = 0;
-	   if (mNativePtr != 0) {
-		   nativeUpdateWhiteBlanceLimit(mNativePtr);
-		   final float range = Math.abs(mWhiteBlanceMax - mWhiteBlanceMin);
-		   if (range > 0) {
-			   result = (int)((whiteBlance_abs - mWhiteBlanceMin) * 100.f / range);
-		   }
-	   }
-	   return result;
-	}
-
-    /**
-     * @return white blance[%]
-     */
-	public synchronized int getWhiteBlance() {
-    	return getFocus(nativeGetWhiteBlance(mNativePtr));
-    }
-
-	public synchronized void resetWhiteBlance() {
-    	if (mNativePtr != 0) {
-    		nativeSetWhiteBlance(mNativePtr, mWhiteBlanceDef);
-    	}
-    }
-//================================================================================
     /**
      * @param brightness [%]
      */
@@ -701,370 +562,12 @@ public class UVCCamera {
 
 //================================================================================
     /**
-     * @param sharpness [%]
-     */
-	public synchronized void setSharpness(final int sharpness) {
-    	if (mNativePtr != 0) {
- 		   final float range = Math.abs(mSharpnessMax - mSharpnessMin);
- 		   if (range > 0)
- 			   nativeSetSharpness(mNativePtr, (int)(sharpness / 100.f * range) + mSharpnessMin);
-    	}
-    }
-
-    /**
-     * @param sharpness_abs
-     * @return sharpness[%]
-     */
-	public synchronized int getSharpness(final int sharpness_abs) {
-	   int result = 0;
-	   if (mNativePtr != 0) {
-		   nativeUpdateSharpnessLimit(mNativePtr);
-		   final float range = Math.abs(mSharpnessMax - mSharpnessMin);
-		   if (range > 0) {
-			   result = (int)((sharpness_abs - mSharpnessMin) * 100.f / range);
-		   }
-	   }
-	   return result;
-	}
-
-    /**
-     * @return sharpness[%]
-     */
-	public synchronized int getSharpness() {
-    	return getSharpness(nativeGetSharpness(mNativePtr));
-    }
-
-	public synchronized void resetSharpness() {
-    	if (mNativePtr != 0) {
-    		nativeSetSharpness(mNativePtr, mSharpnessDef);
-    	}
-    }
-//================================================================================
-    /**
-     * @param gain [%]
-     */
-	public synchronized void setGain(final int gain) {
-    	if (mNativePtr != 0) {
- 		   final float range = Math.abs(mGainMax - mGainMin);
- 		   if (range > 0)
- 			   nativeSetGain(mNativePtr, (int)(gain / 100.f * range) + mGainMin);
-    	}
-    }
-
-    /**
-     * @param gain_abs
-     * @return gain[%]
-     */
-	public synchronized int getGain(final int gain_abs) {
-	   int result = 0;
-	   if (mNativePtr != 0) {
-		   nativeUpdateGainLimit(mNativePtr);
-		   final float range = Math.abs(mGainMax - mGainMin);
-		   if (range > 0) {
-			   result = (int)((gain_abs - mGainMin) * 100.f / range);
-		   }
-	   }
-	   return result;
-	}
-
-    /**
-     * @return gain[%]
-     */
-	public synchronized int getGain() {
-    	return getGain(nativeGetGain(mNativePtr));
-    }
-
-	public synchronized void resetGain() {
-    	if (mNativePtr != 0) {
-    		nativeSetGain(mNativePtr, mGainDef);
-    	}
-    }
-
-//================================================================================
-    /**
-     * @param gamma [%]
-     */
-	public synchronized void setGamma(final int gamma) {
-    	if (mNativePtr != 0) {
- 		   final float range = Math.abs(mGammaMax - mGammaMin);
- 		   if (range > 0)
- 			   nativeSetGamma(mNativePtr, (int)(gamma / 100.f * range) + mGammaMin);
-    	}
-    }
-
-    /**
-     * @param gamma_abs
-     * @return gamma[%]
-     */
-	public synchronized int getGamma(final int gamma_abs) {
-	   int result = 0;
-	   if (mNativePtr != 0) {
-		   nativeUpdateGammaLimit(mNativePtr);
-		   final float range = Math.abs(mGammaMax - mGammaMin);
-		   if (range > 0) {
-			   result = (int)((gamma_abs - mGammaMin) * 100.f / range);
-		   }
-	   }
-	   return result;
-	}
-
-    /**
-     * @return gamma[%]
-     */
-	public synchronized int getGamma() {
-    	return getGamma(nativeGetGamma(mNativePtr));
-    }
-
-	public synchronized void resetGamma() {
-    	if (mNativePtr != 0) {
-    		nativeSetGamma(mNativePtr, mGammaDef);
-    	}
-    }
-
-//================================================================================
-    /**
-     * @param saturation [%]
-     */
-	public synchronized void setSaturation(final int saturation) {
-    	if (mNativePtr != 0) {
- 		   final float range = Math.abs(mSaturationMax - mSaturationMin);
- 		   if (range > 0)
- 			   nativeSetSaturation(mNativePtr, (int)(saturation / 100.f * range) + mSaturationMin);
-    	}
-    }
-
-    /**
-     * @param saturation_abs
-     * @return saturation[%]
-     */
-	public synchronized int getSaturation(final int saturation_abs) {
-	   int result = 0;
-	   if (mNativePtr != 0) {
-		   nativeUpdateSaturationLimit(mNativePtr);
-		   final float range = Math.abs(mSaturationMax - mSaturationMin);
-		   if (range > 0) {
-			   result = (int)((saturation_abs - mSaturationMin) * 100.f / range);
-		   }
-	   }
-	   return result;
-	}
-
-    /**
-     * @return saturation[%]
-     */
-	public synchronized int getSaturation() {
-    	return getSaturation(nativeGetSaturation(mNativePtr));
-    }
-
-	public synchronized void resetSaturation() {
-    	if (mNativePtr != 0) {
-    		nativeSetSaturation(mNativePtr, mSaturationDef);
-    	}
-    }
-//================================================================================
-    /**
-     * @param hue [%]
-     */
-	public synchronized void setHue(final int hue) {
-    	if (mNativePtr != 0) {
- 		   final float range = Math.abs(mHueMax - mHueMin);
- 		   if (range > 0)
- 			   nativeSetHue(mNativePtr, (int)(hue / 100.f * range) + mHueMin);
-    	}
-    }
-
-    /**
-     * @param hue_abs
-     * @return hue[%]
-     */
-	public synchronized int getHue(final int hue_abs) {
-	   int result = 0;
-	   if (mNativePtr != 0) {
-		   nativeUpdateHueLimit(mNativePtr);
-		   final float range = Math.abs(mHueMax - mHueMin);
-		   if (range > 0) {
-			   result = (int)((hue_abs - mHueMin) * 100.f / range);
-		   }
-	   }
-	   return result;
-	}
-
-    /**
-     * @return hue[%]
-     */
-	public synchronized int getHue() {
-    	return getHue(nativeGetHue(mNativePtr));
-    }
-
-	public synchronized void resetHue() {
-    	if (mNativePtr != 0) {
-    		nativeSetHue(mNativePtr, mSaturationDef);
-    	}
-    }
-
-//================================================================================
-	public void setPowerlineFrequency(final int frequency) {
-    	if (mNativePtr != 0)
-    		nativeSetPowerlineFrequency(mNativePtr, frequency);
-    }
-
-	public int getPowerlineFrequency() {
-    	return nativeGetPowerlineFrequency(mNativePtr);
-    }
-
-//================================================================================
-    /**
      * this may not work well with some combination of camera and device
      * @param zoom [%]
      */
 	public synchronized void setZoom(final int zoom) {
     	if (mNativePtr != 0) {
- 		   //final float range = Math.abs(mZoomMax - mZoomMin);
- 		  // if (range > 0) {
- 			//   final int z = (int)(zoom / 100.f * range) + mZoomMin;
-// 			   Log.d(TAG, "setZoom:zoom=" + zoom + " ,value=" + z);
- 			  //
 			nativeSetZoom(mNativePtr, zoom);
- 		  // }
-    	}
-    }
-
-    /**
-     * @param zoom_abs
-     * @return zoom[%]
-     */
-	public synchronized int getZoom(final int zoom_abs) {
-	   int result = 0;
-	   if (mNativePtr != 0) {
-		   nativeUpdateZoomLimit(mNativePtr);
-		   final float range = Math.abs(mZoomMax - mZoomMin);
-		   if (range > 0) {
-			   result = (int)((zoom_abs - mZoomMin) * 100.f / range);
-		   }
-	   }
-	   return result;
-	}
-
-    /**
-     * @return zoom[%]
-     */
-	public synchronized int getZoom() {
-    	return getZoom(nativeGetZoom(mNativePtr));
-    }
-
-	public synchronized void resetZoom() {
-    	if (mNativePtr != 0) {
-    		nativeSetZoom(mNativePtr, mZoomDef);
-    	}
-    }
-
-//================================================================================
-	public synchronized void updateCameraParams() {
-    	if (mNativePtr != 0) {
-    		if ((mControlSupports == 0) || (mProcSupports == 0)) {
-        		// サポートしている機能フラグを取得
-    			if (mControlSupports == 0)
-    				mControlSupports = nativeGetCtrlSupports(mNativePtr);
-    			if (mProcSupports == 0)
-    				mProcSupports = nativeGetProcSupports(mNativePtr);
-    	    	// 設定値を取得
-    	    	if ((mControlSupports != 0) && (mProcSupports != 0)) {
-	    	    	nativeUpdateBrightnessLimit(mNativePtr);
-	    	    	nativeUpdateContrastLimit(mNativePtr);
-	    	    	nativeUpdateSharpnessLimit(mNativePtr);
-	    	    	nativeUpdateGainLimit(mNativePtr);
-	    	    	nativeUpdateGammaLimit(mNativePtr);
-	    	    	nativeUpdateSaturationLimit(mNativePtr);
-	    	    	nativeUpdateHueLimit(mNativePtr);
-	    	    	nativeUpdateZoomLimit(mNativePtr);
-	    	    	nativeUpdateWhiteBlanceLimit(mNativePtr);
-	    	    	nativeUpdateFocusLimit(mNativePtr);
-    	    	}
-    	    	if (DEBUG) {
-					dumpControls(mControlSupports);
-					dumpProc(mProcSupports);
-					Log.v(TAG, String.format("Brightness:min=%d,max=%d,def=%d", mBrightnessMin, mBrightnessMax, mBrightnessDef));
-					Log.v(TAG, String.format("Contrast:min=%d,max=%d,def=%d", mContrastMin, mContrastMax, mContrastDef));
-					Log.v(TAG, String.format("Sharpness:min=%d,max=%d,def=%d", mSharpnessMin, mSharpnessMax, mSharpnessDef));
-					Log.v(TAG, String.format("Gain:min=%d,max=%d,def=%d", mGainMin, mGainMax, mGainDef));
-					Log.v(TAG, String.format("Gamma:min=%d,max=%d,def=%d", mGammaMin, mGammaMax, mGammaDef));
-					Log.v(TAG, String.format("Saturation:min=%d,max=%d,def=%d", mSaturationMin, mSaturationMax, mSaturationDef));
-					Log.v(TAG, String.format("Hue:min=%d,max=%d,def=%d", mHueMin, mHueMax, mHueDef));
-					Log.v(TAG, String.format("Zoom:min=%d,max=%d,def=%d", mZoomMin, mZoomMax, mZoomDef));
-					Log.v(TAG, String.format("WhiteBlance:min=%d,max=%d,def=%d", mWhiteBlanceMin, mWhiteBlanceMax, mWhiteBlanceDef));
-					Log.v(TAG, String.format("Focus:min=%d,max=%d,def=%d", mFocusMin, mFocusMax, mFocusDef));
-				}
-			}
-    	} else {
-    		mControlSupports = mProcSupports = 0;
-    	}
-    }
-
-    private static final String[] SUPPORTS_CTRL = {
-    	"D0:  Scanning Mode",
-    	"D1:  Auto-Exposure Mode",
-    	"D2:  Auto-Exposure Priority",
-    	"D3:  Exposure Time (Absolute)",
-    	"D4:  Exposure Time (Relative)",
-    	"D5:  Focus (Absolute)",
-    	"D6:  Focus (Relative)",
-    	"D7:  Iris (Absolute)",
-    	"D8:  Iris (Relative)",
-    	"D9:  Zoom (Absolute)",
-    	"D10: Zoom (Relative)",
-    	"D11: PanTilt (Absolute)",
-    	"D12: PanTilt (Relative)",
-    	"D13: Roll (Absolute)",
-    	"D14: Roll (Relative)",
-		"D15: Reserved",
-		"D16: Reserved",
-		"D17: Focus, Auto",
-		"D18: Privacy",
-		"D19: Focus, Simple",
-		"D20: Window",
-		"D21: Region of Interest",
-		"D22: Reserved, set to zero",
-		"D23: Reserved, set to zero",
-    };
-
-    private static final String[] SUPPORTS_PROC = {
-		"D0: Brightness",
-		"D1: Contrast",
-		"D2: Hue",
-		"D3: Saturation",
-		"D4: Sharpness",
-		"D5: Gamma",
-		"D6: White Balance Temperature",
-		"D7: White Balance Component",
-		"D8: Backlight Compensation",
-		"D9: Gain",
-		"D10: Power Line Frequency",
-		"D11: Hue, Auto",
-		"D12: White Balance Temperature, Auto",
-		"D13: White Balance Component, Auto",
-		"D14: Digital Multiplier",
-		"D15: Digital Multiplier Limit",
-		"D16: Analog Video Standard",
-		"D17: Analog Video Lock Status",
-		"D18: Contrast, Auto",
-		"D19: Reserved. Set to zero",
-		"D20: Reserved. Set to zero",
-		"D21: Reserved. Set to zero",
-		"D22: Reserved. Set to zero",
-		"D23: Reserved. Set to zero",
-	};
-
-    private static final void dumpControls(final long controlSupports) {
-    	Log.i(TAG, String.format("controlSupports=%x", controlSupports));
-    	for (int i = 0; i < SUPPORTS_CTRL.length; i++) {
-    		Log.i(TAG, SUPPORTS_CTRL[i] + ((controlSupports & (0x1 << i)) != 0 ? "=enabled" : "=disabled"));
-    	}
-    }
-
-	private static final void dumpProc(final long procSupports) {
-    	Log.i(TAG, String.format("procSupports=%x", procSupports));
-    	for (int i = 0; i < SUPPORTS_PROC.length; i++) {
-    		Log.i(TAG, SUPPORTS_PROC[i] + ((procSupports & (0x1 << i)) != 0 ? "=enabled" : "=disabled"));
     	}
     }
 
@@ -1108,31 +611,14 @@ public class UVCCamera {
 	private static final native void nativeWhenShutRefresh(final long mNativePtr);
 	private static final native void nativeWhenChangeTempPara(final long mNativePtr);
 //**********************************************************************
-    /**
-     * start movie capturing(this should call while previewing)
-     */
-    public void startCapture() {
-		if (mCtrlBlock != null) {
-			Log.e(TAG, "startCapture");
-			nativeStartStopCapture(mNativePtr, 1);
-		}
-    }
 
-    /**
-     * stop movie capturing
-     */
-    public void stopCapture() {
-		if (mCtrlBlock != null) {
-			Log.e(TAG, "stopCapture");
-			nativeStartStopCapture(mNativePtr, 0);
-		}
-    }
 	public void stopTemp() {
 		if (mCtrlBlock != null) {
 			Log.e(TAG, "stopTemp");
 			nativeStartStopTemp(mNativePtr, 0);
 		}
 	}
+
 	public void startTemp() {
 		if (mCtrlBlock != null) {
 			Log.e(TAG, "startTemp");
@@ -1156,6 +642,7 @@ public class UVCCamera {
 			}
 		}
 	}
+
 	public void setTempRange(int range) {
 		if (mCtrlBlock != null) {
 			nativeSetTempRange(mNativePtr, range);
@@ -1179,96 +666,7 @@ public class UVCCamera {
 	private static final native void nativeSetTempRange(final long id_camera, int range);
 	private static final native void nativeSetShutterFix(final long id_camera, float mShutterFix);
 	private static final native void nativeSetCameraLens(final long id_camera, int mCameraLens);
-	private static final native int nativeSetCaptureDisplay(final long id_camera, final Surface surface);
 	private static final native int nativeStartStopTemp(final long id_camera, int startStop);
-	private static final native int nativeStartStopCapture(final long id_camera, int startStop);
-
-    private static final native long nativeGetCtrlSupports(final long id_camera);
-    private static final native long nativeGetProcSupports(final long id_camera);
-
-    private final native int nativeUpdateScanningModeLimit(final long id_camera);
-    private static final native int nativeSetScanningMode(final long id_camera, final int scanning_mode);
-    private static final native int nativeGetScanningMode(final long id_camera);
-
-	private final native int nativeUpdateExposureModeLimit(final long id_camera);
-    private static final native int nativeSetExposureMode(final long id_camera, final int exposureMode);
-    private static final native int nativeGetExposureMode(final long id_camera);
-
-	private final native int nativeUpdateExposurePriorityLimit(final long id_camera);
-    private static final native int nativeSetExposurePriority(final long id_camera, final int priority);
-    private static final native int nativeGetExposurePriority(final long id_camera);
-
-	private final native int nativeUpdateExposureLimit(final long id_camera);
-    private static final native int nativeSetExposure(final long id_camera, final int exposure);
-    private static final native int nativeGetExposure(final long id_camera);
-
-	private final native int nativeUpdateExposureRelLimit(final long id_camera);
-    private static final native int nativeSetExposureRel(final long id_camera, final int exposure_rel);
-    private static final native int nativeGetExposureRel(final long id_camera);
-
-	private final native int nativeUpdateAutoFocusLimit(final long id_camera);
-    private static final native int nativeSetAutoFocus(final long id_camera, final boolean autofocus);
-    private static final native int nativeGetAutoFocus(final long id_camera);
-
-    private final native int nativeUpdateFocusLimit(final long id_camera);
-    private static final native int nativeSetFocus(final long id_camera, final int focus);
-    private static final native int nativeGetFocus(final long id_camera);
-
-    private final native int nativeUpdateFocusRelLimit(final long id_camera);
-    private static final native int nativeSetFocusRel(final long id_camera, final int focus_rel);
-    private static final native int nativeGetFocusRel(final long id_camera);
-
-    private final native int nativeUpdateIrisLimit(final long id_camera);
-    private static final native int nativeSetIris(final long id_camera, final int iris);
-    private static final native int nativeGetIris(final long id_camera);
-
-    private final native int nativeUpdateIrisRelLimit(final long id_camera);
-    private static final native int nativeSetIrisRel(final long id_camera, final int iris_rel);
-    private static final native int nativeGetIrisRel(final long id_camera);
-
-    private final native int nativeUpdatePanLimit(final long id_camera);
-    private static final native int nativeSetPan(final long id_camera, final int pan);
-    private static final native int nativeGetPan(final long id_camera);
-
-    private final native int nativeUpdatePanRelLimit(final long id_camera);
-    private static final native int nativeSetPanRel(final long id_camera, final int pan_rel);
-    private static final native int nativeGetPanRel(final long id_camera);
-
-    private final native int nativeUpdateTiltLimit(final long id_camera);
-    private static final native int nativeSetTilt(final long id_camera, final int tilt);
-    private static final native int nativeGetTilt(final long id_camera);
-
-    private final native int nativeUpdateTiltRelLimit(final long id_camera);
-    private static final native int nativeSetTiltRel(final long id_camera, final int tilt_rel);
-    private static final native int nativeGetTiltRel(final long id_camera);
-
-    private final native int nativeUpdateRollLimit(final long id_camera);
-    private static final native int nativeSetRoll(final long id_camera, final int roll);
-    private static final native int nativeGetRoll(final long id_camera);
-
-    private final native int nativeUpdateRollRelLimit(final long id_camera);
-    private static final native int nativeSetRollRel(final long id_camera, final int roll_rel);
-    private static final native int nativeGetRollRel(final long id_camera);
-
-	private final native int nativeUpdateAutoWhiteBlanceLimit(final long id_camera);
-    private static final native int nativeSetAutoWhiteBlance(final long id_camera, final boolean autoWhiteBlance);
-    private static final native int nativeGetAutoWhiteBlance(final long id_camera);
-
-    private final native int nativeUpdateAutoWhiteBlanceCompoLimit(final long id_camera);
-    private static final native int nativeSetAutoWhiteBlanceCompo(final long id_camera, final boolean autoWhiteBlanceCompo);
-    private static final native int nativeGetAutoWhiteBlanceCompo(final long id_camera);
-
-	private final native int nativeUpdateWhiteBlanceLimit(final long id_camera);
-    private static final native int nativeSetWhiteBlance(final long id_camera, final int whiteBlance);
-    private static final native int nativeGetWhiteBlance(final long id_camera);
-
-	private final native int nativeUpdateWhiteBlanceCompoLimit(final long id_camera);
-    private static final native int nativeSetWhiteBlanceCompo(final long id_camera, final int whiteBlance_compo);
-    private static final native int nativeGetWhiteBlanceCompo(final long id_camera);
-
-	private final native int nativeUpdateBacklightCompLimit(final long id_camera);
-    private static final native int nativeSetBacklightComp(final long id_camera, final int backlight_comp);
-    private static final native int nativeGetBacklightComp(final long id_camera);
 
 	private final native int nativeUpdateBrightnessLimit(final long id_camera);
     private static final native int nativeSetBrightness(final long id_camera, final int brightness);
@@ -1278,65 +676,5 @@ public class UVCCamera {
     private static final native int nativeSetContrast(final long id_camera, final int contrast);
     private static final native int nativeGetContrast(final long id_camera);
 
-	private final native int nativeUpdateAutoContrastLimit(final long id_camera);
-    private static final native int nativeSetAutoContrast(final long id_camera, final boolean autocontrast);
-    private static final native int nativeGetAutoContrast(final long id_camera);
-
-	private final native int nativeUpdateSharpnessLimit(final long id_camera);
-    private static final native int nativeSetSharpness(final long id_camera, final int sharpness);
-    private static final native int nativeGetSharpness(final long id_camera);
-
-    private final native int nativeUpdateGainLimit(final long id_camera);
-    private static final native int nativeSetGain(final long id_camera, final int gain);
-    private static final native int nativeGetGain(final long id_camera);
-
-    private final native int nativeUpdateGammaLimit(final long id_camera);
-    private static final native int nativeSetGamma(final long id_camera, final int gamma);
-    private static final native int nativeGetGamma(final long id_camera);
-
-    private final native int nativeUpdateSaturationLimit(final long id_camera);
-    private static final native int nativeSetSaturation(final long id_camera, final int saturation);
-    private static final native int nativeGetSaturation(final long id_camera);
-
-    private final native int nativeUpdateHueLimit(final long id_camera);
-    private static final native int nativeSetHue(final long id_camera, final int hue);
-    private static final native int nativeGetHue(final long id_camera);
-
-	private final native int nativeUpdateAutoHueLimit(final long id_camera);
-	private static final native int nativeSetAutoHue(final long id_camera, final boolean autohue);
-	private static final native int nativeGetAutoHue(final long id_camera);
-
-	private final native int nativeUpdatePowerlineFrequencyLimit(final long id_camera);
-    private static final native int nativeSetPowerlineFrequency(final long id_camera, final int frequency);
-    private static final native int nativeGetPowerlineFrequency(final long id_camera);
-
-    private final native int nativeUpdateZoomLimit(final long id_camera);
     private static final native int nativeSetZoom(final long id_camera, final int zoom);
-    private static final native int nativeGetZoom(final long id_camera);
-
-    private final native int nativeUpdateZoomRelLimit(final long id_camera);
-    private static final native int nativeSetZoomRel(final long id_camera, final int zoom_rel);
-    private static final native int nativeGetZoomRel(final long id_camera);
-
-    private final native int nativeUpdateDigitalMultiplierLimit(final long id_camera);
-    private static final native int nativeSetDigitalMultiplier(final long id_camera, final int multiplier);
-    private static final native int nativeGetDigitalMultiplier(final long id_camera);
-
-	private final native int nativeUpdateDigitalMultiplierLimitLimit(final long id_camera);
-    private static final native int nativeSetDigitalMultiplierLimit(final long id_camera, final int multiplier_limit);
-    private static final native int nativeGetDigitalMultiplierLimit(final long id_camera);
-
-	private final native int nativeUpdateAnalogVideoStandardLimit(final long id_camera);
-    private static final native int nativeSetAnalogVideoStandard(final long id_camera, final int standard);
-    private static final native int nativeGetAnalogVideoStandard(final long id_camera);
-
-	private final native int nativeUpdateAnalogVideoLockStateLimit(final long id_camera);
-    private static final native int nativeSetAnalogVideoLoackState(final long id_camera, final int state);
-    private static final native int nativeGetAnalogVideoLoackState(final long id_camera);
-
-	private final native int nativeUpdatePrivacyLimit(final long id_camera);
-    private static final native int nativeSetPrivacy(final long id_camera, final boolean privacy);
-    private static final native int nativeGetPrivacy(final long id_camera);
-
-
 }

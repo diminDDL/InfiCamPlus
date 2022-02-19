@@ -220,10 +220,12 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		final CameraThread thread = mWeakThread.get();
 		return thread != null && thread.isRecording();
 	}
+
 	public boolean isTemperaturing() {
 		final CameraThread thread = mWeakThread.get();
 		return thread != null && thread.isTemperaturing();
 	}
+
 	public boolean isEqual(final UsbDevice device) {
 		final CameraThread thread = mWeakThread.get();
 		return (thread != null) && thread.isEqual(device);
@@ -437,12 +439,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		sendMessage(obtainMessage(MSG_MEDIA_UPDATE, path));
 	}
 
-	public boolean checkSupportFlag(final long flag) {
-		checkReleased();
-		final CameraThread thread = mWeakThread.get();
-		return thread != null && thread.mUVCCamera != null && thread.mUVCCamera.checkSupportFlag(flag);
-	}
-
 	public int getValue(final int flag) {
 		checkReleased();
 		final CameraThread thread = mWeakThread.get();
@@ -476,6 +472,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		}
 		return 100;
 	}
+
 	public void whenShutRefresh() {
 		checkReleased();
 		final CameraThread thread = mWeakThread.get();
@@ -483,8 +480,8 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		if (camera != null) {
 			camera.whenShutRefresh();
 		}
-
 	}
+
 	public void whenChangeTempPara() {
 		checkReleased();
 		final CameraThread thread = mWeakThread.get();
@@ -492,8 +489,8 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		if (camera != null) {
 			camera.whenChangeTempPara();
 		}
-
 	}
+
 	public int resetValue(final int flag) {
 		checkReleased();
 		final CameraThread thread = mWeakThread.get();
@@ -787,11 +784,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			    Log.e(TAG_THREAD, "handleClose:");
 			//handleStopTemperaturing();
 			//handleStopRecording();
-			if(mIsCapturing){
-			    mIsCapturing=false;
-                Log.e(TAG, "handleClose: stopCapture" );
-			    mUVCCamera.stopCapture();
-            }
             if(mIsRecording){
                 mIsRecording=false;
                 handleStopRecording();
@@ -883,7 +875,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			if(isT3){
 				mWeakCameraView.get().setRotation(180);
 			}
-			mUVCCamera.updateCameraParams();
 			synchronized (mSync) {
 				mIsPreviewing = true;
 			}
@@ -1180,12 +1171,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
 						mIsRecording = false;
 						final Activity parent = mWeakParent.get();
 						mWeakCameraView.get().setVideoEncoder(null);
-						synchronized (mSync) {
-							if (mUVCCamera != null) {
-                                Log.e(TAG, "onStopped:stopCapture ");
-								mUVCCamera.stopCapture();
-							}
-						}
 						final String path = encoder.getOutputPath();
 						if (!TextUtils.isEmpty(path)) {
 							mHandler.sendMessageDelayed(mHandler.obtainMessage(MSG_MEDIA_UPDATE, path), 1000);

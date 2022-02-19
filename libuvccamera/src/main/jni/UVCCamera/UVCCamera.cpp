@@ -64,7 +64,6 @@ UVCCamera::UVCCamera()
 	mDevice(NULL),
 	mDeviceHandle(NULL),
 	mStatusCallback(NULL),
-	mButtonCallback(NULL),
 	mPreview(NULL),
 	mCtrlSupports(0),
 	mPUSupports(0) {
@@ -169,7 +168,6 @@ int UVCCamera::connect(int vid, int pid, int fd, int busnum, int devaddr, const 
 #endif
 				mFd = fd;
 				mStatusCallback = new UVCStatusCallback(mDeviceHandle);
-				mButtonCallback = new UVCButtonCallback(mDeviceHandle);
 				mPreview = new UVCPreviewIR(mDeviceHandle);
 				//mPreview = new UVCPreview(mDeviceHandle);
 				/*if(vid==5396)//IR device
@@ -248,15 +246,6 @@ int UVCCamera::setStatusCallback(JNIEnv *env, jobject status_callback_obj) {
 	int result = EXIT_FAILURE;
 	if (mStatusCallback) {
 		result = mStatusCallback->setCallback(env, status_callback_obj);
-	}
-	RETURN(result, int);
-}
-
-int UVCCamera::setButtonCallback(JNIEnv *env, jobject button_callback_obj) {
-	ENTER();
-	int result = EXIT_FAILURE;
-	if (mButtonCallback) {
-		result = mButtonCallback->setCallback(env, button_callback_obj);
 	}
 	RETURN(result, int);
 }

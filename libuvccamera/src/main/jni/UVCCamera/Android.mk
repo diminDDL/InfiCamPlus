@@ -139,7 +139,6 @@ LOCAL_SRC_FILES := \
 		UVCCamera.cpp \
 		UVCPreview.cpp \
 		UVCPreviewIR.cpp \
-		UVCButtonCallback.cpp \
 		UVCStatusCallback.cpp \
 		Parameters.cpp \
 		time_cal.cpp \
