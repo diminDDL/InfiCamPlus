@@ -400,17 +400,6 @@ public class UVCCamera {
     }
 
     /**
-	 * set frame callback
-	 * @param callback
-	 * @param pixelFormat
-	 */
-	public void setFrameCallback(final IFrameCallback callback, final int pixelFormat) {
-		if (mNativePtr != 0) {
-			nativeSetFrameCallback(mNativePtr, callback, pixelFormat);
-		}
-	}
-
-    /**
      * frame for take picture
      *
      *
@@ -460,9 +449,7 @@ public class UVCCamera {
      * stop preview
      */
     public synchronized void stopPreview() {
-
-    	setFrameCallback(null, 0);
-	//	setTemperatureCallback(null);
+	//	setTemperatureCallback(null); // TODO why commented?
     	if (mCtrlBlock != null) {
     		nativeStopPreview(mNativePtr);
     	}
@@ -596,14 +583,12 @@ public class UVCCamera {
     private static final native int nativeRelease(final long id_camera);
 
 	private static final native int nativeSetStatusCallback(final long mNativePtr, final IStatusCallback callback);
-	private static final native int nativeSetButtonCallback(final long mNativePtr, final IButtonCallback callback);
 
     private static final native int nativeSetPreviewSize(final long id_camera, final int width, final int height, final int min_fps, final int max_fps, final int mode, final float bandwidth);
     private static final native String nativeGetSupportedSize(final long id_camera);
     private static final native int nativeStartPreview(final long id_camera);
     private static final native int nativeStopPreview(final long id_camera);
     private static final native int nativeSetPreviewDisplay(final long id_camera, final Surface surface);
-    private static final native int nativeSetFrameCallback(final long mNativePtr, final IFrameCallback callback, final int pixelFormat);
     private static final native int nativeGetByteArrayPicture(final long mNativePtr,byte[] frame);
 	private static final native int nativeSetUserPalette(final long mNativePtr,int typeOfPalette,byte[] palette);
 	private static final native byte[] nativeGetByteArrayTemperaturePara(final long mNativePtr,int len);

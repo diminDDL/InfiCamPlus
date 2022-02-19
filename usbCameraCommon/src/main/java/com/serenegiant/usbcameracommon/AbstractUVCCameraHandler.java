@@ -50,27 +50,17 @@ import com.serenegiant.encoder.MediaMuxerWrapper;
 import com.serenegiant.encoder.MediaSurfaceEncoder;
 import com.serenegiant.encoder.MediaVideoBufferEncoder;
 import com.serenegiant.encoder.MediaVideoEncoder;
-import com.serenegiant.usb.IFrameCallback;
 import com.serenegiant.usb.ITemperatureCallback;
 import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.usb.UVCCamera;
-import com.serenegiant.utils.ByteUtil;
-import com.serenegiant.widget.CameraViewInterface;
 import com.serenegiant.widget.UVCCameraTextureView;
 
 
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -804,24 +794,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
 				callOnClose();
 			}
 		}
-		private  byte[] FrameData=new byte[640*512*4];
-		private final IFrameCallback mIFrameCallback = new IFrameCallback() {
-			@Override
-			public void onFrame(final ByteBuffer frameData) {
-				//Log.e(TAG, "mIFrameCallback ");
-				final MediaVideoBufferEncoder videoEncoder;
-				synchronized (mSync) {
-					videoEncoder = mVideoEncoder;
-				}
-				if (videoEncoder != null) {
-					videoEncoder.frameAvailableSoon();
-					videoEncoder.encode(frameData);
-				}
-				frameData.get(FrameData,0,frameData.capacity());
-                //Log.e(TAG, "mIFrameCallback frameData[384*288*4/2]:"+ (int)FrameData[384*288*4/2]);
-				//Log.e(TAG, "mIFrameCallback frameData[384*288*4/2]:"+ (int)FrameData[384*288*4/2]);
-			}
-		};
 
 		public void handleStartPreview(final Object surface) {
             Log.e(TAG, "handleStartPreview:mUVCCamera"+mUVCCamera+" mIsPreviewing:"+mIsPreviewing);
