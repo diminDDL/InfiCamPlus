@@ -296,19 +296,6 @@ static jint nativeSetPreviewDisplay(JNIEnv *env, jobject thiz,
 	RETURN(result, jint);
 }
 
-static jint nativeSetFrameCallback(JNIEnv *env, jobject thiz,
-	ID_TYPE id_camera, jobject jIFrameCallback, jint pixel_format) {
-
-	jint result = JNI_ERR;
-	ENTER();
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
-	if (LIKELY(camera)) {
-		jobject frame_callback_obj = env->NewGlobalRef(jIFrameCallback);
-		result = camera->setFrameCallback(env, frame_callback_obj, pixel_format);
-	}
-	RETURN(result, jint);
-}
-
 static jint nativeSetTemperatureCallback(JNIEnv *env, jobject thiz,
 	ID_TYPE id_camera, jobject jITemperatureCallback) {
 //LOGE("nativeSetTemperatureCallback1");
@@ -527,7 +514,7 @@ jint registerNativeMethods(JNIEnv* env, const char *class_name, JNINativeMethod 
 static JNINativeMethod methods[] = {
 	{ "nativeCreate",					"()J", (void *) nativeCreate },
 	{ "nativeDestroy",					"(J)V", (void *) nativeDestroy },
-	//
+
 	{ "nativeConnect",					"(JIIIIILjava/lang/String;)I", (void *) nativeConnect },
 	{ "nativeRelease",					"(J)I", (void *) nativeRelease },
 
@@ -542,7 +529,6 @@ static JNINativeMethod methods[] = {
 	{ "nativeStartPreview",				"(J)I", (void *) nativeStartPreview },
 	{ "nativeStopPreview",				"(J)I", (void *) nativeStopPreview },
 	{ "nativeSetPreviewDisplay",		"(JLandroid/view/Surface;)I", (void *) nativeSetPreviewDisplay },
-	{ "nativeSetFrameCallback",			"(JLcom/serenegiant/usb/IFrameCallback;I)I", (void *) nativeSetFrameCallback },
     { "nativeGetByteArrayPicture",			"(J[B)I", (void *) nativeGetByteArrayPicture },
     { "nativeSetUserPalette",			"(JI[B)I", (void *) nativeSetUserPalette },
 	{ "nativeGetByteArrayTemperaturePara",			"(JI)[B", (void *) nativeGetByteArrayTemperaturePara },

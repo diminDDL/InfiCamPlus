@@ -32,7 +32,7 @@
 #include <pthread.h>
 #include <android/native_window.h>
 #include "UVCStatusCallback.h"
-#include "UVCPreview.h"
+#include "UVCPreviewIR.h"
 
 #define	CTRL_SCANNING		0x000001	// D0:  Scanning Mode
 #define	CTRL_AE				0x000002	// D1:  Auto-Exposure Mode
@@ -114,7 +114,7 @@ class UVCCamera {
 	uvc_device_handle_t *mDeviceHandle;
 	UVCStatusCallback *mStatusCallback;
 	// プレビュー用
-	UVCPreview *mPreview;
+	UVCPreviewIR *mPreview;
 	uint64_t mCtrlSupports;
 	uint64_t mPUSupports;
 	control_value_t mScanningMode;
@@ -189,7 +189,6 @@ void whenShutRefresh() ;
 	char *getSupportedSize();
 	int setPreviewSize(int width, int height, int min_fps, int max_fps, int mode, float bandwidth = DEFAULT_BANDWIDTH);
 	int setPreviewDisplay(ANativeWindow *preview_window);
-	int setFrameCallback(JNIEnv *env, jobject frame_callback_obj, int pixel_format);
 	int setTemperatureCallback(JNIEnv *env, jobject temperature_callback_obj);
 	int startPreview();
 	int stopPreview();

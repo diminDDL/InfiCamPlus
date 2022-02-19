@@ -44,7 +44,6 @@
 #define	LOCAL_DEBUG 0
 #define MAX_FRAME 4
 #define PREVIEW_PIXEL_BYTES 4	// RGBA/RGBX
-#define FRAME_POOL_SZ MAX_FRAME
 #define OUTPUTMODE 4
 //#define OUTPUTMODE 5
 
@@ -54,7 +53,6 @@ UVCPreviewIR::UVCPreviewIR(){
 
 UVCPreviewIR::UVCPreviewIR(uvc_device_handle_t *devh)
 :	mPreviewWindow(NULL),
-	mCaptureWindow(NULL),
 	mDeviceHandle(devh),
 	requestWidth(DEFAULT_PREVIEW_WIDTH),
 	requestHeight(DEFAULT_PREVIEW_HEIGHT),
@@ -70,14 +68,11 @@ UVCPreviewIR::UVCPreviewIR(uvc_device_handle_t *devh)
 	mIsRunning(false),
 	isNeedWriteTable(true),
 	frameNumber(0),
-	mIsCapturing(false),
 	mIsTemperaturing(false),
-	mFrameCallbackObj(NULL),
 	mTemperatureCallbackObj(NULL)
 {
 	ENTER();
 	mIsComputed=true;
-    OutPixelFormat=3;
     mTypeOfPalette=0;
     rangeMode=120;
     floatFpaTmp=0;
@@ -90,19 +85,13 @@ UVCPreviewIR::UVCPreviewIR(uvc_device_handle_t *devh)
     cameraLens=130;//130;//镜头大小:目前支持两种，68：使用6.8mm镜头，130：使用13mm镜头,默认130。
     shutterFix=0;
     shutTemper=0;
-    floatShutTemper=0;//快门温度
     coreTemper=0;
-    floatCoreTemper=0;//外壳温度
     memset(sn, 0, 32);
     memset(cameraSoftVersion, 0, 16);
     memset(UserPalette,0,3*256*sizeof(unsigned char));
 	pthread_cond_init(&preview_sync, NULL);
 	pthread_mutex_init(&preview_mutex, NULL);
-//
-	pthread_cond_init(&capture_sync, NULL);
-	pthread_mutex_init(&capture_mutex, NULL);
 
-//
 	pthread_cond_init(&temperature_sync,NULL);
 	pthread_mutex_init(&temperature_mutex,NULL);
 	EXIT();
@@ -115,13 +104,8 @@ UVCPreviewIR::~UVCPreviewIR() {
 		ANativeWindow_release(mPreviewWindow);
 	mPreviewWindow = NULL;
 	////LOGE("~UVCPreviewIR() 1");
-	if (mCaptureWindow)
-		ANativeWindow_release(mCaptureWindow);
-	mCaptureWindow = NULL;
 	pthread_mutex_destroy(&preview_mutex);
 	pthread_cond_destroy(&preview_sync);
-	pthread_mutex_destroy(&capture_mutex);
-	pthread_cond_destroy(&capture_sync);
 	pthread_mutex_destroy(&temperature_mutex);
     pthread_cond_destroy(&temperature_sync);
     ////LOGE("~UVCPreviewIR() 8");
@@ -171,48 +155,6 @@ int UVCPreviewIR::setPreviewDisplay(ANativeWindow *preview_window) {
 	RETURN(0, int);
 }
 
-int UVCPreviewIR::setFrameCallback(JNIEnv *env, jobject frame_callback_obj, int pixel_format)
-{
-	ENTER();
-	////LOGE("setFrameCallback01");
-	pthread_mutex_lock(&capture_mutex);
-	{
-	    OutPixelFormat=pixel_format;
-		////LOGE("setFrameCallback02 OutPixelFormat:%d",OutPixelFormat);
-		if (!env->IsSameObject(mFrameCallbackObj, frame_callback_obj))
-		{
-		    iframecallback_fields.onFrame = NULL;
-			if (mFrameCallbackObj)
-			{
-				env->DeleteGlobalRef(mFrameCallbackObj);
-			}
-			mFrameCallbackObj = frame_callback_obj;
-			if (frame_callback_obj)
-			 {
-				 // get method IDs of Java object for callback
-			     jclass clazz = env->GetObjectClass(frame_callback_obj);
-				 if (LIKELY(clazz))
-			     {
-				     iframecallback_fields.onFrame = env->GetMethodID(clazz,"onFrame",	"(Ljava/nio/ByteBuffer;)V");
-				 }
-				 else
-				 {
-					 LOGW("failed to get object class");
-				 }
-				 env->ExceptionClear();
-				 if (!iframecallback_fields.onFrame)
-				 {
-					 ////LOGE("Can't find IFrameCallback#onFrame");
-					 env->DeleteGlobalRef(frame_callback_obj);
-					 mFrameCallbackObj = frame_callback_obj = NULL;
-				 }
-			 }
-		}
-	}
-	pthread_mutex_unlock(&capture_mutex);
-	RETURN(0, int);
-}
-
 int UVCPreviewIR::setTemperatureCallback(JNIEnv *env,jobject temperature_callback_obj){
 	ENTER();
 	//pthread_create(&temperature_thread, NULL, temperature_thread_func, (void *)this);
@@ -256,22 +198,6 @@ void UVCPreviewIR::clearDisplay() {
 	ENTER();
 ////LOGE("clearDisplay");
 	ANativeWindow_Buffer buffer;
-	pthread_mutex_lock(&capture_mutex);
-	{
-		if (LIKELY(mCaptureWindow)) {
-			if (LIKELY(ANativeWindow_lock(mCaptureWindow, &buffer, NULL) == 0)) {
-				uint8_t *dest = (uint8_t *)buffer.bits;
-				const size_t bytes = buffer.width * PREVIEW_PIXEL_BYTES;
-				const int stride = buffer.stride * PREVIEW_PIXEL_BYTES;
-				for (int i = 0; i < buffer.height; i++) {
-					memset(dest, 0, bytes);
-					dest += stride;
-				}
-				ANativeWindow_unlockAndPost(mCaptureWindow);
-			}
-		}
-	}
-	pthread_mutex_unlock(&capture_mutex);
 	pthread_mutex_lock(&preview_mutex);
 	{
 		if (LIKELY(mPreviewWindow)) {
@@ -325,7 +251,6 @@ int UVCPreviewIR::stopPreview() {
 	////LOGE("stopPreview");
 	bool b = isRunning();
 	if (LIKELY(b)) {
-	    mIsCapturing=false;
 		mIsRunning = false;
 		pthread_cond_signal(&preview_sync);
 		//pthread_cond_signal(&capture_sync);
@@ -566,10 +491,8 @@ void UVCPreviewIR::do_preview(uvc_stream_ctrl_t *ctrl) {
                     ////LOGE("cpyPara  amountPixels:%d ",amountPixels);
                     memcpy(&shutTemper,fourLinePara+amountPixels+1,sizeof(unsigned short));
                     ////LOGE("cpyPara  shutTemper:%d ",shutTemper);
-                    floatShutTemper=shutTemper/10.0f-273.15f;//快门片
                     memcpy(&coreTemper,fourLinePara+amountPixels+2,sizeof(unsigned short));//外壳
                    // //LOGE("cpyPara  coreTemper:%d ",coreTemper);
-                    floatCoreTemper=coreTemper/10.0f-273.15f;
                     ////LOGE("cpyPara  floatShutTemper:%f,floatCoreTemper:%f,floatFpaTmp:%f\n",floatShutTemper,floatCoreTemper,floatFpaTmp);
                     memcpy((uint8_t*)cameraSoftVersion,fourLinePara+amountPixels+24,16*sizeof(uint8_t));//camera soft version
                     //LOGE("cameraSoftVersion:%s\n",cameraSoftVersion);
@@ -618,11 +541,6 @@ void UVCPreviewIR::do_preview(uvc_stream_ctrl_t *ctrl) {
             {
                 ////LOGE("do_preview1");
                 pthread_cond_signal(&temperature_sync);
-            }
-            if(mFrameCallbackObj&&mIsCapturing)
-            {
-               // //LOGE("do_preview1");
-                pthread_cond_signal(&capture_sync);
             }
             ////LOGE("do_preview4");
 

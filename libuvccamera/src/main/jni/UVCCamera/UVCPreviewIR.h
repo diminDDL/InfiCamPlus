@@ -26,9 +26,29 @@
 #define UVCPREVIEW_IR_H_
 
 #include "libUVCCamera.h"
-#include "UVCPreview.h"
+#include "UVCPreviewIR.h"
 #include <pthread.h>
 #include <android/native_window.h>
+
+#define DEFAULT_PREVIEW_WIDTH 640
+#define DEFAULT_PREVIEW_HEIGHT 480
+#define DEFAULT_PREVIEW_FPS_MIN 1
+#define DEFAULT_PREVIEW_FPS_MAX 30
+#define DEFAULT_PREVIEW_MODE 0
+#define DEFAULT_BANDWIDTH 1.0f
+
+typedef uvc_error_t (*convFunc_t)(uvc_frame_t *in, uvc_frame_t *out);
+
+#define PIXEL_FORMAT_RAW 0		// same as PIXEL_FORMAT_YUV
+#define PIXEL_FORMAT_YUV 1
+#define PIXEL_FORMAT_RGB565 2
+#define PIXEL_FORMAT_RGBX 3
+#define PIXEL_FORMAT_YUV20SP 4
+#define PIXEL_FORMAT_NV21 5		// YVU420SemiPlanar
+
+typedef struct {
+	jmethodID onReceiveTemperature;
+} Fields_iTemperatureCallback;
 
 struct irBuffer//使用专业级图像算法所需要的缓存
 {
@@ -36,14 +56,12 @@ struct irBuffer//使用专业级图像算法所需要的缓存
     unsigned char* destBuffer;
 };
 
-class UVCPreviewIR:public UVCPreview{
+class UVCPreviewIR {
 private:
 	inline const bool isRunning() const;
 	inline const bool isComputed() const;
     unsigned short *mInitData;
 	uvc_device_handle_t *mDeviceHandle;
-	float *mTemperatureMeasure;
-	//float TemperWhenShut,CoreTemperWhenShut,FpaTmpWhenShut;
 	ANativeWindow *mPreviewWindow;
 	volatile bool mIsRunning;
 	int requestWidth, requestHeight, requestMode;
@@ -55,7 +73,6 @@ private:
 	unsigned char *HoldBuffer;// 充满新数据的buffer
 	unsigned char *RgbaOutBuffer;
 	unsigned char *RgbaHoldBuffer;
-	int OutPixelFormat;//回调图像输出形式,rgba=0, 原始输出或者yuyv=1
 	size_t frameBytes;
 	pthread_t preview_thread;
 	pthread_mutex_t preview_mutex;
@@ -63,14 +80,8 @@ private:
 	void signal_receive_frame_data();
 	int previewFormat;
 	int copyToSurface(uint8_t *frameData, ANativeWindow **window);
-//
-	volatile bool mIsCapturing;
+
     volatile bool mIsComputed;
-	ANativeWindow *mCaptureWindow;
-	pthread_mutex_t capture_mutex;
-	pthread_cond_t capture_sync;
-	jobject mFrameCallbackObj;
-	Fields_iframecallback iframecallback_fields;
 	Fields_iTemperatureCallback iTemperatureCallback;
 // improve performance by reducing memory allocation
     irBuffer* irBuffers;
@@ -79,15 +90,12 @@ private:
 	pthread_t temperature_thread;
 	pthread_mutex_t temperature_mutex;
 	pthread_cond_t temperature_sync;
-	uvc_frame_t *temperatureQueu;
-	uvc_frame_t *ReadyToShow;
 	jobject mTemperatureCallbackObj;
     static void *temperature_thread_func(void *vptr_args);
     void do_temperature(JNIEnv *env);
     void do_temperature_callback(JNIEnv *env, uint8_t *frameData);
 
 	//ir temp para
-    int mTempRange;
     int frameNumber;
     /**
      *temperatureTable:温度映射表
@@ -111,9 +119,7 @@ private:
     char sn[32];//camera序列码
     char cameraSoftVersion[16];//camera软件版本
     unsigned short shutTemper;
-    float floatShutTemper;//快门温度
     unsigned short coreTemper;
-    float floatCoreTemper;//外壳温度
 
     float mCbTemper[640*512+10] ;
     unsigned short detectAvg;
@@ -142,7 +148,10 @@ private:
 	void draw_preview_one(uint8_t* frameData, ANativeWindow **window, convFunc_t func, int pixelBytes);
 
 public:
-    UVCPreviewIR();
+	static const int START = 1;  // #1
+	static const int STOP = 2;
+
+	UVCPreviewIR();
 	UVCPreviewIR(uvc_device_handle_t *devh);
 	~UVCPreviewIR();
     void whenShutRefresh();

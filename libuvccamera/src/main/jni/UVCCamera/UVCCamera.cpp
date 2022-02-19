@@ -43,7 +43,6 @@
 #include <unistd.h>
 #include <string.h>
 #include "UVCCamera.h"
-#include "UVCPreview.h"
 #include "UVCPreviewIR.h"
 //#include "UVCPreviewCommon.h"
 #include "Parameters.h"
@@ -277,15 +276,6 @@ int UVCCamera::setPreviewDisplay(ANativeWindow *preview_window) {
 	RETURN(result, int);
 }
 
-int UVCCamera::setFrameCallback(JNIEnv *env, jobject frame_callback_obj, int pixel_format) {
-	ENTER();
-	int result = EXIT_FAILURE;
-	if (mPreview) {
-		result = mPreview->setFrameCallback(env, frame_callback_obj, pixel_format);
-	}
-	RETURN(result, int);
-}
-
 int UVCCamera::setTemperatureCallback(JNIEnv *env, jobject temperature_callback_obj) {
 	ENTER();
 		LOGE("setTemperatureCallback");
@@ -322,8 +312,8 @@ int UVCCamera::getByteArrayTemperaturePara(uint8_t* para) {
     LOGE("UVCCamera::getByteArrayTemperaturePara");
 	int result = EXIT_FAILURE;
 	if (mDeviceHandle) {
-	result=	mPreview->getByteArrayTemperaturePara(para);
-	//LOGE("UVCCamera::getByteArrayTemperaturePara:%d,%d,%d,%d,%d,%o",para[1],para[5],para[9],para[13],para[17],para);
+		result=	mPreview->getByteArrayTemperaturePara(para);
+		//LOGE("UVCCamera::getByteArrayTemperaturePara:%d,%d,%d,%d,%d,%o",para[1],para[5],para[9],para[13],para[17],para);
 	}
 	RETURN(result, int);
 }
