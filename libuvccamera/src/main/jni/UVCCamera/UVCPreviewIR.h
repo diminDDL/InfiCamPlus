@@ -155,7 +155,6 @@ public:
     void whenShutRefresh();
 	int setPreviewSize(int width, int height, int min_fps, int max_fps, int mode, float bandwidth);
 	int setPreviewDisplay(ANativeWindow *preview_window);
-	int setFrameCallback(JNIEnv *env, jobject frame_callback_obj, int pixel_format);
 	int setTemperatureCallback(JNIEnv *env, jobject temperature_callback_obj);
 	int startPreview();
 	int stopPreview();
@@ -165,7 +164,6 @@ public:
 	void setTempRange(int range);
 	void setShutterFix(float mShutterFix);
 	void setCameraLens(int mCameraLens);
-	int getByteArrayPicture(uint8_t* frame);
 	int getByteArrayTemperaturePara(uint8_t* para);
 	void setUserPalette(uint8_t* palette,int typeOfPalette);
 };

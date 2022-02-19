@@ -399,22 +399,6 @@ public class UVCCamera {
     	nativeSetPreviewDisplay(mNativePtr, surface);
     }
 
-    /**
-     * frame for take picture
-     *
-     *
-     */
-    public boolean getByteArrayPicture(byte[] frame) {
-		boolean status=false;
-        if (mNativePtr != 0) {
-			int a= nativeGetByteArrayPicture(mNativePtr,frame);
-            if(a>0){
-                status=true;
-            }
-        }
-        return status;
-    }
-
 	/**
 	 * para of temp
 	 *

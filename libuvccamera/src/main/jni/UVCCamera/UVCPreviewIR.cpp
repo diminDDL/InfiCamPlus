@@ -761,10 +761,6 @@ void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow **window, 
 	}
 }
 
-int UVCPreviewIR:: getByteArrayPicture(uint8_t* frame) {
-    return 0;
-}
-
 /*
 在这里可以返回测温相关参数
 fix       float 0-3

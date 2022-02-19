@@ -206,20 +206,6 @@ static jbyteArray nativeGetByteArrayTemperaturePara(JNIEnv *env, jobject thiz, I
 	return array;
 }
 
-static jint nativeGetByteArrayPicture(JNIEnv *env, jobject thiz, ID_TYPE id_camera,
-                                      jbyteArray frame) {
-	ENTER();
-	int status=0;
-	jsize len  = env->GetArrayLength(frame);
-	jbyte *  arr =env-> GetByteArrayElements(frame,0);
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
-	if (LIKELY(camera)) {
-		status=camera->getByteArrayPicture((uint8_t*)arr);
-	}
-	//env->ReleaseByteArrayElements(frame,arr,0);
-	RETURN(status,jint);
-}
-
 static jint nativeSetUserPalette(JNIEnv *env, jobject thiz, ID_TYPE id_camera, jint typeOfPalette,
                                  jbyteArray palette) {
 	ENTER();
@@ -487,7 +473,6 @@ static JNINativeMethod methods[] = {
 	{ "nativeStartPreview",                 "(J)I", (void *) nativeStartPreview },
 	{ "nativeStopPreview",                  "(J)I", (void *) nativeStopPreview },
 	{ "nativeSetPreviewDisplay",            "(JLandroid/view/Surface;)I", (void *) nativeSetPreviewDisplay },
-    { "nativeGetByteArrayPicture",          "(J[B)I", (void *) nativeGetByteArrayPicture },
     { "nativeSetUserPalette",               "(JI[B)I", (void *) nativeSetUserPalette },
 	{ "nativeGetByteArrayTemperaturePara",  "(JI)[B", (void *) nativeGetByteArrayTemperaturePara },
 
