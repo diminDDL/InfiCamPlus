@@ -75,6 +75,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
     private Bitmap mTempBitmap;
     private boolean mReqesutCaptureStillImage;
     private Callback mCallback;
+
     /**
      * for calculation of frame rate
      */
@@ -445,7 +446,6 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
             if (mIsActive) {
                 mFpsCounter.count();
                 sendEmptyMessage(MSG_REQUEST_RENDER);
-
             }
         }
 
@@ -531,6 +531,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
             private GLDrawer2D1 mDrawer;
             private int mTexId = -1;
             private int[] mTexIds = {-1, -1, -1, -1};
+
             /**
              * SurfaceTexture instance to receive video images
              */
@@ -713,40 +714,6 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
 
             public void setTemperatureAnalysisMode(int mode) {
                 this.temperatureAnalysisMode = mode;
-            }
-
-            /**
-             * 浮点转换为字节
-             *
-             * @param f
-             * @return
-             */
-            public static byte[] float2byte(float f) {
-
-                // 把float转换为byte[]
-                int fbit = Float.floatToIntBits(f);
-
-                byte[] b = new byte[4];
-                for (int i = 0; i < 4; i++) {
-                    b[i] = (byte) (fbit >> (24 - i * 8));
-                }
-
-                // 翻转数组
-                int len = b.length;
-                // 建立一个与源数组元素类型相同的数组
-                byte[] dest = new byte[len];
-                // 为了防止修改源数组，将源数组拷贝一份副本
-                System.arraycopy(b, 0, dest, 0, len);
-                byte temp;
-                // 将顺位第i个与倒数第i个交换
-                for (int i = 0; i < len / 2; ++i) {
-                    temp = dest[i];
-                    dest[i] = dest[len - i - 1];
-                    dest[len - i - 1] = temp;
-                }
-
-                return dest;
-
             }
 
             public void setUnitTemperature(int mode) {

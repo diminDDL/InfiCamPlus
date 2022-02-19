@@ -41,4 +41,3 @@ public class SettingModel {
     public void getSetimage(int setimage){this.setimage = setimage;}
 
 }
-

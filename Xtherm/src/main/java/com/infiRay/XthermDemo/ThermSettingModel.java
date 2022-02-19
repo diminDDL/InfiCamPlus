@@ -29,6 +29,4 @@ public class ThermSettingModel {
     public String getOk() {
         return ok;
     }
-
 }
-
