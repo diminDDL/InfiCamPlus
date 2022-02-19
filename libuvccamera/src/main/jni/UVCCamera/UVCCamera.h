@@ -33,6 +33,7 @@
 #include <android/native_window.h>
 #include "UVCStatusCallback.h"
 #include "UVCPreview.h"
+
 #define	CTRL_SCANNING		0x000001	// D0:  Scanning Mode
 #define	CTRL_AE				0x000002	// D1:  Auto-Exposure Mode
 #define	CTRL_AE_PRIORITY	0x000004	// D2:  Auto-Exposure Priority
@@ -184,7 +185,6 @@ public:
 	int release();
 void whenShutRefresh() ;
 	int setStatusCallback(JNIEnv *env, jobject status_callback_obj);
-	int setButtonCallback(JNIEnv *env, jobject button_callback_obj);
     void SetUserPalette(uint8_t* palette,int typeOfPalette);
 	char *getSupportedSize();
 	int setPreviewSize(int width, int height, int min_fps, int max_fps, int mode, float bandwidth = DEFAULT_BANDWIDTH);
@@ -193,103 +193,7 @@ void whenShutRefresh() ;
 	int setTemperatureCallback(JNIEnv *env, jobject temperature_callback_obj);
 	int startPreview();
 	int stopPreview();
-	int setCaptureDisplay(ANativeWindow *capture_window);
 
-	int getCtrlSupports(uint64_t *supports);
-	int getProcSupports(uint64_t *supports);
-
-	int updateScanningModeLimit(int &min, int &max, int &def);
-	int setScanningMode(int mode);
-	int getScanningMode();
-	
-	int updateExposureModeLimit(int &min, int &max, int &def);
-	int setExposureMode(int mode);
-	int getExposureMode();
-
-	int updateExposurePriorityLimit(int &min, int &max, int &def);
-	int setExposurePriority(int priority);
-	int getExposurePriority();
-	
-	int updateExposureLimit(int &min, int &max, int &def);
-	int setExposure(int ae_abs);
-	int getExposure();
-	
-	int updateExposureRelLimit(int &min, int &max, int &def);
-	int setExposureRel(int ae_rel);
-	int getExposureRel();
-	
-	int updateAutoFocusLimit(int &min, int &max, int &def);
-	int setAutoFocus(bool autoFocus);
-	bool getAutoFocus();
-
-	int updateFocusLimit(int &min, int &max, int &def);
-	int setFocus(int focus);
-	int getFocus();
-
-	int updateFocusRelLimit(int &min, int &max, int &def);
-	int setFocusRel(int focus);
-	int getFocusRel();
-	
-/*	int updateFocusSimpleLimit(int &min, int &max, int &def);
-	int setFocusSimple(int focus);
-	int getFocusSimple(); */
-	
-	int updateIrisLimit(int &min, int &max, int &def);
-	int setIris(int iris);
-	int getIris();
-	
-	int updateIrisRelLimit(int &min, int &max, int &def);
-	int setIrisRel(int iris);
-	int getIrisRel();
-	
-	int updatePanLimit(int &min, int &max, int &def);
-	int setPan(int pan);
-	int getPan();
-	
-	int updateTiltLimit(int &min, int &max, int &def);
-	int setTilt(int tilt);
-	int getTilt();
-	
-	int updateRollLimit(int &min, int &max, int &def);
-	int setRoll(int roll);
-	int getRoll();
-	
-	int updatePanRelLimit(int &min, int &max, int &def);
-	int setPanRel(int pan_rel);
-	int getPanRel();
-	
-	int updateTiltRelLimit(int &min, int &max, int &def);
-	int setTiltRel(int tilt_rel);
-	int getTiltRel();
-	
-	int updateRollRelLimit(int &min, int &max, int &def);
-	int setRollRel(int roll_rel);
-	int getRollRel();
-	
-	int updatePrivacyLimit(int &min, int &max, int &def);
-	int setPrivacy(int privacy);
-	int getPrivacy();
-	
-	int updateAutoWhiteBlanceLimit(int &min, int &max, int &def);
-	int setAutoWhiteBlance(bool autoWhiteBlance);
-	bool getAutoWhiteBlance();
-
-	int updateAutoWhiteBlanceCompoLimit(int &min, int &max, int &def);
-	int setAutoWhiteBlanceCompo(bool autoWhiteBlanceCompo);
-	bool getAutoWhiteBlanceCompo();
-	
-	int updateWhiteBlanceLimit(int &min, int &max, int &def);
-	int setWhiteBlance(int temp);
-	int getWhiteBlance();
-
-	int updateWhiteBlanceCompoLimit(int &min, int &max, int &def);
-	int setWhiteBlanceCompo(int white_blance_compo);
-	int getWhiteBlanceCompo();
-	
-	int updateBacklightCompLimit(int &min, int &max, int &def);
-	int setBacklightComp(int backlight);
-	int getBacklightComp();
-	
 	int updateBrightnessLimit(int &min, int &max, int &def);
 	int setBrightness(int brightness);
 	int getBrightness();
@@ -298,65 +202,11 @@ void whenShutRefresh() ;
 	int setContrast(uint16_t contrast);
 	int getContrast();
 
-	int updateAutoContrastLimit(int &min, int &max, int &def);
-	int setAutoContrast(bool autoFocus);
-	bool getAutoContrast();
-
-	int updateSharpnessLimit(int &min, int &max, int &def);
-	int setSharpness(int sharpness);
-	int getSharpness();
-
-	int updateGainLimit(int &min, int &max, int &def);
-	int setGain(int gain);
-	int getGain();
-
-	int updateGammaLimit(int &min, int &max, int &def);
-	int setGamma(int gamma);
-	int getGamma();
-
-	int updateSaturationLimit(int &min, int &max, int &def);
-	int setSaturation(int saturation);
-	int getSaturation();
-
-	int updateHueLimit(int &min, int &max, int &def);
-	int setHue(int hue);
-	int getHue();
-
-	int updateAutoHueLimit(int &min, int &max, int &def);
-	int setAutoHue(bool autoFocus);
-	bool getAutoHue();
-	
-	int updatePowerlineFrequencyLimit(int &min, int &max, int &def);
-	int setPowerlineFrequency(int frequency);
-	int getPowerlineFrequency();
-
-	int updateZoomLimit(int &min, int &max, int &def);
 	int setZoom(int zoom);
-	int getZoom();
-	
-	int updateZoomRelLimit(int &min, int &max, int &def);
-	int setZoomRel(int zoom);
-	int getZoomRel();
-	
-	int updateDigitalMultiplierLimit(int &min, int &max, int &def);
-	int setDigitalMultiplier(int multiplier);
-	int getDigitalMultiplier();
-	
-	int updateDigitalMultiplierLimitLimit(int &min, int &max, int &def);
-	int setDigitalMultiplierLimit(int multiplier_limit);
-	int getDigitalMultiplierLimit();
-	
-	int updateAnalogVideoStandardLimit(int &min, int &max, int &def);
-	int setAnalogVideoStandard(int standard);
-	int getAnalogVideoStandard();
-	
-	int updateAnalogVideoLockStateLimit(int &min, int &max, int &def);
-	int setAnalogVideoLockState(int status);
-	int getAnalogVideoLockState();
+
 	int stopTemp();
 	int startTemp();
-	int stopCapture();
-	int startCapture();
+
 	void changePalette(int typeOfPalette);
 	void setTempRange(int range);
 	void setShutterFix(float mShutterFix);
@@ -364,7 +214,6 @@ void whenShutRefresh() ;
 	int getByteArrayPicture(uint8_t* frame);
 	int getByteArrayTemperaturePara(uint8_t* para);
 	void whenChangeTempPara();
-
 };
 
 #endif /* UVCCAMERA_H_ */

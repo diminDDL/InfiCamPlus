@@ -66,19 +66,14 @@ UVCPreviewIR::UVCPreviewIR(uvc_device_handle_t *devh)
 	frameHeight(DEFAULT_PREVIEW_HEIGHT),
 	frameBytes(DEFAULT_PREVIEW_WIDTH * DEFAULT_PREVIEW_HEIGHT * 2),	// YUYV
 	frameMode(0),
-	previewBytes(DEFAULT_PREVIEW_WIDTH * DEFAULT_PREVIEW_HEIGHT * PREVIEW_PIXEL_BYTES),
 	previewFormat(WINDOW_FORMAT_RGBX_8888),
 	mIsRunning(false),
 	isNeedWriteTable(true),
 	frameNumber(0),
-	had_recycled_frame(0),
 	mIsCapturing(false),
 	mIsTemperaturing(false),
-
 	mFrameCallbackObj(NULL),
-	mFrameCallbackFunc(NULL),
-	mTemperatureCallbackObj(NULL),
-	callbackPixelBytes(2)
+	mTemperatureCallbackObj(NULL)
 {
 	ENTER();
 	mIsComputed=true;
@@ -257,43 +252,6 @@ int UVCPreviewIR::setTemperatureCallback(JNIEnv *env,jobject temperature_callbac
 	}
     pthread_mutex_unlock(&temperature_mutex);
 	RETURN(0, int);
-}
-
-void UVCPreviewIR::callbackPixelFormatChanged() {
-////LOGE("callbackPixelFormatChanged");
-	mFrameCallbackFunc = NULL;
-	const size_t sz = requestWidth * requestHeight;
-	////LOGE("callbackPixelFormatChanged requestWidth:%d,requestHeight:%d",requestWidth,requestHeight);
-	switch (mPixelFormat) {
-	  case PIXEL_FORMAT_RAW:
-		////LOGE("PIXEL_FORMAT_RAW:");
-		callbackPixelBytes = sz * 2;
-		break;
-	  case PIXEL_FORMAT_YUV:
-		////LOGE("PIXEL_FORMAT_YUV:");
-		callbackPixelBytes = sz * 2;
-		break;
-	  case PIXEL_FORMAT_RGB565:
-		////LOGE("PIXEL_FORMAT_RGB565:");
-		mFrameCallbackFunc = uvc_any2rgb565;
-		callbackPixelBytes = sz * 2;
-		break;
-	  case PIXEL_FORMAT_RGBX:
-		////LOGE("PIXEL_FORMAT_RGBX:");
-		mFrameCallbackFunc = uvc_any2rgbx;
-		callbackPixelBytes = sz * 4;
-		break;
-	  case PIXEL_FORMAT_YUV20SP:
-		////LOGE("PIXEL_FORMAT_YUV20SP:");
-		mFrameCallbackFunc = uvc_yuyv2iyuv420SP;
-		callbackPixelBytes = (sz * 3) / 2;
-		break;
-	  case PIXEL_FORMAT_NV21:
-		////LOGE("PIXEL_FORMAT_NV21:");
-		mFrameCallbackFunc = uvc_yuyv2yuv420SP;
-		callbackPixelBytes = (sz * 3) / 2;
-		break;
-	}
 }
 
 void UVCPreviewIR::clearDisplay() {
@@ -553,7 +511,6 @@ int UVCPreviewIR::prepare_preview(uvc_stream_ctrl_t *ctrl) {
 		}
 		frameMode = requestMode;
 		frameBytes = frameWidth * frameHeight * (!requestMode ? 2 : 4);
-		previewBytes = frameWidth * frameHeight * PREVIEW_PIXEL_BYTES;
 	}
 	else
 	 {
@@ -993,43 +950,6 @@ int UVCPreviewIR:: getByteArrayTemperaturePara(uint8_t* para){
         return true;
 }
 
-int UVCPreviewIR::setCaptureDisplay(ANativeWindow *capture_window) {
-	/*ENTER();
-	////LOGE("setCaptureDisplay");
-	pthread_mutex_lock(&capture_mutex);
-	{
-		if (isRunning() && isCapturing()) {
-			mIsCapturing = false;
-			if (mCaptureWindow) {
-				pthread_cond_signal(&capture_sync);
-				pthread_cond_wait(&capture_sync, &capture_mutex);	// wait finishing capturing
-			}
-		}
-		if (mCaptureWindow != capture_window) {
-			// release current Surface if already assigned.
-			if (UNLIKELY(mCaptureWindow))
-				ANativeWindow_release(mCaptureWindow);
-			mCaptureWindow = capture_window;
-			// if you use Surface came from MediaCodec#createInputSurface
-			// you could not change window format at least when you use
-			// ANativeWindow_lock / ANativeWindow_unlockAndPost
-			// to write frame data to the Surface...
-			// So we need check here.
-			if (mCaptureWindow) {
-				int32_t window_format = ANativeWindow_getFormat(mCaptureWindow);
-				if ((window_format != WINDOW_FORMAT_RGB_565)
-					&& (previewFormat == WINDOW_FORMAT_RGB_565)) {
-					////LOGE("window format mismatch, cancelled movie capturing.");
-					ANativeWindow_release(mCaptureWindow);
-					mCaptureWindow = NULL;
-				}
-			}
-		}
-	}
-	pthread_mutex_unlock(&capture_mutex);
-	RETURN(0, int);*/
-}
-
 int UVCPreviewIR::stopTemp(){
     ENTER();
 	pthread_mutex_lock(&temperature_mutex);
@@ -1076,78 +996,6 @@ ENTER();
 	RETURN(0, int);
 }
 
-int UVCPreviewIR::stopCapture(){
-    ENTER();
-	pthread_mutex_lock(&capture_mutex);
-	{
-		if (isRunning() && mIsCapturing)
-		 {
-	        ////LOGE("stopCapture");
-			mIsCapturing = false;
-			pthread_cond_signal(&capture_sync);
-			pthread_cond_wait(&capture_sync, &capture_mutex);	// wait finishing Temperatur
-		}
-	}
-	pthread_mutex_unlock(&capture_mutex);
-    if (pthread_join(capture_thread, NULL) != EXIT_SUCCESS)
-    {
-        ////LOGE("UVCPreviewIR::stopCapture capture_thread: pthread_join failed");
-    }
-    else
-    {
-        ////LOGE("UVCPreviewIR::stopCapture capture_thread: pthread_join success");
-    }
-	RETURN(0, int);
-}
-
-int UVCPreviewIR::startCapture(){
-ENTER();
-	pthread_mutex_lock(&capture_mutex);
-	{
-		if (isRunning()&&(!mIsCapturing))
-		 {
-	        ////LOGE("startTemp");
-			mIsCapturing = true;
-		 }
-	}
-	pthread_mutex_unlock(&capture_mutex);
-	if(pthread_create(&capture_thread, NULL, capture_thread_func, (void *)this)==0)
-	{
-	    ////LOGE("UVCPreviewIR::startCapture capture_thread: pthread_create success");
-	}
-	else
-	{
-	    ////LOGE("UVCPreviewIR::startCapture capture_thread: pthread_create failed");
-	}
-	RETURN(0, int);
-}
-
-//======================================================================
-/*
- * thread function
- * @param vptr_args pointer to UVCPreviewIR instance
- */
-// static
-void *UVCPreviewIR::capture_thread_func(void *vptr_args) {
-	int result;
-////LOGE("capture_thread_func");
-	ENTER();
-	UVCPreviewIR *preview = reinterpret_cast<UVCPreviewIR *>(vptr_args);
-	if (LIKELY(preview)) {
-		JavaVM *vm = getVM();
-		JNIEnv *env;
-		// attach to JavaVM
-		vm->AttachCurrentThread(&env, NULL);
-		////LOGE("capture_thread_func do_capture");
-		preview->do_capture(env);	// never return until finish previewing
-		// detach from JavaVM
-		vm->DetachCurrentThread();
-		MARK("DetachCurrentThread");
-	}
-	PRE_EXIT();
-	pthread_exit(NULL);
-}
-
 //======================================================================
 /*
  * thread function for ir
@@ -1174,40 +1022,6 @@ void *UVCPreviewIR::temperature_thread_func(void *vptr_args)
 	}
 	PRE_EXIT();
 	pthread_exit(NULL);
-}
-
-/**
- * the actual function for capturing
- */
-void UVCPreviewIR::do_capture(JNIEnv *env)
- {
-	ENTER();
-    ////LOGE("do_capture");
-	 for (; isRunning()&&mIsCapturing;)
-    {
-        ////LOGE("do_capture00");
-        pthread_mutex_lock(&capture_mutex);
-        {
-            ////LOGE("do_capture01");
-            pthread_cond_wait(&capture_sync, &capture_mutex);
-            ////LOGE("do_capture02");
-            if(LIKELY(OutPixelFormat==3))//RGBA 32bit输出
-            {
-                ////LOGE("do_capture03");
-                do_capture_callback(env, RgbaOutBuffer);
-            }
-            else if(UNLIKELY(OutPixelFormat==1))//YUYV或者原始数据输出16bit
-            {
-                ////LOGE("do_capture04");
-                do_capture_callback(env, OutBuffer);
-            }
-            ////LOGE("do_capture05");
-        }
-        pthread_mutex_unlock(&capture_mutex);
-    }
-    pthread_cond_broadcast(&capture_sync);
-    ////LOGE("do_capture EXIT");
-	EXIT();
 }
 
 /**
@@ -1326,34 +1140,6 @@ void UVCPreviewIR::setUserPalette(uint8_t* palette,int typeOfPalette)
      memcpy(UserPalette,palette,3*256*sizeof(unsigned char));
      mTypeOfPalette=typeOfPalette;
  }
-
-/**
- * call IFrameCallback#onFrame if needs
- */
-void UVCPreviewIR::do_capture_callback(JNIEnv *env, uint8_t *frameData) {
-	ENTER();
-    ////LOGE("do_capture_callback");
-	if (LIKELY(mFrameCallbackObj))
-	{
-	    jobject buf;
-	    ////LOGE("do_capture_callback NewDirectByteBuffer");
-	    if(LIKELY(OutPixelFormat==3))//RGBA 32bit输出
-	    {
-		    buf = env->NewDirectByteBuffer(frameData, requestWidth*(requestHeight-4)*4);
-	        ////LOGE("do_capture_callback01 frameData[384*288*4/2]:%d",frameData[384*288*4/2]);
-		    env->CallVoidMethod(mFrameCallbackObj, iframecallback_fields.onFrame, buf);
-	    }
-	    else if(UNLIKELY(OutPixelFormat==1))//YUYV或者原始数据输出16bit
-	    {
-	        buf = env->NewDirectByteBuffer(frameData, requestWidth*(requestHeight-4)*2);
-	        ////LOGE("do_capture_callback02 frameData[384*288*2/2]:%d",frameData[384*288*2/2]);
-            env->CallVoidMethod(mFrameCallbackObj, iframecallback_fields.onFrame, buf);
-	    }
-		env->ExceptionClear();
-		env->DeleteLocalRef(buf);
-	}
-	EXIT();
-}
 
 void UVCPreviewIR::changePalette(int typeOfPalette){
     ENTER();

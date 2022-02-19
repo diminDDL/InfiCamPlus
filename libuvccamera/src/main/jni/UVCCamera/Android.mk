@@ -137,7 +137,6 @@ LOCAL_SRC_FILES := \
 		_onload.cpp \
 		utilbase.cpp \
 		UVCCamera.cpp \
-		UVCPreview.cpp \
 		UVCPreviewIR.cpp \
 		UVCStatusCallback.cpp \
 		Parameters.cpp \

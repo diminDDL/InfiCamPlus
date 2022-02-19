@@ -29,7 +29,6 @@
 #include "UVCPreview.h"
 #include <pthread.h>
 #include <android/native_window.h>
-#include "objectarray.h"
 
 struct irBuffer//使用专业级图像算法所需要的缓存
 {
@@ -41,7 +40,6 @@ class UVCPreviewIR:public UVCPreview{
 private:
 	inline const bool isRunning() const;
 	inline const bool isComputed() const;
-	inline const bool isCapturing() const;
     unsigned short *mInitData;
 	uvc_device_handle_t *mDeviceHandle;
 	float *mTemperatureMeasure;
@@ -62,44 +60,19 @@ private:
 	pthread_t preview_thread;
 	pthread_mutex_t preview_mutex;
 	pthread_cond_t preview_sync;
-	bool had_recycled_frame;
-	ObjectArray<uvc_frame_t *> previewFrames;
-	bool add_frame_to_pool_queue(uvc_frame_t *frame);
 	void signal_receive_frame_data();
-	void addPreviewFrame(uvc_frame_t *frame);
-	uvc_frame_t *get_first_preview_frame() ;
-	uvc_frame_t *waitFrame();
 	int previewFormat;
-	size_t previewBytes;
 	int copyToSurface(uint8_t *frameData, ANativeWindow **window);
 //
 	volatile bool mIsCapturing;
     volatile bool mIsComputed;
 	ANativeWindow *mCaptureWindow;
-	pthread_t capture_thread;
 	pthread_mutex_t capture_mutex;
 	pthread_cond_t capture_sync;
-	uvc_frame_t *captureQueu;// keep latest frame
 	jobject mFrameCallbackObj;
-	convFunc_t mFrameCallbackFunc;
 	Fields_iframecallback iframecallback_fields;
 	Fields_iTemperatureCallback iTemperatureCallback;
-	int mPixelFormat;
-	size_t callbackPixelBytes;
 // improve performance by reducing memory allocation
-	pthread_mutex_t pool_mutex;
-	pthread_mutex_t preview_pool_mutex;
-	ObjectArray<uvc_frame_t *> mFramePool;
-	uvc_frame_t *get_frame(size_t data_bytes);
-	uvc_frame_t *get_preview_frame(size_t data_bytes);
-	void recycle_frame(uvc_frame_t *frame);
-	void recycle_preview_frame(uvc_frame_t *frame);
-	void init_pool(size_t data_bytes);
-	void init_preview_pool(size_t data_bytes);
-	void clear_pool();
-	void clear_preview_pool();
-	int tempIndex;
-	uvc_error_t when_cb_uvc_duplicate_frame(uvc_frame_t *frame,uvc_frame_t *copy);
     irBuffer* irBuffers;
 //ir temperature
     bool mIsTemperaturing;
@@ -109,13 +82,9 @@ private:
 	uvc_frame_t *temperatureQueu;
 	uvc_frame_t *ReadyToShow;
 	jobject mTemperatureCallbackObj;
-static void *temperature_thread_func(void *vptr_args);
-void do_temperature(JNIEnv *env);
-void addTemperatureFrame(uint8_t *frame);
-uvc_frame_t  *waitTemperatureFrame();
-inline  bool isTemperaturing();
-void do_temperature_idle_loop(JNIEnv *env);
-void do_temperature_callback(JNIEnv *env, uint8_t *frameData);
+    static void *temperature_thread_func(void *vptr_args);
+    void do_temperature(JNIEnv *env);
+    void do_temperature_callback(JNIEnv *env, uint8_t *frameData);
 
 	//ir temp para
     int mTempRange;
@@ -167,28 +136,10 @@ void do_temperature_callback(JNIEnv *env, uint8_t *frameData);
 //
 	void clearDisplay();
 	static void uvc_preview_frame_callback(uint8_t *frame, void *vptr_args,size_t hold_bytes);
-	void addFrame();
-	uvc_frame_t *waitPreviewFrame();
-	void clearPreviewFrame();
 	static void *preview_thread_func(void *vptr_args);
 	int prepare_preview(uvc_stream_ctrl_t *ctrl);
 	void do_preview(uvc_stream_ctrl_t *ctrl);
 	void draw_preview_one(uint8_t* frameData, ANativeWindow **window, convFunc_t func, int pixelBytes);
-//
-	void addCaptureFrame(uvc_frame_t *frame);
-	uvc_frame_t *waitCaptureFrame();
-	static void *capture_thread_func(void *vptr_args);
-	void do_capture(JNIEnv *env);
-	void do_capture_surface(JNIEnv *env);
-	void do_capture_idle_loop(JNIEnv *env);
-	void do_capture_callback(JNIEnv *env, uint8_t *frame);
-	void callbackPixelFormatChanged();
-	void SetShutValue(uint16_t value);
-	void cpyAlterParaInvariability(uint8_t *frameData);
-
-
-
-
 
 public:
     UVCPreviewIR();
@@ -203,15 +154,12 @@ public:
 	int stopPreview();
 	int stopTemp();
 	int startTemp();
-    int stopCapture();
-    int startCapture();
 	void changePalette(int typeOfPalette);
 	void setTempRange(int range);
 	void setShutterFix(float mShutterFix);
 	void setCameraLens(int mCameraLens);
 	int getByteArrayPicture(uint8_t* frame);
 	int getByteArrayTemperaturePara(uint8_t* para);
-	int setCaptureDisplay(ANativeWindow *capture_window);
 	void setUserPalette(uint8_t* palette,int typeOfPalette);
 };
 

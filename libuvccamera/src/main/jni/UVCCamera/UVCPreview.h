@@ -67,15 +67,12 @@ public:
 	virtual int stopPreview()=0;
 	virtual int stopTemp()=0;
 	virtual int startTemp()=0;
-    virtual int stopCapture()=0;
-    virtual int startCapture()=0;
 	virtual void changePalette(int typeOfPalette)=0;
 	virtual void setTempRange(int range)=0;
 	virtual void setShutterFix(float mShutterFix)=0;
 	virtual void setCameraLens(int mCameraLens)=0;
 	virtual int getByteArrayPicture(uint8_t* frame)=0;
 	virtual int getByteArrayTemperaturePara(uint8_t* para)=0;
-	virtual int setCaptureDisplay(ANativeWindow *capture_window)=0;
 	virtual void setUserPalette(uint8_t* palette,int typeOfPalette)=0;
 
 };
