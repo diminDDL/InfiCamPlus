@@ -51,6 +51,7 @@
 UVCPreviewIR::UVCPreviewIR(){
 
 }
+
 UVCPreviewIR::UVCPreviewIR(uvc_device_handle_t *devh)
 :	mPreviewWindow(NULL),
 	mCaptureWindow(NULL),
@@ -133,7 +134,6 @@ UVCPreviewIR::~UVCPreviewIR() {
     ////LOGE("~UVCPreviewIR() 8");
 	EXIT();
 }
-
 
 inline const bool UVCPreviewIR::isRunning() const {return mIsRunning; }
 inline const bool UVCPreviewIR::isComputed() const {return mIsComputed; }
@@ -219,6 +219,7 @@ int UVCPreviewIR::setFrameCallback(JNIEnv *env, jobject frame_callback_obj, int 
 	pthread_mutex_unlock(&capture_mutex);
 	RETURN(0, int);
 }
+
 int UVCPreviewIR::setTemperatureCallback(JNIEnv *env,jobject temperature_callback_obj){
 	ENTER();
 	//pthread_create(&temperature_thread, NULL, temperature_thread_func, (void *)this);
@@ -465,11 +466,11 @@ void UVCPreviewIR::uvc_preview_frame_callback(uint8_t *frameData, void *vptr_arg
     }
     //LOGE("uvc_preview_frame_callback03");
 }
+
 void UVCPreviewIR::signal_receive_frame_data()
 {
     pthread_cond_signal(&preview_sync);
 }
-
 
 void *UVCPreviewIR::preview_thread_func(void *vptr_args)
  {
@@ -703,7 +704,6 @@ static void copyFrame(const uint8_t *src, uint8_t *dest, const int width, int he
 
 	////LOGE("copyFrame2");
 }
-
 
 // transfer specific frame data to the Surface(ANativeWindow)
 int UVCPreviewIR::copyToSurface(uint8_t *frameData, ANativeWindow **window) {
@@ -952,9 +952,6 @@ void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow **window, 
         }
  }
 
-
-
-
 int UVCPreviewIR:: getByteArrayPicture(uint8_t* frame)
 {
     return 0;
@@ -995,11 +992,7 @@ int UVCPreviewIR:: getByteArrayTemperaturePara(uint8_t* para){
       //  //////LOGE("getByteArrayTemperaturePara:%d,%d,%d,%d,%d,%d",para[16],para[17],para[18],para[19],para[20],para[21]);
         return true;
 }
-//======================================================================
-//
-//======================================================================
-inline const bool UVCPreviewIR::isCapturing() const { return mIsCapturing; }
-inline  bool UVCPreviewIR::isTemperaturing()  { return mIsTemperaturing; }
+
 int UVCPreviewIR::setCaptureDisplay(ANativeWindow *capture_window) {
 	/*ENTER();
 	////LOGE("setCaptureDisplay");
@@ -1036,6 +1029,7 @@ int UVCPreviewIR::setCaptureDisplay(ANativeWindow *capture_window) {
 	pthread_mutex_unlock(&capture_mutex);
 	RETURN(0, int);*/
 }
+
 int UVCPreviewIR::stopTemp(){
     ENTER();
 	pthread_mutex_lock(&temperature_mutex);
@@ -1059,6 +1053,7 @@ int UVCPreviewIR::stopTemp(){
     }
 	RETURN(0, int);
 }
+
 int UVCPreviewIR::startTemp(){
 ENTER();
 	pthread_mutex_lock(&temperature_mutex);
@@ -1080,6 +1075,7 @@ ENTER();
 	}
 	RETURN(0, int);
 }
+
 int UVCPreviewIR::stopCapture(){
     ENTER();
 	pthread_mutex_lock(&capture_mutex);
@@ -1103,6 +1099,7 @@ int UVCPreviewIR::stopCapture(){
     }
 	RETURN(0, int);
 }
+
 int UVCPreviewIR::startCapture(){
 ENTER();
 	pthread_mutex_lock(&capture_mutex);
@@ -1124,6 +1121,7 @@ ENTER();
 	}
 	RETURN(0, int);
 }
+
 //======================================================================
 /*
  * thread function
@@ -1149,6 +1147,7 @@ void *UVCPreviewIR::capture_thread_func(void *vptr_args) {
 	PRE_EXIT();
 	pthread_exit(NULL);
 }
+
 //======================================================================
 /*
  * thread function for ir
@@ -1210,6 +1209,7 @@ void UVCPreviewIR::do_capture(JNIEnv *env)
     ////LOGE("do_capture EXIT");
 	EXIT();
 }
+
 /**
  * the actual function for temperature
  */
@@ -1237,6 +1237,7 @@ void UVCPreviewIR::do_temperature(JNIEnv *env)
     ////LOGE("do_temperature EXIT");
 	EXIT();
 }
+
 void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData)
 {
 
@@ -1305,7 +1306,6 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData)
 	EXIT();
 }
 
-
 //打快门更新表
 void UVCPreviewIR::whenShutRefresh()
 {
@@ -1327,9 +1327,8 @@ void UVCPreviewIR::setUserPalette(uint8_t* palette,int typeOfPalette)
      mTypeOfPalette=typeOfPalette;
  }
 
-
 /**
-* call IFrameCallback#onFrame if needs
+ * call IFrameCallback#onFrame if needs
  */
 void UVCPreviewIR::do_capture_callback(JNIEnv *env, uint8_t *frameData) {
 	ENTER();
@@ -1355,24 +1354,28 @@ void UVCPreviewIR::do_capture_callback(JNIEnv *env, uint8_t *frameData) {
 	}
 	EXIT();
 }
+
 void UVCPreviewIR::changePalette(int typeOfPalette){
     ENTER();
     mTypeOfPalette=typeOfPalette;
     EXIT();
 }
+
 void UVCPreviewIR::setTempRange(int range){
     ENTER();
-    rangeMode=range;
+    rangeMode = range;
     EXIT();
 }
+
 void UVCPreviewIR::setShutterFix(float mShutterFix){
     ENTER();
-    shutterFix=mShutterFix;
+    shutterFix = mShutterFix;
     EXIT();
 }
+
 void UVCPreviewIR::setCameraLens(int mCameraLens){
     ENTER();
-    cameraLens=mCameraLens;
+    cameraLens = mCameraLens;
     //LOGE("setCameraLens:%d\n",cameraLens);
     EXIT();
 }

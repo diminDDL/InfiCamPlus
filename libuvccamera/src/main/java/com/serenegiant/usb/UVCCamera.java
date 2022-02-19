@@ -1340,15 +1340,3 @@ public class UVCCamera {
 
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
