@@ -299,16 +299,6 @@ int UVCPreviewIR::stopPreview() {
         delete[] RgbaHoldBuffer;
     }
     //释放专业图像算法占用的资源
-    if(OUTPUTMODE==4)
-    {
-        SimplePictureProcessingDeinit();
-        if(irBuffers[0].midVar!=NULL)
-        {
-            SimplePictureProcessingDeinitMidVar(irBuffers[0].midVar);
-            free(irBuffers[0].midVar);
-            irBuffers[0].midVar=NULL;
-        }
-    }
     if(irBuffers[0].destBuffer!=NULL)
     {
         free(irBuffers[0].destBuffer);
@@ -387,21 +377,6 @@ int UVCPreviewIR::prepare_preview(uvc_stream_ctrl_t *ctrl) {
     paletteRainbow = getPalette(2);//224*3 彩虹2
     paletteHighRainbow = getPalette(3);//448*3 高动态彩虹
     paletteHighContrast = getPalette(4);//448*3 高对比彩虹
-    //初始化专业级图像算法
-    if(OUTPUTMODE==4)
-    {
-        irBuffers = (irBuffer*)malloc(1 * sizeof(*irBuffers));
-        if(!irBuffers)
-        {
-            printf("Out of memory\n");
-            return 0;
-        }
-        SimplePictureProcessingInit(requestWidth,(requestHeight-4));
-        SetParameter(100,0.5f,0.1f,0.1f,1.0f,3.5f);
-        irBuffers[0].midVar=(size_t**)calloc (7,sizeof(size_t*));
-        SimplePictureProcessingInitMidVar(irBuffers[0].midVar);
-        irBuffers[0].destBuffer=(unsigned char*)calloc(requestWidth*(requestHeight-4)*4,sizeof(unsigned char));
-    }
 
     mInitData=new unsigned short[requestWidth*(requestHeight-4)+10];
 	result = uvc_get_stream_ctrl_format_size_fps(mDeviceHandle, ctrl,
@@ -1049,8 +1024,6 @@ void UVCPreviewIR::whenShutRefresh()
 void UVCPreviewIR::setUserPalette(uint8_t* palette,int typeOfPalette)
  {
      ////LOGE("SetUserPalette OUT:%X\n",palette);
-     SetUserPalette(palette,typeOfPalette);//c语言里的函数，开头大写区分S
-
      memcpy(UserPalette,palette,3*256*sizeof(unsigned char));
      mTypeOfPalette=typeOfPalette;
  }
