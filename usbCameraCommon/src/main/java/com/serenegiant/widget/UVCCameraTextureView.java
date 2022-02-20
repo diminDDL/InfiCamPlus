@@ -46,7 +46,7 @@ import com.serenegiant.encoder.IVideoEncoder;
 import com.serenegiant.encoder.MediaEncoder;
 import com.serenegiant.encoder.MediaVideoEncoder;
 import com.serenegiant.glutils.EGLBase;
-import com.serenegiant.usb.ITemperatureCallback;
+import com.serenegiant.ITemperatureCallback;
 import com.serenegiant.utils.FpsCounter;
 
 import java.text.DecimalFormat;

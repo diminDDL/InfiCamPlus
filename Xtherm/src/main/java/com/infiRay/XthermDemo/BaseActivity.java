@@ -21,35 +21,35 @@
  *  may have a different license, see the respective files.
  */
 
-package com.serenegiant.common;
+package com.infiRay.XthermDemo;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Fragment;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
+import com.serenegiant.uvccamera.R;
 
 import com.serenegiant.dialog.MessageDialogFragment;
 import com.serenegiant.utils.BuildCheck;
 import com.serenegiant.utils.HandlerThreadHandler;
 import com.serenegiant.utils.PermissionCheck;
-import com.serenegiant.uvccamera.R;
 
 /**
- * Created by saki on 2016/11/19.
+ * Created by saki on 2016/11/18.
  *
  */
-public class BaseFragment extends Fragment
+public class BaseActivity extends AppCompatActivity
 	implements MessageDialogFragment.MessageDialogListener {
 
 	private static boolean DEBUG = false;	// FIXME 実働時はfalseにセットすること
-	private static final String TAG = BaseFragment.class.getSimpleName();
+	private static final String TAG = BaseActivity.class.getSimpleName();
 
 	/** UI操作のためのHandler */
 	private final Handler mUIHandler = new Handler(Looper.getMainLooper());
@@ -58,12 +58,8 @@ public class BaseFragment extends Fragment
 	private Handler mWorkerHandler;
 	private long mWorkerThreadID = -1;
 
-	public BaseFragment() {
-		super();
-	}
-
 	@Override
-	public void onCreate(final Bundle savedInstanceState) {
+	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		// ワーカースレッドを生成
 		if (mWorkerHandler == null) {
@@ -73,13 +69,13 @@ public class BaseFragment extends Fragment
 	}
 
 	@Override
-	public void onPause() {
+	protected void onPause() {
 		clearToast();
 		super.onPause();
 	}
 
 	@Override
-	public synchronized void onDestroy() {
+	protected synchronized void onDestroy() {
 		// ワーカースレッドを破棄
 		if (mWorkerHandler != null) {
 			try {
@@ -202,9 +198,9 @@ public class BaseFragment extends Fragment
 				}
 				if (args != null) {
 					final String _msg = getString(msg, args);
-					mToast = Toast.makeText(getActivity(), _msg, Toast.LENGTH_SHORT);
+					mToast = Toast.makeText(BaseActivity.this, _msg, Toast.LENGTH_SHORT);
 				} else {
-					mToast = Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT);
+					mToast = Toast.makeText(BaseActivity.this, msg, Toast.LENGTH_SHORT);
 				}
 				mToast.show();
 			} catch (final Exception e) {
@@ -224,6 +220,7 @@ public class BaseFragment extends Fragment
 	@SuppressLint("NewApi")
 	@Override
 	public void onMessageDialogResult(final MessageDialogFragment dialog, final int requestCode, final String[] permissions, final boolean result) {
+        Log.e(TAG, "onMessageDialogResult" );
 		if (result) {
 			// メッセージダイアログでOKを押された時はパーミッション要求する
 			if (BuildCheck.isMarshmallow()) {
@@ -233,7 +230,7 @@ public class BaseFragment extends Fragment
 		}
 		// メッセージダイアログでキャンセルされた時とAndroid6でない時は自前でチェックして#checkPermissionResultを呼び出す
 		for (final String permission: permissions) {
-			checkPermissionResult(requestCode, permission, PermissionCheck.hasPermission(getActivity(), permission));
+			checkPermissionResult(requestCode, permission, PermissionCheck.hasPermission(this, permission));
 		}
 	}
 
@@ -277,7 +274,6 @@ public class BaseFragment extends Fragment
 	// 動的パーミッション要求時の要求コード
 	protected static final int REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE = 0x12345;
 	protected static final int REQUEST_PERMISSION_AUDIO_RECORDING = 0x234567;
-	protected static final int REQUEST_PERMISSION_NETWORK = 0x345678;
 	protected static final int REQUEST_PERMISSION_CAMERA = 0x537642;
 
 	/**
@@ -286,13 +282,20 @@ public class BaseFragment extends Fragment
 	 * @return true 外部ストレージへの書き込みパーミッションが有る
 	 */
 	protected boolean checkPermissionWriteExternalStorage() {
-		if (!PermissionCheck.hasWriteExternalStorage(getActivity())) {
+        Log.e(TAG, "checkPermissionWriteExternalStorage:%X"+this );
+		if (!PermissionCheck.hasWriteExternalStorage(this)) {
+            Log.e(TAG, "checkPermissionWriteExternalStorage: ready showDialog" );
 			MessageDialogFragment.showDialog(this, REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE,
-				R.string.permission_title,R.string.permission_ext_storage_request,
+                    R.string.per_title, R.string.per_storage,
 				new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE});
+            Log.e(TAG, "checkPermissionWriteExternalStorage: showDialog" );
 			return false;
 		}
 		return true;
+
+            //this.requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE);
+            //return true;
+
 	}
 
 	/**
@@ -301,25 +304,13 @@ public class BaseFragment extends Fragment
 	 * @return true 録音のパーミッションが有る
 	 */
 	protected boolean checkPermissionAudio() {
-		if (!PermissionCheck.hasAudio(getActivity())) {
+        Log.e(TAG, "checkPermissionAudio" );
+		if (!PermissionCheck.hasAudio(this)) {
+			Log.e(TAG, "checkPermissionAudio: ready showDialog" );
 			MessageDialogFragment.showDialog(this, REQUEST_PERMISSION_AUDIO_RECORDING,
-				R.string.permission_title,R.string.permission_audio_recording_request,
+				R.string.per_title, R.string.per_audio,
 				new String[]{Manifest.permission.RECORD_AUDIO});
-			return false;
-		}
-		return true;
-	}
-
-	/**
-	 * ネットワークアクセスのパーミッションが有るかどうかをチェック
-	 * なければ説明ダイアログを表示する
-	 * @return true ネットワークアクセスのパーミッションが有る
-	 */
-	protected boolean checkPermissionNetwork() {
-		if (!PermissionCheck.hasNetwork(getActivity())) {
-			MessageDialogFragment.showDialog(this, REQUEST_PERMISSION_NETWORK,
-				R.string.permission_title,R.string.permission_network_request,
-				new String[]{Manifest.permission.INTERNET});
+			Log.e(TAG, "checkPermissionAudio: showDialog" );
 			return false;
 		}
 		return true;
@@ -331,12 +322,13 @@ public class BaseFragment extends Fragment
 	 * @return true カメラアクセスのパーミッションが有る
 	 */
 	protected boolean checkPermissionCamera() {
-		if (!PermissionCheck.hasCamera(getActivity())) {
+		if (!PermissionCheck.hasCamera(this)) {
 			MessageDialogFragment.showDialog(this, REQUEST_PERMISSION_CAMERA,
-				R.string.permission_title, R.string.permission_camera_request,
+				R.string.per_title, R.string.per_camera,
 				new String[]{Manifest.permission.CAMERA});
 			return false;
 		}
 		return true;
 	}
+
 }

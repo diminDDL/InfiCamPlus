@@ -25,9 +25,8 @@ package com.serenegiant.usbcameracommon;
 
 import android.app.Activity;
 
-import com.serenegiant.usb.ITemperatureCallback;
-import com.serenegiant.usb.UVCCamera;
-import com.serenegiant.widget.CameraViewInterface;
+import com.serenegiant.ITemperatureCallback;
+import com.serenegiant.UVCCamera;
 import com.serenegiant.widget.UVCCameraTextureView;
 
 public class UVCCameraHandler extends AbstractUVCCameraHandler {

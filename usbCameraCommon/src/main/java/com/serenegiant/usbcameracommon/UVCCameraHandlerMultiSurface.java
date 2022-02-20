@@ -27,8 +27,7 @@ import android.app.Activity;
 import android.view.Surface;
 
 import com.serenegiant.glutils.RendererHolder;
-import com.serenegiant.usb.UVCCamera;
-import com.serenegiant.widget.CameraViewInterface;
+import com.serenegiant.UVCCamera;
 import com.serenegiant.widget.UVCCameraTextureView;
 
 public class UVCCameraHandlerMultiSurface extends AbstractUVCCameraHandler {

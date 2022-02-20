@@ -1,4 +1,4 @@
-package com.serenegiant.usb;
+package com.serenegiant;
 
 /**
  * Created by Administrator on 2017/11/1 0001.

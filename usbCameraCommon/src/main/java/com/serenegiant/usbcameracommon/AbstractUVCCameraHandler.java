@@ -40,7 +40,6 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
-import android.widget.Toast;
 
 
 import com.serenegiant.MyApp;
@@ -50,9 +49,9 @@ import com.serenegiant.encoder.MediaMuxerWrapper;
 import com.serenegiant.encoder.MediaSurfaceEncoder;
 import com.serenegiant.encoder.MediaVideoBufferEncoder;
 import com.serenegiant.encoder.MediaVideoEncoder;
-import com.serenegiant.usb.ITemperatureCallback;
-import com.serenegiant.usb.USBMonitor;
-import com.serenegiant.usb.UVCCamera;
+import com.serenegiant.ITemperatureCallback;
+import com.serenegiant.USBMonitor;
+import com.serenegiant.UVCCamera;
 import com.serenegiant.widget.UVCCameraTextureView;
 
 
@@ -65,7 +64,6 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.ByteBuffer;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;

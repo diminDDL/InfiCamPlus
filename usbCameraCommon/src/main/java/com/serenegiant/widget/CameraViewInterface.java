@@ -28,7 +28,7 @@ import android.graphics.SurfaceTexture;
 import android.view.Surface;
 
 import com.serenegiant.encoder.IVideoEncoder;
-import com.serenegiant.usb.ITemperatureCallback;
+import com.serenegiant.ITemperatureCallback;
 
 public interface CameraViewInterface extends IAspectRatioView {
 	public interface Callback {

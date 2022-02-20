@@ -23,28 +23,17 @@ package com.serenegiant.widget;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.text.DecimalFormat;
-import java.util.LinkedList;
 
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.Rect;
-import android.opengl.GLES10;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
-import android.util.Log;
 
 //import com.serenegiant.glutils.GLHelper;
 import com.serenegiant.MyApp;
 import com.serenegiant.glutils.IDrawer2D;
-import com.serenegiant.glutils.IDrawer2dES2;
 import com.serenegiant.glutils.ITexture;
 import com.serenegiant.glutils.TextureOffscreen;
-import com.serenegiant.usb.ITemperatureCallback;
 
 import static com.serenegiant.glutils.ShaderConst.*;
 

@@ -21,7 +21,7 @@
  *  may have a different license, see the respective files.
  */
 
-package com.serenegiant.usb;
+package com.serenegiant;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,9 +42,6 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.Spinner;
-
-import com.serenegiant.usb.DeviceFilter;
-import com.serenegiant.usb.USBMonitor;
 
 import com.serenegiant.uvccamera.R;
 

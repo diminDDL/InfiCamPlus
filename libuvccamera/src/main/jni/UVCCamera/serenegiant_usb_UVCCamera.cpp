@@ -462,11 +462,11 @@ static JNINativeMethod methods[] = {
 	{ "nativeConnect",                      "(JIIIIILjava/lang/String;)I", (void *) nativeConnect },
 	{ "nativeRelease",                      "(J)I", (void *) nativeRelease },
 
-	{ "nativeSetTemperatureCallback",       "(JLcom/serenegiant/usb/ITemperatureCallback;)I", (void *) nativeSetTemperatureCallback },
+	{ "nativeSetTemperatureCallback",       "(JLcom/serenegiant/ITemperatureCallback;)I", (void *) nativeSetTemperatureCallback },
     { "nativeWhenShutRefresh",              "(J)V", (void *) nativeWhenShutRefresh },
     { "nativeWhenChangeTempPara",           "(J)V", (void *) nativeWhenChangeTempPara },
 
-	{ "nativeSetStatusCallback",            "(JLcom/serenegiant/usb/IStatusCallback;)I", (void *) nativeSetStatusCallback },
+	{ "nativeSetStatusCallback",            "(JLcom/serenegiant/IStatusCallback;)I", (void *) nativeSetStatusCallback },
 
 	{ "nativeGetSupportedSize",             "(J)Ljava/lang/String;", (void *) nativeGetSupportedSize },
 	{ "nativeSetPreviewSize",               "(JIIIIIF)I", (void *) nativeSetPreviewSize },
@@ -497,7 +497,7 @@ static JNINativeMethod methods[] = {
 int register_uvccamera(JNIEnv *env) {
 	LOGV("register_uvccamera:");
 	if (registerNativeMethods(env,
-		"com/serenegiant/usb/UVCCamera",
+		"com/serenegiant/UVCCamera",
 		methods, NUM_ARRAY_ELEMENTS(methods)) < 0) {
 		return -1;
 	}

@@ -21,7 +21,7 @@
  *  may have a different license, see the respective files.
  */
 
-package com.serenegiant.usb;
+package com.serenegiant;
 
 import java.util.Locale;
 
