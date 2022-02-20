@@ -21,7 +21,7 @@
  *  may have a different license, see the respective files.
  */
 
-package com.serenegiant;
+package com.infiRay.XthermDemo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +43,8 @@ import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.Spinner;
 
+import com.serenegiant.DeviceFilter;
+import com.serenegiant.USBMonitor;
 import com.serenegiant.uvccamera.R;
 
 public class CameraDialog extends DialogFragment {

@@ -86,7 +86,6 @@ import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
 import com.serenegiant.MyApp;
 import com.serenegiant.encoder.MediaMuxerWrapper;
-import com.serenegiant.CameraDialog;
 import com.serenegiant.USBMonitor;
 import com.serenegiant.USBMonitor.OnDeviceConnectListener;
 import com.serenegiant.USBMonitor.UsbControlBlock;

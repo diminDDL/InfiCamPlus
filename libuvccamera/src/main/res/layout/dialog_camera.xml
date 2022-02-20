@@ -31,7 +31,7 @@
     android:paddingLeft="@dimen/horizontal_margin"
     android:paddingRight="@dimen/horizontal_margin"
     android:paddingTop="@dimen/vertical_margin"
-    tools:context="com.serenegiant.CameraDialog" >
+    tools:context="com.infiRay.XthermDemo.CameraDialog" >
 
     <Spinner
         android:id="@+id/spinner1"
