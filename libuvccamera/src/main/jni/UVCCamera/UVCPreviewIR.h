@@ -37,8 +37,6 @@
 #define DEFAULT_PREVIEW_MODE 0
 #define DEFAULT_BANDWIDTH 1.0f
 
-typedef uvc_error_t (*convFunc_t)(uvc_frame_t *in, uvc_frame_t *out);
-
 #define PIXEL_FORMAT_RAW 0		// same as PIXEL_FORMAT_YUV
 #define PIXEL_FORMAT_YUV 1
 #define PIXEL_FORMAT_RGB565 2
@@ -49,12 +47,6 @@ typedef uvc_error_t (*convFunc_t)(uvc_frame_t *in, uvc_frame_t *out);
 typedef struct {
 	jmethodID onReceiveTemperature;
 } Fields_iTemperatureCallback;
-
-struct irBuffer//使用专业级图像算法所需要的缓存
-{
-    size_t** midVar;
-    unsigned char* destBuffer;
-};
 
 class UVCPreviewIR {
 private:
@@ -69,8 +61,8 @@ private:
 	float requestBandwidth;
 	int frameWidth, frameHeight;
 	int frameMode;
-	unsigned char *OutBuffer;//使用完的buffer
-	unsigned char *HoldBuffer;// 充满新数据的buffer
+	unsigned char *OutBuffer; // 使用完的buffer
+	unsigned char *HoldBuffer; // 充满新数据的buffer
 	unsigned char *RgbaOutBuffer;
 	unsigned char *RgbaHoldBuffer;
 	size_t frameBytes;
@@ -83,9 +75,7 @@ private:
 
     volatile bool mIsComputed;
 	Fields_iTemperatureCallback iTemperatureCallback;
-// improve performance by reducing memory allocation
-    irBuffer* irBuffers;
-//ir temperature
+	//ir temperature
     bool mIsTemperaturing;
 	pthread_t temperature_thread;
 	pthread_mutex_t temperature_mutex;
@@ -131,7 +121,7 @@ private:
     unsigned short miny1;
     unsigned short t_min;
     unsigned short t_avg;
-    unsigned char paletteIronRainbow[65536 * 3];
+    unsigned char paletteIronRainbow[65536 * 3]; // TODO (netman) This is probably far bigger than sensible if this is right we expect at most 16384 possible temp values: https://github.com/mcguire-steve/ht301_ircam/blob/master/src/XthermDll.cpp
     unsigned char palette3[256*3];//256*3 彩虹1
     unsigned char paletteRainbow[65536 * 3];
     unsigned char paletteHighRainbow[65536 * 3];
@@ -143,7 +133,7 @@ private:
 	static void *preview_thread_func(void *vptr_args);
 	int prepare_preview(uvc_stream_ctrl_t *ctrl);
 	void do_preview(uvc_stream_ctrl_t *ctrl);
-	void draw_preview_one(uint8_t* frameData, ANativeWindow **window, convFunc_t func, int pixelBytes);
+	void draw_preview_one(uint8_t* frameData, ANativeWindow **window);
 
 public:
 	static const int START = 1;  // #1

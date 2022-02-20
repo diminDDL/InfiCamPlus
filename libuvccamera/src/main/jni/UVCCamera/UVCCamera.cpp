@@ -35,35 +35,28 @@
 	#define GET_RAW_DESCRIPTOR
 #endif
 
-//**********************************************************************
-//
-//**********************************************************************
 #include <stdlib.h>
 #include <linux/time.h>
 #include <unistd.h>
 #include <string.h>
 #include "UVCCamera.h"
 #include "UVCPreviewIR.h"
-//#include "UVCPreviewCommon.h"
 #include "Parameters.h"
 #include "libuvc_internal.h"
 
 #define	LOCAL_DEBUG 0
 
-//**********************************************************************
-//
-//**********************************************************************
 /**
  * コンストラクタ
  */
 UVCCamera::UVCCamera()
-:	mFd(0),
-	mUsbFs(NULL),
+:	mFd(-1),
 	mContext(NULL),
 	mDevice(NULL),
 	mDeviceHandle(NULL),
 	mStatusCallback(NULL),
 	mPreview(NULL) {
+
 	ENTER();
 
 	EXIT();
@@ -79,14 +72,9 @@ UVCCamera::~UVCCamera() {
 		uvc_exit(mContext);
 		mContext = NULL;
 	}
-	if (mUsbFs) {
-		free(mUsbFs);
-		mUsbFs = NULL;
-	}
 	EXIT();
 }
 
-//======================================================================
 /**
  * カメラへ接続する
  */
@@ -95,11 +83,8 @@ int UVCCamera::connect(int vid, int pid, int fd, int busnum, int devaddr, const 
 	LOGE("UVCCamera connect vid:%d,pid:%d",vid,pid);
 	uvc_error_t result = UVC_ERROR_BUSY;
 	if (!mDeviceHandle && fd) {
-		if (mUsbFs)
-			free(mUsbFs);
-		mUsbFs = strdup(usbfs);
 		if (UNLIKELY(!mContext)) {
-			result = uvc_init2(&mContext, NULL, mUsbFs);
+			result = uvc_init2(&mContext, NULL, usbfs);
 //			libusb_set_debug(mContext->usb_ctx, LIBUSB_LOG_LEVEL_DEBUG);
 			if (UNLIKELY(result < 0)) {
 				LOGD("failed to init libuvc");
@@ -107,7 +92,7 @@ int UVCCamera::connect(int vid, int pid, int fd, int busnum, int devaddr, const 
 			}
 		}
 		// カメラ機能フラグをクリア
-		fd = dup(fd);
+		fd = dup(fd); // TODO (netman) Why is it duplicated?
 		// 指定したvid,idを持つデバイスを検索, 見つかれば0を返してmDeviceに見つかったデバイスをセットする(既に1回uvc_ref_deviceを呼んである)
 //		result = uvc_find_device2(mContext, &mDevice, vid, pid, NULL, fd);
 		result = uvc_get_device_with_fd(mContext, &mDevice, vid, pid, NULL, fd, busnum, devaddr);
@@ -122,16 +107,6 @@ int UVCCamera::connect(int vid, int pid, int fd, int busnum, int devaddr, const 
 				mFd = fd;
 				mStatusCallback = new UVCStatusCallback(mDeviceHandle);
 				mPreview = new UVCPreviewIR(mDeviceHandle);
-				//mPreview = new UVCPreview(mDeviceHandle);
-				/*if(vid==5396)//IR device
-				{
-				mPreview = new UVCPreviewIR(mDeviceHandle);
-				}
-				else//Common device
-				{
-				mPreview = new UVCPreviewCommon(mDeviceHandle);
-				}*/
-
 			} else {
 				// open出来なかった時
 				LOGE("could not open camera:err=%d", result);
@@ -173,13 +148,10 @@ int UVCCamera::release() {
 		uvc_unref_device(mDevice);
 		mDevice = NULL;
 	}
-	// カメラ機能フラグをクリア
-	if (mUsbFs) {
-		close(mFd);
-		mFd = 0;
-		free(mUsbFs);
-		mUsbFs = NULL;
-	}
+	if (mFd >= 0) {
+        close(mFd);
+        mFd = -1;
+    }
 	RETURN(0, int);
 }
 

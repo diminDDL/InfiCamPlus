@@ -35,13 +35,11 @@
 #include "UVCPreviewIR.h"
 
 class UVCCamera {
-	char *mUsbFs;
 	uvc_context_t *mContext;
 	int mFd;
 	uvc_device_t *mDevice;
 	uvc_device_handle_t *mDeviceHandle;
 	UVCStatusCallback *mStatusCallback;
-	// プレビュー用
 	UVCPreviewIR *mPreview;
 
 public:

@@ -21,30 +21,29 @@
  * All files in the folder are under this Apache License, Version 2.0.
  * Files in the jni/libjpeg, jni/libusb, jin/libuvc, jni/rapidjson folder may have a different license, see the respective files.
 */
-#include <stdlib.h>
-#include <linux/time.h>
-#include <unistd.h>
-#include <math.h>
+
 #if 1	// set 1 if you don't need debug log
-	#ifndef LOG_NDEBUG
-		#define	LOG_NDEBUG		// w/o LOGV/LOGD/MARK
-	#endif
-	#undef USE_LOGALL
+#ifndef LOG_NDEBUG
+#define	LOG_NDEBUG		// w/o LOGV/LOGD/MARK
+#endif
+#undef USE_LOGALL
 #else
-	#define USE_LOGALL
+#define USE_LOGALL
 	#undef LOG_NDEBUG
 //	#undef NDEBUG
 #endif
 
-#include "utilbase.h"
-#include "UVCPreviewIR.h"
-#include "libuvc_internal.h"
-
-
 #define	LOCAL_DEBUG 0
 #define PREVIEW_PIXEL_BYTES 4	// RGBA/RGBX
 #define OUTPUTMODE 4
-//#define OUTPUTMODE 5
+
+#include <stdlib.h>
+#include <linux/time.h>
+#include <unistd.h>
+#include <math.h>
+#include "utilbase.h"
+#include "UVCPreviewIR.h"
+#include "libuvc_internal.h"
 
 UVCPreviewIR::UVCPreviewIR(){
 
@@ -110,8 +109,8 @@ UVCPreviewIR::~UVCPreviewIR() {
 	EXIT();
 }
 
-inline const bool UVCPreviewIR::isRunning() const {return mIsRunning; }
-inline const bool UVCPreviewIR::isComputed() const {return mIsComputed; }
+inline const bool UVCPreviewIR::isRunning() const { return mIsRunning; }
+inline const bool UVCPreviewIR::isComputed() const { return mIsComputed; }
 
 int UVCPreviewIR::setPreviewSize(int width, int height, int min_fps, int max_fps, int mode, float bandwidth) {
 	ENTER();
@@ -284,30 +283,12 @@ int UVCPreviewIR::stopPreview() {
 	pthread_mutex_unlock(&preview_mutex);
 
     SAFE_DELETE(mInitData);
-    if(OutBuffer!=NULL){
-        delete[] OutBuffer;
-    }
-    if(HoldBuffer!=NULL){
-        delete[] HoldBuffer;
-    }
-    if(RgbaOutBuffer!=NULL){
-        delete[] RgbaOutBuffer;
-    }
-    if(RgbaHoldBuffer!=NULL){
-        delete[] RgbaHoldBuffer;
-    }
-    //释放专业图像算法占用的资源
-    if(irBuffers[0].destBuffer!=NULL)
-    {
-        free(irBuffers[0].destBuffer);
-        irBuffers[0].destBuffer=NULL;
-    }
-    if(irBuffers!=NULL)
-    {
-        free(irBuffers);
-        irBuffers=NULL;
-    }
-    //end -释放专业图像算法占用的资源
+	SAFE_DELETE_ARRAY(OutBuffer);
+	SAFE_DELETE_ARRAY(HoldBuffer);
+	SAFE_DELETE_ARRAY(RgbaOutBuffer);
+	SAFE_DELETE_ARRAY(RgbaHoldBuffer);
+
+    // end - 释放专业图像算法占用的资源
 	RETURN(0, int);
 }
 
@@ -323,23 +304,17 @@ void UVCPreviewIR::uvc_preview_frame_callback(struct uvc_frame *frame, void *vpt
     size_t frameBytes = preview->requestWidth * preview->requestHeight * 2;
     if(LIKELY( preview->isRunning()) && frame->actual_bytes >= frameBytes)
     {
-    //LOGE("uvc_preview_frame_callback01");
-    memcpy(preview->OutBuffer, frame, frameBytes);
-    //LOGE("uvc_preview_frame_callback02");
-    /* swap the buffers org */
-    uint8_t* tmp_buf = NULL;
-    tmp_buf = preview->OutBuffer;
-    preview->OutBuffer = preview->HoldBuffer;
-    preview->HoldBuffer = tmp_buf;
-    tmp_buf=NULL;
-    preview->signal_receive_frame_data();
+		//LOGE("uvc_preview_frame_callback01");
+		memcpy(preview->OutBuffer, frame, frameBytes);
+		//LOGE("uvc_preview_frame_callback02");
+		/* swap the buffers org */
+		uint8_t* tmp_buf = NULL;
+		tmp_buf = preview->OutBuffer;
+		preview->OutBuffer = preview->HoldBuffer;
+		preview->HoldBuffer = tmp_buf;
+		pthread_cond_signal(&preview->preview_sync);
     }
     //LOGE("uvc_preview_frame_callback03");
-}
-
-void UVCPreviewIR::signal_receive_frame_data()
-{
-    pthread_cond_signal(&preview_sync);
 }
 
 void *UVCPreviewIR::preview_thread_func(void *vptr_args)
@@ -365,11 +340,12 @@ int UVCPreviewIR::prepare_preview(uvc_stream_ctrl_t *ctrl) {
 ////LOGE("prepare_preview");
 	uvc_error_t result;
 	ENTER();
-    OutBuffer=new unsigned char[requestWidth*(requestHeight)*2];
-    HoldBuffer=new unsigned char[requestWidth*(requestHeight)*2];
-    RgbaOutBuffer=new unsigned char[requestWidth*(requestHeight-4)*4];
-    RgbaHoldBuffer=new unsigned char[requestWidth*(requestHeight-4)*4];
+    OutBuffer = new unsigned char[requestWidth*(requestHeight)*2];
+    HoldBuffer = new unsigned char[requestWidth*(requestHeight)*2];
+    RgbaOutBuffer = new unsigned char[requestWidth*(requestHeight-4)*4];
+    RgbaHoldBuffer = new unsigned char[requestWidth*(requestHeight-4)*4];
 
+    // TODO (netman) This is temporary generating a palette thing, dunno what the plan is yet, but it doesn't belong here.
 	for (int i = 0; i + 3 <= sizeof(paletteIronRainbow); i += 3) {
 		double x = (double) i / (double) sizeof(paletteIronRainbow);
 		paletteIronRainbow[i + 0] = round(255 * sqrt(x));
@@ -377,6 +353,7 @@ int UVCPreviewIR::prepare_preview(uvc_stream_ctrl_t *ctrl) {
 		paletteIronRainbow[i + 2] = round(255 * fmax(0, sin(2 * M_PI * x)));
 	}
 
+	// TODO (netman) This is temporary generating a palette thing, dunno what the plan is yet, but it doesn't belong here.
 	for (int i = 0; i + 3 <= sizeof(paletteRainbow); i += 3) {
 		double h = 360.0 - (double) i / (double) sizeof(paletteRainbow) * 360.0;
 		double x = (1 - abs(fmod(h / 60.0, 2) - 1));
@@ -465,11 +442,11 @@ void UVCPreviewIR::do_preview(uvc_stream_ctrl_t *ctrl) {
               //  {
                     mIsComputed=false;
                     // swap the buffers rgba
-                    tmp_buf =RgbaOutBuffer;
-                    RgbaOutBuffer= RgbaHoldBuffer;
-                    RgbaHoldBuffer=tmp_buf;
-                    unsigned short* orgData=(unsigned short*)HoldBuffer;
-                    unsigned short* fourLinePara=orgData+requestWidth*(requestHeight-4);//后四行参数
+                    tmp_buf = RgbaOutBuffer;
+                    RgbaOutBuffer = RgbaHoldBuffer;
+                    RgbaHoldBuffer = tmp_buf;
+                    unsigned short *orgData = (unsigned short*)HoldBuffer;
+                    unsigned short *fourLinePara = orgData+requestWidth*(requestHeight-4);//后四行参数
                         int amountPixels=0;
                         switch (requestWidth)
                         {
@@ -530,7 +507,7 @@ void UVCPreviewIR::do_preview(uvc_stream_ctrl_t *ctrl) {
 					t_avg=orgData[amountPixels];
 					//LOGE("min: %d %d %d, max: %d %d %d, avg: %d", minx1, miny1, t_min, maxx1, maxy1, t_max, t_avg);
                     //LOGE("waitPreviewFrame04");
-                    draw_preview_one(HoldBuffer, &mPreviewWindow, NULL, 4);
+                    draw_preview_one(HoldBuffer, &mPreviewWindow);
                     tmp_buf=NULL;
                     mIsComputed=true;
                // }
@@ -562,65 +539,42 @@ void UVCPreviewIR::do_preview(uvc_stream_ctrl_t *ctrl) {
 	EXIT();
 }
 
-static void copyFrame(const uint8_t *src, uint8_t *dest, const int width, int height, const int stride_src, const int stride_dest) {
-	////LOGE("copyFrame width%d,height%d,stride_src%d,stride_dest%d",width,height,stride_src,stride_dest);
-	//memset(src,0,384*292*4);
-
-	//const int h8 = height % 8;l
-	for (int i = 0; i < height; i++) {
-		memcpy(dest, src, width);
-		dest += stride_dest;
-		src += stride_src;
-	}
-/*memcpy(dest, src, width*height*sizeof(uint8_t));*/
-
-	////LOGE("copyFrame2");
-}
-
 // transfer specific frame data to the Surface(ANativeWindow)
 int UVCPreviewIR::copyToSurface(uint8_t *frameData, ANativeWindow **window) {
-//LOGE("copyToSurface");
 	// ENTER();
 	int result = 0;
 	if (LIKELY(*window)) {
 		ANativeWindow_Buffer buffer;
 		if (LIKELY(ANativeWindow_lock(*window, &buffer, NULL) == 0)) {
-			// source = frame data
+			// source = frame data, destination = Surface(ANativeWindow)
 			const uint8_t *src = frameData;
 			const int src_w = requestWidth * PREVIEW_PIXEL_BYTES;
-			const int src_step = src_w;
-			// destination = Surface(ANativeWindow)
-			uint8_t *dest = (uint8_t *)buffer.bits;
-			const int dest_w = buffer.width * PREVIEW_PIXEL_BYTES;
-			const int dest_step = buffer.stride * PREVIEW_PIXEL_BYTES;
-			// use lower transfer bytes
-			const int w = src_w < dest_w ? src_w : dest_w;
-			// use lower height
-			const int h = frameHeight < buffer.height ? frameHeight : buffer.height;
-			////LOGE("copyToSurface");
-			// transfer from frame data to the Surface
-			////LOGE("copyToSurface:w:%d,h,%d",w,h);
-			copyFrame(src, dest, w, h, src_step, dest_step);
-			src=NULL;
-			dest=NULL;
-			////LOGE("copyToSurface2");
-			ANativeWindow_unlockAndPost(*window);
-			//LOGE("copyToSurface3");
+			const int dst_w = buffer.width * PREVIEW_PIXEL_BYTES;
+			const int dst_step = buffer.stride * PREVIEW_PIXEL_BYTES;
 
+			// set w and h to be the smallest of the two rectangles
+			const int w = src_w < dst_w ? src_w : dst_w;
+			const int h = frameHeight < buffer.height ? frameHeight : buffer.height;
+
+			// transfer from frame data to the Surface
+			uint8_t *dst = (uint8_t *) buffer.bits;
+			for (int i = 0; i < h; ++i) {
+				memcpy(dst, src, w);
+				dst += dst_step;
+				src += src_w;
+			}
+
+			ANativeWindow_unlockAndPost(*window);
 		} else {
-        //LOGE("copyToSurface4");
 			result = -1;
 		}
 	} else {
-	//LOGE("copyToSurface5");
 		result = -1;
 	}
-	//LOGE("copyToSurface6");
 	return result; //RETURN(result, int);
 }
 
-// changed to return original frame instead of returning converted frame even if convert_func is not null.
-void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow **window, convFunc_t convert_func, int pixcelBytes) {
+void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow **window) {
 	unsigned short *tmp_buf = (unsigned short*) frameData;
 	//8005模式下yuyv转rgba
 	//uvc_yuyv2rgbx2(tmp_buf, RgbaHoldBuffer,requestWidth,requestHeight);
@@ -632,8 +586,8 @@ void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow **window, 
 	 */
 	int avgSubMin= (t_avg - t_min) > 0 ? (t_avg - t_min) : 1;
 	int maxSubAvg= (t_max - t_avg) > 0 ? (t_max - t_avg) : 1;
-	int ro1= (t_avg - t_min) > 97 ? 97 : (t_avg - t_min);
-	int ro2= (t_max - t_avg) > 157 ? 157 : (t_max - t_avg);
+	int ro1 = (t_avg - t_min) > 97 ? 97 : (t_avg - t_min);
+	int ro2 = (t_max - t_avg) > 157 ? 157 : (t_max - t_avg);
 	int span = t_max - t_min;
 	switch (mTypeOfPalette) {
 		case 0:
@@ -753,14 +707,9 @@ void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow **window, 
 			 }
 		  break;
 	 }
-	 //LOGE("not myOpencl");
-
-	tmp_buf=NULL;
 
 	if (LIKELY(*window))
-	{
 		copyToSurface(RgbaHoldBuffer, window);
-	}
 }
 
 /*
@@ -973,7 +922,7 @@ void UVCPreviewIR::whenShutRefresh() {
     pthread_mutex_unlock(&temperature_mutex);
 }
 
-void UVCPreviewIR::setUserPalette(uint8_t* palette,int typeOfPalette) {
+void UVCPreviewIR::setUserPalette(uint8_t *palette, int typeOfPalette) {
 	////LOGE("SetUserPalette OUT:%X\n",palette);
 	memcpy(UserPalette,palette,3*256*sizeof(unsigned char));
 	mTypeOfPalette=typeOfPalette;
@@ -987,19 +936,19 @@ void UVCPreviewIR::changePalette(int typeOfPalette) {
 
 void UVCPreviewIR::setTempRange(int range) {
     ENTER();
-    rangeMode = range;
+    rangeMode = range; // TODO (netman) Shouldn't this also trigger isNeedWriteTable?
     EXIT();
 }
 
 void UVCPreviewIR::setShutterFix(float mShutterFix) {
     ENTER();
-    shutterFix = mShutterFix;
+    shutterFix = mShutterFix; // TODO (netman) Shouldn't this also trigger isNeedWriteTable?
     EXIT();
 }
 
 void UVCPreviewIR::setCameraLens(int mCameraLens) {
     ENTER();
-    cameraLens = mCameraLens;
+    cameraLens = mCameraLens; // TODO (netman) Shouldn't this also trigger isNeedWriteTable?
     //LOGE("setCameraLens:%d\n",cameraLens);
     EXIT();
 }
