@@ -54,25 +54,17 @@
 #define USE_STRIDE 1
 /** @internal */
 uvc_error_t uvc_ensure_frame_size(uvc_frame_t *frame, size_t need_bytes) {
-//LOGE("uvc_ensure_frame_size");
 	if LIKELY(frame->library_owns_data) {
-//	LOGE("uvc_ensure_frame_size  LIKELY(frame->library_owns_data)");
 		if UNLIKELY(!frame->data || frame->data_bytes != need_bytes) {
 			frame->actual_bytes = frame->data_bytes = need_bytes;	// XXX
-	//		LOGE("uvc_ensure_frame_size    frame->data = realloc(frame->data, frame->data_bytes)1");
 			frame->data = realloc(frame->data, frame->data_bytes);
-//			LOGE("uvc_ensure_frame_size    frame->data = realloc(frame->data, frame->data_bytes)2");
 		}
-		if (UNLIKELY(!frame->data || !need_bytes)){
-	//	LOGE("uvc_ensure_frame_size    UNLIKELY(!frame->data || !need_bytes)");
+		if (UNLIKELY(!frame->data || !need_bytes))
 			return UVC_ERROR_NO_MEM;
-			}
 		return UVC_SUCCESS;
 	} else {
-		if (UNLIKELY(!frame->data || frame->data_bytes < need_bytes)){
-//		LOGE("uvc_ensure_frame_size    UNLIKELY(!frame->data || frame->data_bytes < need_bytes)");
+		if (UNLIKELY(!frame->data || frame->data_bytes < need_bytes))
 			return UVC_ERROR_NO_MEM;
-			}
 		return UVC_SUCCESS;
 	}
 }
@@ -84,9 +76,8 @@ uvc_error_t uvc_ensure_frame_size(uvc_frame_t *frame, size_t need_bytes) {
  * @return New frame, or NULL on error
  */
 uvc_frame_t *uvc_allocate_frame(size_t data_bytes) {
-LOGE("uvc_allocate_frame malloc1");
 	uvc_frame_t *frame = malloc(sizeof(*frame));	// FIXME using buffer pool is better performance(5-30%) than directory use malloc everytime.
-LOGE("uvc_allocate_frame malloc2");
+
 	if (UNLIKELY(!frame))
 		return NULL;
 
@@ -98,113 +89,27 @@ LOGE("uvc_allocate_frame malloc2");
 //	frame->library_owns_data = 1;	// XXX moved to lower
 
 	if (LIKELY(data_bytes > 0)) {
-	LOGE("uvc_allocate_frame LIKELY(data_bytes > 0)");
 		frame->library_owns_data = 1;
 		frame->actual_bytes = frame->data_bytes = data_bytes;	// XXX
-		 LOGE("uvc_allocate_frame  if malloc(data_bytes);%d",data_bytes);
 		frame->data = malloc(data_bytes);
-        memset(frame->data, 0, data_bytes);
-		if (UNLIKELY(!frame->data)) {
-		LOGE("uvc_allocate_frame free");
-			free(frame);
-			frame=NULL;
-			//return NULL ;
-		}
-	}
 
-	return frame;
-}
-uvc_frame_t *uvc_allocate_ini_frame(size_t data_bytes){
-//LOGE("uvc_allocate_ini_frame malloc1");
-	uvc_frame_t *frame = malloc(sizeof(*frame));	// FIXME using buffer pool is better performance(5-30%) than directory use malloc everytime.
-//LOGE("uvc_allocate_ini_frame malloc2");
-	if (UNLIKELY(!frame))
-		return NULL;
-
-#ifndef __ANDROID__
-	// XXX in many case, it is not neccesary to clear because all fields are set before use
-	// therefore we remove this to improve performace, but be care not to forget to set fields before use
-	memset(frame, 0, sizeof(*frame));	// bzero(frame, sizeof(*frame)); // bzero is deprecated
-#endif
-//	frame->library_owns_data = 1;	// XXX moved to lower
-    if(data_bytes==224256){
-      frame->width=384;
-      frame->height=292;
-      frame->frame_format = UVC_FRAME_FORMAT_YUYV;
-      }else{
-        frame->width=240;
-        frame->height=184;
-        frame->frame_format = UVC_FRAME_FORMAT_YUYV;
-      }
-	if (LIKELY(data_bytes > 0)) {
-//	LOGE("uvc_allocate_ini_frame LIKELY(data_bytes > 0)");
-		frame->library_owns_data = 1;
-		frame->actual_bytes = frame->data_bytes = data_bytes;	// XXX
-//		 LOGE("uvc_allocate_ini_frame  if malloc(data_bytes);%d",data_bytes);
-		frame->data = malloc(data_bytes);
-        memset(frame->data, 0, data_bytes);
 		if (UNLIKELY(!frame->data)) {
-//		LOGE("uvc_allocate_ini_frame free");
 			free(frame);
-			frame=NULL;
-			//return NULL ;
+			return NULL ;
 		}
 	}
 
 	return frame;
 }
 
-
-uvc_frame_t *uvc_allocate_ini_preview_frame(size_t data_bytes){
-//LOGE("uvc_allocate_ini_frame malloc1");
-	uvc_frame_t *frame = malloc(sizeof(*frame));	// FIXME using buffer pool is better performance(5-30%) than directory use malloc everytime.
-//LOGE("uvc_allocate_ini_frame malloc2");
-	if (UNLIKELY(!frame))
-		return NULL;
-
-#ifndef __ANDROID__
-	// XXX in many case, it is not neccesary to clear because all fields are set before use
-	// therefore we remove this to improve performace, but be care not to forget to set fields before use
-	memset(frame, 0, sizeof(*frame));	// bzero(frame, sizeof(*frame)); // bzero is deprecated
-#endif
-//	frame->library_owns_data = 1;	// XXX moved to lower
-    if(data_bytes==442368){
-      frame->width=384;
-      frame->height=288;
-      frame->frame_format = UVC_FRAME_FORMAT_RGBX;
-      }else{
-        frame->width=240;
-        frame->height=180;
-        frame->frame_format = UVC_FRAME_FORMAT_RGBX;
-      }
-	if (LIKELY(data_bytes > 0)) {
-//	LOGE("uvc_allocate_ini_frame LIKELY(data_bytes > 0)");
-		frame->library_owns_data = 1;
-		frame->actual_bytes = frame->data_bytes = data_bytes;	// XXX
-	//	 LOGE("uvc_allocate_ini_frame  if malloc(data_bytes);%d",data_bytes);
-		frame->data = malloc(data_bytes);
-        memset(frame->data, 0, data_bytes);
-		if (UNLIKELY(!frame->data)) {
-//		LOGE("uvc_allocate_ini_frame free");
-			free(frame);
-			frame=NULL;
-			//return NULL ;
-		}
-	}
-
-	return frame;
-}
 /** @brief Free a frame structure
  * @ingroup frame
  *
  * @param frame Frame to destroy
  */
 void uvc_free_frame(uvc_frame_t *frame) {
-	//if ((frame->data_bytes !=NULL) && frame->library_owns_data){
-	if(frame->data){
-	free(frame->data);
-	frame->data=NULL;
-	}
+	if ((frame->data_bytes > 0) && frame->library_owns_data)
+		free(frame->data);
 
 	free(frame);
 }
@@ -235,7 +140,6 @@ uvc_error_t uvc_duplicate_frame(uvc_frame_t *in, uvc_frame_t *out) {
 
 #if USE_STRIDE	 // XXX
 	if (in->step && out->step) {
-	//LOGE("uvc_duplicate_frame  if (in->step && out->step)");
 		const int istep = in->step;
 		const int ostep = out->step;
 		const int hh = in->height < out->height ? in->height : out->height;
@@ -255,11 +159,9 @@ uvc_error_t uvc_duplicate_frame(uvc_frame_t *in, uvc_frame_t *out) {
 		}
 	} else {
 		// compressed format? XXX if only one of the frame in / out has step, this may lead to crash...
-	//	LOGE("uvc_duplicate_frame  else {1");
 		memcpy(out->data, in->data, in->actual_bytes);
 	}
 #else
- //   LOGE("uvc_duplicate_frame  else {2");
 	memcpy(out->data, in->data, in->actual_bytes); // XXX
 #endif
 	return UVC_SUCCESS;
@@ -676,7 +578,7 @@ uvc_error_t uvc_yuyv2rgbx(uvc_frame_t *in, uvc_frame_t *out) {
 
 	if (UNLIKELY(uvc_ensure_frame_size(out, in->width * in->height * PIXEL_RGBX) < 0))
 		return UVC_ERROR_NO_MEM;
-LOGE("convert_func  in->width:%d,,in->height:%d",in->width,in->height);
+
 	out->width = in->width;
 	out->height = in->height;
 	out->frame_format = UVC_FRAME_FORMAT_RGBX;
@@ -685,28 +587,21 @@ LOGE("convert_func  in->width:%d,,in->height:%d",in->width,in->height);
 	out->sequence = in->sequence;
 	out->capture_time = in->capture_time;
 	out->source = in->source;
-	LOGE("convert_func1");
-//uint8_t *mImageProcessed=(uint8_t*) malloc(384*292*2);
-//MedianFilter((uint8_t *)in->data,mImageProcessed,384*2,288);
-LOGE("convert_func2");
-//LOGE("uvc_yuyv2rgbx %d,%d,%d,%d,%d,%d:",mImageProcessed[0],mImageProcessed[1],mImageProcessed[2],mImageProcessed[3],mImageProcessed[4],mImageProcessed[5]);
+
 	uint8_t *pyuv = in->data;
-	//uint8_t *pyuv = in->data;
 	const uint8_t *pyuv_end = pyuv + in->data_bytes - PIXEL8_YUYV;
 	uint8_t *prgbx = out->data;
 	const uint8_t *prgbx_end = prgbx + out->data_bytes - PIXEL8_RGBX;
-LOGE("convert_func3");
+
 	// YUYV => RGBX8888
 #if USE_STRIDE
 	if (in->step && out->step && (in->step != out->step)) {
-	LOGE("convert_func4");
 		const int hh = in->height < out->height ? in->height : out->height;
 		const int ww = in->width < out->width ? in->width : out->width;
 		int h, w;
 		for (h = 0; h < hh; h++) {
 			w = 0;
 			pyuv = in->data + in->step * h;
-			//pyuv = in->data + in->step * h;
 			prgbx = out->data + out->step * h;
 			for (; (prgbx <= prgbx_end) && (pyuv <= pyuv_end) && (w < ww) ;) {
 				IYUYV2RGBX_8(pyuv, prgbx, 0, 0);
@@ -717,7 +612,6 @@ LOGE("convert_func3");
 			}
 		}
 	} else {
-	LOGE("convert_func5");
 		// compressed format? XXX if only one of the frame in / out has step, this may lead to crash...
 		for (; (prgbx <= prgbx_end) && (pyuv <= pyuv_end) ;) {
 			IYUYV2RGBX_8(pyuv, prgbx, 0, 0);
@@ -728,48 +622,14 @@ LOGE("convert_func3");
 	}
 #else
 	for (; (prgbx <= prgbx_end) && (pyuv <= pyuv_end) ;) {
-	LOGE("convert_func6");
 		IYUYV2RGBX_8(pyuv, prgbx, 0, 0);
 
 		prgbx += PIXEL8_RGBX;
 		pyuv += PIXEL8_YUYV;
 	}
-
 #endif
-prgbx = out->data;
-//LOGE("uvc_yuyv2rgbx2222 %d,%d,%d,%d,%d,%d,%d,%d:",prgbx[0],prgbx[1],prgbx[2],prgbx[3],prgbx[4],prgbx[5],prgbx[6],prgbx[7]);
-LOGE("convert_func7");
-//    if(mImageProcessed!=NULL)
- //   {
- //   free(mImageProcessed);
- //   }
-    LOGE("convert_func8");
 	return UVC_SUCCESS;
 }
-
-
-uvc_error_t uvc_yuyv2rgbx2(uint8_t *in, uint8_t *out,int width,int height) {
-	uint8_t *pyuv = in;
-	const uint8_t *pyuv_end = pyuv + width*height*2 - PIXEL8_YUYV;
-	uint8_t *prgbx = out;
-	const uint8_t *prgbx_end = prgbx + width*height*4 - PIXEL8_RGBX;
-//LOGE("convert_func3");
-	for (; (prgbx <= prgbx_end) && (pyuv <= pyuv_end) ;) {
-	//LOGE("convert_func6");
-		IYUYV2RGBX_8(pyuv, prgbx, 0, 0);
-
-		prgbx += PIXEL8_RGBX;
-		pyuv += PIXEL8_YUYV;
-	}
-
-prgbx = out;
-//LOGE("uvc_yuyv2rgbx2 %d,%d,%d,%d,%d,%d,%d,%d:",prgbx[0],prgbx[1],prgbx[2],prgbx[3],prgbx[4],prgbx[5],prgbx[6],prgbx[7]);
-//LOGE("convert_func7");
-	return UVC_SUCCESS;
-}
-
-
-
 
 #define IYUYV2BGR_2(pyuv, pbgr, ax, bx) { \
 		const int d1 = (pyuv)[1]; \
@@ -1464,16 +1324,12 @@ uvc_error_t uvc_any2rgbx(uvc_frame_t *in, uvc_frame_t *out) {
 		return uvc_mjpeg2rgbx(in, out);
 #endif
 	case UVC_FRAME_FORMAT_YUYV:
-	//LOGE("UVC_FRAME_FORMAT_YUYV uvc_yuyv2rgbx");
 		return uvc_yuyv2rgbx(in, out);
 	case UVC_FRAME_FORMAT_UYVY:
-	//LOGE("UVC_FRAME_FORMAT_UYVY uvc_uyvy2rgbx");
 		return uvc_uyvy2rgbx(in, out);
 	case UVC_FRAME_FORMAT_RGBX:
-	//LOGE("UVC_FRAME_FORMAT_RGBX uvc_duplicate_frame");
 		return uvc_duplicate_frame(in, out);
 	case UVC_FRAME_FORMAT_RGB:
-	//LOGE("UVC_FRAME_FORMAT_RGB uvc_rgb2rgbx");
 		return uvc_rgb2rgbx(in, out);
 	default:
 		return UVC_ERROR_NOT_SUPPORTED;
@@ -1536,94 +1392,4 @@ uvc_error_t uvc_any2iyuv420SP(uvc_frame_t *in, uvc_frame_t *out) {
 		uvc_free_frame(yuv);
 	}
 	return result;
-}
-//中值滤波
-
- uint8_t GetMedianNum(int * bArray, int iFilterLen)
-{
-    int     i,j;            // 循环变量
-    uint8_t bTemp;
-
-    // 用冒泡法对数组进行排序
-	int t=iFilterLen - 1;
-    for (j = 0; j <t ; j ++)
-    {
-        for (i = 0; i < t - j ; i ++)
-        {
-            if (bArray[i] > bArray[i + 1])
-            {
-                // 互换
-                bTemp = bArray[i];
-                bArray[i] = bArray[i + 1];
-                bArray[i + 1] = bTemp;
-            }
-        }
-    }
-
-    // 计算中值
-    if ((iFilterLen & 1) > 0)
-    {
-        // 数组有奇数个元素，返回中间一个元素
-        bTemp = bArray[(iFilterLen + 1) / 2];
-    }
-    else
-    {
-        // 数组有偶数个元素，返回中间两个元素平均值
-        bTemp = (bArray[iFilterLen / 2] + bArray[iFilterLen / 2 + 1]) / 2;
-    }
-
-    return bTemp;
-}
-
-void MedianFilter(uint8_t *pImg1,uint8_t *pImg,int nWidth,int nHeight)
-{
-    uint8_t   *lpSrc;                         // 指向源图像的指针
-    uint8_t   *lpDst;                         // 指向要复制区域的指针
-    int         aValue[5];          // 指向滤波器数组的指针
-    int         i,j,k,l;                            // 循环变量
-    int         lLineBytes;                         // 图像每行的字节数
-    lLineBytes =nWidth;// WIDTHBYTES(nWidth * 8);
-    //for ( i=0;i<nWidth;i++,pImg++ )
-    //    (*pImg)=0;
-    // 开始中值滤波
-    // 行(除去边缘几行)
-	int t=nHeight -  1;
-	int m=nWidth -  2;
-	int n=nWidth*t;
-    memcpy(pImg,pImg1,nWidth);
-    memcpy(pImg + n,pImg1+n,nWidth);
-    for(i=1;i<nHeight;i++)
-	{
-     int Dst = lLineBytes * i ;
-      pImg[Dst-1]= pImg1[Dst-1];
-      pImg[Dst]= pImg1[Dst];
-      pImg[Dst+1]= pImg1[Dst+1];
-      pImg[Dst-2]= pImg1[Dst-2];
-
-	}
-
-	for(i = 1; i < t; i++)
-    {
-        // 列(除去边缘几列)
-        for(j = 2; j < m; j=j+2)
-        {
-            // 指向新DIB第i行，第j个象素的指针
-            lpDst = pImg + lLineBytes * i + j;
-
-                     lpSrc =pImg1 + lLineBytes * i + j;
-					 aValue[0] = *lpSrc;
-					  * (lpDst+1) = *(lpSrc+1);
-				     lpSrc =pImg1 + lLineBytes * i + j-2;
-					 aValue[1] = *lpSrc;
-                     lpSrc =pImg1 + lLineBytes * i + j + 2;
-					 aValue[2] = *lpSrc;
-					 lpSrc =pImg1 + lLineBytes * ( i + 1) + j ;
-					 aValue[3] = *lpSrc;
-					 lpSrc =pImg1 + lLineBytes * ( i - 1) + j ;
-                     aValue[4] = *lpSrc;
-            // 获取中值
-            * lpDst = GetMedianNum(aValue, 5);
-        }
-    }
-
 }

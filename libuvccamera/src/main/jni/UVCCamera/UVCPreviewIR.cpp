@@ -311,25 +311,26 @@ int UVCPreviewIR::stopPreview() {
 	RETURN(0, int);
 }
 
-void UVCPreviewIR::uvc_preview_frame_callback(uint8_t *frameData, void *vptr_args,size_t hold_bytes)
+void UVCPreviewIR::uvc_preview_frame_callback(struct uvc_frame *frame, void *vptr_args)
 {
     //LOGE("uvc_preview_frame_callback00");
     UVCPreviewIR *preview = reinterpret_cast<UVCPreviewIR *>(vptr_args);
-    unsigned short* tmp_buf=(unsigned short*)frameData;
+    unsigned short* tmp_buf = (unsigned short*)frame;
     ////LOGE("uvc_preview_frame_callback00  tmp_buf:%d,%d,%d,%d",tmp_buf[384*144*4],tmp_buf[384*144*4+1],tmp_buf[384*144*4+2],tmp_buf[384*144*4+3]);
 
     ////LOGE("uvc_preview_frame_callback hold_bytes:%d,preview->frameBytes:%d",hold_bytes,preview->frameBytes);
 
-    if(LIKELY( preview->isRunning()) && hold_bytes >= preview->frameBytes)
+    size_t frameBytes = preview->requestWidth * preview->requestHeight * 2;
+    if(LIKELY( preview->isRunning()) && frame->actual_bytes >= frameBytes)
     {
     //LOGE("uvc_preview_frame_callback01");
-    memcpy(preview->OutBuffer,frameData,(preview->requestWidth)*(preview->requestHeight)*2);
+    memcpy(preview->OutBuffer, frame, frameBytes);
     //LOGE("uvc_preview_frame_callback02");
     /* swap the buffers org */
-    uint8_t* tmp_buf=NULL;
-    tmp_buf =preview->OutBuffer;
-    preview->OutBuffer=preview->HoldBuffer;
-    preview->HoldBuffer=tmp_buf;
+    uint8_t* tmp_buf = NULL;
+    tmp_buf = preview->OutBuffer;
+    preview->OutBuffer = preview->HoldBuffer;
+    preview->HoldBuffer = tmp_buf;
     tmp_buf=NULL;
     preview->signal_receive_frame_data();
     }

@@ -72,11 +72,9 @@ uvc_frame_t *uvc_allocate_frame(size_t data_bytes) {
 
   if (data_bytes > 0) {
     frame->data_bytes = data_bytes;
-     LOGE("uvc_allocate_frame  if malloc(data_bytes);%d",data_bytes);
     frame->data = malloc(data_bytes);
 
     if (!frame->data) {
-
       free(frame);
       return NULL;
     }

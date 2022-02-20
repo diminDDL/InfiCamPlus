@@ -275,7 +275,7 @@ uvc_error_t uvc_open(uvc_device_t *dev, uvc_device_handle_t **devh) {
 	UVC_ENTER();
 
 	ret = libusb_open(dev->usb_dev, &usb_devh);
-	LOGE("libusb_open() = %d", ret);
+	UVC_DEBUG("libusb_open() = %d", ret);
 
 	if (UNLIKELY(ret != UVC_SUCCESS)) {
 		UVC_EXIT(ret);
@@ -305,10 +305,10 @@ uvc_error_t uvc_open(uvc_device_t *dev, uvc_device_handle_t **devh) {
 		goto fail;
 
 	libusb_get_device_descriptor(dev->usb_dev, &desc);
-	internal_devh->is_isight = 0;//(desc.idVendor == 0x1514 && desc.idProduct == 0x0001);
+	internal_devh->is_isight = (desc.idVendor == 0x05ac && desc.idProduct == 0x8501);
 
 	if (internal_devh->info->ctrl_if.bEndpointAddress) {
-		LOGE("status check transfer:bEndpointAddress=0x%02x", internal_devh->info->ctrl_if.bEndpointAddress);
+		UVC_DEBUG("status check transfer:bEndpointAddress=0x%02x", internal_devh->info->ctrl_if.bEndpointAddress);
 		internal_devh->status_xfer = libusb_alloc_transfer(0);
 		if (UNLIKELY(!internal_devh->status_xfer)) {
 			ret = UVC_ERROR_NO_MEM;
@@ -320,7 +320,7 @@ uvc_error_t uvc_open(uvc_device_t *dev, uvc_device_handle_t **devh) {
 				internal_devh->status_buf, sizeof(internal_devh->status_buf),
 				_uvc_status_callback, internal_devh, 0);
 		ret = libusb_submit_transfer(internal_devh->status_xfer);
-		LOGE("libusb_submit_transfer() = %d", ret);
+		UVC_DEBUG("libusb_submit_transfer() = %d", ret);
 
 		if (UNLIKELY(ret)) {
 			LOGE("device has a status interrupt endpoint, but unable to read from it");
@@ -339,7 +339,7 @@ uvc_error_t uvc_open(uvc_device_t *dev, uvc_device_handle_t **devh) {
 	*devh = internal_devh;
 
 	UVC_EXIT(ret);
-     LOGE("opendevice =%d",ret);
+
 	return ret;
 
 fail:
@@ -1767,7 +1767,6 @@ void _uvc_status_callback(struct libusb_transfer *transfer) {
 	case LIBUSB_TRANSFER_CANCELLED:
 	case LIBUSB_TRANSFER_NO_DEVICE:
 		UVC_DEBUG("not processing/resubmitting, status = %d", transfer->status);
-		LOGE("not processing/resubmitting, status = %d", transfer->status);
 		UVC_EXIT_VOID();
 		return;
 	case LIBUSB_TRANSFER_COMPLETED:

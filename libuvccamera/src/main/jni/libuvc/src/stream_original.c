@@ -164,7 +164,7 @@ uvc_error_t uvc_query_stream_ctrl(
     SHORT_TO_SW(ctrl->wDelay, buf + 16);
     INT_TO_DW(ctrl->dwMaxVideoFrameSize, buf + 18);
     INT_TO_DW(ctrl->dwMaxPayloadTransferSize, buf + 22);
-LOGE("dwMaxVideoFrameSize:%d, dwMaxPayloadTransferSize %d", ctrl->dwMaxVideoFrameSize, ctrl->dwMaxPayloadTransferSize);
+
     if (len == 34) {
       /** @todo support UVC 1.1 */
       return UVC_ERROR_NOT_SUPPORTED;
@@ -591,7 +591,6 @@ uvc_error_t uvc_start_iso_streaming(
 }
 
 static uvc_stream_handle_t *_uvc_get_stream_by_interface(uvc_device_handle_t *devh, int interface_idx) {
-LOGE("_uvc_get_stream_by_interface");
   uvc_stream_handle_t *strmh;
 
   DL_FOREACH(devh->streams, strmh) {

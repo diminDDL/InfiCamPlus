@@ -139,7 +139,7 @@ private:
     unsigned char UserPalette[256*3];
 
 	void clearDisplay();
-	static void uvc_preview_frame_callback(uint8_t *frame, void *vptr_args,size_t hold_bytes);
+	static void uvc_preview_frame_callback(struct uvc_frame *frame, void *vptr_args);
 	static void *preview_thread_func(void *vptr_args);
 	int prepare_preview(uvc_stream_ctrl_t *ctrl);
 	void do_preview(uvc_stream_ctrl_t *ctrl);

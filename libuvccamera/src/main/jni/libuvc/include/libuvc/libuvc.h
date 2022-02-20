@@ -487,7 +487,7 @@ typedef struct uvc_frame {
 /** A callback function to handle incoming assembled UVC frames
  * @ingroup streaming
  */
-typedef void(uvc_frame_callback_t)(uint8_t *frame, void *user_ptr,size_t hold_bytes);
+typedef void(uvc_frame_callback_t)(struct uvc_frame *frame, void *user_ptr);
 
 /** Streaming mode, includes all information needed to select stream
  * @ingroup streaming
@@ -783,8 +783,6 @@ void uvc_print_diag(uvc_device_handle_t *devh, FILE *stream);
 void uvc_print_stream_ctrl(uvc_stream_ctrl_t *ctrl, FILE *stream);
 
 uvc_frame_t *uvc_allocate_frame(size_t data_bytes);
-uvc_frame_t *uvc_allocate_ini_frame(size_t data_bytes);
-uvc_frame_t *uvc_allocate_ini_preview_frame(size_t data_bytes);
 void uvc_free_frame(uvc_frame_t *frame);
 
 uvc_error_t uvc_duplicate_frame(uvc_frame_t *in, uvc_frame_t *out);
@@ -811,7 +809,6 @@ uvc_error_t uvc_rgb2rgb565(uvc_frame_t *in, uvc_frame_t *out);		// XXX
 uvc_error_t uvc_any2rgb565(uvc_frame_t *in, uvc_frame_t *out);		// XXX
 
 uvc_error_t uvc_yuyv2rgbx(uvc_frame_t *in, uvc_frame_t *out);		// XXX
-uvc_error_t uvc_yuyv2rgbx2(uint8_t *in, uint8_t *out,int width,int height);
 uvc_error_t uvc_uyvy2rgbx(uvc_frame_t *in, uvc_frame_t *out);		// XXX
 uvc_error_t uvc_rgb2rgbx(uvc_frame_t *in, uvc_frame_t *out);		// XXX
 uvc_error_t uvc_any2rgbx(uvc_frame_t *in, uvc_frame_t *out);		// XXX
@@ -841,8 +838,6 @@ void uvc_print_interface_desc(
 void uvc_print_endpoint_desc(
 	const struct libusb_endpoint_descriptor *endpoint, const int num_endpoint,
 	const char *prefix, FILE *stream);
- uint8_t GetMedianNum(int * bArray, int iFilterLen);
- void MedianFilter(uint8_t *pImg1,uint8_t *pImg,int nWidth,int nHeight);
 
 #define uvc_print_format_descriptor_one uvc_print_format_desc_one
 #define uvc_print_format_descriptor uvc_print_format_desc

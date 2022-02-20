@@ -35,7 +35,7 @@
 ######################################################################
 # libuvc_static.a (static library with static link to libjpeg, libusb1.0)
 ######################################################################
-LOCAL_PATH := $(call my-dir)/../..
+LOCAL_PATH	:= $(call my-dir)/../..
 include $(CLEAR_VARS)
 
 LOCAL_C_INCLUDES += \

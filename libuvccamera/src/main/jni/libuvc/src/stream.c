@@ -191,7 +191,7 @@ uvc_error_t uvc_query_stream_ctrl(uvc_device_handle_t *devh,
 		SHORT_TO_SW(ctrl->wDelay, buf + 16);
 		INT_TO_DW(ctrl->dwMaxVideoFrameSize, buf + 18);
 		INT_TO_DW(ctrl->dwMaxPayloadTransferSize, buf + 22);
-LOGE("dwMaxVideoFrameSize:%d, dwMaxPayloadTransferSize %d,bFrameIndex:%d", ctrl->dwMaxVideoFrameSize, ctrl->dwMaxPayloadTransferSize,ctrl->bFrameIndex);
+
 		if (len > 26) {	// len == 34
 			// XXX add to support UVC 1.1
 			INT_TO_DW(ctrl->dwClockFrequency, buf + 26);
@@ -380,13 +380,12 @@ static void _uvc_print_streaming_interface_one(uvc_streaming_interface_t *stream
 static uvc_error_t _prepare_stream_ctrl(uvc_device_handle_t *devh, uvc_stream_ctrl_t *ctrl) {
 	// XXX some camera may need to call uvc_query_stream_ctrl with UVC_GET_CUR/UVC_GET_MAX/UVC_GET_MIN
 	// before negotiation otherwise stream stall. added by saki
-	/*if device support UVC_GET_CUR only, after it success(result == 0) _prepare_stream_ctrl should not try UVC_GET_MIN etc.*/
 	uvc_error_t result = uvc_query_stream_ctrl(devh, ctrl, 1, UVC_GET_CUR);	// probe query
-	if (LIKELY(result)) {
+	if (LIKELY(!result)) {
 		result = uvc_query_stream_ctrl(devh, ctrl, 1, UVC_GET_MIN);			// probe query
-		if (LIKELY(result)) {
+		if (LIKELY(!result)) {
 			result = uvc_query_stream_ctrl(devh, ctrl, 1, UVC_GET_MAX);		// probe query
-			if (UNLIKELY(!result))
+			if (UNLIKELY(result))
 				LOGE("uvc_query_stream_ctrl:UVC_GET_MAX:err=%d", result);	// XXX 最大値の方を後で取得しないとだめ
 		} else {
 			LOGE("uvc_query_stream_ctrl:UVC_GET_MIN:err=%d", result);
@@ -414,17 +413,16 @@ static uvc_error_t _uvc_get_stream_ctrl_format(uvc_device_handle_t *devh,
 
 	int i;
 	uvc_frame_desc_t *frame;
- 	ctrl->bInterfaceNumber = stream_if->bInterfaceNumber;
+
+	ctrl->bInterfaceNumber = stream_if->bInterfaceNumber;
 	uvc_error_t result = uvc_claim_if(devh, ctrl->bInterfaceNumber);
 	if (UNLIKELY(result)) {
 		LOGE("uvc_claim_if:err=%d", result);
 		goto fail;
 	}
-
 	for (i = 0; i < 2; i++) {
 		result = _prepare_stream_ctrl(devh, ctrl);
 	}
-
 	if (UNLIKELY(result)) {
 		LOGE("_prepare_stream_ctrl:err=%d", result);
 		goto fail;
@@ -463,12 +461,12 @@ static uvc_error_t _uvc_get_stream_ctrl_format(uvc_device_handle_t *devh,
 			continue;
 
 		uint32_t *interval;
-     LOGE("intervals:%d",frame->intervals);
+
 		if (frame->intervals) {
 			for (interval = frame->intervals; *interval; ++interval) {
 				if (UNLIKELY(!(*interval))) continue;
 				uint32_t it = 10000000 / *interval;
-				LOGE("it:%d", it);
+				LOGV("it:%d", it);
 				if ((it >= (uint32_t) min_fps) && (it <= (uint32_t) max_fps)) {
 					ctrl->bmHint = (1 << 0); /* don't negotiate interval */
 					ctrl->bFormatIndex = format->bFormatIndex;
@@ -484,7 +482,7 @@ static uvc_error_t _uvc_get_stream_ctrl_format(uvc_device_handle_t *devh,
 				if (UNLIKELY(!fps)) continue;
 				uint32_t interval_100ns = 10000000 / fps;
 				uint32_t interval_offset = interval_100ns - frame->dwMinFrameInterval;
-				LOGE("fps:%d", fps);
+				LOGV("fps:%d", fps);
 				if (interval_100ns >= frame->dwMinFrameInterval
 					&& interval_100ns <= frame->dwMaxFrameInterval
 					&& !(interval_offset
@@ -501,7 +499,6 @@ static uvc_error_t _uvc_get_stream_ctrl_format(uvc_device_handle_t *devh,
 	}
 	result = UVC_ERROR_INVALID_MODE;
 fail:
-    LOGE("bInterfaceNumber:%d", ctrl->bInterfaceNumber);
 	uvc_release_if(devh, ctrl->bInterfaceNumber);
 	RETURN(result, uvc_error_t);
 
@@ -544,7 +541,7 @@ uvc_error_t uvc_get_stream_ctrl_format_size_fps(uvc_device_handle_t *devh,
 
 	uvc_streaming_interface_t *stream_if;
 	uvc_error_t result;
- LOGE("_uvc_get_stream_ctrl_format=%d", result);
+
 	memset(ctrl, 0, sizeof(*ctrl));	// XXX add
 	/* find a matching frame descriptor and interval */
 	uvc_format_desc_t *format;
@@ -554,10 +551,9 @@ uvc_error_t uvc_get_stream_ctrl_format_size_fps(uvc_device_handle_t *devh,
 		{
 			if (!_uvc_frame_format_matches_guid(cf, format->guidFormat))
 				continue;
-            LOGE("_uvc_get_stream_ctrl_format _uvc_frame_format_matches_guid=%x",  format->guidFormat);
+
 			result = _uvc_get_stream_ctrl_format(devh, stream_if, ctrl, format, width, height, min_fps, max_fps);
 			if (!result) {	// UVC_SUCCESS
-			    LOGE("_uvc_get_stream_ctrl_format _uvc_get_stream_ctrl_format=%d", result);
 				goto found;
 			}
 		}
@@ -623,7 +619,6 @@ static void _uvc_swap_buffers(uvc_stream_handle_t *strmh) {
 	pthread_mutex_unlock(&strmh->cb_mutex);
 
 	strmh->seq++;
-	//LOGE("_uvc_swap_buffers  strmh->seq:%d", strmh->seq);
 	strmh->got_bytes = 0;
 	strmh->last_scr = 0;
 	strmh->pts = 0;
@@ -665,7 +660,7 @@ static void _uvc_delete_transfer(struct libusb_transfer *transfer) {
 
 /** @internal
  * @brief Process a payload transfer
- *
+ * 
  * Processes stream, places frames into buffer, signals listeners
  * (such as user callback thread and any polling thread) on new frame
  *
@@ -680,7 +675,7 @@ static void _uvc_process_payload(uvc_stream_handle_t *strmh, const uint8_t *payl
 	struct libusb_iso_packet_descriptor *pkt;
 	uvc_vc_error_code_control_t vc_error_code;
 	uvc_vs_error_code_control_t vs_error_code;
-//LOGE("_uvc_process_payload");
+
 	// magic numbers for identifying header packets from some iSight cameras
 	static const uint8_t isight_tag[] = {
 		0x11, 0x22, 0x33, 0x44,
@@ -707,9 +702,10 @@ static void _uvc_process_payload(uvc_stream_handle_t *strmh, const uint8_t *payl
 		data_len = payload_len;
 	} else {
 		header_len = payload[0];
-//LOGE("bogus packet: actual_len=%d, header_len=%d", payload_len, header_len);
+
 		if (UNLIKELY(header_len > payload_len)) {
 			strmh->bfh_err |= UVC_STREAM_ERR;
+			UVC_DEBUG("bogus packet: actual_len=%zd, header_len=%zd\n", payload_len, header_len);
 			return;
 		}
 
@@ -807,7 +803,6 @@ static inline void _uvc_process_payload_iso(uvc_stream_handle_t *strmh, struct l
 }
 #else
 static inline void _uvc_process_payload_iso(uvc_stream_handle_t *strmh, struct libusb_transfer *transfer) {
-//LOGE("_uvc_process_payload_iso");
 	/* per packet */
 	uint8_t *pktbuf;
 	uint8_t check_header;
@@ -822,6 +817,7 @@ static inline void _uvc_process_payload_iso(uvc_stream_handle_t *strmh, struct l
 	int packet_id;
 	uvc_vc_error_code_control_t vc_error_code;
 	uvc_vs_error_code_control_t vs_error_code;
+
 	for (packet_id = 0; packet_id < transfer->num_iso_packets; ++packet_id) {
 		check_header = 1;
 
@@ -858,15 +854,13 @@ static inline void _uvc_process_payload_iso(uvc_stream_handle_t *strmh, struct l
 						&& memcmp(isight_tag, pktbuf + 3, sizeof(isight_tag)))) {
 					check_header = 0;
 					header_len = 0;
-					LOGE("pkt->actual_length < 30  header_len1 = 0");
 				} else {
 					header_len = pktbuf[0];
-					LOGE(" header_len2 =:%d",header_len);
 				}
 			} else {
 				header_len = pktbuf[0];	// Header length field of Stream Header
-				//LOGE(" header_len3 =:%d",header_len);
 			}
+
 			if (LIKELY(check_header)) {
 				header_info = pktbuf[1];
 				if (UNLIKELY(header_info & UVC_STREAM_ERR)) {
@@ -925,7 +919,7 @@ static inline void _uvc_process_payload_iso(uvc_stream_handle_t *strmh, struct l
 			if (UNLIKELY(pkt->actual_length < header_len)) {
 				/* Bogus packet received */
 				strmh->bfh_err |= UVC_STREAM_ERR;
-				LOGE("bogus packet: actual_len=%d, header_len=%zd", pkt->actual_length, header_len);
+				MARK("bogus packet: actual_len=%d, header_len=%zd", pkt->actual_length, header_len);
 				continue;
 			}
 
@@ -938,7 +932,6 @@ static inline void _uvc_process_payload_iso(uvc_stream_handle_t *strmh, struct l
 				assert(strmh->got_bytes + odd_bytes < strmh->size_buf);
 				assert(strmh->outbuf);
 				assert(pktbuf);
-				//LOGE("_uvc_process_payload_iso header_len:%d,pkt->actual_length:%d, odd_bytes:%d,packet_id:%d", header_len, pkt->actual_length,odd_bytes,packet_id);
 				memcpy(strmh->outbuf + strmh->got_bytes, pktbuf + header_len, odd_bytes);
 				strmh->got_bytes += odd_bytes;
 			}
@@ -950,7 +943,7 @@ static inline void _uvc_process_payload_iso(uvc_stream_handle_t *strmh, struct l
 #endif
 		} else {	// if (LIKELY(pktbuf))
 			strmh->bfh_err |= UVC_STREAM_ERR;
-			LOGE("libusb_get_iso_packet_buffer_simple returned null");
+			MARK("libusb_get_iso_packet_buffer_simple returned null");
 			continue;
 		}
 	}	// for
@@ -959,7 +952,7 @@ static inline void _uvc_process_payload_iso(uvc_stream_handle_t *strmh, struct l
 
 /** @internal
  * @brief Isochronous transfer callback
- *
+ * 
  * Processes stream, places frames into buffer, signals listeners
  * (such as user callback thread and any polling thread) on new frame
  *
@@ -993,7 +986,7 @@ static void _uvc_stream_callback(struct libusb_transfer *transfer) {
 		// pass through to following lines
 	case LIBUSB_TRANSFER_CANCELLED:
 	case LIBUSB_TRANSFER_ERROR:
-		LOGE("not retrying transfer, status = %d", transfer->status);
+		UVC_DEBUG("not retrying transfer, status = %d", transfer->status);
 //		MARK("not retrying transfer, status = %d", transfer->status);
 //		_uvc_delete_transfer(transfer);
 		resubmit = 0;
@@ -1001,7 +994,7 @@ static void _uvc_stream_callback(struct libusb_transfer *transfer) {
 	case LIBUSB_TRANSFER_TIMED_OUT:
 	case LIBUSB_TRANSFER_STALL:
 	case LIBUSB_TRANSFER_OVERFLOW:
-		LOGE("retrying transfer, status = %d", transfer->status);
+		UVC_DEBUG("retrying transfer, status = %d", transfer->status);
 //		MARK("retrying transfer, status = %d", transfer->status);
 		break;
 	}
@@ -1018,14 +1011,13 @@ static void _uvc_stream_callback(struct libusb_transfer *transfer) {
 #if 0
 /** @internal
  * @brief Isochronous transfer callback
- *
+ * 
  * Processes stream, places frames into buffer, signals listeners
  * (such as user callback thread and any polling thread) on new frame
  *
  * @param transfer Active transfer
  */
 static void _uvc_iso_callback(struct libusb_transfer *transfer) {
-LOGE("_uvc_iso_callback");
 	uvc_stream_handle_t *strmh;
 	int packet_id;
 
@@ -1050,14 +1042,14 @@ LOGE("_uvc_iso_callback");
 	switch (transfer->status) {
 	case LIBUSB_TRANSFER_COMPLETED:
 		if (UNLIKELY(!transfer->num_iso_packets))
-			LOGE("num_iso_packets is zero");
+			MARK("num_iso_packets is zero");
 		for (packet_id = 0; packet_id < transfer->num_iso_packets; ++packet_id) {
 			check_header = 1;
 
 			pkt = transfer->iso_packet_desc + packet_id;
 
 			if (UNLIKELY(pkt->status != 0)) {
-				LOGE("bad packet:status=%d,actual_length=%d", pkt->status, pkt->actual_length);
+				MARK("bad packet:status=%d,actual_length=%d", pkt->status, pkt->actual_length);
 				strmh->bfh_err |= UVC_STREAM_ERR;
 				continue;
 			}
@@ -1095,7 +1087,7 @@ LOGE("_uvc_iso_callback");
 					header_info = pktbuf[1];
 					if (UNLIKELY(header_info & UVC_STREAM_ERR)) {
 						strmh->bfh_err |= UVC_STREAM_ERR;
-						LOGE("bad packet");
+						MARK("bad packet");
 //						libusb_clear_halt(strmh->devh->usb_devh, strmh->stream_if->bEndpointAddress);
 						uvc_vc_get_error_code(strmh->devh, &vc_error_code, UVC_GET_CUR);
 						uvc_vs_get_error_code(strmh->devh, &vs_error_code, UVC_GET_CUR);
@@ -1120,7 +1112,7 @@ LOGE("_uvc_iso_callback");
 						if (LIKELY(header_len >= 6)) {
 							strmh->pts = DW_TO_INT(pktbuf + 2);
 						} else {
-							LOGE("bogus packet: header info has UVC_STREAM_PTS, but no data");
+							MARK("bogus packet: header info has UVC_STREAM_PTS, but no data");
 							strmh->pts = 0;
 						}
 					}
@@ -1130,7 +1122,7 @@ LOGE("_uvc_iso_callback");
 						if (LIKELY(header_len >= 10)) {
 							strmh->last_scr = DW_TO_INT(pktbuf + 6);
 						} else {
-							LOGE("bogus packet: header info has UVC_STREAM_SCR, but no data");
+							MARK("bogus packet: header info has UVC_STREAM_SCR, but no data");
 							strmh->last_scr = 0;
 						}
 					}
@@ -1149,7 +1141,7 @@ LOGE("_uvc_iso_callback");
 				if (UNLIKELY(pkt->actual_length < header_len)) {
 					/* Bogus packet received */
 					strmh->bfh_err |= UVC_STREAM_ERR;
-					LOGE("bogus packet: actual_len=%d, header_len=%zd", pkt->actual_length, header_len);
+					MARK("bogus packet: actual_len=%d, header_len=%zd", pkt->actual_length, header_len);
 					continue;
 				}
 
@@ -1173,7 +1165,7 @@ LOGE("_uvc_iso_callback");
 #endif
 			} else {	// if (LIKELY(pktbuf))
 				strmh->bfh_err |= UVC_STREAM_ERR;
-				LOGE("libusb_get_iso_packet_buffer_simple returned null");
+				MARK("libusb_get_iso_packet_buffer_simple returned null");
 				continue;
 			}
 		}	// for
@@ -1182,14 +1174,14 @@ LOGE("_uvc_iso_callback");
 		strmh->running = 0;	// this needs for unexpected disconnect of cable otherwise hangup
 	case LIBUSB_TRANSFER_CANCELLED:
 	case LIBUSB_TRANSFER_ERROR:
-		LOGE("not retrying transfer, status = %d", transfer->status);
+		UVC_DEBUG("not retrying transfer, status = %d", transfer->status);
 //		MARK("not retrying transfer, status = %d", transfer->status);
 		_uvc_delete_transfer(transfer);
 		break;
 	case LIBUSB_TRANSFER_TIMED_OUT:
 	case LIBUSB_TRANSFER_STALL:
 	case LIBUSB_TRANSFER_OVERFLOW:
-		LOGE("retrying transfer, status = %d", transfer->status);
+		UVC_DEBUG("retrying transfer, status = %d", transfer->status);
 //		MARK("retrying transfer, status = %d", transfer->status);
 		break;
 	}
@@ -1239,14 +1231,12 @@ uvc_error_t uvc_start_streaming_bandwidth(uvc_device_handle_t *devh,
 	uvc_stream_handle_t *strmh;
 
 	ret = uvc_stream_open_ctrl(devh, &strmh, ctrl);
-	if (UNLIKELY(ret != UVC_SUCCESS)){
-	LOGE("uvc_start_streaming_bandwidth   uvc_stream_open_ctrl ret != UVC_SUCCESS");
+	if (UNLIKELY(ret != UVC_SUCCESS))
 		return ret;
-}
+
 	ret = uvc_stream_start_bandwidth(strmh, cb, user_ptr, bandwidth_factor, flags);
 	if (UNLIKELY(ret != UVC_SUCCESS)) {
 		uvc_stream_close(strmh);
-		LOGE("uvc_start_streaming_bandwidth  uvc_stream_start_bandwidth ret != UVC_SUCCESS");
 		return ret;
 	}
 
@@ -1419,7 +1409,6 @@ uvc_error_t uvc_stream_start_bandwidth(uvc_stream_handle_t *strmh,
 	strmh->bfh_err = 0;	// XXX
 
 	frame_desc = uvc_find_frame_desc_stream(strmh, ctrl->bFormatIndex, ctrl->bFrameIndex);
-	LOGE("uvc_stream_start_bandwidth  uvc_find_frame_desc_stream ctrl->bFrameIndex:%d",ctrl->bFrameIndex);
 	if (UNLIKELY(!frame_desc)) {
 		ret = UVC_ERROR_INVALID_PARAM;
 		LOGE("UVC_ERROR_INVALID_PARAM");
@@ -1433,7 +1422,6 @@ uvc_error_t uvc_stream_start_bandwidth(uvc_stream_handle_t *strmh,
 		LOGE("unlnown frame format");
 		goto fail;
 	}
-	LOGE("ctrl->dwMaxVideoFrameSize：%d  ,frame_desc->dwMaxVideoFrameBufferSize：%d",ctrl->dwMaxVideoFrameSize,frame_desc->dwMaxVideoFrameBufferSize);
 	const uint32_t dwMaxVideoFrameSize = ctrl->dwMaxVideoFrameSize <= frame_desc->dwMaxVideoFrameBufferSize
 		? ctrl->dwMaxVideoFrameSize : frame_desc->dwMaxVideoFrameBufferSize;
 
@@ -1465,7 +1453,7 @@ uvc_error_t uvc_stream_start_bandwidth(uvc_stream_handle_t *strmh,
 
 		struct libusb_transfer *transfer;
 		int transfer_id;
-
+		
 		if ((bandwidth_factor > 0) && (bandwidth_factor < 1.0f)) {
 			config_bytes_per_packet = (size_t)(strmh->cur_ctrl.dwMaxPayloadTransferSize * bandwidth_factor);
 			if (!config_bytes_per_packet) {
@@ -1498,8 +1486,6 @@ uvc_error_t uvc_stream_start_bandwidth(uvc_stream_handle_t *strmh,
 				endpoint = altsetting->endpoint + ep_idx;
 				if (endpoint->bEndpointAddress == format_desc->parent->bEndpointAddress) {
 					endpoint_bytes_per_packet = endpoint->wMaxPacketSize;
-
-					LOGE("endpoint_bytes_per_packet=%d",endpoint->wMaxPacketSize);
 					// wMaxPacketSize: [unused:2 (multiplier-1):3 size:11]
 					// bit10…0:		maximum packet size
 					// bit12…11:	the number of additional transaction opportunities per microframe for high-speed
@@ -1510,7 +1496,6 @@ uvc_error_t uvc_stream_start_bandwidth(uvc_stream_handle_t *strmh,
 					endpoint_bytes_per_packet
 						= (endpoint_bytes_per_packet & 0x07ff)
 							* (((endpoint_bytes_per_packet >> 11) & 3) + 1);
-						LOGE("endpoint_bytes_per_packet=%d,dwMaxVideoFrameSize=%d",endpoint->wMaxPacketSize,dwMaxVideoFrameSize);
 					break;
 				}
 			}
@@ -1523,13 +1508,12 @@ uvc_error_t uvc_stream_start_bandwidth(uvc_stream_handle_t *strmh,
 					packets_per_transfer = (dwMaxVideoFrameSize
 							+ endpoint_bytes_per_packet - 1)
 							/ endpoint_bytes_per_packet;		// XXX cashed by zero divided exception occured
-                   LOGE("packets_per_transfer=%d，config_bytes_per_packet=%d,endpoint_bytes_per_packet=%d", packets_per_transfer,config_bytes_per_packet,endpoint_bytes_per_packet);
+
 					/* But keep a reasonable limit: Otherwise we start dropping data */
 					if (packets_per_transfer > 32)
 						packets_per_transfer = 32;
 
 					total_transfer_size = packets_per_transfer * endpoint_bytes_per_packet;
-
 					break;
 				}
 			}
@@ -1557,12 +1541,12 @@ uvc_error_t uvc_stream_start_bandwidth(uvc_stream_handle_t *strmh,
 		ret = libusb_set_interface_alt_setting(strmh->devh->usb_devh,
 				altsetting->bInterfaceNumber, altsetting->bAlternateSetting);
 		if (UNLIKELY(ret != UVC_SUCCESS)) {
-			LOGE("libusb_set_interface_alt_setting failed");
+			UVC_DEBUG("libusb_set_interface_alt_setting failed");
 			goto fail;
 		}
 
 		/* Set up the transfers */
-		LOGE("Set up the transfers");
+		MARK("Set up the transfers");
 		for (transfer_id = 0; transfer_id < LIBUVC_NUM_TRANSFER_BUFS; ++transfer_id) {
 			transfer = libusb_alloc_transfer(packets_per_transfer);
 			strmh->transfers[transfer_id] = transfer;
@@ -1597,15 +1581,15 @@ uvc_error_t uvc_stream_start_bandwidth(uvc_stream_handle_t *strmh,
 	/* If the user wants it, set up a thread that calls the user's function
 	 * with the contents of each frame.
 	 */
-	LOGE("create callback thread");
+	MARK("create callback thread");
 	if LIKELY(cb) {
 		pthread_create(&strmh->cb_thread, NULL, _uvc_user_caller, (void*) strmh);
 	}
-	LOGE("submit transfers");
+	MARK("submit transfers");
 	for (transfer_id = 0; transfer_id < LIBUVC_NUM_TRANSFER_BUFS; transfer_id++) {
 		ret = libusb_submit_transfer(strmh->transfers[transfer_id]);
 		if (UNLIKELY(ret != UVC_SUCCESS)) {
-			LOGE("libusb_submit_transfer failed");
+			UVC_DEBUG("libusb_submit_transfer failed");
 			break;
 		}
 	}
@@ -1614,7 +1598,7 @@ uvc_error_t uvc_stream_start_bandwidth(uvc_stream_handle_t *strmh,
 		/** @todo clean up transfers and memory */
 		goto fail;
 	}
-LOGE("uvc_stream_start_bandwidth exit");
+
 	UVC_EXIT(ret);
 	return ret;
 fail:
@@ -1646,7 +1630,7 @@ uvc_error_t uvc_stream_start_iso(uvc_stream_handle_t *strmh,
  * @param arg Device handle
  */
 static void *_uvc_user_caller(void *arg) {
-uvc_stream_handle_t *strmh = (uvc_stream_handle_t *) arg;
+	uvc_stream_handle_t *strmh = (uvc_stream_handle_t *) arg;
 
 	uint32_t last_seq = 0;
 
@@ -1654,60 +1638,23 @@ uvc_stream_handle_t *strmh = (uvc_stream_handle_t *) arg;
 		pthread_mutex_lock(&strmh->cb_mutex);
 		{
 			for (; strmh->running && (last_seq == strmh->hold_seq) ;) {
-			//LOGE("_uvc_user_caller strmh->running && (last_seq == strmh->hold_seq)");
 				pthread_cond_wait(&strmh->cb_cond, &strmh->cb_mutex);
 			}
 
 			if (UNLIKELY(!strmh->running)) {
-			LOGE("_uvc_user_caller UNLIKELY(!strmh->running)");
-				pthread_mutex_unlock(&strmh->cb_mutex);
-				break;
-			}
-
-			last_seq = strmh->hold_seq;
-            if (LIKELY(!strmh->hold_bfh_err))	// XXX
-            {
-                (&strmh->frame)->sequence=strmh->seq;
-                //LOGE("_uvc_user_caller2 LIKELY(!strmh->hold_bfh_err)");
-                strmh->user_cb(strmh->holdbuf, strmh->user_ptr,strmh->hold_bytes);	// call user callback function
-            }
-
-		}
-		pthread_mutex_unlock(&strmh->cb_mutex);
-	}
-	/*uvc_stream_handle_t *strmh = (uvc_stream_handle_t *) arg;
-
-	uint32_t last_seq = 0;
-
-	for (; 1 ;) {
-		pthread_mutex_lock(&strmh->cb_mutex);
-		{
-			for (; strmh->running && (last_seq == strmh->hold_seq) ;) {
-			LOGE("_uvc_user_caller strmh->running && (last_seq == strmh->hold_seq)");
-				pthread_cond_wait(&strmh->cb_cond, &strmh->cb_mutex);
-			}
-
-			if (UNLIKELY(!strmh->running)) {
-			LOGE("_uvc_user_caller UNLIKELY(!strmh->running)");
 				pthread_mutex_unlock(&strmh->cb_mutex);
 				break;
 			}
 
 			last_seq = strmh->hold_seq;
 			if (LIKELY(!strmh->hold_bfh_err))	// XXX
-			LOGE("_uvc_user_caller1 LIKELY(!strmh->hold_bfh_err)");
 				_uvc_populate_frame(strmh);
 		}
 		pthread_mutex_unlock(&strmh->cb_mutex);
 
 		if (LIKELY(!strmh->hold_bfh_err))	// XXX
-		{
-		    (&strmh->frame)->sequence=strmh->seq;
-		    LOGE("_uvc_user_caller2 LIKELY(!strmh->hold_bfh_err)");
-            strmh->user_cb(&strmh->frame, strmh->user_ptr);	// call user callback function
-		}
-
-	}*/
+			strmh->user_cb(&strmh->frame, strmh->user_ptr);	// call user callback function
+	}
 
 	return NULL; // return value ignored
 }
@@ -1750,17 +1697,11 @@ void _uvc_populate_frame(uvc_stream_handle_t *strmh) {
 
 	/* copy the image data from the hold buffer to the frame (unnecessary extra buf?) */
 	if (UNLIKELY(frame->data_bytes < strmh->hold_bytes)) {
-	    LOGE("_uvc_populate_frame frame->data_bytes:%d < strmh->hold_bytes:%d",frame->data_bytes,strmh->hold_bytes);
 		frame->data = realloc(frame->data, strmh->hold_bytes);	// TODO add error handling when failed realloc
 		frame->data_bytes = strmh->hold_bytes;
 	}
-	if(UNLIKELY(!frame->data))
-	{
-	strmh->hold_bfh_err=UVC_STREAM_ERR;
-	return ;
-	}
 	memcpy(frame->data, strmh->holdbuf, strmh->hold_bytes/*frame->data_bytes*/);	// XXX
-LOGE("memcpy(frame->data, strmh->holdbuf, strmh->hold_bytes/*frame->data_bytes*/);");
+
 	/** @todo set the frame time */
 }
 
