@@ -305,10 +305,7 @@ public final class USBMonitor {
 				for (final UsbDevice device: deviceList.values() ) {
 					for (final DeviceFilter filter: filters) {
 						if ((filter != null) && filter.matches(device)) {
-							// when filter matches
-							if (!filter.isExclude) {
-								result.add(device);
-							}
+							result.add(device);
 							break;
 						}
 					}
@@ -330,9 +327,8 @@ public final class USBMonitor {
 		final List<UsbDevice> result = new ArrayList<UsbDevice>();
 		if (deviceList != null) {
 			for (final UsbDevice device: deviceList.values() ) {
-				if ((filter == null) || (filter.matches(device) && !filter.isExclude)) {
+				if (filter == null || filter.matches(device))
 					result.add(device);
-				}
 			}
 		}
 		return result;

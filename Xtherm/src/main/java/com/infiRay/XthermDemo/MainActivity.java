@@ -425,7 +425,7 @@ public final class MainActivity extends BaseActivity {
                             mCameraHandler = UVCCameraHandler.createHandler(MainActivity.this, mUVCCameraView,
                                     USE_SURFACE_ENCODER ? 0 : 1, PREVIEW_WIDTH, PREVIEW_HEIGHT, PREVIEW_MODE, null);
                             mUSBMonitor = new USBMonitor(MainActivity.this, mOnDeviceConnectListener);
-                            mUSBMonitor.addDeviceFilter(new DeviceFilter(0, 0, 239, 2, 0, null, null, null) {
+                            mUSBMonitor.addDeviceFilter(new DeviceFilter() {
                                 @Override
                                 public boolean matches(final UsbDevice device) {
                                     String pn = device.getProductName();
