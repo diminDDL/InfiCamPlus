@@ -39,7 +39,7 @@ android {
 	}
 
     defaultConfig {
-		minSdkVersion 14
+		minSdkVersion 21
 		targetSdkVersion 32
 
 		ndk {
