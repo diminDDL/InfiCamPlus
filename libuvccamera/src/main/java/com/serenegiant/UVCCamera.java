@@ -381,87 +381,6 @@ public class UVCCamera {
     	}
     }
 
-    /**
-     * @param brightness [%]
-     */
-	public synchronized void setBrightness(final int brightness) {
-    	if (mNativePtr != 0) {
- 		   final float range = Math.abs(mBrightnessMax - mBrightnessMin);
- 		   if (range > 0)
- 			   nativeSetBrightness(mNativePtr, (int)(brightness / 100.f * range) + mBrightnessMin);
-    	}
-    }
-
-    /**
-     * @param brightness_abs
-     * @return brightness[%]
-     */
-	public synchronized int getBrightness(final int brightness_abs) {
-	   int result = 0;
-	   if (mNativePtr != 0) {
-		   nativeUpdateBrightnessLimit(mNativePtr);
-		   final float range = Math.abs(mBrightnessMax - mBrightnessMin);
-		   if (range > 0) {
-			   result = (int)((brightness_abs - mBrightnessMin) * 100.f / range);
-		   }
-	   }
-	   return result;
-	}
-
-    /**
-     * @return brightness[%]
-     */
-	public synchronized int getBrightness() {
-    	return getBrightness(nativeGetBrightness(mNativePtr));
-    }
-
-	public synchronized void resetBrightness() {
-    	if (mNativePtr != 0) {
-    		nativeSetBrightness(mNativePtr, mBrightnessDef);
-    	}
-    }
-
-//================================================================================
-    /**
-     * @param contrast [%]
-     */
-	public synchronized void setContrast(final int contrast) {
-    	if (mNativePtr != 0) {
-    		nativeUpdateContrastLimit(mNativePtr);
-	    	final float range = Math.abs(mContrastMax - mContrastMin);
-	    	if (range > 0)
-	    		nativeSetContrast(mNativePtr, (int)(contrast / 100.f * range) + mContrastMin);
-    	}
-    }
-
-    /**
-     * @param contrast_abs
-     * @return contrast[%]
-     */
-	public synchronized int getContrast(final int contrast_abs) {
-	   int result = 0;
-	   if (mNativePtr != 0) {
-		   final float range = Math.abs(mContrastMax - mContrastMin);
-		   if (range > 0) {
-			   result = (int)((contrast_abs - mContrastMin) * 100.f / range);
-		   }
-	   }
-	   return result;
-	}
-
-    /**
-     * @return contrast[%]
-     */
-	public synchronized int getContrast() {
-    	return getContrast(nativeGetContrast(mNativePtr));
-    }
-
-	public synchronized void resetContrast() {
-    	if (mNativePtr != 0) {
-    		nativeSetContrast(mNativePtr, mContrastDef);
-    	}
-    }
-
 //================================================================================
     /**
      * this may not work well with some combination of camera and device
@@ -514,13 +433,6 @@ public class UVCCamera {
 	private static final native void nativeSetCameraLens(final long id_camera, int mCameraLens);
 	private static final native int nativeStartStopTemp(final long id_camera, int startStop);
 
-	private final native int nativeUpdateBrightnessLimit(final long id_camera);
-	private static final native int nativeSetBrightness(final long id_camera, final int brightness);
-	private static final native int nativeGetBrightness(final long id_camera);
-
-	private final native int nativeUpdateContrastLimit(final long id_camera);
-	private static final native int nativeSetContrast(final long id_camera, final int contrast);
-	private static final native int nativeGetContrast(final long id_camera);
 	private static final native int nativeSetZoom(final long id_camera, final int zoom);
 //**********************************************************************
 

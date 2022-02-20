@@ -348,84 +348,6 @@ static void nativeSetCameraLens(JNIEnv *env, jobject thiz, ID_TYPE id_camera, ji
 	EXIT();
 }
 
-//======================================================================
-// Java mnethod correspond to this function should not be a static mathod
-static jint nativeUpdateBrightnessLimit(JNIEnv *env, jobject thiz, ID_TYPE id_camera) {
-	jint result = JNI_ERR;
-	ENTER();
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
-	if (LIKELY(camera)) {
-		int min, max, def;
-		result = camera->updateBrightnessLimit(min, max, def);
-		if (!result) {
-			// Java側へ書き込む
-			setField_int(env, thiz, "mBrightnessMin", min);
-			setField_int(env, thiz, "mBrightnessMax", max);
-			setField_int(env, thiz, "mBrightnessDef", def);
-		}
-	}
-	RETURN(result, jint);
-}
-
-static jint nativeSetBrightness(JNIEnv *env, jobject thiz, ID_TYPE id_camera, jint brightness) {
-	jint result = JNI_ERR;
-	ENTER();
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
-	if (LIKELY(camera)) {
-		result = camera->setBrightness(brightness);
-	}
-	RETURN(result, jint);
-}
-
-static jint nativeGetBrightness(JNIEnv *env, jobject thiz, ID_TYPE id_camera) {
-	jint result = 0;
-	ENTER();
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
-	if (LIKELY(camera)) {
-		result = camera->getBrightness();
-	}
-	RETURN(result, jint);
-}
-
-//======================================================================
-// Java mnethod correspond to this function should not be a static mathod
-static jint nativeUpdateContrastLimit(JNIEnv *env, jobject thiz, ID_TYPE id_camera) {
-	jint result = JNI_ERR;
-	ENTER();
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
-	if (LIKELY(camera)) {
-		int min, max, def;
-		result = camera->updateContrastLimit(min, max, def);
-		if (!result) {
-			// Java側へ書き込む
-			setField_int(env, thiz, "mContrastMin", min);
-			setField_int(env, thiz, "mContrastMax", max);
-			setField_int(env, thiz, "mContrastDef", def);
-		}
-	}
-	RETURN(result, jint);
-}
-
-static jint nativeSetContrast(JNIEnv *env, jobject thiz, ID_TYPE id_camera, jint contrast) {
-	jint result = JNI_ERR;
-	ENTER();
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
-	if (LIKELY(camera)) {
-		result = camera->setContrast(contrast);
-	}
-	RETURN(result, jint);
-}
-
-static jint nativeGetContrast(JNIEnv *env, jobject thiz, ID_TYPE id_camera) {
-	jint result = 0;
-	ENTER();
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
-	if (LIKELY(camera)) {
-		result = camera->getContrast();
-	}
-	RETURN(result, jint);
-}
-
 static jint nativeSetZoom(JNIEnv *env, jobject thiz, ID_TYPE id_camera, jint zoom) {
 	jint result = JNI_ERR;
 	ENTER();
@@ -482,14 +404,6 @@ static JNINativeMethod methods[] = {
     { "nativeSetTempRange",                 "(JI)V", (void *) nativeSetTempRange },
     { "nativeSetShutterFix",                "(JF)V", (void *) nativeSetShutterFix },
     { "nativeSetCameraLens",                "(JI)V", (void *) nativeSetCameraLens },
-
-	{ "nativeUpdateBrightnessLimit",        "(J)I", (void *) nativeUpdateBrightnessLimit },
-	{ "nativeSetBrightness",                "(JI)I", (void *) nativeSetBrightness },
-	{ "nativeGetBrightness",                "(J)I", (void *) nativeGetBrightness },
-
-	{ "nativeUpdateContrastLimit",          "(J)I", (void *) nativeUpdateContrastLimit },
-	{ "nativeSetContrast",                  "(JI)I", (void *) nativeSetContrast },
-	{ "nativeGetContrast",                  "(J)I", (void *) nativeGetContrast },
 
 	{ "nativeSetZoom",                      "(JI)I", (void *) nativeSetZoom },
 };

@@ -313,32 +313,12 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		sendMessage(obtainMessage(MSG_MEDIA_UPDATE, path));
 	}
 
-	public int getValue(final int flag) {
-		checkReleased();
-		final CameraThread thread = mWeakThread.get();
-		final UVCCamera camera = thread != null ? thread.mUVCCamera : null;
-		if (camera != null) {
-			if (flag == UVCCamera.PU_BRIGHTNESS) {
-				return camera.getBrightness();
-			} else if (flag == UVCCamera.PU_CONTRAST) {
-				return camera.getContrast();
-			}
-		}
-		throw new IllegalStateException();
-	}
-
 	public int setValue(final int flag, final int value) {
 		checkReleased();
 		final CameraThread thread = mWeakThread.get();
 		final UVCCamera camera =(thread != null ? thread.mUVCCamera : null);
 		if (camera != null) {
-			if (flag == UVCCamera.PU_BRIGHTNESS) {
-				camera.setBrightness(value);
-				return camera.getBrightness();
-			} else if (flag == UVCCamera.PU_CONTRAST) {
-				camera.setContrast(value);
-				return camera.getContrast();
-			}else if (flag==UVCCamera.CTRL_ZOOM_ABS)
+			if (flag==UVCCamera.CTRL_ZOOM_ABS)
 			{
 				camera.setZoom(value);
 				return 1;
@@ -363,22 +343,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		if (camera != null) {
 			camera.whenChangeTempPara();
 		}
-	}
-
-	public int resetValue(final int flag) {
-		checkReleased();
-		final CameraThread thread = mWeakThread.get();
-		final UVCCamera camera = thread != null ? thread.mUVCCamera : null;
-		if (camera != null) {
-			if (flag == UVCCamera.PU_BRIGHTNESS) {
-				camera.resetBrightness();
-				return camera.getBrightness();
-			} else if (flag == UVCCamera.PU_CONTRAST) {
-				camera.resetContrast();
-				return camera.getContrast();
-			}
-		}
-		throw new IllegalStateException();
 	}
 
 	@Override
