@@ -599,21 +599,18 @@ public final class MainActivity extends BaseActivity {
             List<UsbDevice> mUsbDeviceList = mUSBMonitor.getDeviceList();
             for (UsbDevice udv : mUsbDeviceList) {
 //            System.out.println(udv.toString());
-                if (udv.getProductName() != null) {
-                    if (udv.getProductName().contains("Xtherm") || udv.getProductName().contains("FX3") || udv.getProductName().contains("S0") || udv.getProductName().contains("T3") || udv.getProductName().contains("DL") || udv.getProductName().contains("DV") || udv.getProductName().contains("T2") || udv.getProductName().contains("DP")) {
-                        XthermAlreadyConnected = true;
-                        String deviceName = udv.getProductName();
-                        MyApp.isT3 = deviceName.contains("DL") || deviceName.contains("DV") || deviceName.contains("DP");
-                        isFirstRun = sharedPreferences.getBoolean("isFirstRun", true);
-                        if (isFirstRun) {
-                            if (isZh(this)) {
-                                rl_tip.setVisibility(View.VISIBLE);
-                            }
-                        } else {
-                            rl_tip.setVisibility(View.GONE);
-                        }
+                XthermAlreadyConnected = true;
+                String deviceName = udv.getProductName();
+                MyApp.isT3 = deviceName.contains("DL") || deviceName.contains("DV") || deviceName.contains("DP");
+                isFirstRun = sharedPreferences.getBoolean("isFirstRun", true);
+                if (isFirstRun) {
+                    if (isZh(this)) {
+                        rl_tip.setVisibility(View.VISIBLE);
                     }
+                } else {
+                    rl_tip.setVisibility(View.GONE);
                 }
+                break; // TODO (netman) loop is silly, only one device at a time is supported
             }
             if (!XthermAlreadyConnected) {
                 ConnectOurDeviceAlert = new AlertDialog.Builder(MainActivity.this)
@@ -632,15 +629,14 @@ public final class MainActivity extends BaseActivity {
                                 List<UsbDevice> mUsbDeviceList2 = mUSBMonitor.getDeviceList();
                                 for (UsbDevice udv : mUsbDeviceList2) {
                                     Log.e(TAG, "onClick AlertDialog.BUTTON_POSITIVE: " + udv.getProductName());
-                                    if (udv.getProductName().contains("FX3") || udv.getProductName().contains("Xtherm") || udv.getProductName().contains("S0") || udv.getProductName().contains("T3") || udv.getProductName().contains("DL") || udv.getProductName().contains("DV") || udv.getProductName().contains("T2") || udv.getProductName().contains("DP")) {
-                                        if (mUSBMonitor.hasPermission(udv)) {
-                                            XthermAlreadyConnected = true;
-                                            Log.e(TAG, "onClick hasPermission ");
-                                            ConnectOurDeviceAlert.dismiss();
-                                        } else {
-                                            mUSBMonitor.requestPermission(udv);
-                                        }
+                                    if (mUSBMonitor.hasPermission(udv)) {
+                                        XthermAlreadyConnected = true;
+                                        Log.e(TAG, "onClick hasPermission ");
+                                        ConnectOurDeviceAlert.dismiss();
+                                    } else {
+                                        mUSBMonitor.requestPermission(udv);
                                     }
+                                    break; // TODO (netman) loop is silly, only one device at a time is supported
                                 }
                             }
                         });
