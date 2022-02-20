@@ -45,7 +45,7 @@ void Thermometry::sub_10001010() {
 
     v0 = exp(airtmp_ * (airtmp_ * 0.00000068455 * airtmp_) + 0.06938999999999999 * airtmp_ + 1.5587 - airtmp_ * 0.00027816 * airtmp_) * Humi_;
     v1 = sqrt(v0);
-    v2 = sqrt((double) (uint16) Distance_);
+    v2 = sqrt((double) (uint16_t) Distance_);
     v3 = -v2;
     v4 = (0.006568999961018562 - v1 * 0.00227600010111928) * v3;
     v5 = exp(v4);
@@ -58,25 +58,6 @@ void Thermometry::sub_10001010() {
     v10 = v9 * (1.0 - Emiss_) * flt_100133AC;
     v11 = pow(airtmp_ + 273.15, 4.0);
     flt_100033A0 = v11 * (1.0 - flt_100133AC) + v10;
-}
-
-void Thermometry::UpdateFixParam(float Emiss, float refltmp, float airtmp, float Humi, unsigned short Distance, float Fix) {
-    Fix_ = Fix;
-    Distance_ = Distance;
-    refltmp_ = refltmp;
-    airtmp_ = airtmp;
-    Humi_ = Humi;
-    Emiss_ = Emiss;
-    sub_10001010();
-}
-
-void Thermometry::GetFixParam(float *Emiss, float *refltmp, float *airtmp, float *Humi, unsigned short *Distance, float *Fix) {
-    *Fix = Fix_;
-    *refltmp = refltmp_;
-    *airtmp = airtmp_;
-    *Humi = Humi_;
-    *Emiss = Emiss_;
-    *Distance = Distance_;
 }
 
 unsigned int Thermometry::sub_10001180(float a1, int16_t cx) {
@@ -130,6 +111,25 @@ unsigned int Thermometry::sub_10001180(float a1, int16_t cx) {
     return result;
 }
 
+void Thermometry::UpdateFixParam(float Emiss, float refltmp, float airtmp, float Humi, unsigned short Distance, float Fix) {
+    Fix_ = Fix;
+    Distance_ = Distance;
+    refltmp_ = refltmp;
+    airtmp_ = airtmp;
+    Humi_ = Humi;
+    Emiss_ = Emiss;
+    sub_10001010();
+}
+
+void Thermometry::GetFixParam(float *Emiss, float *refltmp, float *airtmp, float *Humi, unsigned short *Distance, float *Fix) {
+    *Fix = Fix_;
+    *refltmp = refltmp_;
+    *airtmp = airtmp_;
+    *Humi = Humi_;
+    *Emiss = Emiss_;
+    *Distance = Distance_;
+}
+
 void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
     int v2, v3, v5, v7, v11, typea, typeb;
     double v4;
@@ -141,16 +141,16 @@ void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
         v2 = Height_ + 1;
     v3 = Width_ * v2;
     v4 = (double) (*(uint16_t *) &pbuff[2 * Width_ * Height_ + 2] - 7800) / 36.0;
-    v5 = *(uint16*) &pbuff[2 * v3];
-    typeb = *(uint16*) &pbuff[2 * v3 + 2];
+    v5 = *(uint16_t *) &pbuff[2 * v3];
+    typeb = *(uint16_t *) &pbuff[2 * v3 + 2];
     v6 = *(float*) &pbuff[2 * v3 + 6];
     v7 = v3 + 127;
     v3 += 5;
     flt_10003360 = v6;
-    v8 = *(float*) &pbuff[2 * v3];
+    v8 = *(float *) &pbuff[2 * v3];
     v3 += 2;
     flt_1000335C = v8;
-    v9 = *(float*) &pbuff[2 * v3];
+    v9 = *(float *) &pbuff[2 * v3];
     v3 += 2;
     flt_1000339C = v9;
     flt_10003398 = *(float *) &pbuff[2 * v3];
@@ -175,7 +175,7 @@ void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
     flt_1000337C = flt_1000335C / (flt_10003360 + flt_10003360);
     flt_10003378 = flt_1000335C * flt_1000335C / (flt_10003360 * (4.0 * flt_10003360));
     sub_10001010();
-    sub_10001180(*(float *) &typea, v5); // bug in IDA
+    sub_10001180(*(float *) &typea, v5); // bug in IDA -- TODO (netman) wtf did they mean by "bug in IDA?"
 }
 
 int Thermometry::DataInit(int Width, int Height) {
@@ -248,7 +248,8 @@ void Thermometry::GetTmpData(int type, uint8_t *pbuff, float *maxtmp, int *maxx,
     tmparr[2] = temperatureLUT[v13[15]] + Fix_;
     if (!type)
     {
-        memcpy(alltmp, temperatureLUT, sizeof(temperatureLUT));
+        // TODO (netman)
+        //memcpy(alltmp, temperatureLUT, sizeof(temperatureLUT));
     }
     /*
     v17 = alltmp;
@@ -276,7 +277,6 @@ void Thermometry::GetTmpData(int type, uint8_t *pbuff, float *maxtmp, int *maxx,
         v23 = *(uint16_t*)& v11[2 * v18++];
 }
     */
-
 }
 
 void Thermometry::GetDevData(float *fpatmp, float *coretmp, int *fpaavg, int *orgavg) {

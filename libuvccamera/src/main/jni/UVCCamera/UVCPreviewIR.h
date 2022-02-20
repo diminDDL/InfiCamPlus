@@ -69,9 +69,7 @@ private:
 	pthread_t preview_thread;
 	pthread_mutex_t preview_mutex;
 	pthread_cond_t preview_sync;
-	void signal_receive_frame_data();
 	int previewFormat;
-	int copyToSurface(uint8_t *frameData, ANativeWindow **window);
 
     volatile bool mIsComputed;
 	Fields_iTemperatureCallback iTemperatureCallback;
@@ -81,7 +79,9 @@ private:
 	pthread_mutex_t temperature_mutex;
 	pthread_cond_t temperature_sync;
 	jobject mTemperatureCallbackObj;
-    static void *temperature_thread_func(void *vptr_args);
+
+	int copyToSurface(uint8_t *frameData, ANativeWindow **window);
+	static void *temperature_thread_func(void *vptr_args);
     void do_temperature(JNIEnv *env);
     void do_temperature_callback(JNIEnv *env, uint8_t *frameData);
 

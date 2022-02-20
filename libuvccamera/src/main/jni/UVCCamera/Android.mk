@@ -102,6 +102,7 @@ LOCAL_SRC_FILES := \
 		UVCPreviewIR.cpp \
 		UVCStatusCallback.cpp \
 		Parameters.cpp \
+		Thermometry.cpp \
 		serenegiant_usb_UVCCamera.cpp
 
 LOCAL_MODULE    := UVCCamera
