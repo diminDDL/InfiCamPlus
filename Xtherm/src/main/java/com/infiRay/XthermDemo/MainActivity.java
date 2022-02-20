@@ -429,8 +429,9 @@ public final class MainActivity extends BaseActivity {
                                 @Override
                                 public boolean matches(final UsbDevice device) {
                                     String pn = device.getProductName();
-                                    if (pn == null)
+                                    if (pn == null || device.getDeviceClass() != 239 || device.getDeviceSubclass() != 2)
                                         return false;
+                                    // TODO (netman) We should figure out a better way to determine what devices are supported.
                                     boolean b = pn.contains("FX3") || pn.contains("Xtherm") || pn.contains("Xmodule") || pn.contains("S0") || pn.contains("T2") || pn.contains("DL") || pn.contains("T3") || pn.contains("DP");
                                     return b;
                                 }
