@@ -62,6 +62,8 @@ public class UVCCamera {
 	public static final int PIXEL_FORMAT_NV21 = 5;		// = YVU420SemiPlanar
 
 	//--------------------------------------------------------------------------------
+    public static final int CTRL_ZOOM_ABS		= 0x00000200;	// D9:  Zoom (Absolute)
+
     public static final int PU_BRIGHTNESS		= 0x80000001;	// D0: Brightness
     public static final int PU_CONTRAST			= 0x80000002;	// D1: Contrast
 
