@@ -21,7 +21,7 @@
 ######################################################################
 # libusb.a
 ######################################################################
-LOCAL_PATH := $(call my-dir)/../..
+LOCAL_PATH			:= $(call my-dir)/../..
 include $(CLEAR_VARS)
 
 # changed linux_usbfs.c => android_usbfs.c
@@ -58,7 +58,7 @@ LOCAL_CFLAGS += -DLOG_NDEBUG
 LOCAL_CFLAGS += -DACCESS_RAW_DESCRIPTORS
 LOCAL_CFLAGS += -O3 -fstrict-aliasing -fprefetch-loop-arrays
 LOCAL_EXPORT_LDLIBS += -llog
-#LOCAL_ARM_MODE := arm
+LOCAL_ARM_MODE := arm
 
 LOCAL_MODULE := libusb100_static
 include $(BUILD_STATIC_LIBRARY)

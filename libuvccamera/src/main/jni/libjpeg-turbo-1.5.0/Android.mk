@@ -24,7 +24,7 @@
 ######################################################################
 # libjpeg-turbo1500_static.a
 ######################################################################
-LOCAL_PATH := $(call my-dir)
+LOCAL_PATH		:= $(call my-dir)
 include $(CLEAR_VARS)
 
 # CFLAGS := -Werror
@@ -112,7 +112,6 @@ LOCAL_SRC_FILES += \
 	jdarith.c \
 
 LOCAL_SRC_FILES += \
-	turbojpeg-jni.c \
 	turbojpeg.c \
 	transupp.c \
 	jdatadst-tj.c \
@@ -206,7 +205,8 @@ LOCAL_SRC_FILES += \
 	simd/jquanti-sse2.asm \
 	simd/jchuff-sse2.asm \
 
-LOCAL_CFLAGS += -DSIZEOF_SIZE_T=4
+LOCAL_CFLAGS += \
+	-DSIZEOF_SIZE_T=4 \
 
 else ifeq ($(TARGET_ARCH_ABI),mips)
 
@@ -265,3 +265,4 @@ LOCAL_WHOLE_STATIC_LIBRARIES = jpeg-turbo1500_static
 
 LOCAL_MODULE := jpeg-turbo1500
 include $(BUILD_SHARED_LIBRARY)
+

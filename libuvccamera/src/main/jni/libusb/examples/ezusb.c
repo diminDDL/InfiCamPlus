@@ -814,7 +814,7 @@ int ezusb_load_ram(libusb_device_handle *device, const char *path, int fx_type, 
 	}
 
 	if (verbose)
-		logerror("... WROTE: %d bytes, %d segments, t_avg %d\n",
+		logerror("... WROTE: %d bytes, %d segments, avg %d\n",
 		(int)ctx.total, (int)ctx.count, (int)(ctx.total/ctx.count));
 
 	/* if required, reset the CPU so it runs what we just uploaded */

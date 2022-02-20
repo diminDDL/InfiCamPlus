@@ -1894,7 +1894,7 @@ static int do_streams_ioctl(struct libusb_device_handle *handle, long req,
 	memcpy(streams->eps, endpoints, num_endpoints);
 
 	r = ioctl(fd, req, streams);
-    LOGE("r = ioctl(fd, req, streams);");
+
 	free(streams);
 
 	if (r < 0) {
@@ -1933,7 +1933,6 @@ static int op_kernel_driver_active(struct libusb_device_handle *handle, int inte
 
 	getdrv.interface = interface;
 	r = ioctl(fd, IOCTL_USBFS_GETDRIVER, &getdrv);
-	LOGE("r = ioctl(fd, IOCTL_USBFS_GETDRIVER, &getdrv);");
 	if (UNLIKELY(r)) {
 		if (errno == ENODATA)
 			return LIBUSB_SUCCESS;
@@ -2585,8 +2584,6 @@ static int handle_bulk_completion(struct libusb_device_handle *handle,	// XXX ad
 	int urb_idx = urb - tpriv->urbs;
 
 	usbi_mutex_lock(&itransfer->lock);
-    //LOGE("handling completion status %d of bulk urb %d/%d",
-           // urb->status, urb_idx + 1, tpriv->num_urbs);
 	usbi_dbg("handling completion status %d of bulk urb %d/%d",
 			urb->status, urb_idx + 1, tpriv->num_urbs);
 
@@ -2594,7 +2591,6 @@ static int handle_bulk_completion(struct libusb_device_handle *handle,	// XXX ad
 
 	if (UNLIKELY(tpriv->reap_action != NORMAL)) {
 		/* cancelled, submit_fail, or completed early */
-		LOGE("abnormal reap: urb status %d", urb->status);
 		usbi_dbg("abnormal reap: urb status %d", urb->status);
 
 		/* even though we're in the process of cancelling, it's possible that
@@ -2615,7 +2611,6 @@ static int handle_bulk_completion(struct libusb_device_handle *handle,	// XXX ad
 		 */
 		if (urb->actual_length > 0) {
 			unsigned char *target = transfer->buffer + itransfer->transferred;
-			LOGE("received %d bytes of surplus data", urb->actual_length);
 			usbi_dbg("received %d bytes of surplus data", urb->actual_length);
 			if (urb->buffer != target) {
 				usbi_dbg("moving surplus data from offset %d to offset %d",
@@ -2627,7 +2622,6 @@ static int handle_bulk_completion(struct libusb_device_handle *handle,	// XXX ad
 		}
 
 		if (tpriv->num_retired == tpriv->num_urbs) {
-			LOGE("abnormal reap: last URB handled, reporting");
 			usbi_dbg("abnormal reap: last URB handled, reporting");
 			if (tpriv->reap_action != COMPLETED_EARLY
 					&& tpriv->reap_status == LIBUSB_TRANSFER_COMPLETED)
@@ -2715,7 +2709,6 @@ completed:
 		free(tpriv->urbs);
 	tpriv->urbs = NULL;
 	usbi_mutex_unlock(&itransfer->lock);
-	//LOGE("handle_bulk_completion");
 	return CANCELLED == tpriv->reap_action ?
 		usbi_handle_transfer_cancellation(itransfer) :
 		usbi_handle_transfer_completion(itransfer, tpriv->reap_status);
@@ -2724,7 +2717,6 @@ completed:
 static int handle_iso_completion(struct libusb_device_handle *handle,	// XXX added saki
 		struct usbi_transfer *itransfer,
 		struct usbfs_urb *urb) {
-		//LOGE("handle_iso_completion");
 	struct libusb_transfer *transfer = USBI_TRANSFER_TO_LIBUSB_TRANSFER(itransfer);
 	struct android_transfer_priv *tpriv = usbi_transfer_get_os_priv(itransfer);
 	int num_urbs = tpriv->num_urbs;
@@ -2863,7 +2855,6 @@ static int handle_control_completion(struct libusb_device_handle *handle,	// XXX
 			tpriv->urbs = NULL;
 		}
 		usbi_mutex_unlock(&itransfer->lock);
-		LOGE("handle_control_completion");
 		return usbi_handle_transfer_cancellation(itransfer);
 	}
 
@@ -2920,7 +2911,6 @@ static int reap_for_handle(struct libusb_device_handle *handle) {
 	struct libusb_transfer *transfer;
 
 	r = ioctl(hpriv->fd, IOCTL_USBFS_REAPURBNDELAY, &urb);
-	//LOGE("reap_for_handle r:%d,errno:%d\n",r,errno);
 	if (r == -1 && errno == EAGAIN)
 		return 1;
 	if (UNLIKELY(r < 0)) {
@@ -2933,8 +2923,6 @@ static int reap_for_handle(struct libusb_device_handle *handle) {
 
 	itransfer = urb->usercontext;
 	transfer = USBI_TRANSFER_TO_LIBUSB_TRANSFER(itransfer);
-
-		//LOGE("urb type=%d status=%d transferred=%d",urb->type, urb->status, urb->actual_length);
 
 	usbi_dbg("urb type=%d status=%d transferred=%d",
 		urb->type, urb->status, urb->actual_length);

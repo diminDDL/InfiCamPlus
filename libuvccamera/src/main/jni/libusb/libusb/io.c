@@ -1621,7 +1621,7 @@ int usbi_handle_transfer_completion(struct usbi_transfer *itransfer,
  * callback functions may attempt to directly resubmit the transfer, which
  * will attempt to take the lock. */
 int usbi_handle_transfer_cancellation(struct usbi_transfer *transfer) {
-LOGE("usbi_handle_transfer_cancellation");
+
 	/* if the URB was cancelled due to timeout, report timeout to the user */
 	if (transfer->flags & USBI_TRANSFER_TIMED_OUT) {
 		usbi_dbg("detected timeout cancellation");

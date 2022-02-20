@@ -16,16 +16,16 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 #
 
-LOCAL_PATH := $(call my-dir)
-LIBUSB_ROOT_REL := ../..
-LIBUSB_ROOT_ABS := $(LOCAL_PATH)/../..
+LOCAL_PATH:= $(call my-dir)
+LIBUSB_ROOT_REL:= ../..
+LIBUSB_ROOT_ABS:= $(LOCAL_PATH)/../..
 
 # libusb
 
 include $(CLEAR_VARS)
 
-LIBUSB_ROOT_REL := ../..
-LIBUSB_ROOT_ABS := $(LOCAL_PATH)/../..
+LIBUSB_ROOT_REL:= ../..
+LIBUSB_ROOT_ABS:= $(LOCAL_PATH)/../..
 
 # changed linux_usbfs.c => android_usbfs.c
 # changed linux_netlink.c => android_netlink.c
@@ -53,8 +53,8 @@ LOCAL_EXPORT_C_INCLUDES := \
 
 LOCAL_LDLIBS := -llog
 # added
-#LOCAL_ARM_MODE := arm
+LOCAL_ARM_MODE := arm
 
 LOCAL_MODULE := libusb1.0
 
-include $(BUILD_STATIC_LIBRARY)
+include $(BUILD_SHARED_LIBRARY)
