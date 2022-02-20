@@ -84,6 +84,7 @@ import android.widget.Toast;
 import com.hjq.permissions.OnPermission;
 import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
+import com.serenegiant.DeviceFilter;
 import com.serenegiant.MyApp;
 import com.serenegiant.encoder.MediaMuxerWrapper;
 import com.serenegiant.USBMonitor;
@@ -424,6 +425,16 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                             mCameraHandler = UVCCameraHandler.createHandler(MainActivity.this, mUVCCameraView,
                                     USE_SURFACE_ENCODER ? 0 : 1, PREVIEW_WIDTH, PREVIEW_HEIGHT, PREVIEW_MODE, null);
                             mUSBMonitor = new USBMonitor(MainActivity.this, mOnDeviceConnectListener);
+                            mUSBMonitor.addDeviceFilter(new DeviceFilter(0, 0, 239, 2, 0, null, null, null) {
+                                @Override
+                                public boolean matches(final UsbDevice device) {
+                                    String pn = device.getProductName();
+                                    if (pn == null)
+                                        return false;
+                                    boolean b = pn.contains("FX3") || pn.contains("Xtherm") || pn.contains("Xmodule") || pn.contains("S0") || pn.contains("T2") || pn.contains("DL") || pn.contains("T3") || pn.contains("DP");
+                                    return b;
+                                }
+                            });
                         }
 
                         @Override
@@ -1648,7 +1659,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
     private final OnDeviceConnectListener mOnDeviceConnectListener = new OnDeviceConnectListener() {
         @Override
         public void onAttach(final UsbDevice device) {
-            if (device.getDeviceClass() == 239 && device.getDeviceSubclass() == 2) {
+            if (device.getDeviceClass() == 239 && device.getDeviceSubclass() == 2) { // TODO (netman) so this is the device class we look for
                 //  Toast.makeText(MainActivity.this,device.getProductName(), Toast.LENGTH_SHORT).show();
                 Handler handler = new Handler();
                 handler.postDelayed(new Runnable() {

@@ -78,16 +78,6 @@ public final class USBMonitor {
 	 */
 	private final Handler mAsyncHandler;
 	private volatile boolean destroyed;
-
-	// TODO (netman) This is kindof a dirty hack, we should do it better.
-    private boolean isMyDevice(UsbDevice device) {
-        String pn = device.getProductName();
-        if (pn == null)
-            return false;
-        boolean b = pn.contains("FX3") || pn.contains("Xtherm") || pn.contains("Xmodule") || pn.contains("S0") || pn.contains("T2") || pn.contains("DL") || pn.contains("T3") || pn.contains("DP");
-        return b;
-    }
-
 	/**
 	 * USB機器の状態変更時のコールバックリスナー
 	 */
@@ -314,15 +304,13 @@ public final class USBMonitor {
 			} else {
 				for (final UsbDevice device: deviceList.values() ) {
 					for (final DeviceFilter filter: filters) {
-					    if (isMyDevice(device)) {
-                            if ((filter != null) && filter.matches(device)) {
-                                // when filter matches
-                                if (!filter.isExclude) {
-                                    result.add(device);
-                                }
-                                break;
-                            }
-                        }
+						if ((filter != null) && filter.matches(device)) {
+							// when filter matches
+							if (!filter.isExclude) {
+								result.add(device);
+							}
+							break;
+						}
 					}
 				}
 			}
@@ -506,15 +494,13 @@ public final class USBMonitor {
 				// when device removed
 				final UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
 				if (device != null) {
-                    if (isMyDevice(device)) {
-                        UsbControlBlock ctrlBlock = mCtrlBlocks.remove(device);
-                        if (ctrlBlock != null) {
-                            // cleanup
-                            ctrlBlock.close();
-                        }
-                        mDeviceCounts = 0;
-                        processDettach(device);
-                    }
+					UsbControlBlock ctrlBlock = mCtrlBlocks.remove(device);
+					if (ctrlBlock != null) {
+						// cleanup
+						ctrlBlock.close();
+					}
+					mDeviceCounts = 0;
+					processDettach(device);
 				}
 			}
 		}
@@ -546,14 +532,12 @@ public final class USBMonitor {
 				if (mOnDeviceConnectListener != null) {
 					for (int i = 0; i < n; i++) {
 						final UsbDevice device = devices.get(i);
-                        if (isMyDevice(device)) {
-                            mAsyncHandler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mOnDeviceConnectListener.onAttach(device);
-                                }
-                            });
-                        }
+						mAsyncHandler.post(new Runnable() {
+							@Override
+							public void run() {
+								mOnDeviceConnectListener.onAttach(device);
+							}
+						});
 					}
 				}
 			}

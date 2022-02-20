@@ -38,7 +38,7 @@ import android.hardware.usb.UsbInterface;
 import android.text.TextUtils;
 import android.util.Log;
 
-public final class DeviceFilter {
+public class DeviceFilter {
 
 	private static final String TAG = "DeviceFilter";
 
