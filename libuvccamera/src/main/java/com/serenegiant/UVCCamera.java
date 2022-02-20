@@ -96,6 +96,7 @@ public class UVCCamera {
 	protected float mCurrentBandwidthFactor = DEFAULT_BANDWIDTH;
     protected String mSupportedSize;
     protected List<Size> mCurrentSizeList;
+
 	// these fields from here are accessed from native code and do not change name and remove
     protected long mNativePtr;
     protected int mBrightnessMin, mBrightnessMax, mBrightnessDef; // TODO (netman) I am not sure we need the brightness and contrast stuff
@@ -492,12 +493,10 @@ public class UVCCamera {
     // #nativeCreate and #nativeDestroy are not static methods.
     private final native long nativeCreate();
     private final native void nativeDestroy(final long id_camera);
-
     private final native int nativeConnect(long id_camera, int venderId, int productId, int fileDescriptor, int busNum, int devAddr, String usbfs);
+
     private static final native int nativeRelease(final long id_camera);
-
 	private static final native int nativeSetStatusCallback(final long mNativePtr, final IStatusCallback callback);
-
     private static final native int nativeSetPreviewSize(final long id_camera, final int width, final int height, final int min_fps, final int max_fps, final int mode, final float bandwidth);
     private static final native String nativeGetSupportedSize(final long id_camera);
     private static final native int nativeStartPreview(final long id_camera);
@@ -509,6 +508,20 @@ public class UVCCamera {
 	private static final native int nativeSetTemperatureCallback(final long mNativePtr,  final ITemperatureCallback callback);
 	private static final native void nativeWhenShutRefresh(final long mNativePtr);
 	private static final native void nativeWhenChangeTempPara(final long mNativePtr);
+	private static final native void nativeChangePalette(final long id_camera, int typeOfPalette);
+	private static final native void nativeSetTempRange(final long id_camera, int range);
+	private static final native void nativeSetShutterFix(final long id_camera, float mShutterFix);
+	private static final native void nativeSetCameraLens(final long id_camera, int mCameraLens);
+	private static final native int nativeStartStopTemp(final long id_camera, int startStop);
+
+	private final native int nativeUpdateBrightnessLimit(final long id_camera);
+	private static final native int nativeSetBrightness(final long id_camera, final int brightness);
+	private static final native int nativeGetBrightness(final long id_camera);
+
+	private final native int nativeUpdateContrastLimit(final long id_camera);
+	private static final native int nativeSetContrast(final long id_camera, final int contrast);
+	private static final native int nativeGetContrast(final long id_camera);
+	private static final native int nativeSetZoom(final long id_camera, final int zoom);
 //**********************************************************************
 
 	public void stopTemp() {
@@ -560,20 +573,4 @@ public class UVCCamera {
 			nativeSetCameraLens(mNativePtr, mCameraLens);
 		}
 	}
-
-	private static final native void nativeChangePalette(final long id_camera, int typeOfPalette);
-	private static final native void nativeSetTempRange(final long id_camera, int range);
-	private static final native void nativeSetShutterFix(final long id_camera, float mShutterFix);
-	private static final native void nativeSetCameraLens(final long id_camera, int mCameraLens);
-	private static final native int nativeStartStopTemp(final long id_camera, int startStop);
-
-	private final native int nativeUpdateBrightnessLimit(final long id_camera);
-    private static final native int nativeSetBrightness(final long id_camera, final int brightness);
-    private static final native int nativeGetBrightness(final long id_camera);
-
-    private final native int nativeUpdateContrastLimit(final long id_camera);
-    private static final native int nativeSetContrast(final long id_camera, final int contrast);
-    private static final native int nativeGetContrast(final long id_camera);
-
-    private static final native int nativeSetZoom(final long id_camera, final int zoom);
 }
