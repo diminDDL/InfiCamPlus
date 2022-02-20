@@ -232,7 +232,7 @@ public final class MainActivity extends BaseActivity {
             switch (language) {
                 case -1:
                     switch (locale_language) {
-                        case "zh":
+                    case "zh":
                             sharedPreferences.edit().putInt("Language", 0).apply();
                             break;
                         case "en":
