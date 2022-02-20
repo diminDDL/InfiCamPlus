@@ -62,45 +62,8 @@ public class UVCCamera {
 	public static final int PIXEL_FORMAT_NV21 = 5;		// = YVU420SemiPlanar
 
 	//--------------------------------------------------------------------------------
-    public static final int	CTRL_SCANNING		= 0x00000001;	// D0:  Scanning Mode
-    public static final int CTRL_AE				= 0x00000002;	// D1:  Auto-Exposure Mode
-    public static final int CTRL_AE_PRIORITY	= 0x00000004;	// D2:  Auto-Exposure Priority
-    public static final int CTRL_AE_ABS			= 0x00000008;	// D3:  Exposure Time (Absolute)
-    public static final int CTRL_AR_REL			= 0x00000010;	// D4:  Exposure Time (Relative)
-    public static final int CTRL_FOCUS_ABS		= 0x00000020;	// D5:  Focus (Absolute)
-    public static final int CTRL_FOCUS_REL		= 0x00000040;	// D6:  Focus (Relative)
-    public static final int CTRL_IRIS_ABS		= 0x00000080;	// D7:  Iris (Absolute)
-    public static final int CTRL_IRIS_REL		= 0x00000100;	// D8:  Iris (Relative)
-    public static final int CTRL_ZOOM_ABS		= 0x00000200;	// D9:  Zoom (Absolute)
-    public static final int CTRL_ZOOM_REL		= 0x00000400;	// D10: Zoom (Relative)
-    public static final int CTRL_PANTILT_ABS	= 0x00000800;	// D11: PanTilt (Absolute)
-    public static final int CTRL_PANTILT_REL	= 0x00001000;	// D12: PanTilt (Relative)
-    public static final int CTRL_ROLL_ABS		= 0x00002000;	// D13: Roll (Absolute)
-    public static final int CTRL_ROLL_REL		= 0x00004000;	// D14: Roll (Relative)
-    public static final int CTRL_FOCUS_AUTO		= 0x00020000;	// D17: Focus, Auto
-    public static final int CTRL_PRIVACY		= 0x00040000;	// D18: Privacy
-    public static final int CTRL_FOCUS_SIMPLE	= 0x00080000;	// D19: Focus, Simple
-    public static final int CTRL_WINDOW			= 0x00100000;	// D20: Window
-
     public static final int PU_BRIGHTNESS		= 0x80000001;	// D0: Brightness
     public static final int PU_CONTRAST			= 0x80000002;	// D1: Contrast
-    public static final int PU_HUE				= 0x80000004;	// D2: Hue
-    public static final int PU_SATURATION		= 0x80000008;	// D3: Saturation
-    public static final int PU_SHARPNESS		= 0x80000010;	// D4: Sharpness
-    public static final int PU_GAMMA			= 0x80000020;	// D5: Gamma
-    public static final int PU_WB_TEMP			= 0x80000040;	// D6: White Balance Temperature
-    public static final int PU_WB_COMPO			= 0x80000080;	// D7: White Balance Component
-    public static final int PU_BACKLIGHT		= 0x80000100;	// D8: Backlight Compensation
-    public static final int PU_GAIN				= 0x80000200;	// D9: Gain
-    public static final int PU_POWER_LF			= 0x80000400;	// D10: Power Line Frequency
-    public static final int PU_HUE_AUTO			= 0x80000800;	// D11: Hue, Auto
-    public static final int PU_WB_TEMP_AUTO		= 0x80001000;	// D12: White Balance Temperature, Auto
-    public static final int PU_WB_COMPO_AUTO	= 0x80002000;	// D13: White Balance Component, Auto
-    public static final int PU_DIGITAL_MULT		= 0x80004000;	// D14: Digital Multiplier
-    public static final int PU_DIGITAL_LIMIT	= 0x80008000;	// D15: Digital Multiplier Limit
-    public static final int PU_AVIDEO_STD		= 0x80010000;	// D16: Analog Video Standard
-    public static final int PU_AVIDEO_LOCK		= 0x80020000;	// D17: Analog Video Lock Status
-    public static final int PU_CONTRAST_AUTO	= 0x80040000;	// D18: Contrast, Auto
 
 	// uvc_status_class from libuvc.h
 	public static final int STATUS_CLASS_CONTROL = 0x10;

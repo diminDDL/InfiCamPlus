@@ -64,7 +64,7 @@ UVCCamera::UVCCamera()
 	mDeviceHandle(NULL),
 	mStatusCallback(NULL),
 	mPreview(NULL),
-	mPUSupports(0) {
+	mPUSupports(0) { // TODO (netman) mPUSupports is always 0 i think, this makes setContrast/setBrightness/etc useless.
 
 	ENTER();
 	clearCameraParams();
