@@ -786,7 +786,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                 matrix.setRotate(alpha);
                 // 围绕原地进行旋转
                 Bitmap newBM = null;
-//                if(isT3){
+//                if(MyApp.isT3){
 //////                  newBM = Bitmap.createScaledBitmap(origin,  icon.getWidth() / 2, icon.getHeight() / 2,false);
 //                      newBM = Bitmap.createBitmap(origin, 0, 0, width, height, matrix, false);
 ////                    newBM = skewBitmap(newBM);
@@ -801,8 +801,6 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                 origin.recycle();
                 return newBM;
             }
-
-            private Boolean isT3 = MyApp.deviceName.contains("DL") || MyApp.deviceName.contains("DV");
 
             private void drawRotateBitmap(Canvas canvas, Paint paint, Bitmap bitmap,
                                           float rotation, float posX, float posY) {
@@ -821,7 +819,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
             public final void onDrawFrame() {
                 String extern;
                 float x, y;
-//                if(isT3&&isFirstCome==0){
+//                if(MyApp.isT3&&isFirstCome==0){
 //                    rotate=180;
 //                }
                 if (UnitTemperature == 0) {
@@ -832,7 +830,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                 bitcanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 //                Log.e("rotate:", rotate + "");
                 if (isWatermaker) {
-                    if (isT3) {
+                    if (MyApp.isT3) {
                         if (rotate == 180) {
                             drawRotateBitmap(bitcanvas, photoPaint, mWatermakLogo, 0, icon.getWidth() - mWatermakLogo.getWidth() - 10, 10);
                         }
@@ -896,7 +894,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                     Bitmap mCamera2Bitmap = mCamera2Helper.getCamera2Bitmap();
                     if (mCamera2Bitmap != null) {
                         Bitmap bp = null;
-                        if (isT3) {
+                        if (MyApp.isT3) {
                             bp = rotateBitmap(mCamera2Bitmap, 90);
                             bitcanvas.drawBitmap(bp, 1, 1, photoPaint);
 //                            bitcanvas.drawBitmap(bp,icon.getWidth()-mCamera2Bitmap.getHeight(),icon.getHeight()-mCamera2Bitmap.getWidth(),  photoPaint);
@@ -966,7 +964,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                         photoPaint.setColor(Color.YELLOW);
                         x = (float) icon.getWidth() / 2.0f;
                         y = icon.getHeight() / 2.0f;
-                        if (isT3) {
+                        if (MyApp.isT3) {
                             bitcanvas.rotate(180 + tempRotate, x, y);
 //                            Matrix matrix = new Matrix();
 //                            matrix.setRotate(rotate,x + (float) mCursorYellow.getWidth() / 2.0f, y + mCursorYellow.getHeight() / 2.0f);
@@ -987,7 +985,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
 
                         x = (float) icon.getWidth() / (float) mSuportWidth * maxx1;
                         y = (float) icon.getHeight() / (float) (mSuportHeight - 4) * maxy1;
-                        if (isT3) {
+                        if (MyApp.isT3) {
 //                            Matrix matrix = new Matrix();
 //                            matrix.setRotate(rotate,x + (float) mCursorRed.getWidth() / 2.0f, y + mCursorRed.getHeight() / 2.0f);
 //                            bitcanvas.setMatrix(matrix);
@@ -1004,7 +1002,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                         photoPaint.setColor(Color.BLUE);
                         x = (float) icon.getWidth() / (float) mSuportWidth * minx1;
                         y = (float) icon.getHeight() / (float) (mSuportHeight - 4) * miny1;
-                        if (isT3) {
+                        if (MyApp.isT3) {
 //                            Matrix matrix = new Matrix();
 //                            matrix.setRotate(rotate,x + (float) mCursorBlue.getWidth() / 2.0f, y + mCursorBlue.getHeight() / 2.0f);
 //                            bitcanvas.setMatrix(matrix);
@@ -1025,14 +1023,14 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                                 //photoPaint.setTextSize(20);
                                 float pointx = j.x * icon.getWidth() - mCursorGreen.getWidth() / 2.0f;
                                 float pointy = j.y * icon.getHeight() - mCursorGreen.getHeight() / 2.0f;
-                                if (isT3) {
+                                if (MyApp.isT3) {
                                     bitcanvas.drawBitmap(mCursorGreen, icon.getWidth() - pointx - mCursorGreen.getWidth(), icon.getHeight() - pointy - mCursorGreen.getWidth(), photoPaint);
                                 } else {
                                     bitcanvas.drawBitmap(mCursorGreen, pointx, pointy, photoPaint);
                                 }
                                 int index = 0;
                                 //int index;//=(int)(j.y*288*384+j.x*384-10);
-                                if (isT3) {
+                                if (MyApp.isT3) {
                                     index = (((int) ((1 - j.y) * (mSuportHeight - 4))) * mSuportWidth + (int) ((1 - j.x) * mSuportWidth) + 10);
                                 } else {
                                     index = (((int) (j.y * (mSuportHeight - 4))) * mSuportWidth + (int) (j.x * mSuportWidth) + 10);
@@ -1040,7 +1038,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                                 //int index=(384*288/2+384/2+10);
                                 x = j.x * (float) icon.getWidth();
                                 y = j.y * (float) icon.getHeight();
-                                if (isT3) {
+                                if (MyApp.isT3) {
                                     bitcanvas.rotate(180 + tempRotate, icon.getWidth() - x, icon.getHeight() - y);
                                 } else {
                                     bitcanvas.rotate(tempRotate, x, y);
@@ -1051,7 +1049,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                                         point1Temp = decimalFormat.format(temperature1[index]) + extern;
 
 //                                        Log.e(TAG, "point1Temp:" + temperature1[index]);
-                                        if (isT3) {
+                                        if (MyApp.isT3) {
                                             bitcanvas.drawText(point1Temp, icon.getWidth() - x + (float) mCursorGreen.getWidth() / 2.0f, icon.getHeight() - y + (float) mCursorGreen.getHeight() / 2.0f, photoPaint);
                                         } else {
                                             bitcanvas.drawText(point1Temp, x + (float) mCursorGreen.getWidth() / 2.0f, y + (float) mCursorGreen.getHeight() / 2.0f, photoPaint);
@@ -1060,7 +1058,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                                     case 1:
                                         point2Temp = decimalFormat.format(temperature1[index]) + extern;
 //                                        Log.e(TAG, "point2Temp:" + temperature1[index]);
-                                        if (isT3) {
+                                        if (MyApp.isT3) {
                                             bitcanvas.drawText(point2Temp, icon.getWidth() - x + (float) mCursorGreen.getWidth() / 2.0f, icon.getHeight() - y + (float) mCursorGreen.getHeight() / 2.0f, photoPaint);
                                         } else {
                                             bitcanvas.drawText(point2Temp, x + (float) mCursorGreen.getWidth() / 2.0f, y + (float) mCursorGreen.getHeight() / 2.0f, photoPaint);
@@ -1069,7 +1067,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                                     case 2:
                                         point3Temp = decimalFormat.format(temperature1[index]) + extern;
 //                                        Log.e(TAG, "point3Temp:" + temperature1[index]);
-                                        if (isT3) {
+                                        if (MyApp.isT3) {
                                             bitcanvas.drawText(point3Temp, icon.getWidth() - x + (float) mCursorGreen.getWidth() / 2.0f, icon.getHeight() - y + (float) mCursorGreen.getHeight() / 2.0f, photoPaint);
                                         } else {
                                             bitcanvas.drawText(point3Temp, x + (float) mCursorGreen.getWidth() / 2.0f, y + (float) mCursorGreen.getHeight() / 2.0f, photoPaint);
@@ -1078,7 +1076,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                                     case 3:
                                         point4Temp = decimalFormat.format(temperature1[index]) + extern;
 //                                        Log.e(TAG, "point3Temp:" + temperature1[index]);
-                                        if (isT3) {
+                                        if (MyApp.isT3) {
                                             bitcanvas.drawText(point4Temp, icon.getWidth() - x + (float) mCursorGreen.getWidth() / 2.0f, icon.getHeight() - y + (float) mCursorGreen.getHeight() / 2.0f, photoPaint);
                                         } else {
                                             bitcanvas.drawText(point4Temp, x + (float) mCursorGreen.getWidth() / 2.0f, y + (float) mCursorGreen.getHeight() / 2.0f, photoPaint);
@@ -1087,14 +1085,14 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                                     case 4:
                                         point5Temp = decimalFormat.format(temperature1[index]) + extern;
 //                                        Log.e(TAG, "point3Temp:" + temperature1[index]);
-                                        if (isT3) {
+                                        if (MyApp.isT3) {
                                             bitcanvas.drawText(point5Temp, icon.getWidth() - x + (float) mCursorGreen.getWidth() / 2.0f, icon.getHeight() - y + (float) mCursorGreen.getHeight() / 2.0f, photoPaint);
                                         } else {
                                             bitcanvas.drawText(point5Temp, x + (float) mCursorGreen.getWidth() / 2.0f, y + (float) mCursorGreen.getHeight() / 2.0f, photoPaint);
                                         }
                                         break;
                                 }
-                                if (isT3) {
+                                if (MyApp.isT3) {
                                     bitcanvas.rotate(540 - tempRotate, icon.getWidth() - x, icon.getHeight() - y);
                                 } else {
                                     bitcanvas.rotate(360 - tempRotate, x, y);
@@ -1125,7 +1123,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                         photoPaint.setColor(Color.YELLOW);
                         x = (float) icon.getWidth() / 2.0f;
                         y = (float) icon.getHeight() / 2.0f;
-                        if (isT3) {
+                        if (MyApp.isT3) {
                             bitcanvas.rotate(tempRotate + 180, x, y);
                             bitcanvas.drawText(centerTempString, x + (float) mCursorYellow.getWidth() / 2.0f, y + mCursorYellow.getHeight() / 2.0f, photoPaint);
                             bitcanvas.rotate(540 - tempRotate, x, y);
@@ -1138,7 +1136,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                         if (mTouchPoint.size() >= 2) {
                             TouchPoint1 = mTouchPoint.get(0);
                             TouchPoint2 = mTouchPoint.get(mTouchPoint.size() - 1);
-                            if (isT3) {
+                            if (MyApp.isT3) {
                                 point1x = (int) ((1 - TouchPoint1.x) * mSuportWidth);
                                 point2x = (int) ((1 - TouchPoint2.x) * mSuportWidth);
                                 point1y = (int) ((1 - TouchPoint1.y) * (mSuportHeight - 4));
@@ -1182,7 +1180,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                                     minPointY = leftPointy;
                                 }
                             }
-                            if (isT3) {
+                            if (MyApp.isT3) {
                                 bitcanvas.drawLine(icon.getWidth() - TouchPoint1.x * icon.getWidth(), icon.getHeight() - TouchPoint1.y * icon.getHeight(), icon.getWidth() - TouchPoint2.x * icon.getWidth(), icon.getHeight() - TouchPoint1.y * icon.getHeight(), photoPaint);
                             } else {
                                 bitcanvas.drawLine(TouchPoint1.x * icon.getWidth(), TouchPoint1.y * icon.getHeight(), TouchPoint2.x * icon.getWidth(), TouchPoint1.y * icon.getHeight(), photoPaint);
@@ -1200,7 +1198,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                             photoPaint.setColor(Color.RED);
                             x = (float) icon.getWidth() / (float) mSuportWidth * maxPointX;
                             y = (float) icon.getHeight() / (float) (mSuportHeight - 4) * maxPointY;
-                            if (isT3) {
+                            if (MyApp.isT3) {
                                 bitcanvas.rotate(tempRotate + 180,  x,  y);
                                 bitcanvas.drawText(maxTempString, x + (float) mCursorRed.getWidth() / 2.0f, y + (float) mCursorRed.getHeight() / 2.0f, photoPaint);
 //                                bitcanvas.drawText(maxTempString, icon.getWidth() - x + (float) mCursorRed.getWidth() / 2.0f, icon.getHeight() - y + (float) mCursorRed.getHeight() / 2.0f, photoPaint);
@@ -1214,7 +1212,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                             photoPaint.setColor(Color.BLUE);
                             x = (float) icon.getWidth() / (float) mSuportWidth * minPointX;
                             y = (float) icon.getHeight() / (float) (mSuportHeight - 4) * minPointY;
-                            if (isT3) {
+                            if (MyApp.isT3) {
                                 bitcanvas.rotate(tempRotate + 180, x,  y);
                                 bitcanvas.drawText(minTempString, x + (float) mCursorBlue.getWidth() / 2.0f, y + (float) mCursorBlue.getHeight() / 2.0f, photoPaint);
 //                                bitcanvas.drawText(minTempString, icon.getWidth() - x + (float) mCursorBlue.getWidth() / 2.0f, icon.getHeight() - y + (float) mCursorBlue.getHeight() / 2.0f, photoPaint);
@@ -1225,7 +1223,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                                 bitcanvas.rotate(360 - tempRotate, x, y);
                             }
 
-                            if (isT3) {
+                            if (MyApp.isT3) {
                                 bitcanvas.drawBitmap(mCursorRed, (float) icon.getWidth() / (float) mSuportWidth * maxPointX - (float) mCursorRed.getWidth() / 2.0f, (float) icon.getHeight() / (float) (mSuportHeight - 4) * maxPointY - (float) mCursorRed.getHeight() / 2.0f, photoPaint);
                                 //Log.e(TAG, "onReceiveTemperature maxx1:" + maxx1);
                                 bitcanvas.drawBitmap(mCursorBlue, (float) icon.getWidth() / (float) mSuportWidth * minPointX - (float) mCursorBlue.getWidth() / 2.0f, (float) icon.getHeight() / (float) (mSuportHeight - 4) * minPointY - (float) mCursorBlue.getHeight() / 2.0f, photoPaint);
@@ -1253,7 +1251,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                         photoPaint.setColor(Color.YELLOW);
                         x = (float) icon.getWidth() / 2.0f;
                         y = icon.getHeight() / 2.0f;
-                        if (isT3) {
+                        if (MyApp.isT3) {
                             bitcanvas.rotate(tempRotate + 180, x, y);
                             bitcanvas.drawText(centerTempString, x + (float) mCursorYellow.getWidth() / 2.0f, y + mCursorYellow.getHeight() / 2.0f, photoPaint);
                             bitcanvas.rotate(540 - tempRotate, x, y);
@@ -1267,7 +1265,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                         if (mTouchPoint.size() >= 2) {
                             TouchPoint1 = mTouchPoint.get(0);
                             TouchPoint2 = mTouchPoint.get(mTouchPoint.size() - 1);
-                            if (isT3) {
+                            if (MyApp.isT3) {
                                 point1x = (int) ((1 - TouchPoint1.x) * mSuportWidth);
                                 point2x = (int) ((1 - TouchPoint2.x) * mSuportWidth);
                                 point1y = (int) ((1 - TouchPoint1.y) * (mSuportHeight - 4));
@@ -1313,7 +1311,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                                 }
                             }
                             photoPaint.setColor(Color.YELLOW);
-                            if (isT3) {
+                            if (MyApp.isT3) {
                                 bitcanvas.drawLine(icon.getWidth() - TouchPoint1.x * icon.getWidth(), icon.getHeight() - TouchPoint1.y * icon.getHeight(), icon.getWidth() - TouchPoint2.x * icon.getWidth(), icon.getHeight() - TouchPoint1.y * icon.getHeight(), photoPaint);
                                 bitcanvas.drawLine(icon.getWidth() - TouchPoint1.x * icon.getWidth(), icon.getHeight() - TouchPoint1.y * icon.getHeight(), icon.getWidth() - TouchPoint1.x * icon.getWidth(), icon.getHeight() - TouchPoint2.y * icon.getHeight(), photoPaint);
                                 bitcanvas.drawLine(icon.getWidth() - TouchPoint1.x * icon.getWidth(), icon.getHeight() - TouchPoint2.y * icon.getHeight(), icon.getWidth() - TouchPoint2.x * icon.getWidth(), icon.getHeight() - TouchPoint2.y * icon.getHeight(), photoPaint);
@@ -1337,7 +1335,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                             photoPaint.setColor(Color.RED);
                             x = (float) icon.getWidth() / (float) mSuportWidth * maxPointX;
                             y = (float) icon.getHeight() / (float) (mSuportHeight - 4) * maxPointY;
-                            if (isT3) {
+                            if (MyApp.isT3) {
                                 bitcanvas.rotate(tempRotate + 180,  x, y);
                                 bitcanvas.drawText(maxTempString, x + (float) mCursorRed.getWidth() / 2.0f, y + (float) mCursorRed.getHeight() / 2.0f, photoPaint);
 //                                bitcanvas.drawText(maxTempString, (float) icon.getWidth() - x + (float) mCursorRed.getWidth() / 2.0f, icon.getHeight() - y + (float) mCursorRed.getHeight() / 2.0f, photoPaint);
@@ -1352,7 +1350,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                             photoPaint.setColor(Color.BLUE);
                             x = (float) icon.getWidth() / (float) mSuportWidth * minPointX;
                             y = (float) icon.getHeight() / (float) (mSuportHeight - 4) * minPointY;
-                            if (isT3) {
+                            if (MyApp.isT3) {
                                 bitcanvas.rotate(tempRotate + 180,  x,  y);
                                 bitcanvas.drawText(minTempString, x + (float) mCursorBlue.getWidth() / 2.0f, y + (float) mCursorBlue.getHeight() / 2.0f, photoPaint);
 //                                bitcanvas.drawText(minTempString, (float) icon.getWidth() - x + (float) mCursorBlue.getWidth() / 2.0f, icon.getHeight() - y + (float) mCursorBlue.getHeight() / 2.0f, photoPaint);
@@ -1363,7 +1361,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                                 bitcanvas.drawText(minTempString, x + (float) mCursorBlue.getWidth() / 2.0f, y + (float) mCursorBlue.getHeight() / 2.0f, photoPaint);
                                 bitcanvas.rotate(360 - tempRotate, x, y);
                             }
-                            if (isT3) {
+                            if (MyApp.isT3) {
                                 bitcanvas.drawBitmap(mCursorRed, (float) icon.getWidth() / (float) mSuportWidth * maxPointX - (float) mCursorRed.getWidth() / 2.0f, (float) icon.getHeight() / (float) (mSuportHeight - 4) * maxPointY - (float) mCursorRed.getHeight() / 2.0f, photoPaint);
                                 //Log.e(TAG, "onReceiveTemperature maxx1:" + maxx1);
                                 bitcanvas.drawBitmap(mCursorBlue, (float) icon.getWidth() / (float) mSuportWidth * minPointX - (float) mCursorBlue.getWidth() / 2.0f, (float) icon.getHeight() / (float) (mSuportHeight - 4) * minPointY - (float) mCursorBlue.getHeight() / 2.0f, photoPaint);

@@ -841,8 +841,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			ITemperatureCallback mTempCb= mWeakCameraView.get().getTemperatureCallback();
 			mUVCCamera.setTemperatureCallback(mTempCb);
 			mWeakCameraView.get().setTemperatureCbing(false);
-			Boolean isT3 = MyApp.deviceName.contains("DL")|| MyApp.deviceName.contains("DV");
-			if(isT3){
+			if (MyApp.isT3) {
 				mWeakCameraView.get().setRotation(180);
 			}
 			synchronized (mSync) {

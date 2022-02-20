@@ -213,7 +213,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
     private boolean isFirstRun;
     LinearLayout rl_tip, rl_tip_kaka, rl_tip_setting, menu_palette_layout, rl_tip_setting1;
     RelativeLayout ll_tip_temp, ll_tip_temp1;
-    Boolean isT3 = false;
     String locale_language;
     private int isOpened = 0;
 
@@ -591,8 +590,8 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                 if (udv.getProductName() != null) {
                     if (udv.getProductName().contains("Xtherm") || udv.getProductName().contains("FX3") || udv.getProductName().contains("S0") || udv.getProductName().contains("T3") || udv.getProductName().contains("DL") || udv.getProductName().contains("DV") || udv.getProductName().contains("T2") || udv.getProductName().contains("DP")) {
                         XthermAlreadyConnected = true;
-                        MyApp.deviceName = udv.getProductName();
-                        isT3 = MyApp.deviceName.contains("DL") || MyApp.deviceName.contains("DV") || MyApp.deviceName.contains("DP");
+                        String deviceName = udv.getProductName();
+                        MyApp.isT3 = deviceName.contains("DL") || deviceName.contains("DV") || deviceName.contains("DP");
                         isFirstRun = sharedPreferences.getBoolean("isFirstRun", true);
                         if (isFirstRun) {
                             if (isZh(this)) {
@@ -1451,7 +1450,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
             temperatureAnalysisWindow = new PopupWindow(contentView, (int) (mMenuRight.getHeight() / 5.806f),
                     mMenuRight.getHeight());
 
-//            if (isT3) {
+//            if (MyApp.isT3) {
 //                contentView.setRotation(oldRotation);
 //                Log.e(TAG,"oldRotation1"+oldRotation);
 //            }
@@ -1818,7 +1817,7 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
                 Rect bounds = new Rect();
                 photoPaint.getTextBounds(RecordTime, 0, RecordTime.length(), bounds);
 
-                if (isT3) {
+                if (MyApp.isT3) {
                     canvas.rotate(180, bounds.height() * 7, bounds.height());
                     canvas.drawText(RecordTime, bounds.height() * 7, bounds.height(), photoPaint);
                 } else {

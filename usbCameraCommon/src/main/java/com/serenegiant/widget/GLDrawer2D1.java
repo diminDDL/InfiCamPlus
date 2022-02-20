@@ -64,7 +64,6 @@ public class GLDrawer2D1 implements IDrawer2dES21 {
     int muTexMatrixLoc;
     private final float[] mMvpMatrix = new float[16];
     private static final String TAG = "GLDrawer2D1";
-    private Boolean isDv = MyApp.deviceName.contains("T3");
 
     /**
      * コンストラクタ
