@@ -64,7 +64,6 @@ UVCCamera::UVCCamera()
 	mDeviceHandle(NULL),
 	mStatusCallback(NULL),
 	mPreview(NULL),
-	mCtrlSupports(0),
 	mPUSupports(0) {
 
 	ENTER();
