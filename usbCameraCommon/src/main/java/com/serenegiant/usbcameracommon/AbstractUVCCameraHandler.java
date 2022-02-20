@@ -99,14 +99,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
 	private static final int MSG_SET_SHUTTERFIX=28;
 	private static final int MSG_OPEN_SYS_CAMERA=16;
 	private static final int MSG_CLOSE_SYS_CAMERA=17;
-    private static final int MSG_SET_HIGHTHROW=18;
-    private static final int MSG_SET_LOWTHROW=19;
-    private static final int MSG_SET_HIGHPLAT=20;
-    private static final int MSG_SET_LOWPLAT=21;
-    private static final int MSG_SET_ORGSUBGSHIGH=22;
-    private static final int MSG_SET_ORGSUBGSLOW=23;
-    private static final int MSG_SET_SIGMAD=24;
-    private static final int MSG_SET_SIGMAR=25;
 	private static final int MSG_RELAYOUT=26;
     private static final int MSG_WATERMARK_ONOFF=27;
 	private final WeakReference<AbstractUVCCameraHandler.CameraThread> mWeakThread;
@@ -140,64 +132,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			return para;
 		}
 	}
-
-    public int getHighThrow() {
-        final CameraThread thread = mWeakThread.get();
-        if((thread != null)&&(thread.mUVCCamera)!=null) {
-            //return thread.mUVCCamera.getHighThrow();
-        }
-        return 0;
-    }
-    public int getLowThrow() {
-        final CameraThread thread = mWeakThread.get();
-        if((thread != null)&&(thread.mUVCCamera)!=null) {
-            //return thread.mUVCCamera.getLowThrow();
-        }
-        return 0;
-    }
-    public int getHighPlat() {
-        final CameraThread thread = mWeakThread.get();
-        if((thread != null)&&(thread.mUVCCamera)!=null) {
-            //return thread.mUVCCamera.getHighPlat();
-        }
-        return 0;
-    }
-    public int getLowPlat() {
-        final CameraThread thread = mWeakThread.get();
-        if((thread != null)&&(thread.mUVCCamera)!=null) {
-            //return thread.mUVCCamera.getLowPlat();
-        }
-        return 0;
-    }
-    public int getOrgSubGsHigh() {
-        final CameraThread thread = mWeakThread.get();
-        if((thread != null)&&(thread.mUVCCamera)!=null) {
-            //return thread.mUVCCamera.getOrgSubGsHigh();
-        }
-        return 0;
-    }
-    public int getOrgSubGsLow() {
-        final CameraThread thread = mWeakThread.get();
-        if((thread != null)&&(thread.mUVCCamera)!=null) {
-            //return thread.mUVCCamera.getOrgSubGsLow();
-        }
-        return 0;
-    }
-    public float getSigmaD() {
-        final CameraThread thread = mWeakThread.get();
-        if((thread != null)&&(thread.mUVCCamera)!=null) {
-            //return thread.mUVCCamera.getSigmaD();
-        }
-        return 0;
-    }
-    public float getSigmaR() {
-        final CameraThread thread = mWeakThread.get();
-        if((thread != null)&&(thread.mUVCCamera)!=null) {
-            //return thread.mUVCCamera.getSigmaR();
-        }
-        return 0;
-    }
-
 
 	public boolean isPreviewing() {
 		final CameraThread thread = mWeakThread.get();
@@ -332,54 +266,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
         Message message = Message.obtain();
         message.what = MSG_WATERMARK_ONOFF;
         message.arg1 = isWatermaker;
-        sendMessage(message);
-    }
-    public void setHighThrow(int inputHighThrow){
-        Message message = Message.obtain();
-        message.what = MSG_SET_HIGHTHROW;
-        message.arg1 = inputHighThrow;
-        sendMessage(message);
-    }
-    public void setLowThrow(int inputLowThrow){
-        Message message = Message.obtain();
-        message.what = MSG_SET_LOWTHROW;
-        message.arg1 = inputLowThrow;
-        sendMessage(message);
-    }
-    public void setHighPlat(int inputHighPlat){
-        Message message = Message.obtain();
-        message.what = MSG_SET_HIGHPLAT;
-        message.arg1 = inputHighPlat;
-        sendMessage(message);
-    }
-    public void setLowPlat(int inputLowPlat){
-        Message message = Message.obtain();
-        message.what = MSG_SET_LOWPLAT;
-        message.arg1 = inputLowPlat;
-        sendMessage(message);
-    }
-    public void setSigmaD(int inputSigmaD){
-        Message message = Message.obtain();
-        message.what = MSG_SET_SIGMAD;
-        message.arg1 = inputSigmaD;
-        sendMessage(message);
-    }
-    public void setSigmaR(int inputSigmaR){
-        Message message = Message.obtain();
-        message.what = MSG_SET_SIGMAR;
-        message.arg1 = inputSigmaR;
-        sendMessage(message);
-    }
-    public void setOrgSubGsHigh(int inputOrgSubGsHigh){
-        Message message = Message.obtain();
-        message.what = MSG_SET_ORGSUBGSHIGH;
-        message.arg1 = inputOrgSubGsHigh;
-        sendMessage(message);
-    }
-    public void setOrgSubGsLow(int inputOrgSubGsLow){
-        Message message = Message.obtain();
-        message.what = MSG_SET_ORGSUBGSLOW;
-        message.arg1 = inputOrgSubGsLow;
         sendMessage(message);
     }
 	public void stopTemperaturing() {
@@ -542,41 +428,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
                 Log.e(TAG, "handleMessage isWatermaker: "+isWatermaker );
                 thread.handleWatermarkOnOff(isWatermaker);
                 break;
-            case MSG_SET_HIGHTHROW:
-                int inputHighThrow=msg.arg1;
-                thread.handleSetHighThrow(inputHighThrow);
-                break;
-            case MSG_SET_LOWTHROW:
-                int inputLowThrow=msg.arg1;
-                thread.handleSetLowThrow(inputLowThrow);
-                break;
-            case MSG_SET_HIGHPLAT:
-                int inputHighPlat=msg.arg1;
-                thread.handleSetHighPlat(inputHighPlat);
-                break;
-            case MSG_SET_LOWPLAT:
-                int inputLowPlat=msg.arg1;
-                thread.handleSetLowPlat(inputLowPlat);
-                break;
-            case MSG_SET_ORGSUBGSHIGH:
-                int inputOrgSubGsHigh=msg.arg1;
-                thread.handleSetOrgSubGsHigh(inputOrgSubGsHigh);
-                break;
-            case MSG_SET_ORGSUBGSLOW:
-                int inputOrgSubGsLow=msg.arg1;
-                thread.handleSetOrgSubGsLow(inputOrgSubGsLow);
-                break;
-            case MSG_SET_SIGMAD:
-                int sigmaD=msg.arg1;
-                float inputSigmaD=sigmaD/10.0f;
-                thread.handleSetSigmaD(inputSigmaD);
-                break;
-            case MSG_SET_SIGMAR:
-                int sigmaR=msg.arg1;
-                float inputSigmaR=sigmaR/10.0f;
-                thread.handleSetSigmaR(inputSigmaR);
-                break;
-
 			case MSG_TEMPERATURE_STOP:
 				thread.handleStopTemperaturing();
 				break;
@@ -613,7 +464,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		private float mBandwidthFactor;
 		private boolean mIsPreviewing;
 		private boolean mIsTemperaturing;
-        private boolean mIsCapturing;
 		private boolean mIsRecording;
 		public  ITemperatureCallback CameraThreadTemperatureCallback;
 		/**
@@ -1312,54 +1162,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
 				return;
 			}
 			mUVCCamera.setShutterFix(mShutterFix);
-		}
-		public void handleSetHighThrow(int inputHighThrow) {
-			if ((mUVCCamera == null) ){
-				return;
-			}
-			//mUVCCamera.setHighThrow(inputHighThrow);
-		}
-		public void handleSetLowThrow(int inputLowThrow) {
-			if ((mUVCCamera == null) ){
-				return;
-			}
-			//mUVCCamera.setLowThrow(inputLowThrow);
-		}
-		public void handleSetLowPlat(int inputLowPlat) {
-			if ((mUVCCamera == null) ){
-				return;
-			}
-			//mUVCCamera.setLowPlat(inputLowPlat);
-		}
-		public void handleSetHighPlat(int inputHighPlat) {
-			if ((mUVCCamera == null) ){
-				return;
-			}
-			//mUVCCamera.setHighPlat(inputHighPlat);
-		}
-		public void handleSetOrgSubGsHigh(int inputOrgSubGsHigh) {
-			if ((mUVCCamera == null) ){
-				return;
-			}
-			//mUVCCamera.setOrgSubGsHigh(inputOrgSubGsHigh);
-		}
-		public void handleSetOrgSubGsLow(int inputOrgSubGsLow) {
-			if ((mUVCCamera == null) ){
-				return;
-			}
-			//mUVCCamera.setOrgSubGsLow(inputOrgSubGsLow);
-		}
-		public void handleSetSigmaD(float inputSigmaD) {
-			if ((mUVCCamera == null) ){
-				return;
-			}
-			//mUVCCamera.setSigmaD(inputSigmaD);
-		}
-		public void handleSetSigmaR(float inputSigmaR) {
-			if ((mUVCCamera == null) ){
-				return;
-			}
-			//mUVCCamera.setSigmaR(inputSigmaR);
 		}
 	}
 }
