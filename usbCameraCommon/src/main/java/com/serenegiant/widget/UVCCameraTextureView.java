@@ -900,6 +900,8 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
 //                            bitcanvas.drawBitmap(bp,icon.getWidth()-mCamera2Bitmap.getHeight(),icon.getHeight()-mCamera2Bitmap.getWidth(),  photoPaint);
                         } else {
                             bp = rotateBitmap(mCamera2Bitmap, 270);
+                            /*bitcanvas.drawBitmap(bp, new Rect(0, 0, bp.getWidth(), bp.getHeight()),
+                                    new Rect(0, 0, bitcanvas.getWidth(), bitcanvas.getHeight()), photoPaint);*/
                             bitcanvas.drawBitmap(bp, 1, 1, photoPaint);
                         }
 //                        Log.e(TAG, "onDrawFrame: mCamera2Bitmap!=null width:" + mCamera2Bitmap.getWidth() + " height:" + mCamera2Bitmap.getHeight());
