@@ -90,45 +90,9 @@ UVCCamera::~UVCCamera() {
 }
 
 void UVCCamera::clearCameraParams() {
-	mCtrlSupports = mPUSupports = 0;
-	mScanningMode.min = mScanningMode.max = mScanningMode.def = 0;
-	mExposureMode.min = mExposureMode.max = mExposureMode.def = 0;
-	mExposurePriority.min = mExposurePriority.max = mExposurePriority.def = 0;
-	mExposureAbs.min = mExposureAbs.max = mExposureAbs.def = 0;
-	mAutoFocus.min = mAutoFocus.max = mAutoFocus.def = 0;
-	mAutoWhiteBlance.min = mAutoWhiteBlance.max = mAutoWhiteBlance.def = 0;
-	mWhiteBlance.min = mWhiteBlance.max = mWhiteBlance.def = 0;
-	mAutoWhiteBlanceCompo.min = mAutoWhiteBlanceCompo.max = mAutoWhiteBlanceCompo.def = 0;
-	mWhiteBlanceCompo.min = mWhiteBlanceCompo.max = mWhiteBlanceCompo.def = 0;
-	mBacklightComp.min = mBacklightComp.max = mBacklightComp.def = 0;
 	mBrightness.min = mBrightness.max = mBrightness.def = 0;
 	mContrast.min = mContrast.max = mContrast.def = 0;
-	mAutoContrast.min = mAutoContrast.max = mAutoContrast.def = 0;
-	mSharpness.min = mSharpness.max = mSharpness.def = 0;
-	mGain.min = mGain.max = mGain.def = 0;
-	mGamma.min = mGamma.max = mGamma.def = 0;
-	mSaturation.min = mSaturation.max = mSaturation.def = 0;
-	mHue.min = mHue.max = mHue.def = 0;
-	mAutoHue.min = mAutoHue.max = mAutoHue.def = 0;
 	mZoom.min = mZoom.max = mZoom.def = 0;
-	mZoomRel.min = mZoomRel.max = mZoomRel.def = 0;
-	mFocus.min = mFocus.max = mFocus.def = 0;
-	mFocusRel.min = mFocusRel.max = mFocusRel.def = 0;
-	mFocusSimple.min = mFocusSimple.max = mFocusSimple.def = 0;
-	mIris.min = mIris.max = mIris.def = 0;
-	mIrisRel.min = mIrisRel.max = mIrisRel.def = 0;
-	mPan.min = mPan.max = mPan.def = 0; mPan.current = -1;
-	mTilt.min = mTilt.max = mTilt.def = 0; mTilt.current = -1;
-	mRoll.min = mRoll.max = mRoll.def = 0;
-	mPanRel.min = mPanRel.max = mPanRel.def = 0; mPanRel.current = -1;
-	mTiltRel.min = mTiltRel.max = mTiltRel.def = 0; mTiltRel.current = -1;
-	mRollRel.min = mRollRel.max = mRollRel.def = 0;
-	mPrivacy.min = mPrivacy.max = mPrivacy.def = 0;
-	mPowerlineFrequency.min = mPowerlineFrequency.max = mPowerlineFrequency.def = 0;
-	mMultiplier.min = mMultiplier.max = mMultiplier.def = 0;
-	mMultiplierLimit.min = mMultiplierLimit.max = mMultiplierLimit.def = 0;
-	mAnalogVideoStandard.min = mAnalogVideoStandard.max = mAnalogVideoStandard.def = 0;
-	mAnalogVideoLockState.min = mAnalogVideoLockState.max = mAnalogVideoLockState.def = 0;
 }
 
 //======================================================================

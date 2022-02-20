@@ -168,4 +168,4 @@ public:
 	void setUserPalette(uint8_t* palette,int typeOfPalette);
 };
 
-#endif /* UVCPREVIEW_H_ */
+#endif /* UVCPREVIEW_IR_H_ */

@@ -77,7 +77,6 @@ public class AspectRatioTextureView extends TextureView	// API >= 14
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-
 		if (mRequestedAspect > 0) {
 			int initialWidth = MeasureSpec.getSize(widthMeasureSpec);
 			int initialHeight = MeasureSpec.getSize(heightMeasureSpec);

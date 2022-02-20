@@ -585,8 +585,6 @@ public final class USBMonitor {
                             }
                         }
                     }
-
-
                 }
             }
             mAsyncHandler.postDelayed(this, 2000);    // confirm every 2 seconds
