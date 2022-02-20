@@ -524,17 +524,17 @@ public class UVCCamera {
 	private static final native int nativeSetZoom(final long id_camera, final int zoom);
 //**********************************************************************
 
-	public void stopTemp() {
-		if (mCtrlBlock != null) {
-			Log.e(TAG, "stopTemp");
-			nativeStartStopTemp(mNativePtr, 0);
-		}
-	}
-
 	public void startTemp() {
 		if (mCtrlBlock != null) {
 			Log.e(TAG, "startTemp");
 			nativeStartStopTemp(mNativePtr, 1);
+		}
+	}
+
+	public void stopTemp() {
+		if (mCtrlBlock != null) {
+			Log.e(TAG, "stopTemp");
+			nativeStartStopTemp(mNativePtr, 0);
 		}
 	}
 
@@ -567,6 +567,7 @@ public class UVCCamera {
 			nativeSetShutterFix(mNativePtr, mShutterFix);
 		}
 	}
+
 	public void setCameraLens(int mCameraLens) {
 		if (mCtrlBlock != null) {
 			Log.e(TAG, "");
