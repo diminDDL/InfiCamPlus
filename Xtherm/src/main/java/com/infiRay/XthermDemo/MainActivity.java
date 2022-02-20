@@ -104,7 +104,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public final class MainActivity extends BaseActivity implements CameraDialog.CameraDialogParent {
+public final class MainActivity extends BaseActivity {
     private static final boolean DEBUG = false;    // TODO set false on release
     private static final String TAG = "MainActivity";
     private static final int REQUEST_CODE_CHOOSE = 23;
@@ -1771,25 +1771,6 @@ public final class MainActivity extends BaseActivity implements CameraDialog.Cam
             System.exit(0);
         }
     };
-
-    /**
-     * to access from CameraDialog
-     *
-     * @return
-     */
-    @Override
-    public USBMonitor getUSBMonitor() {
-        return mUSBMonitor;
-    }
-
-    @Override
-    public void onDialogResult(boolean canceled) {
-        if (DEBUG) Log.v(TAG, "onDialogResult:canceled=" + canceled);
-        if (canceled) {
-            //setCameraButton(false);
-        } else {
-        }
-    }
 
     //================================================================================
 
