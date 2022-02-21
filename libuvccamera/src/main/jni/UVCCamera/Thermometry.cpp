@@ -59,14 +59,13 @@ static double atmt(double h, double t_atm, double d) {
 }
 
 /* Object temperature from humidity, ambient temperature, distance, emissivity and reflected temperature. */
-double Thermometry::tobj(double h, double t_atm, double d, double e, double t_refl, uint16_t cx) {
+void Thermometry::tobj(double h, double t_atm, double d, double e, double t_refl, uint16_t cx) {
+    double atm = atmt(h, t_atm, d);
     //double bm = 0.0000000567; /* Stefan-Boltzmann constant. */ // TODO why does python version not use boltzman and + instead of -? what about absz?
-    //double dividend = (1.0 - e) * atmt * bm * pow(t_refl - absz, 4) - (1.0 - atmt) * bm * pow(t_atm - absz, 4);
-    //double atm = atmt(h, t_atm, d);
-    //double dividend = (1.0 - e) * atm * pow(t_refl - absz, 4) + (1.0 - atm) * pow(t_atm - absz, 4);
-    //double divisor = e * atm;
+    //double dividend = (1.0 - e) * atm * bm * pow(t_refl - absz, 4) - (1.0 - atm) * bm * pow(t_atm - absz, 4);
+    double dividend = (1.0 - e) * atm * pow(t_refl - absz, 4) + (1.0 - atm) * pow(t_atm - absz, 4);
+    double divisor = e * atm;
 
-#if 0
     double l_flt_1000337C = flt_1000335C / (2.0 * flt_10003360);
     double l_flt_1000337C_2 = pow(l_flt_1000337C, 2);
     double v23 = flt_10003360 * pow(coretmp_, 2) + flt_1000335C * coretmp_;
@@ -81,9 +80,8 @@ double Thermometry::tobj(double h, double t_atm, double d, double e, double t_re
 
         double dc = (((d >= 20.0) ? 20.0 : d) * 0.85 - 1.125) / 100;
         double res = tobj + dc * (tobj - t_atm);
-        //temperatureLUT[i] = res;
+        temperatureLUT[i] = res;
     }
-#endif
 }
 
 void Thermometry::sub_10001010() {
@@ -228,24 +226,27 @@ void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
 }
 
 int Thermometry::DataInit(int Width, int Height) {
-    int result;
+    int result = 0;
 
-    if (Width > 640) {
-        if (Width == 1024) {
-            dev_type_ = 3;
-            Width_ = 1024;
-            Height_ = 768;
-        } else if (Width == 1280) {
-            Width_ = 1280;
-            dev_type_ = 4;
-            Height_ = 1024;
-            return 1;
-        }
+    if (Width == 1280) {
+        Width_ = 1280;
+        dev_type_ = 4;
+        Height_ = 1024;
+        result = 1;
+    } else if (Width == 1024) {
+        dev_type_ = 3;
+        Width_ = 1024;
+        Height_ = 768;
         result = 1;
     } else if (Width == 640) {
         dev_type_ = 2;
         Width_ = 640;
         Height_ = 512;
+        result = 1;
+    } else if (Width == 384) {
+        dev_type_ = 1;
+        Width_ = 384;
+        Height_ = 288;
         result = 1;
     } else if (Width == 256) { // NOTE Added by netman.
         dev_type_ = 0;
@@ -258,12 +259,7 @@ int Thermometry::DataInit(int Width, int Height) {
         Height_ = 180;
         result = 1;
     } else {
-        result = 1;
-        if (Width == 384) {
-            dev_type_ = 1;
-            Width_ = 384;
-            Height_ = 288;
-        } // TODO (netman) What if not 384?
+        // TODO (netman) What if none found?
     }
     return result;
 }
@@ -292,10 +288,11 @@ void Thermometry::GetTmpData(int type, uint8_t *pbuff, float *maxtmp, int *maxx,
     orgavg_ = v15;
     coretmp_ = (double) ((uint64_t) pbuffa) / 10.0 - 273.1; // TODO meant to be 0C in kelvin?
 
+    // TODO this is just for test
     int v2 = Height_ + 3;
     if (!dev_type_)
         v2 = Height_ + 1;
-    //tobj(Humi_, airtmp_, Distance_, Emiss_, refltmp_, /**(uint16_t *) &pbuff[2 * Width_ * v2]*/ 0);
+    tobj(Humi_, airtmp_, Distance_, Emiss_, refltmp_, *(uint16_t *) &pbuff[2 * Width_ * v2]);
 
     *centertmp = temperatureLUT[v16] + Fix_;
     *maxtmp = temperatureLUT[v13[4]] + Fix_;
@@ -307,8 +304,7 @@ void Thermometry::GetTmpData(int type, uint8_t *pbuff, float *maxtmp, int *maxx,
     *tmparr = temperatureLUT[v13[13]] + Fix_;
     tmparr[1] = temperatureLUT[v13[14]] + Fix_;
     tmparr[2] = temperatureLUT[v13[15]] + Fix_;
-    if (!type)
-    {
+    if (!type) {
         // TODO (netman)
         //memcpy(alltmp, temperatureLUT, sizeof(temperatureLUT));
     }

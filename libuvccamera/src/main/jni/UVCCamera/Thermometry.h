@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 class Thermometry {
-private:
+public:
     float Fix_, Distance_, refltmp_, airtmp_, Humi_, Emiss_;
     float fpatmp_, fpaavg_, orgavg_, coretmp_;
     float flt_100133AC, flt_100133A8, flt_100033A0;
@@ -17,7 +17,7 @@ private:
 
 public:
     int readParaFromDevFlag = 1; // TODO must this be here?
-    double tobj(double h, double t_atm, double d, double e, double t_refl, uint16_t cx);
+    void tobj(double h, double t_atm, double d, double e, double t_refl, uint16_t cx);
 
     void UpdateFixParam(float Emiss, float refltmp, float airtmp, float Humi, unsigned short Distance, float Fix);
     void GetFixParam(float *Emiss, float *refltmp, float *airtmp, float *Humi, unsigned short *Distance, float *Fix);

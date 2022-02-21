@@ -354,6 +354,7 @@ int UVCPreviewIR::prepare_preview(uvc_stream_ctrl_t *ctrl) {
 	}
 
 	// TODO (netman) This is temporary generating a palette thing, dunno what the plan is yet, but it doesn't belong here.
+	// TODO add partial (0-270 degrees) rainbow, where cold is blue and red is hot
 	for (int i = 0; i + 3 <= sizeof(paletteRainbow); i += 3) {
 		double h = 360.0 - (double) i / (double) sizeof(paletteRainbow) * 360.0;
 		double x = (1 - abs(fmod(h / 60.0, 2) - 1));
@@ -855,10 +856,10 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
     unsigned short* fourLinePara=orgData+requestWidth*(requestHeight-4);//后四行参数
 	if(UNLIKELY(isNeedWriteTable))
 	{
-		//tm.UpdateFixParam(0.98, 21.0, 21.0, 0.45, 1, 0);
+		tm.UpdateFixParam(0.98, 21.0, 21.0, 0.45, 1, 0);
 		//tm.UpdateParam(0, HoldBuffer);
 		//tm.readParaFromDevFlag = 1;
-		//tm.DataInit(requestWidth, requestHeight);
+		tm.DataInit(requestWidth, requestHeight);
 
 		thermometryT4Line(requestWidth,
 						  requestHeight,
@@ -877,18 +878,20 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 		isNeedWriteTable=false;
 	}
 
-	/*tm.UpdateParam(0, HoldBuffer);
+	tm.UpdateParam(0, HoldBuffer);
 	{
 		float max, min, tc, tarr[20000];
 		int mx, my, ax, ay;
 		tm.GetTmpData(0, HoldBuffer, &max, &mx, &my,  &min, &ax, &ay, &tc, tarr, NULL);
-		LOGE("min: %f, max: %f, tc: %f", min, max, tc);
+		//LOGE("min: %f, max: %f, tc: %f   %f", min, max, tc, temperatureTable[t_min]);
+		LOGE("a: %f %f %f %f", temperatureTable[6000], temperatureTable[6100], temperatureTable[6200], temperatureTable[6300]);
+		LOGE("b: %f %f %f %f", tm.temperatureLUT[6000], tm.temperatureLUT[6100], tm.temperatureLUT[6200], tm.temperatureLUT[6300]);
 		//LOGE("maxpos: %d %d, minpos: %d %d", mx, my, ax, ay);
-		int d;
+		/*int d;
 		float fpa, core;
 		tm.GetDevData(&fpa, &core, &d, &d);
-		LOGE("fpa: %f %f, core: %f %f", fpa, 20.0 - ((double) (uint16_t) fpaTmp - 7800.0) / 36.0, core, ((float)(uint16_t) coreTemper) / 10.0 -273.1);
-	}*/
+		LOGE("fpa: %f %f, core: %f %f", fpa, 20.0 - ((double) (uint16_t) fpaTmp - 7800.0) / 36.0, core, ((float)(uint16_t) coreTemper) / 10.0 -273.1);*/
+	}
 
 	/*temperatureData[0]=centerTmp;
     temperatureData[1]=(float)maxx1;
