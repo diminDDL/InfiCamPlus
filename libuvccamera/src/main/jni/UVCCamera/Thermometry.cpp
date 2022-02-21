@@ -90,8 +90,8 @@ void Thermometry::sub_10001010() {
     float v0, v1, v2, v3, v4, v5, v7, v8, v9, v11;
     double v6, v10;
 
-    v0 = wvc(Humi_, airtmp_);
-    //v0 = exp(airtmp_ * (airtmp_ * 0.00000068455 * airtmp_) + 0.06938999999999999 * airtmp_ + 1.5587 - airtmp_ * 0.00027816 * airtmp_) * Humi_;
+    //v0 = wvc(Humi_, airtmp_);
+    v0 = exp(airtmp_ * (airtmp_ * 0.00000068455 * airtmp_) + 0.06938999999999999 * airtmp_ + 1.5587 - airtmp_ * 0.00027816 * airtmp_) * Humi_;
     v1 = sqrt(v0);
     v2 = sqrt((double) (uint16_t) Distance_);
     v3 = -v2;
@@ -152,7 +152,7 @@ unsigned int Thermometry::sub_10001180(float a1, int16_t cx) {
         else
             v21 = v3;
         ++v5;
-        v16 = (double)v21 * 0.85;
+        v16 = (double) v21 * 0.85;
         v19 = v5;
         *p = v18 + (v16 - 1.125) * (v18 - airtmp_) / 100.0;
         ++p;
@@ -273,7 +273,7 @@ void Thermometry::GetTmpData(int type, uint8_t *pbuff, float *maxtmp, int *maxx,
     float *v17, *v19;
     unsigned int v20;
     uint64_t v21;
-    unsigned char *pbuffa;
+    uint16_t pbuffa;
 
     v11 = pbuff;
     v12 = Width_ * Height_;
@@ -283,18 +283,18 @@ void Thermometry::GetTmpData(int type, uint8_t *pbuff, float *maxtmp, int *maxx,
     if (!dev_type_)
         v14 = 1;
     // TODO wtf up with pbuffa being a pointer?
-    pbuffa = (unsigned char *) v13[v14 * Width_ + 2]; //starts at the third line, plus 2 chars of metadata
+    pbuffa = *(uint16_t *) &v13[v14 * Width_ + 2]; //starts at the third line, plus 2 chars of metadata
     v15 = v13[8];
     fpaavg_ = *v13;
     v16 = v13[12];
     orgavg_ = v15;
-    coretmp_ = (double) ((uint64_t) pbuffa) / 10.0 - 273.1; // TODO meant to be 0C in kelvin?
+    coretmp_ = ((double) pbuffa) / 10.0 - 273.1; // TODO meant to be 0C in kelvin?
 
     // TODO this is just for test
-    int v2 = Height_ + 3;
+    /*int v2 = Height_ + 3;
     if (!dev_type_)
         v2 = Height_ + 1;
-    tobj(Humi_, airtmp_, Distance_, Emiss_, refltmp_, *(uint16_t *) &pbuff[2 * Width_ * v2]);
+    tobj(Humi_, airtmp_, Distance_, Emiss_, refltmp_, *(uint16_t *) &pbuff[2 * Width_ * v2]);*/
 
     *centertmp = temperatureLUT[v16] + Fix_;
     *maxtmp = temperatureLUT[v13[4]] + Fix_;
