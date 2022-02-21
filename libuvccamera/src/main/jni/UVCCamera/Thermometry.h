@@ -1,5 +1,5 @@
-#ifndef THERMOMETRY_H_
-#define THERMOMETRY_H_
+#ifndef __THERMOMETRY_H__
+#define __THERMOMETRY_H__
 
 #include <stdint.h>
 
@@ -11,12 +11,14 @@ private:
     float flt_10003360, flt_1000335C, flt_1000339C, flt_100033A4, flt_10003398;
     float flt_10003394, temperatureLUT[16384], flt_10003378, flt_1000337C;
     int type_, dev_type_, Height_, Width_;
-    int readParaFromDevFlag = 1;
 
     void sub_10001010();
     unsigned int sub_10001180(float a1, int16_t cx);
 
 public:
+    int readParaFromDevFlag = 1; // TODO must this be here?
+    double tobj(double h, double t_atm, double d, double e, double t_refl, uint16_t cx);
+
     void UpdateFixParam(float Emiss, float refltmp, float airtmp, float Humi, unsigned short Distance, float Fix);
     void GetFixParam(float *Emiss, float *refltmp, float *airtmp, float *Humi, unsigned short *Distance, float *Fix);
     void UpdateParam(int type, uint8_t *pbuff);
@@ -25,4 +27,4 @@ public:
     void GetDevData(float *fpatmp, float *coretmp, int *fpaavg, int *orgavg);
 };
 
-#endif /* THERMOMETRY_H_ */
+#endif /* __THERMOMETRY_H__ */

@@ -29,6 +29,7 @@
 #include "UVCPreviewIR.h"
 #include <pthread.h>
 #include <android/native_window.h>
+#include "Thermometry.h"
 
 #define DEFAULT_PREVIEW_WIDTH 640
 #define DEFAULT_PREVIEW_HEIGHT 480
@@ -79,6 +80,8 @@ private:
 	pthread_mutex_t temperature_mutex;
 	pthread_cond_t temperature_sync;
 	jobject mTemperatureCallbackObj;
+
+	Thermometry tm;
 
 	int copyToSurface(uint8_t *frameData, ANativeWindow **window);
 	static void *temperature_thread_func(void *vptr_args);

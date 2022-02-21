@@ -855,6 +855,10 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
     unsigned short* fourLinePara=orgData+requestWidth*(requestHeight-4);//后四行参数
 	if(UNLIKELY(isNeedWriteTable))
 	{
+		//tm.UpdateFixParam(0.98, 21.0, 21.0, 0.45, 1, 0);
+		//tm.UpdateParam(0, HoldBuffer);
+		//tm.readParaFromDevFlag = 1;
+		//tm.DataInit(requestWidth, requestHeight);
 
 		thermometryT4Line(requestWidth,
 						  requestHeight,
@@ -872,16 +876,30 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 						  rangeMode);
 		isNeedWriteTable=false;
 	}
-		/*temperatureData[0]=centerTmp;
-		temperatureData[1]=(float)maxx1;
-		temperatureData[2]=(float)maxy1;
-		temperatureData[3]=maxTmp;
-		temperatureData[4]=(float)minx1;
-		temperatureData[5]=(float)miny1;
-		temperatureData[6]=minTmp;
-		temperatureData[7]=point1Tmp;
-		temperatureData[8]=point2Tmp;
-		temperatureData[9]=point3Tmp;*/
+
+	/*tm.UpdateParam(0, HoldBuffer);
+	{
+		float max, min, tc, tarr[20000];
+		int mx, my, ax, ay;
+		tm.GetTmpData(0, HoldBuffer, &max, &mx, &my,  &min, &ax, &ay, &tc, tarr, NULL);
+		LOGE("min: %f, max: %f, tc: %f", min, max, tc);
+		//LOGE("maxpos: %d %d, minpos: %d %d", mx, my, ax, ay);
+		int d;
+		float fpa, core;
+		tm.GetDevData(&fpa, &core, &d, &d);
+		LOGE("fpa: %f %f, core: %f %f", fpa, 20.0 - ((double) (uint16_t) fpaTmp - 7800.0) / 36.0, core, ((float)(uint16_t) coreTemper) / 10.0 -273.1);
+	}*/
+
+	/*temperatureData[0]=centerTmp;
+    temperatureData[1]=(float)maxx1;
+    temperatureData[2]=(float)maxy1;
+    temperatureData[3]=maxTmp;
+    temperatureData[4]=(float)minx1;
+    temperatureData[5]=(float)miny1;
+    temperatureData[6]=minTmp;
+    temperatureData[7]=point1Tmp;
+    temperatureData[8]=point2Tmp;
+    temperatureData[9]=point3Tmp;*/
 
 		float* temperatureData=mCbTemper;
 		//根据8004或者8005模式来查表，8005模式下仅输出以上注释的10个参数，8004模式下数据以上参数+全局温度数据
@@ -898,7 +916,7 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 		//memcpy(&temperatureData[8],&RgbaHoldBuffer[(miny1*384+minx1)*4],4);
 	jfloatArray mNCbTemper = env->NewFloatArray(requestWidth*(requestHeight-4)+10);
 	env->SetFloatArrayRegion(mNCbTemper, 0, 10+requestWidth*(requestHeight-4), mCbTemper);
-	if (mTemperatureCallbackObj!=NULL) {
+	if (mTemperatureCallbackObj != NULL) {
 		////LOGE("do_temperature_callback mTemperatureCallbackObj1");
 		env->CallVoidMethod(mTemperatureCallbackObj, iTemperatureCallback.onReceiveTemperature, mNCbTemper);
 		////LOGE("do_temperature_callback2 frameNumber:%d",frameNumber);

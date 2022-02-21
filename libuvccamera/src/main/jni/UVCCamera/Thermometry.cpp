@@ -39,11 +39,59 @@
 #include <math.h>
 #include <stdint.h>
 
+// see: https://doi.org/10.3390/s17081718
+
+double absz = -273.15;
+
+/* Water vapor coefficient. */
+static double wvc(double h, double t_atm) {
+    double h1 = 1.5587, h2 = 0.06939, h3 = -0.00027816, h4 = 0.00000068455;
+    // TODO t_atm doesn't need to be kelvin?
+    return h * exp(h1 + h2 * t_atm + h3 * pow(t_atm, 2) + h4 * pow(t_atm, 3));
+}
+
+/* Transmittance of the atmosphere from humitity, ambient temperature and distance. */
+static double atmt(double h, double t_atm, double d) {
+    double k_atm = 1.9, nsqd = -sqrt(d), sqw = sqrt(wvc(h, t_atm));
+    double a1 = 0.0066, a2 = 0.0126; /* Athmospheric attenuation without water vapor. */
+    double b1 = -0.0023, b2 = -0.0067; /* Attenuation for water vapor. */
+    return k_atm * exp(nsqd * (a1 + b1 * sqw)) + (1.0 - k_atm) * exp(nsqd * (a2 + b2 * sqw));
+}
+
+/* Object temperature from humidity, ambient temperature, distance, emissivity and reflected temperature. */
+double Thermometry::tobj(double h, double t_atm, double d, double e, double t_refl, uint16_t cx) {
+    //double bm = 0.0000000567; /* Stefan-Boltzmann constant. */ // TODO why does python version not use boltzman and + instead of -? what about absz?
+    //double dividend = (1.0 - e) * atmt * bm * pow(t_refl - absz, 4) - (1.0 - atmt) * bm * pow(t_atm - absz, 4);
+    //double atm = atmt(h, t_atm, d);
+    //double dividend = (1.0 - e) * atm * pow(t_refl - absz, 4) + (1.0 - atm) * pow(t_atm - absz, 4);
+    //double divisor = e * atm;
+
+#if 0
+    double l_flt_1000337C = flt_1000335C / (2.0 * flt_10003360);
+    double l_flt_1000337C_2 = pow(l_flt_1000337C, 2);
+    double v23 = flt_10003360 * pow(coretmp_, 2) + flt_1000335C * coretmp_;
+    double v22 = flt_1000339C * pow(fpatmp_, 2) + flt_10003398 * fpatmp_ + flt_10003394;
+    double v2 = 390.0 - fpatmp_ * 7.05; // TODO python version has option to set 0, and int() around it
+
+    for (int i = 0; i < 16384; ++i) {
+        double ttot = sqrt(((i - (cx - v2)) * v22 + v23) / flt_10003360 + l_flt_1000337C_2) -
+                      l_flt_1000337C - absz;
+        double wtot = pow(ttot, 4);
+        double tobj = pow((wtot - dividend) / divisor, 1.0 / 4.0) + absz;
+
+        double dc = (((d >= 20.0) ? 20.0 : d) * 0.85 - 1.125) / 100;
+        double res = tobj + dc * (tobj - t_atm);
+        //temperatureLUT[i] = res;
+    }
+#endif
+}
+
 void Thermometry::sub_10001010() {
     float v0, v1, v2, v3, v4, v5, v7, v8, v9, v11;
     double v6, v10;
 
-    v0 = exp(airtmp_ * (airtmp_ * 0.00000068455 * airtmp_) + 0.06938999999999999 * airtmp_ + 1.5587 - airtmp_ * 0.00027816 * airtmp_) * Humi_;
+    v0 = wvc(Humi_, airtmp_);
+    //v0 = exp(airtmp_ * (airtmp_ * 0.00000068455 * airtmp_) + 0.06938999999999999 * airtmp_ + 1.5587 - airtmp_ * 0.00027816 * airtmp_) * Humi_;
     v1 = sqrt(v0);
     v2 = sqrt((double) (uint16_t) Distance_);
     v3 = -v2;
@@ -84,7 +132,7 @@ unsigned int Thermometry::sub_10001180(float a1, int16_t cx) {
         v9 = sqrt(v8);
         result = 4;
         v11 = v9 - flt_1000337C;
-        v20 = v11 + 273.1499938964844;
+        v20 = v11 + 273.1499938964844; // TODO meant to be 0C in kelvin?
         v17 = 1.0;
         while (1) {
             v12 = v20;
@@ -96,7 +144,8 @@ unsigned int Thermometry::sub_10001180(float a1, int16_t cx) {
             v20 = v12 * v12;
         }
         v13 = v17 - flt_100033A0;
-        v14 = v13 * flt_100133A8;		v15 = pow(v14, 0.25);
+        v14 = v13 * flt_100133A8;
+        v15 = pow(v14, 0.25);
         v18 = v15 - 273.15;
         if (v3 >= 20)
             v21 = 20;
@@ -156,7 +205,7 @@ void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
     flt_10003398 = *(float *) &pbuff[2 * v3];
     flt_10003394 = *(float *) &pbuff[2 * v3 + 4];
     flt_100033A4 = 20.0 - v4;
-    *(float *) &typea = (double) typeb / 10.0 - 273.1499938964844;
+    *(float *) &typea = (double) typeb / 10.0 - 273.1499938964844; // TODO meant to be 0C in kelvin?
     if (readParaFromDevFlag) {
         Fix_ = *(float *) &pbuff[2 * v7];
         v10 = *(float *) &pbuff[2 * v7 + 4];
@@ -198,6 +247,11 @@ int Thermometry::DataInit(int Width, int Height) {
         Width_ = 640;
         Height_ = 512;
         result = 1;
+    } else if (Width == 256) { // NOTE Added by netman.
+        dev_type_ = 0;
+        Width_ = 256;
+        Height_ = 192;
+        result = 1;
     } else if (Width == 240) {
         dev_type_ = 0;
         Width_ = 240;
@@ -227,15 +281,22 @@ void Thermometry::GetTmpData(int type, uint8_t *pbuff, float *maxtmp, int *maxx,
     v12 = Width_ * Height_;
     v13 = (uint16_t *) &pbuff[2 * Width_ * Height_];
     v14 = 3;
-    fpatmp_ = 20.0 - ((double) * (uint16_t*)& pbuff[2 * Width_ * Height_ + 2] - 7800.0) / 36.0;
+    fpatmp_ = 20.0 - ((double) *(uint16_t *) &pbuff[2 * Width_ * Height_ + 2] - 7800.0) / 36.0;
     if (!dev_type_)
         v14 = 1;
+    // TODO wtf up with pbuffa being a pointer?
     pbuffa = (unsigned char *) v13[v14 * Width_ + 2]; //starts at the third line, plus 2 chars of metadata
     v15 = v13[8];
     fpaavg_ = *v13;
     v16 = v13[12];
     orgavg_ = v15;
-    coretmp_ = (double)((uint64_t)pbuffa) / 10.0 - 273.1;
+    coretmp_ = (double) ((uint64_t) pbuffa) / 10.0 - 273.1; // TODO meant to be 0C in kelvin?
+
+    int v2 = Height_ + 3;
+    if (!dev_type_)
+        v2 = Height_ + 1;
+    //tobj(Humi_, airtmp_, Distance_, Emiss_, refltmp_, /**(uint16_t *) &pbuff[2 * Width_ * v2]*/ 0);
+
     *centertmp = temperatureLUT[v16] + Fix_;
     *maxtmp = temperatureLUT[v13[4]] + Fix_;
     *mintmp = temperatureLUT[v13[7]] + Fix_;
