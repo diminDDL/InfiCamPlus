@@ -305,7 +305,7 @@ void UVCPreviewIR::uvc_preview_frame_callback(struct uvc_frame *frame, void *vpt
     if(LIKELY( preview->isRunning()) && frame->actual_bytes >= frameBytes)
     {
 		//LOGE("uvc_preview_frame_callback01");
-		memcpy(preview->OutBuffer, frame, frameBytes);
+		memcpy(preview->OutBuffer, frame->data, frameBytes);
 		//LOGE("uvc_preview_frame_callback02");
 		/* swap the buffers org */
 		uint8_t* tmp_buf = NULL;
