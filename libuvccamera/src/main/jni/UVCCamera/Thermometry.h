@@ -17,7 +17,7 @@ public:
 
 public:
     int readParaFromDevFlag = 1; // TODO must this be here?
-    void tobj(double h, double t_atm, double d, double e, double t_refl, uint16_t cx);
+    void tobj(double h, double t_atm, double d, double e, double t_refl, int cx);
 
     void UpdateFixParam(float Emiss, float refltmp, float airtmp, float Humi, unsigned short Distance, float Fix);
     void GetFixParam(float *Emiss, float *refltmp, float *airtmp, float *Humi, unsigned short *Distance, float *Fix);

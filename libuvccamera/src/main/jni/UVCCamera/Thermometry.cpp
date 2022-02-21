@@ -59,10 +59,12 @@ static double atmt(double h, double t_atm, double d) {
 }
 
 /* Object temperature from humidity, ambient temperature, distance, emissivity and reflected temperature. */
-void Thermometry::tobj(double h, double t_atm, double d, double e, double t_refl, uint16_t cx) {
+void Thermometry::tobj(double h, double t_atm, double d, double e, double t_refl, int cx) {
     double atm = atmt(h, t_atm, d);
     //double bm = 0.0000000567; /* Stefan-Boltzmann constant. */ // TODO why does python version not use boltzman and + instead of -? what about absz?
-    //double dividend = (1.0 - e) * atm * bm * pow(t_refl - absz, 4) - (1.0 - atm) * bm * pow(t_atm - absz, 4);
+    //double dividend = (1.0 - e) * atm * bm * pow(t_refl/* - absz*/, 4) - (1.0 - atm) * bm * pow(t_atm/* - absz*/, 4);
+    //double divisor = e/* * bm*/ * atm;
+    // TODO subtracting absz almost can't be right...
     double dividend = (1.0 - e) * atm * pow(t_refl - absz, 4) + (1.0 - atm) * pow(t_atm - absz, 4);
     double divisor = e * atm;
 
@@ -71,14 +73,14 @@ void Thermometry::tobj(double h, double t_atm, double d, double e, double t_refl
     double v23 = flt_10003360 * pow(coretmp_, 2) + flt_1000335C * coretmp_;
     double v22 = flt_1000339C * pow(fpatmp_, 2) + flt_10003398 * fpatmp_ + flt_10003394;
     double v2 = 390.0 - fpatmp_ * 7.05; // TODO python version has option to set 0, and int() around it
+    //double v2 = 0;
 
     for (int i = 0; i < 16384; ++i) {
-        double ttot = sqrt(((i - (cx - v2)) * v22 + v23) / flt_10003360 + l_flt_1000337C_2) -
-                      l_flt_1000337C - absz;
+        double ttot = sqrt(((i - (cx - v2)) * v22 + v23) / flt_10003360 + l_flt_1000337C_2) - l_flt_1000337C - absz;
         double wtot = pow(ttot, 4);
         double tobj = pow((wtot - dividend) / divisor, 1.0 / 4.0) + absz;
 
-        double dc = (((d >= 20.0) ? 20.0 : d) * 0.85 - 1.125) / 100;
+        double dc = (((d >= 20.0) ? 20.0 : d) * 0.85 - 1.125) / 100.0;
         double res = tobj + dc * (tobj - t_atm);
         temperatureLUT[i] = res;
     }
@@ -190,18 +192,18 @@ void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
     v4 = (double) (*(uint16_t *) &pbuff[2 * Width_ * Height_ + 2] - 7800) / 36.0;
     v5 = *(uint16_t *) &pbuff[2 * v3];
     typeb = *(uint16_t *) &pbuff[2 * v3 + 2];
-    v6 = *(float*) &pbuff[2 * v3 + 6];
+    v6 = *(float*) &pbuff[2 * v3 + 6]; // +6
     v7 = v3 + 127;
     v3 += 5;
     flt_10003360 = v6;
-    v8 = *(float *) &pbuff[2 * v3];
+    v8 = *(float *) &pbuff[2 * v3]; // +10
     v3 += 2;
     flt_1000335C = v8;
-    v9 = *(float *) &pbuff[2 * v3];
+    v9 = *(float *) &pbuff[2 * v3]; // +14
     v3 += 2;
     flt_1000339C = v9;
-    flt_10003398 = *(float *) &pbuff[2 * v3];
-    flt_10003394 = *(float *) &pbuff[2 * v3 + 4];
+    flt_10003398 = *(float *) &pbuff[2 * v3]; // +18
+    flt_10003394 = *(float *) &pbuff[2 * v3 + 4]; // +22
     flt_100033A4 = 20.0 - v4;
     *(float *) &typea = (double) typeb / 10.0 - 273.1499938964844; // TODO meant to be 0C in kelvin?
     if (readParaFromDevFlag) {
