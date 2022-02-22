@@ -146,7 +146,7 @@ void thermometrySearch(int param_1,int param_2,int param_3,ushort *param_4,float
     return;
 }
 
-void thermometryT4Line(int width,int height,float *temperatureTable,ushort *fourLinePara,
+void thermometryT4Line2(int width,int height,float *temperatureTable,ushort *fourLinePara,
                        float *floatFpaTmp,float *correction,float *Refltmp,float *Airtmp,float *humi,
                        float *emiss,ushort *distance,int cameraLens,float shutterFix,int rangeMode)
 {
@@ -291,13 +291,13 @@ void thermometryT4Line(int width,int height,float *temperatureTable,ushort *four
     local_40 = 0x144;
     local_48 = 0;
     LAB_00011745:
-    uVar2 = *(ushort *)((int)fourLinePara + iVar5);
-    uVar3 = *(ushort *)((int)fourLinePara + iVar4);
-    fVar8 = *(float *)((int)fourLinePara + iter_tt_b);
-    fVar6 = *(float *)((int)fourLinePara + (int)local_a0);
-    pfVar1 = (float *)((int)fourLinePara + (int)local_74);
-    local_74 = *(float *)((int)fourLinePara + (int)local_7c);
-    local_a0 = *(float *)((int)fourLinePara + iter_tt_a);
+    uVar2 = *(ushort *)(fourLinePara + iVar5);
+    uVar3 = *(ushort *)(fourLinePara + iVar4);
+    fVar8 = *(float *)(fourLinePara + iter_tt_b);
+    fVar6 = *(float *)(fourLinePara + (int)local_a0);
+    pfVar1 = (float *)(fourLinePara + (int)local_74);
+    local_74 = *(float *)(fourLinePara + (int)local_7c);
+    local_a0 = *(float *)(fourLinePara + iter_tt_a);
     local_7c = *pfVar1;
     if ((width == 640) && (rangeMode == 400)) {
         local_74 = *(float *)(fourLinePara + local_48 + 0x14a);
@@ -306,12 +306,12 @@ void thermometryT4Line(int width,int height,float *temperatureTable,ushort *four
         local_a0 = *(float *)(fourLinePara + local_40);
         local_7c = *(float *)(fourLinePara + local_48 + 0x14c);
     }
-    *correction = *(float *)((int)fourLinePara + off_correction);
-    *Refltmp = *(float *)((int)fourLinePara + off_refltmp);
-    *Airtmp = *(float *)((int)fourLinePara + off_airtmp);
-    *humi = *(float *)((int)fourLinePara + off_humi);
-    *emiss = *(float *)((int)fourLinePara + off_emiss);
-    distance3 = *(ushort *)((int)fourLinePara + off_distance);
+    *correction = *(float *)(fourLinePara + off_correction);
+    *Refltmp = *(float *)(fourLinePara + off_refltmp);
+    *Airtmp = *(float *)(fourLinePara + off_airtmp);
+    *humi = *(float *)(fourLinePara + off_humi);
+    *emiss = *(float *)(fourLinePara + off_emiss);
+    distance3 = *(ushort *)(fourLinePara + off_distance);
     *distance = distance3;
     if (cameraLens == 68) {
         multivar1 = (uint)*distance * 3;

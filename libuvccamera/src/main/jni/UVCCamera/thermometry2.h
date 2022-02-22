@@ -3,9 +3,10 @@
 
 #include <stdint.h>
 
-void thermometryT4Line2(int width, int param_3,float *temperatureTable,
-                        long fourLinePara, float *fpaTmp, float *correction, float *Refltmp,
-                        float *Airtmp, float *humi, float *emiss, uint16_t *distance,
-                        int cameraLens, float shutterFix, int rangeMode);
+typedef uint16_t ushort;
+
+void thermometryT4Line2(int width,int height,float *temperatureTable,ushort *fourLinePara,
+                        float *floatFpaTmp,float *correction,float *Refltmp,float *Airtmp,float *humi,
+                        float *emiss,ushort *distance,int cameraLens,float shutterFix,int rangeMode);
 
 #endif /* __THERMOMETRY_H__ */
