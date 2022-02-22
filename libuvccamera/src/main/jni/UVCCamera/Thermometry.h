@@ -12,7 +12,7 @@ public:
     float flt_10003394, temperatureLUT[16384], flt_10003378, flt_1000337C;
     int type_, dev_type_, Height_, Width_;
 
-    void sub_10001010();
+    void sub_10001010(double h, double t_atm, double d, double e, double t_refl);
     unsigned int sub_10001180(float a1, int16_t cx);
 
 public:

@@ -93,25 +93,10 @@ void Thermometry::tobj(double h, double t_atm, double d, double e, double t_refl
     }
 }
 
-void Thermometry::sub_10001010() {
-    float v9, v11;
-    double v10;
-
-    /*
-    *divisor = 1.0 / (atm * emiss); // this is reciprocal of "divisor" in tobj()
-    dVar2 = pow((double)(t_refl + 273.15), 4.0);
-    //atm = *atmp; // no-op
-    dVar3 = pow((double)(t_atmosphere + 273.15), 4.0);
-    *dividend = (float)dVar3 * (1.0 - *atmp) + (1.0 - emiss) * (float)dVar2 * atm; // divident as in tobj()
-    return;
-     */
-
-    float atm = atmt(Humi_, airtmp_, Distance_);
-    divisor = 1 / (Emiss_ * atm);
-    v11 = pow(airtmp_ + 273.15, 4.0);
-    v9 = pow(refltmp_ + 273.15, 4.0);
-    v10 = v9 * (1.0 - Emiss_) * atm;
-    dividend = v11 * (1.0 - atm) + v10;
+void Thermometry::sub_10001010(double h, double t_atm, double d, double e, double t_refl) {
+    double atm = atmt(h, t_atm, d);
+    dividend = (1.0 - e) * atm * pow(t_refl + zeroc, 4) + (1.0 - atm) * pow(t_atm + zeroc, 4);
+    divisor = e * atm;
 }
 
 unsigned int Thermometry::sub_10001180(float a1, int16_t cx) {
@@ -150,7 +135,7 @@ unsigned int Thermometry::sub_10001180(float a1, int16_t cx) {
             v20 = v12 * v12;
         }
         v13 = v17 - dividend;
-        v14 = v13 * divisor;
+        v14 = v13 / divisor;
         v15 = pow(v14, 0.25);
         v18 = v15 - 273.15;
         if (v3 >= 20)
@@ -173,7 +158,7 @@ void Thermometry::UpdateFixParam(float Emiss, float refltmp, float airtmp, float
     airtmp_ = airtmp;
     Humi_ = Humi;
     Emiss_ = Emiss;
-    sub_10001010();
+    sub_10001010(Humi_, airtmp_, Distance_, Emiss_, refltmp_);
 }
 
 void Thermometry::GetFixParam(float *Emiss, float *refltmp, float *airtmp, float *Humi, unsigned short *Distance, float *Fix) {
@@ -229,7 +214,7 @@ void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
     }
     flt_1000337C = flt_1000335C / (flt_10003360 + flt_10003360);
     flt_10003378 = flt_1000335C * flt_1000335C / (flt_10003360 * (4.0 * flt_10003360));
-    sub_10001010();
+    sub_10001010(Humi_, airtmp_, Distance_, Emiss_, refltmp_);
     // typea is just coretmp
     sub_10001180(*(float *) &typea, v5); // bug in IDA -- TODO (netman) wtf did they mean by "bug in IDA?"
 }
