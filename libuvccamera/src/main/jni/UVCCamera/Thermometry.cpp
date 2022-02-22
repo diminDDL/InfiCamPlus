@@ -100,6 +100,7 @@ void Thermometry::tobj(double h, double t_atm, double d, double e, double t_refl
     double local_74f = 0; // TODO somewhere from frame
     double uVar2 = 0; // TODO from frame
     double local_7c = 0; // TODO frame also
+
     double shutterFix = 0; // TODO user parameter
 
     double fVar7 = ((float)(uint)uVar2 / 10.0 - 273.15) + shutterFix;
@@ -142,6 +143,8 @@ unsigned int Thermometry::sub_10001180(float a1, int16_t cx) {
     double v12, v16;
     unsigned int result;
 
+    //     fVar8 = local_a0 * fVar7 * fVar7 + fVar7 * fVar8;
+    //    local_7c = fVar6 * fpatemp2 * fpatemp2 + local_74f * fpatemp2 + local_7c;
     v23 = flt_10003360 * a1 * a1 + a1 * flt_1000335C;
     v22 = flt_1000339C * flt_100033A4 * flt_100033A4 + flt_10003398 * flt_100033A4 + flt_10003394;
     if (type_)
@@ -218,16 +221,13 @@ void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
     v4 = (double) (*(uint16_t *) &pbuff[2 * Width_ * Height_ + 2] - 8617) / 37.682; // TODO depends on camera
     v5 = *(uint16_t *) &pbuff[2 * v3];
     typeb = *(uint16_t *) &pbuff[2 * v3 + 2];
-    v6 = *(float*) &pbuff[2 * v3 + 6]; // +6
+    flt_10003360 = *(float*) &pbuff[2 * v3 + 6]; // +6
     v7 = v3 + 127;
     v3 += 5;
-    flt_10003360 = v6;
-    v8 = *(float *) &pbuff[2 * v3]; // +10
+    flt_1000335C = *(float *) &pbuff[2 * v3]; // +10
     v3 += 2;
-    flt_1000335C = v8;
-    v9 = *(float *) &pbuff[2 * v3]; // +14
+    flt_1000339C = *(float *) &pbuff[2 * v3]; // +14
     v3 += 2;
-    flt_1000339C = v9;
     flt_10003398 = *(float *) &pbuff[2 * v3]; // +18
     flt_10003394 = *(float *) &pbuff[2 * v3 + 4]; // +22
     flt_100033A4 = 20.0 - v4;
@@ -251,7 +251,7 @@ void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
     // InitTempParam()
     flt_1000337C = flt_1000335C / (flt_10003360 + flt_10003360);
     flt_10003378 = flt_1000335C * flt_1000335C / (flt_10003360 * (4.0 * flt_10003360));
-    
+
     sub_10001010(Humi_, airtmp_, Distance_, Emiss_, refltmp_);
     // typea is just coretmp
     sub_10001180(*(float *) &typea, v5); // bug in IDA -- TODO (netman) wtf did they mean by "bug in IDA?"
