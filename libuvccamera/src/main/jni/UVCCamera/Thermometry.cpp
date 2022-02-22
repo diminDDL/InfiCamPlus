@@ -90,8 +90,8 @@ void Thermometry::sub_10001010() {
     float v0, v1, v2, v3, v4, v5, v7, v8, v9, v11;
     double v6, v10;
 
-    //v0 = wvc(Humi_, airtmp_);
-    v0 = exp(airtmp_ * (airtmp_ * 0.00000068455 * airtmp_) + 0.06938999999999999 * airtmp_ + 1.5587 - airtmp_ * 0.00027816 * airtmp_) * Humi_;
+    v0 = wvc(Humi_, airtmp_);
+    //v0 = exp(airtmp_ * (airtmp_ * 0.00000068455 * airtmp_) + 0.06938999999999999 * airtmp_ + 1.5587 - airtmp_ * 0.00027816 * airtmp_) * Humi_;
     v1 = sqrt(v0);
     v2 = sqrt((double) (uint16_t) Distance_);
     v3 = -v2;
@@ -189,7 +189,7 @@ void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
     if (!dev_type_)
         v2 = Height_ + 1;
     v3 = Width_ * v2;
-    v4 = (double) (*(uint16_t *) &pbuff[2 * Width_ * Height_ + 2] - 7800) / 36.0;
+    v4 = (double) (*(uint16_t *) &pbuff[2 * Width_ * Height_ + 2] - 8617) / 37.682; // TODO depends on camera
     v5 = *(uint16_t *) &pbuff[2 * v3];
     typeb = *(uint16_t *) &pbuff[2 * v3 + 2];
     v6 = *(float*) &pbuff[2 * v3 + 6]; // +6
@@ -280,7 +280,7 @@ void Thermometry::GetTmpData(int type, uint8_t *pbuff, float *maxtmp, int *maxx,
     v12 = Width_ * Height_;
     v13 = (uint16_t *) &pbuff[2 * Width_ * Height_];
     v14 = 3;
-    fpatmp_ = 20.0 - ((double) *(uint16_t *) &pbuff[2 * Width_ * Height_ + 2] - 7800.0) / 36.0;
+    fpatmp_ = 20.0 - ((double) *(uint16_t *) &pbuff[2 * Width_ * Height_ + 2] - 8617) / 37.682; // TODO depends on camera
     if (!dev_type_)
         v14 = 1;
     pbuffa = *(uint16_t *) &v13[v14 * Width_ + 2]; //starts at the third line, plus 2 chars of metadata

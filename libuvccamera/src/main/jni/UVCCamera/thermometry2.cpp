@@ -164,10 +164,13 @@ void thermometryT4Line2(int width,int height,float *temperatureTable,ushort *fou
     float10 Ttot;
     float fVar7;
     float fVar8;
-    float local_a0;
+    int local_a0;
+    float local_a0f;
     float distance2;
-    float local_7c;
-    float local_74;
+    int local_7c;
+    float local_7cf;
+    int local_74;
+    float local_74f;
     int off_correction;
     int off_refltmp;
     int off_airtmp;
@@ -207,9 +210,9 @@ void thermometryT4Line2(int width,int height,float *temperatureTable,ushort *fou
         off_airtmp = 0x306;
         off_refltmp = 0x302;
         off_correction = 0x2fe;
-        local_74 = 7.482934e-43;
-        local_7c = 7.426882e-43;
-        local_a0 = 7.37083e-43;
+        local_74 = 0x216;
+        local_7c = 0x212;
+        local_a0 = 0x20e;
         local_40 = 0x244;
         *floatFpaTmp = 20.0 - (float)(multivar1 - 8617) / 37.682;
         iter_tt_a = 0x206;
@@ -227,9 +230,9 @@ void thermometryT4Line2(int width,int height,float *temperatureTable,ushort *fou
             off_airtmp = 0x2e6;
             off_refltmp = 0x2e2;
             off_correction = 0x2de;
-            local_74 = 7.034518e-43;
-            local_7c = 6.978466e-43;
-            local_a0 = 6.922414e-43;
+            local_74 = 0x1f6;
+            local_7c = 0x1f2;
+            local_a0 = 0x1ee;
             local_40 = 0x234;
             *floatFpaTmp = 20.0 - (float)(multivar1 - 7800) / 36.0;
             iter_tt_a = 0x1e6;
@@ -247,9 +250,9 @@ void thermometryT4Line2(int width,int height,float *temperatureTable,ushort *fou
             off_airtmp = 0xa06;
             off_refltmp = 0xa02;
             off_correction = 0x9fe;
-            local_74 = 3.25942e-42;
-            local_7c = 3.253815e-42;
-            local_a0 = 3.24821e-42;
+            local_74 = 0x916;
+            local_7c = 0x912;
+            local_a0 = 0x90e;
             local_40 = 0x5c4;
             local_48 = 0x480;
             *floatFpaTmp = 20.0 - (float)(multivar1 - 7800) / 36.0;
@@ -266,9 +269,9 @@ void thermometryT4Line2(int width,int height,float *temperatureTable,ushort *fou
             off_airtmp = 0x1006;
             off_refltmp = 0x1002;
             off_correction = 0xffe;
-            local_74 = 5.411815e-42;
-            local_7c = 5.406209e-42;
-            local_a0 = 5.400604e-42;
+            local_74 = 0xf16;
+            local_7c = 0xf12;
+            local_a0 = 0xf0e;
             local_40 = 0x8c4;
             local_48 = 0x780;
             *floatFpaTmp = 20.0 - (float)(multivar1 - 6867) / 33.8;
@@ -286,26 +289,26 @@ void thermometryT4Line2(int width,int height,float *temperatureTable,ushort *fou
     iVar4 = 0;
     off_refltmp = 0x102;
     off_correction = 0xfe;
-    local_74 = 3.082857e-44;
-    local_7c = 2.522337e-44;
-    local_a0 = 1.961818e-44;
+    local_74 = 0x16;
+    local_7c = 0x12;
+    local_a0 = 0xe;
     local_40 = 0x144;
     local_48 = 0;
     LAB_00011745:
     uVar2 = *(ushort *)(fourLinePara + iVar5);
     uVar3 = *(ushort *)(fourLinePara + iVar4);
-    fVar8 = *(float *)(fourLinePara + iter_tt_b);
-    fVar6 = *(float *)(fourLinePara + (int)local_a0);
+    fVar8 = (float) *(ushort *)(fourLinePara + iter_tt_b);
+    fVar6 = (float) *(ushort *)(fourLinePara + (int)local_a0);
     pfVar1 = (float *)(fourLinePara + (int)local_74);
-    local_74 = *(float *)(fourLinePara + (int)local_7c);
-    local_a0 = *(float *)(fourLinePara + iter_tt_a);
-    local_7c = *pfVar1;
+    local_74f = *(uint16_t *)(fourLinePara + (int)local_7c);
+    local_a0f = *(uint16_t *)(fourLinePara + iter_tt_a);
+    local_7cf = (float) *(ushort *) pfVar1;
     if ((width == 640) && (rangeMode == 400)) {
-        local_74 = *(float *)(fourLinePara + local_48 + 0x14a);
+        local_74f = *(float *)(fourLinePara + local_48 + 0x14a);
         fVar8 = *(float *)(fourLinePara + local_48 + 0x146);
         fVar6 = *(float *)(fourLinePara + local_48 + 0x148);
-        local_a0 = *(float *)(fourLinePara + local_40);
-        local_7c = *(float *)(fourLinePara + local_48 + 0x14c);
+        local_a0f = *(float *)(fourLinePara + local_40);
+        local_7cf = *(float *)(fourLinePara + local_48 + 0x14c);
     }
     *correction = *(float *)(fourLinePara + off_correction);
     *Refltmp = *(float *)(fourLinePara + off_refltmp);
@@ -324,19 +327,23 @@ void thermometryT4Line2(int width,int height,float *temperatureTable,ushort *fou
         multivar1 = (uint)distance3;
     }
     distance2 = (float)multivar1;
-    InitTempParam(&local_2c,&local_28,local_a0,fVar8);
-    CalcFixRaw(&local_38,&local_34,&local_30,*Airtmp,*humi,distance2,*emiss,*Refltmp,&local_24);
+    InitTempParam(&local_2c,&local_28,local_a0f,fVar8);
+
+    //CalcFixRaw(&local_38,&local_34,&local_30,*Airtmp,*humi,distance2,*emiss,*Refltmp,&local_24);
+    // TODO manual parameters for test
+    CalcFixRaw(&local_38,&local_34,&local_30,21.0,0.45,1,0.95,21.0,&local_24);
+
     fVar7 = ((float)(uint)uVar2 / 10.0 - 273.15) + shutterFix;
     fpatemp2 = *floatFpaTmp;
     iter_tt_a = GetFix(fpatemp2,rangeMode,width);
     multivar1 = (uint)uVar3 - iter_tt_a & 0xffff;
-    fVar8 = local_a0 * fVar7 * fVar7 + fVar7 * fVar8;
-    local_7c = fVar6 * fpatemp2 * fpatemp2 + local_74 * fpatemp2 + local_7c;
+    fVar8 = local_a0f * fVar7 * fVar7 + fVar7 * fVar8;
+    local_7c = fVar6 * fpatemp2 * fpatemp2 + local_74f * fpatemp2 + local_7cf;
     if (cameraLens == 68) {
         iter_tt_a = -multivar1;
         if (distance2 < 60.0) {
             do {
-                Ttot = (float10)GetTempEvn(SQRT(((float)iter_tt_a * local_7c + fVar8) / local_a0 + local_28)
+                Ttot = (float10)GetTempEvn(SQRT(((float)iter_tt_a * local_7cf + fVar8) / local_a0f + local_28)
                                            - local_2c,local_24,local_30);
                 temperatureTable[multivar1 + iter_tt_a] =
                         (((float)Ttot - *Airtmp) * (distance2 * 0.85 + 1.125)) / 100.0 + (float)Ttot;
@@ -345,7 +352,7 @@ void thermometryT4Line2(int width,int height,float *temperatureTable,ushort *fou
         }
         else {
             do {
-                Ttot = (float10)GetTempEvn(SQRT(((float)iter_tt_a * local_7c + fVar8) / local_a0 + local_28)
+                Ttot = (float10)GetTempEvn(SQRT(((float)iter_tt_a * local_7cf + fVar8) / local_a0f + local_28)
                                            - local_2c,local_24,local_30);
                 temperatureTable[multivar1 + iter_tt_a] =
                         (((float)Ttot - *Airtmp) * 52.125) / 100.0 + (float)Ttot;
