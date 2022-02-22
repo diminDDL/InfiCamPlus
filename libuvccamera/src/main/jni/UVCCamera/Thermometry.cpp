@@ -224,6 +224,7 @@ void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
     flt_1000337C = flt_1000335C / (flt_10003360 + flt_10003360);
     flt_10003378 = flt_1000335C * flt_1000335C / (flt_10003360 * (4.0 * flt_10003360));
     sub_10001010();
+    // typea is just coretmp
     sub_10001180(*(float *) &typea, v5); // bug in IDA -- TODO (netman) wtf did they mean by "bug in IDA?"
 }
 
@@ -282,7 +283,6 @@ void Thermometry::GetTmpData(int type, uint8_t *pbuff, float *maxtmp, int *maxx,
     fpatmp_ = 20.0 - ((double) *(uint16_t *) &pbuff[2 * Width_ * Height_ + 2] - 7800.0) / 36.0;
     if (!dev_type_)
         v14 = 1;
-    // TODO wtf up with pbuffa being a pointer?
     pbuffa = *(uint16_t *) &v13[v14 * Width_ + 2]; //starts at the third line, plus 2 chars of metadata
     v15 = v13[8];
     fpaavg_ = *v13;

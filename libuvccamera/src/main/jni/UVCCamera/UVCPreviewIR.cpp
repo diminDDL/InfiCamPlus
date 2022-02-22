@@ -872,7 +872,7 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 						  shutterFix,
 						  rangeMode);
 
-		tm.readParaFromDevFlag = 1;
+		//tm.readParaFromDevFlag = 0;
 		tm.DataInit(requestWidth, requestHeight);
 		tm.UpdateFixParam(emiss, Refltmp, Airtmp, humi, distance, correction);
 		tm.UpdateParam(0, HoldBuffer);
@@ -880,22 +880,23 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 		//tm.UpdateParam(0, HoldBuffer);
 		//tm.readParaFromDevFlag = 1;
 
+		{
+			float max, min, tc, tarr[20000];
+			int mx, my, ax, ay;
+			tm.GetTmpData(0, HoldBuffer, &max, &mx, &my,  &min, &ax, &ay, &tc, tarr, NULL);
+			//LOGE("min: %f, max: %f, tc: %f   %f", min, max, tc, temperatureTable[t_min]);
+			LOGE("a: %f %f %f %f", temperatureTable[5500], temperatureTable[5600], temperatureTable[5700], temperatureTable[5800]);
+			LOGE("b: %f %f %f %f", tm.temperatureLUT[5500], tm.temperatureLUT[5600], tm.temperatureLUT[5700], tm.temperatureLUT[5800]);
+			//LOGE("maxpos: %d %d, minpos: %d %d", mx, my, ax, ay);
+			/*int d;
+            float fpa, core;
+            tm.GetDevData(&fpa, &core, &d, &d);
+            LOGE("fpa: %f %f, core: %f %f", fpa, 20.0 - ((double) (uint16_t) fpaTmp - 7800.0) / 36.0, core, ((float)(uint16_t) coreTemper) / 10.0 -273.1);*/
+		}
+
 		isNeedWriteTable=false;
 	}
 
-	{
-		float max, min, tc, tarr[20000];
-		int mx, my, ax, ay;
-		tm.GetTmpData(0, HoldBuffer, &max, &mx, &my,  &min, &ax, &ay, &tc, tarr, NULL);
-		//LOGE("min: %f, max: %f, tc: %f   %f", min, max, tc, temperatureTable[t_min]);
-		LOGE("a: %f %f %f %f", temperatureTable[5500], temperatureTable[5600], temperatureTable[5700], temperatureTable[5800]);
-		LOGE("b: %f %f %f %f", tm.temperatureLUT[5500], tm.temperatureLUT[5600], tm.temperatureLUT[5700], tm.temperatureLUT[5800]);
-		//LOGE("maxpos: %d %d, minpos: %d %d", mx, my, ax, ay);
-		/*int d;
-		float fpa, core;
-		tm.GetDevData(&fpa, &core, &d, &d);
-		LOGE("fpa: %f %f, core: %f %f", fpa, 20.0 - ((double) (uint16_t) fpaTmp - 7800.0) / 36.0, core, ((float)(uint16_t) coreTemper) / 10.0 -273.1);*/
-	}
 
 	/*temperatureData[0]=centerTmp;
     temperatureData[1]=(float)maxx1;
