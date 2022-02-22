@@ -51,12 +51,12 @@ void InitTempParam(float *param_1,float *param_2,float param_3,float param_4) {
     return;
 }
 
-int GetFix(float param_1,int param_2,int param_3) {
+int GetFix(float fpatemp, int rangemode, int width) {
     int iVar1;
 
     iVar1 = 0;
-    if ((param_2 == 0x78) && (iVar1 = 0xaa, param_3 != 0x100)) {
-        iVar1 = (int)(390.0 - param_1 * 7.05);
+    if ((rangemode == 0x78) && (iVar1 = 0xaa, width != 0x100)) {
+        iVar1 = (int)(390.0 - fpatemp * 7.05);
         if ((short)iVar1 < 0) {
             iVar1 = 0;
         }
@@ -64,6 +64,28 @@ int GetFix(float param_1,int param_2,int param_3) {
     }
     return iVar1;
 }
+
+/* Maybe it is like this instead (from aarch64 decompile):
+int GetFix(undefined4 param_1,int param_2,int param_3)
+{
+  short sVar1;
+  float fVar2;
+
+  if (param_2 != 0x78) {
+    return 0;
+  }
+  if (param_3 != 0x100) {
+    fVar2 = (float)NEON_fmsub(param_1,0x40e1999a,0x43c30000);
+    sVar1 = (short)(int)fVar2;
+    if (sVar1 < 0) {
+      sVar1 = 0;
+    }
+    return (int)sVar1;
+  }
+  return 0xaa;
+}
+
+ */
 
 void thermometrySearch2(int width, int height, float *temperatureTable, ushort *orgData, float *temperatureData,
                        int rangeMode, int outputMode)
@@ -308,7 +330,7 @@ void thermometryT4Line2(int width,int height,float *temperatureTable,ushort *fou
     local_74f = *(uint16_t *)(fourLinePara + (int)local_7c);
     local_a0 = *(uint16_t *)(fourLinePara + iter_tt_a);
     local_7c = (float) *(ushort *) pfVar1;
-    if ((width == 640) && (rangeMode == 400)) {
+    if ((width == 640) && (rangeMode == 400)) { // TODO do not forget to implement this
         local_74f = *(float *)(fourLinePara + local_48 + 0x14a);
         fVar8 = *(float *)(fourLinePara + local_48 + 0x146);
         fVar6 = *(float *)(fourLinePara + local_48 + 0x148);
@@ -324,15 +346,14 @@ void thermometryT4Line2(int width,int height,float *temperatureTable,ushort *fou
     *distance = distance3;
     if (cameraLens == 68) {
         multivar1 = (uint)*distance * 3;
-    }
-    else {
+    } else {
         if (cameraLens != 130) {
             distance3 = *distance;
         }
         multivar1 = (uint)distance3;
     }
     distance2 = (float)multivar1;
-    InitTempParam(&local_2c, &local_28, local_a0, fVar8);
+    InitTempParam(&local_2c, &local_28, local_a0, fVar8); // local_a0 and fVar8 come from frame somewhere, what are they?
 
     //CalcFixRaw(&wvc,&atmp,&ldivisor,*Airtmp,*humi,distance2,*emiss,*Refltmp,&ldividend);
     // TODO manual parameters for test

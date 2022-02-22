@@ -71,8 +71,18 @@ void Thermometry::sub_10001010(double h, double t_atm, double d, double e, doubl
     divisor = e * atm;
 }
 
+void InitTempParam(double *param_1, double *param_2, double param_3, double param_4) {
+    *param_1 = param_4 / (param_3 + param_3);
+    *param_2 = (param_4 * param_4) / (param_3 * param_3 * 4.0);
+}
+
 /* Object temperature from humidity, ambient temperature, distance, emissivity and reflected temperature. */
 void Thermometry::tobj(double h, double t_atm, double d, double e, double t_refl, int cx) {
+    double distlim = 20.0; // TODO depends on lens, also distance is modified depending on lens
+    /*if (cameraLens == 68) { // 68 and 130 are supported (6.8 and 130mm)
+        distlim = 30.0;
+        d *= 3;
+    }*/
     double atm = atmt(h, t_atm, d);
     // TODO why does python/infiray version not use boltzman and + instead of -? what about absz?
     //double bm = 0.0000000567; /* Stefan-Boltzmann constant. */
@@ -81,15 +91,32 @@ void Thermometry::tobj(double h, double t_atm, double d, double e, double t_refl
     double dividend = (1.0 - e) * atm * pow(t_refl + zeroc, 4) + (1.0 - atm) * pow(t_atm + zeroc, 4);
     double divisor = e * atm;
 
-    double distlim = 20.0; // TODO depends on lens
+    double local_a0, fVar8; // TODO comes from frame somewhere
+    double local_2c, local_28; // InitTempParam does the work
+    InitTempParam(&local_2c, &local_28, local_a0, fVar8);
+
+    double local_a0_2 = 0; // TODO comes from frame, but where?
+    double fVar6 = 0; // TODO also from frame
+    double local_74f = 0; // TODO somewhere from frame
+    double uVar2 = 0; // TODO from frame
+    double local_7c = 0; // TODO frame also
+    double shutterFix = 0; // TODO user parameter
+
+    double fVar7 = ((float)(uint)uVar2 / 10.0 - 273.15) + shutterFix;
+    double fVar8_2 = local_a0_2 * fVar7 * fVar7 + fVar7 * fVar8_2;
+    double local_7c_2 = fVar6 * pow(fpatmp_, 2) + local_74f * fpatmp_ + local_7c;
+
+    // TODO GetFix() used to not start i as 0 i think?
     for (int i = 0; i < 16384; ++i) {
-        double in = i; // TODO
+        //double in = i; // TODO
+        double in = (((double) i * local_7c_2 + fVar8_2) / local_a0 + local_28) - local_2c;
+
         double ttot = pow((pow(in + zeroc, 4.0) - divisor) * dividend, 0.25) - zeroc;
         double dc = (((d >= distlim) ? distlim : d) * 0.85 - 1.125) / 100.0;
         temperatureLUT[i] = ttot + (ttot - t_atm) * dc;
     }
 
-    double l_flt_1000337C = flt_1000335C / (2.0 * flt_10003360);
+    /*double l_flt_1000337C = flt_1000335C / (2.0 * flt_10003360);
     double l_flt_1000337C_2 = pow(l_flt_1000337C, 2);
     double v23 = flt_10003360 * pow(coretmp_, 2) + flt_1000335C * coretmp_;
     double v22 = flt_1000339C * pow(fpatmp_, 2) + flt_10003398 * fpatmp_ + flt_10003394;
@@ -104,7 +131,7 @@ void Thermometry::tobj(double h, double t_atm, double d, double e, double t_refl
         double dc = (((d >= 20.0) ? 20.0 : d) * 0.85 - 1.125) / 100.0;
         double res = tobj + dc * (tobj - t_atm);
         temperatureLUT[i] = res;
-    }
+    }*/
 }
 
 unsigned int Thermometry::sub_10001180(float a1, int16_t cx) {
@@ -220,8 +247,11 @@ void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
         Distance_ = *(uint16_t *) &pbuff[2 * v11 + 4];
         readParaFromDevFlag = 0;
     }
+
+    // InitTempParam()
     flt_1000337C = flt_1000335C / (flt_10003360 + flt_10003360);
     flt_10003378 = flt_1000335C * flt_1000335C / (flt_10003360 * (4.0 * flt_10003360));
+    
     sub_10001010(Humi_, airtmp_, Distance_, Emiss_, refltmp_);
     // typea is just coretmp
     sub_10001180(*(float *) &typea, v5); // bug in IDA -- TODO (netman) wtf did they mean by "bug in IDA?"
