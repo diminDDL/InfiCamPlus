@@ -146,10 +146,10 @@ unsigned int Thermometry::sub_10001180(float a1, int16_t cx) {
     //     fVar8 = local_a0 * fVar7 * fVar7 + fVar7 * fVar8;
     //    local_7c = fVar6 * fpatemp2 * fpatemp2 + local_74f * fpatemp2 + local_7c;
     v23 = flt_10003360 * a1 * a1 + a1 * flt_1000335C;
-    v22 = flt_1000339C * flt_100033A4 * flt_100033A4 + flt_10003398 * flt_100033A4 + flt_10003394;
+    v22 = flt_1000339C * fpatemp2 * fpatemp2 + flt_10003398 * fpatemp2 + flt_10003394;
     if (type_)
         v2 = 0;
-    else v2 = (signed int) (390.0 - flt_100033A4 * 7.05);
+    else v2 = (signed int) (390.0 - fpatemp2 * 7.05);
     v3 = Distance_;
     v4 = cx - v2;
     v5 = -v4;
@@ -210,7 +210,6 @@ void Thermometry::GetFixParam(float *Emiss, float *refltmp, float *airtmp, float
 
 void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
     int v2, v3, v5, v7, v11, typea, typeb;
-    double v4;
     float v6, v8, v9, v10, v12, v13;
 
     type_ = type;
@@ -218,10 +217,9 @@ void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
     if (!dev_type_)
         v2 = Height_ + 1;
     v3 = Width_ * v2;
-    v4 = (double) (*(uint16_t *) &pbuff[2 * Width_ * Height_ + 2] - 8617) / 37.682; // TODO depends on camera
-    v5 = *(uint16_t *) &pbuff[2 * v3];
-    typeb = *(uint16_t *) &pbuff[2 * v3 + 2];
-    flt_10003360 = *(float*) &pbuff[2 * v3 + 6]; // +6
+    v5 = *(uint16_t *) &pbuff[2 * v3]; // +0 ???
+    typeb = *(uint16_t *) &pbuff[2 * v3 + 2]; // +2, shutter temperature
+    flt_10003360 = *(float*) &pbuff[2 * v3 + 6]; // +6 ???
     v7 = v3 + 127;
     v3 += 5;
     flt_1000335C = *(float *) &pbuff[2 * v3]; // +10
@@ -230,7 +228,7 @@ void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
     v3 += 2;
     flt_10003398 = *(float *) &pbuff[2 * v3]; // +18
     flt_10003394 = *(float *) &pbuff[2 * v3 + 4]; // +22
-    flt_100033A4 = 20.0 - v4;
+    fpatemp2 = 20.0 - (double) (*(uint16_t *) &pbuff[2 * Width_ * Height_ + 2] - 8617) / 37.682; // TODO depends on camera
     *(float *) &typea = (double) typeb / 10.0 - 273.15; // TODO meant to be 0C in kelvin?
     if (readParaFromDevFlag) {
         Fix_ = *(float *) &pbuff[2 * v7];
@@ -253,7 +251,7 @@ void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
     flt_10003378 = flt_1000335C * flt_1000335C / (flt_10003360 * (4.0 * flt_10003360));
 
     sub_10001010(Humi_, airtmp_, Distance_, Emiss_, refltmp_);
-    // typea is just coretmp
+    // typea is shutter temperature
     sub_10001180(*(float *) &typea, v5); // bug in IDA -- TODO (netman) wtf did they mean by "bug in IDA?"
 }
 
@@ -308,8 +306,8 @@ void Thermometry::GetTmpData(int type, uint8_t *pbuff, float *maxtmp, int *maxx,
     v11 = pbuff;
     v12 = Width_ * Height_;
     v13 = (uint16_t *) &pbuff[2 * Width_ * Height_];
-    v14 = 3;
     fpatmp_ = 20.0 - ((double) *(uint16_t *) &pbuff[2 * Width_ * Height_ + 2] - 8617) / 37.682; // TODO depends on camera
+    v14 = 3;
     if (!dev_type_)
         v14 = 1;
     pbuffa = *(uint16_t *) &v13[v14 * Width_ + 2]; //starts at the third line, plus 2 chars of metadata
@@ -325,7 +323,7 @@ void Thermometry::GetTmpData(int type, uint8_t *pbuff, float *maxtmp, int *maxx,
         v2 = Height_ + 1;
     tobj(Humi_, airtmp_, Distance_, Emiss_, refltmp_, *(uint16_t *) &pbuff[2 * Width_ * v2]);*/
 
-    *centertmp = temperatureLUT[v16] + Fix_;
+    *centertmp = temperatureLUT[v13[12]] + Fix_;
     *maxtmp = temperatureLUT[v13[4]] + Fix_;
     *mintmp = temperatureLUT[v13[7]] + Fix_;
     *maxx = v13[2];

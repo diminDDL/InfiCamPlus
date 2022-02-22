@@ -1,0 +1,67 @@
+// last 4 lines of the frame have parameters
+// note that the pointer math is in steps of 16 bytes because unsigned short
+unsigned short *fourLinePara = orgData + requestWidth * (requestHeight - 4);
+
+// there's an offset depending on the width
+// again note that the pointer math is in steps of 16 bytes because unsigned short
+int amountPixels=0;
+switch (requestWidth)
+{
+	case 384:
+		amountPixels=requestWidth*(4-1);
+		break;
+	case 240:
+		amountPixels=requestWidth*(4-3);
+		break;
+	case 256:
+		amountPixels=requestWidth*(4-3);
+		break;
+	case 640:
+		amountPixels=requestWidth*(4-1);
+		break;
+		// TODO there's more info about this in libthermometry.so
+}
+
+uint8_t *param = fourLinePara
+
+Location  | Datatype        | Parameter
+------------------------------------------------------
+  0 -   2 | 16bit uint      | Average FPA temperature (presumably same unit as FPA temperature)
+  2 -   4 | 16bit uint      | FPA temperature (convert to celcius is weird)
+  4 -   6 | 16bit uint      | Max point X
+  6 -   8 | 16bit uint      | Max point Y
+  8 -  10 | 16bit uint      | Max temperature
+ 10 -  12 | 16bit uint      | Min point X
+ 12 -  14 | 16bit uint      | Min point Y
+ 14 -  16 | 16bit uint      | Min temperature
+ 16 -  18 | 16bit uint      | Average temperature (TODO: verify) also called orgAvg
+ 18 -  24 | ???             | ???
+ 24 -  26 | 16bit uint      | Center temperature
+ 26 -  28 | 16bit uint      | User point 1 temperature
+ 28 -  30 | 16bit uint      | User point 2 temperature
+ 30 -  32 | 16bit uint      | User point 3 temperature
+
+uint8_t *param = fourLinePara + amountPixels
+
+Location  | Datatype        | Parameter
+------------------------------------------------------
+  0 -   2 | 16bit something | ???
+  2 -   4 | 16bit uint?     | Shutter temperature (times 10, in kelvin)
+  4 -   6 | 16bit uint?     | Core temperature (times 10, in kelvin)
+  6 -  10 | float (32bit)   | ??? (flt_10003360)
+ 10 -  14 | float (32bit)   | ??? (flt_1000335C)
+ 14 -  18 | float (32bit)   | ??? (flt_1000339C)
+ 18 -  22 | float (32bit)   | ??? (flt_10003398)
+ 22 -  26 | float (32bit)   | ??? (flt_10003394)
+ 26 -  48 | ???             | ???
+ 48 -  64 | 16 byte string  | Firmware version
+ 64 -  95 | 32 byte string  | Serial number
+ 95 - 254 | ???             | ???
+---User area, writeable by ABS_ZOOM command-----------
+254 - 258 | float (32bit)   | Correction
+258 - 262 | float (32bit)   | Reflected temperature
+262 - 266 | float (32bit)   | Air temperature
+266 - 270 | float (32bit)   | Humidity
+270 - 274 | float (32bit)   | Emissivity
+274 - 278 | float (32bit)   | Distance
+278 - ??? | ???             | Possibly more user area
