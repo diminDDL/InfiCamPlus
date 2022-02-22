@@ -44,6 +44,7 @@
 #include "utilbase.h"
 #include "UVCPreviewIR.h"
 #include "libuvc_internal.h"
+#include "thermometry2.h"
 
 UVCPreviewIR::UVCPreviewIR(){
 
@@ -857,7 +858,22 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 	if(UNLIKELY(isNeedWriteTable))
 	{
 
-		thermometryT4Line(requestWidth,
+		/*thermometryT4Line(requestWidth,
+						  requestHeight,
+						  temperatureTable,
+						  fourLinePara,
+						  &floatFpaTmp,
+						  &correction,
+						  &Refltmp,
+						  &Airtmp,
+						  &humi,
+						  &emiss,
+						  &distance,
+						  cameraLens,
+						  shutterFix,
+						  rangeMode);*/
+
+		thermometryT4Line2(requestWidth,
 						  requestHeight,
 						  temperatureTable,
 						  fourLinePara,
@@ -873,13 +889,14 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 						  rangeMode);
 
 		//tm.readParaFromDevFlag = 0;
-		tm.DataInit(requestWidth, requestHeight);
+		/*tm.DataInit(requestWidth, requestHeight);
 		tm.UpdateFixParam(emiss, Refltmp, Airtmp, humi, distance, correction);
-		tm.UpdateParam(0, HoldBuffer);
+		tm.UpdateParam(0, HoldBuffer);*/
 
 		//tm.UpdateParam(0, HoldBuffer);
 		//tm.readParaFromDevFlag = 1;
 
+		#if 0
 		{
 			float max, min, tc, tarr[20000];
 			int mx, my, ax, ay;
@@ -893,6 +910,7 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
             tm.GetDevData(&fpa, &core, &d, &d);
             LOGE("fpa: %f %f, core: %f %f", fpa, 20.0 - ((double) (uint16_t) fpaTmp - 7800.0) / 36.0, core, ((float)(uint16_t) coreTemper) / 10.0 -273.1);*/
 		}
+        #endif
 
 		isNeedWriteTable=false;
 	}

@@ -45,6 +45,7 @@ void InitTempParam(float *param_1,float *param_2,float param_3,float param_4) {
     *param_2 = (param_4 * param_4) / (param_3 * param_3 * 4.0);
     return;
 }
+
 int GetFix(float param_1,int param_2,int param_3) {
     int iVar1;
 
@@ -59,8 +60,8 @@ int GetFix(float param_1,int param_2,int param_3) {
     return iVar1;
 }
 
-void thermometrySearch(int param_1,int param_2,int param_3,ushort *param_4,float *param_5,
-                       int param_6,int param_7)
+void thermometrySearch2(int width, int height, float *temperatureTable, ushort *orgData, float *temperatureData,
+                       int rangeMode, int outputMode)
 {
     ushort *puVar1;
     float fVar2;
@@ -78,63 +79,63 @@ void thermometrySearch(int param_1,int param_2,int param_3,ushort *param_4,float
     int iVar14;
     uint uVar15;
 
-    iVar13 = (param_2 + -4) * param_1;
-    uVar7 = param_4[iVar13 + 2];
-    uVar8 = param_4[iVar13 + 3];
-    uVar9 = param_4[iVar13 + 5];
-    uVar10 = param_4[iVar13 + 6];
-    if (param_1 == 0x100) {
-        iVar14 = (param_2 + -3) * 0x100;
+    iVar13 = (height + -4) * width;
+    uVar7 = orgData[iVar13 + 2];
+    uVar8 = orgData[iVar13 + 3];
+    uVar9 = orgData[iVar13 + 5];
+    uVar10 = orgData[iVar13 + 6];
+    if (width == 0x100) {
+        iVar14 = (height + -3) * 0x100;
         goto LAB_000123fb;
     }
-    if (param_1 < 0x101) {
-        if (param_1 == 0xf0) {
-            iVar14 = (param_2 + -3) * 0xf0;
+    if (width < 0x101) {
+        if (width == 0xf0) {
+            iVar14 = (height + -3) * 0xf0;
             goto LAB_000123fb;
         }
     }
     else {
-        if (param_1 == 0x180) {
-            iVar14 = (param_2 * 3 + -3) * 0x80;
+        if (width == 0x180) {
+            iVar14 = (height * 3 + -3) * 0x80;
             goto LAB_000123fb;
         }
-        iVar14 = (param_2 * 5 + -5) * 0x80;
-        if (param_1 == 0x280) goto LAB_000123fb;
+        iVar14 = (height * 5 + -5) * 0x80;
+        if (width == 0x280) goto LAB_000123fb;
     }
     iVar14 = iVar13 + 0xf;
     LAB_000123fb:
-    fVar11 = *(float *)(param_4 + iVar14 + 0x7f);
-    if (((((param_4[iVar13 + 0xc] < 0x4000) && (param_4[iVar13 + 4] < 0x4000)) &&
-          (param_4[iVar13 + 7] < 0x4000)) &&
-         ((param_4[iVar13 + 0xd] < 0x4000 && (param_4[iVar13 + 0xe] < 0x4000)))) &&
-        (param_4[iVar13 + 8] < 0x4000)) {
-        fVar2 = *(float *)(param_3 + (uint)param_4[iVar13 + 4] * 4);
-        fVar3 = *(float *)(param_3 + (uint)param_4[iVar13 + 0xd] * 4);
-        fVar4 = *(float *)(param_3 + (uint)param_4[iVar13 + 7] * 4);
-        fVar5 = *(float *)(param_3 + (uint)param_4[iVar13 + 0xe] * 4);
-        fVar6 = *(float *)(param_3 + (uint)param_4[iVar13 + 8] * 4);
-        *param_5 = *(float *)(param_3 + (uint)param_4[iVar13 + 0xc] * 4) + fVar11;
-        param_5[3] = fVar2 + fVar11;
-        param_5[1] = (float)(uint)uVar7;
-        param_5[2] = (float)(uint)uVar8;
-        param_5[6] = fVar4 + fVar11;
-        param_5[7] = fVar11 + fVar3;
-        param_5[8] = fVar5 + fVar11;
-        param_5[9] = fVar6 + fVar11;
-        param_5[4] = (float)(uint)uVar9;
-        param_5[5] = (float)(uint)uVar10;
-        if ((param_7 == 4) && (0 < iVar13)) {
-            uVar15 = (uint)*param_4;
+    fVar11 = *(float *)(orgData + iVar14 + 0x7f);
+    if (((((orgData[iVar13 + 0xc] < 0x4000) && (orgData[iVar13 + 4] < 0x4000)) &&
+          (orgData[iVar13 + 7] < 0x4000)) &&
+         ((orgData[iVar13 + 0xd] < 0x4000 && (orgData[iVar13 + 0xe] < 0x4000)))) &&
+        (orgData[iVar13 + 8] < 0x4000)) {
+        fVar2 = *(float *)(temperatureTable + (uint)orgData[iVar13 + 4] * 4);
+        fVar3 = *(float *)(temperatureTable + (uint)orgData[iVar13 + 0xd] * 4);
+        fVar4 = *(float *)(temperatureTable + (uint)orgData[iVar13 + 7] * 4);
+        fVar5 = *(float *)(temperatureTable + (uint)orgData[iVar13 + 0xe] * 4);
+        fVar6 = *(float *)(temperatureTable + (uint)orgData[iVar13 + 8] * 4);
+        *temperatureData = *(float *)(temperatureTable + (uint)orgData[iVar13 + 0xc] * 4) + fVar11;
+        temperatureData[3] = fVar2 + fVar11;
+        temperatureData[1] = (float)(uint)uVar7;
+        temperatureData[2] = (float)(uint)uVar8;
+        temperatureData[6] = fVar4 + fVar11;
+        temperatureData[7] = fVar11 + fVar3;
+        temperatureData[8] = fVar5 + fVar11;
+        temperatureData[9] = fVar6 + fVar11;
+        temperatureData[4] = (float)(uint)uVar9;
+        temperatureData[5] = (float)(uint)uVar10;
+        if ((outputMode == 4) && (0 < iVar13)) {
+            uVar15 = (uint)*orgData;
             if (uVar15 < 0x4000) {
-                puVar1 = param_4 + iVar13;
-                pfVar12 = param_5 + 10;
+                puVar1 = orgData + iVar13;
+                pfVar12 = temperatureData + 10;
                 do {
-                    param_4 = param_4 + 1;
-                    *pfVar12 = *(float *)(param_3 + uVar15 * 4) + fVar11;
-                    if (param_4 == puVar1) {
+                    orgData = orgData + 1;
+                    *pfVar12 = *(float *)(temperatureTable + uVar15 * 4) + fVar11;
+                    if (orgData == puVar1) {
                         return;
                     }
-                    uVar15 = (uint)*param_4;
+                    uVar15 = (uint)*orgData;
                     pfVar12 = pfVar12 + 1;
                 } while (uVar15 < 0x4000);
             }
