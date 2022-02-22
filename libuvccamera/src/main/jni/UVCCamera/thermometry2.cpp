@@ -17,6 +17,7 @@ float10 GetTempEvn(float param_1,float param_2,float param_3) {
     return (float10)((float)dVar1 - 273.15);
 }
 
+// this is like Thermometry::sub_10001010() or ::tobj()
 void CalcFixRaw(float *wvc, float *atmp, float *divisor, float t_atmosphere, float humidity,
                 float distance, float emiss, float t_refl, float *dividend) {
     float atm;
