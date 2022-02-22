@@ -875,7 +875,7 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 
 		LOGE(":: %f %f %f %f", Refltmp, Airtmp, humi, floatFpaTmp);
 
-		tm.readParaFromDevFlag = 1;
+		//tm.readParaFromDevFlag = 1;
 		tm.DataInit(requestWidth, requestHeight);
 		tm.UpdateFixParam(emiss, Refltmp, Airtmp, humi, distance, correction);
 		tm.UpdateParam(0, HoldBuffer);

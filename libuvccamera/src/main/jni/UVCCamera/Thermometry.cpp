@@ -65,6 +65,12 @@ static double atmt(double h, double t_atm, double d) {
     return k_atm * exp(nsqd * (a1 + b1 * sqw)) + (1.0 - k_atm) * exp(nsqd * (a2 + b2 * sqw));
 }
 
+void Thermometry::sub_10001010(double h, double t_atm, double d, double e, double t_refl) {
+    double atm = atmt(h, t_atm, d);
+    dividend = (1.0 - e) * atm * pow(t_refl + zeroc, 4) + (1.0 - atm) * pow(t_atm + zeroc, 4);
+    divisor = e * atm;
+}
+
 /* Object temperature from humidity, ambient temperature, distance, emissivity and reflected temperature. */
 void Thermometry::tobj(double h, double t_atm, double d, double e, double t_refl, int cx) {
     double atm = atmt(h, t_atm, d);
@@ -74,6 +80,14 @@ void Thermometry::tobj(double h, double t_atm, double d, double e, double t_refl
     //double divisor = e/* * bm*/ * atm;
     double dividend = (1.0 - e) * atm * pow(t_refl + zeroc, 4) + (1.0 - atm) * pow(t_atm + zeroc, 4);
     double divisor = e * atm;
+
+    double distlim = 20.0; // TODO depends on lens
+    for (int i = 0; i < 16384; ++i) {
+        double in = i; // TODO
+        double ttot = pow((pow(in + zeroc, 4.0) - divisor) * dividend, 0.25) - zeroc;
+        double dc = (((d >= distlim) ? distlim : d) * 0.85 - 1.125) / 100.0;
+        temperatureLUT[i] = ttot + (ttot - t_atm) * dc;
+    }
 
     double l_flt_1000337C = flt_1000335C / (2.0 * flt_10003360);
     double l_flt_1000337C_2 = pow(l_flt_1000337C, 2);
@@ -91,12 +105,6 @@ void Thermometry::tobj(double h, double t_atm, double d, double e, double t_refl
         double res = tobj + dc * (tobj - t_atm);
         temperatureLUT[i] = res;
     }
-}
-
-void Thermometry::sub_10001010(double h, double t_atm, double d, double e, double t_refl) {
-    double atm = atmt(h, t_atm, d);
-    dividend = (1.0 - e) * atm * pow(t_refl + zeroc, 4) + (1.0 - atm) * pow(t_atm + zeroc, 4);
-    divisor = e * atm;
 }
 
 unsigned int Thermometry::sub_10001180(float a1, int16_t cx) {
