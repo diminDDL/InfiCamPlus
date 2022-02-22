@@ -17,26 +17,30 @@ float10 GetTempEvn(float param_1,float param_2,float param_3) {
     return (float10)((float)dVar1 - 273.15);
 }
 
-void CalcFixRaw(float *param_1,float *param_2,float *param_3,float param_4,float param_5,
-                float param_6,float param_7,float param_8,float *param_9) {
-    float fVar1;
+void CalcFixRaw(float *wvc, float *atmp, float *divisor, float t_atmosphere, float humidity,
+                float distance, float emiss, float t_refl, float *dividend) {
+    float atm;
     double dVar2;
     double dVar3;
 
-    dVar2 = exp((double)(param_4 * 6.8455e-07 * param_4 * param_4 +
-                         ((param_4 * 0.06939 + 1.5587) - param_4 * 0.00027816 * param_4)));
-    *param_1 = (float)((double)param_5 * dVar2);
-    dVar2 = exp((double)((SQRT(*param_1) * -0.002276 + 0.006569) *
-                         (float)((uint)SQRT(param_6) ^ 0x80000000)));
-    dVar3 = exp((double)((float)((uint)SQRT(param_6) ^ 0x80000000) *
-                         (SQRT(*param_1) * -0.00667 + 0.01262)));
-    fVar1 = (float)(dVar3 * -0.8999999761581421 + dVar2 * 1.899999976158142);
-    *param_2 = fVar1;
-    *param_3 = 1.0 / (fVar1 * param_7);
-    dVar2 = pow((double)(param_8 + 273.15),4.0);
-    fVar1 = *param_2;
-    dVar3 = pow((double)(param_4 + 273.15),4.0);
-    *param_9 = (float)dVar3 * (1.0 - *param_2) + (1.0 - param_7) * (float)dVar2 * fVar1;
+    // NOTE apparently matches wvc() exactly, so this is done and dusted
+    dVar2 = exp((double)(t_atmosphere * 6.8455e-07 * t_atmosphere * t_atmosphere +
+                         ((t_atmosphere * 0.06939 + 1.5587) - t_atmosphere * 0.00027816 * t_atmosphere)));
+    *wvc = (float)((double)humidity * dVar2);
+
+    // NOTE this matches my atmt() exactly, done figured out
+    dVar2 = exp((double)((SQRT(*wvc) * -0.002276 + 0.006569) *
+                         (float)((uint)SQRT(distance) ^ 0x80000000)));
+    dVar3 = exp((double)((float)((uint)SQRT(distance) ^ 0x80000000) *
+                         (SQRT(*wvc) * -0.00667 + 0.01262)));
+    atm = (float)(dVar3 * -0.8999999761581421 + dVar2 * 1.899999976158142);
+    *atmp = atm;
+
+    *divisor = 1.0 / (atm * emiss); // this is reciprocal of "divisor" in tobj()
+    dVar2 = pow((double)(t_refl + 273.15), 4.0);
+    //atm = *atmp; // no-op
+    dVar3 = pow((double)(t_atmosphere + 273.15), 4.0);
+    *dividend = (float)dVar3 * (1.0 - *atmp) + (1.0 - emiss) * (float)dVar2 * atm; // divident as in tobj()
     return;
 }
 

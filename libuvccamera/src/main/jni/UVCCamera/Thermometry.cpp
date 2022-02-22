@@ -53,7 +53,7 @@ double zeroc = 273.15;
 
 /* Water vapor coefficient from humidity and ambient temperature. */
 static double wvc(double h, double t_atm) {
-    double h1 = 1.5587, h2 = 0.06939, h3 = -0.00027816, h4 = 0.00000068455;
+    double h1 = 1.5587, h2 = 0.06939, h3 = -2.7816e-4, h4 = 6.8455e-7;
     return h * exp(h1 + h2 * t_atm + h3 * pow(t_atm, 2) + h4 * pow(t_atm, 3));
 }
 
@@ -68,11 +68,11 @@ static double atmt(double h, double t_atm, double d) {
 /* Object temperature from humidity, ambient temperature, distance, emissivity and reflected temperature. */
 void Thermometry::tobj(double h, double t_atm, double d, double e, double t_refl, int cx) {
     double atm = atmt(h, t_atm, d);
-    //double bm = 0.0000000567; /* Stefan-Boltzmann constant. */ // TODO why does python version not use boltzman and + instead of -? what about absz?
+    // TODO why does python/infiray version not use boltzman and + instead of -? what about absz?
+    //double bm = 0.0000000567; /* Stefan-Boltzmann constant. */
     //double dividend = (1.0 - e) * atm * bm * pow(t_refl/* - absz*/, 4) - (1.0 - atm) * bm * pow(t_atm/* - absz*/, 4);
     //double divisor = e/* * bm*/ * atm;
-    // TODO subtracting absz almost can't be right...
-    double dividend = (1.0 - e) * atm * pow(t_refl - absz, 4) + (1.0 - atm) * pow(t_atm - absz, 4);
+    double dividend = (1.0 - e) * atm * pow(t_refl + zeroc, 4) + (1.0 - atm) * pow(t_atm + zeroc, 4);
     double divisor = e * atm;
 
     double l_flt_1000337C = flt_1000335C / (2.0 * flt_10003360);
@@ -94,33 +94,24 @@ void Thermometry::tobj(double h, double t_atm, double d, double e, double t_refl
 }
 
 void Thermometry::sub_10001010() {
-    float v0, v1, v2, v3, v4, v5, v7, v8, v9, v11;
-    double v6, v10;
+    float v9, v11;
+    double v10;
 
-    //v0 = wvc(Humi_, airtmp_);
-    /*v0 = exp(airtmp_ * (airtmp_ * 0.00000068455 * airtmp_) + 0.06938999999999999 * airtmp_ + 1.5587 - airtmp_ * 0.00027816 * airtmp_) * Humi_;
-    LOGE("WVC === %f %f ===", v0, wvc(Humi_, airtmp_));*/
-    /*for (int i = 0; i < 1000; i += 50)
-        LOGE("ATMT:  %f", atmt(.25, 15, i));*/
+    /*
+    *divisor = 1.0 / (atm * emiss); // this is reciprocal of "divisor" in tobj()
+    dVar2 = pow((double)(t_refl + 273.15), 4.0);
+    //atm = *atmp; // no-op
+    dVar3 = pow((double)(t_atmosphere + 273.15), 4.0);
+    *dividend = (float)dVar3 * (1.0 - *atmp) + (1.0 - emiss) * (float)dVar2 * atm; // divident as in tobj()
+    return;
+     */
 
-    /*v1 = sqrt(v0);
-    v2 = sqrt((double) (uint16_t) Distance_);
-    v3 = -v2;
-    v4 = (0.006569 - v1 * 0.002276) * v3;
-    v5 = exp(v4);
-    v6 = v5 * 1.9;
-    v7 = (0.01262 - v1 * 0.00667) * v3;
-    v8 = exp(v7);
-    flt_100133AC = v6 - v8 * 0.9; // atmospheric coefficient, like atmt()
-    flt_100133A8 = 1.0 / (Emiss_ * flt_100133AC); // Divisor for that thing but it's reciprocal (e * atm)
-    LOGE("=== %f %f ===", flt_100133AC, atmt(Humi_, airtmp_, Distance_));*/
-
-    float flt_100133AC = atmt(Humi_, airtmp_, Distance_);
-    flt_100133A8 = 1 / (Emiss_ * flt_100133AC);
-    v9 = pow(refltmp_ + 273.15, 4.0);
-    v10 = v9 * (1.0 - Emiss_) * flt_100133AC;
+    float atm = atmt(Humi_, airtmp_, Distance_);
+    divisor = 1 / (Emiss_ * atm);
     v11 = pow(airtmp_ + 273.15, 4.0);
-    flt_100033A0 = v11 * (1.0 - flt_100133AC) + v10;
+    v9 = pow(refltmp_ + 273.15, 4.0);
+    v10 = v9 * (1.0 - Emiss_) * atm;
+    dividend = v11 * (1.0 - atm) + v10;
 }
 
 unsigned int Thermometry::sub_10001180(float a1, int16_t cx) {
@@ -158,8 +149,8 @@ unsigned int Thermometry::sub_10001180(float a1, int16_t cx) {
                 break;
             v20 = v12 * v12;
         }
-        v13 = v17 - flt_100033A0;
-        v14 = v13 * flt_100133A8;
+        v13 = v17 - dividend;
+        v14 = v13 * divisor;
         v15 = pow(v14, 0.25);
         v18 = v15 - 273.15;
         if (v3 >= 20)
