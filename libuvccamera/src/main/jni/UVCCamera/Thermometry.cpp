@@ -39,22 +39,29 @@
 #include <math.h>
 #include <stdint.h>
 
+#include "utilbase.h" // TODO temporary
+
 // see: https://doi.org/10.3390/s17081718
 
 double absz = -273.15;
+double zeroc = 273.15;
 
-/* Water vapor coefficient. */
+/* I find it strange the equations wvc and atmt are based on work with degrees Celcius without
+ *   seemingly involving Kelvin at all. I've verified they match ht301_hacklib and ht301_ircam's
+ *   implementations and the graphs in https://doi.org/10.3390/s17081718
+ */
+
+/* Water vapor coefficient from humidity and ambient temperature. */
 static double wvc(double h, double t_atm) {
     double h1 = 1.5587, h2 = 0.06939, h3 = -0.00027816, h4 = 0.00000068455;
-    // TODO t_atm doesn't need to be kelvin?
     return h * exp(h1 + h2 * t_atm + h3 * pow(t_atm, 2) + h4 * pow(t_atm, 3));
 }
 
 /* Transmittance of the atmosphere from humitity, ambient temperature and distance. */
 static double atmt(double h, double t_atm, double d) {
     double k_atm = 1.9, nsqd = -sqrt(d), sqw = sqrt(wvc(h, t_atm));
-    double a1 = 0.0066, a2 = 0.0126; /* Athmospheric attenuation without water vapor. */
-    double b1 = -0.0023, b2 = -0.0067; /* Attenuation for water vapor. */
+    double a1 = 0.006569, a2 = 0.01262; /* Athmospheric attenuation without water vapor. */
+    double b1 = -0.002276, b2 = -0.00667; /* Attenuation for water vapor. */
     return k_atm * exp(nsqd * (a1 + b1 * sqw)) + (1.0 - k_atm) * exp(nsqd * (a2 + b2 * sqw));
 }
 
@@ -90,18 +97,26 @@ void Thermometry::sub_10001010() {
     float v0, v1, v2, v3, v4, v5, v7, v8, v9, v11;
     double v6, v10;
 
-    v0 = wvc(Humi_, airtmp_);
-    //v0 = exp(airtmp_ * (airtmp_ * 0.00000068455 * airtmp_) + 0.06938999999999999 * airtmp_ + 1.5587 - airtmp_ * 0.00027816 * airtmp_) * Humi_;
-    v1 = sqrt(v0);
+    //v0 = wvc(Humi_, airtmp_);
+    /*v0 = exp(airtmp_ * (airtmp_ * 0.00000068455 * airtmp_) + 0.06938999999999999 * airtmp_ + 1.5587 - airtmp_ * 0.00027816 * airtmp_) * Humi_;
+    LOGE("WVC === %f %f ===", v0, wvc(Humi_, airtmp_));*/
+    /*for (int i = 0; i < 1000; i += 50)
+        LOGE("ATMT:  %f", atmt(.25, 15, i));*/
+
+    /*v1 = sqrt(v0);
     v2 = sqrt((double) (uint16_t) Distance_);
     v3 = -v2;
-    v4 = (0.0066 - v1 * 0.0023) * v3;
+    v4 = (0.006569 - v1 * 0.002276) * v3;
     v5 = exp(v4);
     v6 = v5 * 1.9;
-    v7 = (0.0126 - v1 * 0.0067) * v3;
+    v7 = (0.01262 - v1 * 0.00667) * v3;
     v8 = exp(v7);
-    flt_100133AC = v6 - v8 * 0.9;
-    flt_100133A8 = 1.0 / (Emiss_ * flt_100133AC);
+    flt_100133AC = v6 - v8 * 0.9; // atmospheric coefficient, like atmt()
+    flt_100133A8 = 1.0 / (Emiss_ * flt_100133AC); // Divisor for that thing but it's reciprocal (e * atm)
+    LOGE("=== %f %f ===", flt_100133AC, atmt(Humi_, airtmp_, Distance_));*/
+
+    float flt_100133AC = atmt(Humi_, airtmp_, Distance_);
+    flt_100133A8 = 1 / (Emiss_ * flt_100133AC);
     v9 = pow(refltmp_ + 273.15, 4.0);
     v10 = v9 * (1.0 - Emiss_) * flt_100133AC;
     v11 = pow(airtmp_ + 273.15, 4.0);
