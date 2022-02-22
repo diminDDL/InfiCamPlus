@@ -95,12 +95,12 @@ void Thermometry::sub_10001010() {
     v1 = sqrt(v0);
     v2 = sqrt((double) (uint16_t) Distance_);
     v3 = -v2;
-    v4 = (0.006568999961018562 - v1 * 0.00227600010111928) * v3;
+    v4 = (0.0066 - v1 * 0.0023) * v3;
     v5 = exp(v4);
-    v6 = v5 * 1.899999976158142;
-    v7 = (0.01262000016868114 - v1 * 0.006670000031590462) * v3;
+    v6 = v5 * 1.9;
+    v7 = (0.0126 - v1 * 0.0067) * v3;
     v8 = exp(v7);
-    flt_100133AC = v6 - v8 * 0.8999999761581421;
+    flt_100133AC = v6 - v8 * 0.9;
     flt_100133A8 = 1.0 / (Emiss_ * flt_100133AC);
     v9 = pow(refltmp_ + 273.15, 4.0);
     v10 = v9 * (1.0 - Emiss_) * flt_100133AC;
@@ -132,7 +132,7 @@ unsigned int Thermometry::sub_10001180(float a1, int16_t cx) {
         v9 = sqrt(v8);
         result = 4;
         v11 = v9 - flt_1000337C;
-        v20 = v11 + 273.1499938964844; // TODO meant to be 0C in kelvin?
+        v20 = v11 + 273.15; // TODO meant to be 0C in kelvin?
         v17 = 1.0;
         while (1) {
             v12 = v20;
@@ -205,7 +205,7 @@ void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
     flt_10003398 = *(float *) &pbuff[2 * v3]; // +18
     flt_10003394 = *(float *) &pbuff[2 * v3 + 4]; // +22
     flt_100033A4 = 20.0 - v4;
-    *(float *) &typea = (double) typeb / 10.0 - 273.1499938964844; // TODO meant to be 0C in kelvin?
+    *(float *) &typea = (double) typeb / 10.0 - 273.15; // TODO meant to be 0C in kelvin?
     if (readParaFromDevFlag) {
         Fix_ = *(float *) &pbuff[2 * v7];
         v10 = *(float *) &pbuff[2 * v7 + 4];
@@ -288,7 +288,7 @@ void Thermometry::GetTmpData(int type, uint8_t *pbuff, float *maxtmp, int *maxx,
     fpaavg_ = *v13;
     v16 = v13[12];
     orgavg_ = v15;
-    coretmp_ = ((double) pbuffa) / 10.0 - 273.1; // TODO meant to be 0C in kelvin?
+    coretmp_ = ((double) pbuffa) / 10.0 - 273.15; // TODO meant to be 0C in kelvin?
 
     // TODO this is just for test
     /*int v2 = Height_ + 3;

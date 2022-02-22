@@ -338,7 +338,7 @@ void thermometryT4Line2(int width,int height,float *temperatureTable,ushort *fou
     iter_tt_a = GetFix(fpatemp2,rangeMode,width);
     multivar1 = (uint)uVar3 - iter_tt_a & 0xffff;
     fVar8 = local_a0f * fVar7 * fVar7 + fVar7 * fVar8;
-    local_7c = fVar6 * fpatemp2 * fpatemp2 + local_74f * fpatemp2 + local_7cf;
+    local_7cf = fVar6 * fpatemp2 * fpatemp2 + local_74f * fpatemp2 + local_7cf;
     if (cameraLens == 68) {
         iter_tt_a = -multivar1;
         if (distance2 < 60.0) {
