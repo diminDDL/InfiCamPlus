@@ -42,16 +42,16 @@ void CalcFixRaw(float *mwvc, float *atmp, float *divisor, float t_atmosphere, fl
     // NOTE apparently matches wvc() exactly, so this is done and dusted
     dVar2 = exp((double)(t_atmosphere * 6.8455e-07 * t_atmosphere * t_atmosphere +
                          ((t_atmosphere * 0.06939 + 1.5587) - t_atmosphere * 0.00027816 * t_atmosphere)));
-    //*mwvc = (float)((double)humidity * dVar2);
-    *mwvc = wvc(humidity, distance);
+    *mwvc = (float)((double)humidity * dVar2);
+    //*mwvc = wvc(humidity, distance);
 
     // NOTE this matches my atmt() exactly, done figured out
     dVar2 = exp((double)((SQRT(*mwvc) * -0.002276 + 0.006569) *
                          (float)((uint)SQRT(distance))));
     dVar3 = exp((double)((float)((uint)SQRT(distance)) *
                          (SQRT(*mwvc) * -0.00667 + 0.01262)));
-    atm = (float)(dVar3 * -0.9 + dVar2 * 1.9);
-    atm = atmt(humidity, t_atmosphere, distance);
+    atm = (float)(dVar3 * -0.8999999761581421 + dVar2 * 1.8999999761581421);
+    //atm = atmt(humidity, t_atmosphere, distance);
     *atmp = atm;
 
     *divisor = 1.0 / (atm * emiss); // this is reciprocal of "divisor" in tobj()
@@ -73,13 +73,13 @@ int GetFix(float fpatemp, int rangemode, int width) {
     int iVar1;
 
     iVar1 = 0;
-    //if ((rangemode == 0x78) && (iVar1 = 0xaa, width != 0x100)) {
+    if ((rangemode == 0x78) && (iVar1 = 0xaa, width != 0x100)) { // TODO what exactly does this do?
         iVar1 = (int)(390.0 - fpatemp * 7.05);
-/*        if ((short)iVar1 < 0) {
+        if ((short)iVar1 < 0) {
             iVar1 = 0;
         }
         return iVar1;
-    }*/
+    }
     return iVar1;
 }
 
