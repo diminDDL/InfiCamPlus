@@ -875,9 +875,9 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 
 		LOGE(":: %f %f %f %f", Refltmp, Airtmp, humi, floatFpaTmp);
 
-		tm.readParaFromDevFlag = 0;
+		/*tm.readParaFromDevFlag = 0;
 		tm.DataInit(requestWidth, requestHeight);
-		tm.UpdateFixParam(emiss, Refltmp, Airtmp, humi, distance, correction);
+		tm.UpdateFixParam(emiss, Refltmp, Airtmp, humi, distance, correction);*/
 
 		//tm.UpdateParam(0, HoldBuffer);
 		//tm.readParaFromDevFlag = 1;
@@ -885,8 +885,24 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 		{
 			float max, min, tc, tarr[20000];
 			int mx, my, ax, ay;
-			tm.GetTmpData(0, HoldBuffer, &max, &mx, &my,  &min, &ax, &ay, &tc, tarr, NULL);
-			tm.UpdateParam(0, HoldBuffer);
+			//tm.GetTmpData(0, HoldBuffer, &max, &mx, &my,  &min, &ax, &ay, &tc, tarr, NULL);
+			//tm.UpdateParam(0, HoldBuffer);
+
+			thermometryT4Line2(requestWidth,
+							  requestHeight,
+							  tm.temperatureLUT,
+							  fourLinePara,
+							  &floatFpaTmp,
+							  &correction,
+							  &Refltmp,
+							  &Airtmp,
+							  &humi,
+							  &emiss,
+							  &distance,
+							  cameraLens,
+							  shutterFix,
+							  rangeMode);
+
 			//LOGE("min: %f, max: %f, tc: %f   %f", min, max, tc, temperatureTable[t_min]);
 			LOGE("a: %f %f %f %f", temperatureTable[5500], temperatureTable[5600], temperatureTable[5700], temperatureTable[5800]);
 			LOGE("b: %f %f %f %f", tm.temperatureLUT[5500], tm.temperatureLUT[5600], tm.temperatureLUT[5700], tm.temperatureLUT[5800]);

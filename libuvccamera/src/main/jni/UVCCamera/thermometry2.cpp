@@ -1,6 +1,7 @@
 #include "thermometry2.h"
 #include <stdint.h>
 #include <math.h>
+#include "utilbase.h"
 
 typedef uint16_t ushort;
 typedef uint32_t uint;
@@ -17,8 +18,22 @@ float10 GetTempEvn(float Ttot, float dividend, float divisor) {
     return (float10)((float)dVar1 - 273.15);
 }
 
+/* Water vapor coefficient from humidity and ambient temperature. */
+static double wvc(double h, double t_atm) {
+    double h1 = 1.5587, h2 = 0.06939, h3 = -2.7816e-4, h4 = 6.8455e-7;
+    return h * exp(h1 + h2 * t_atm + h3 * pow(t_atm, 2) + h4 * pow(t_atm, 3));
+}
+
+/* Transmittance of the atmosphere from humitity, ambient temperature and distance. */
+static double atmt(double h, double t_atm, double d) {
+    double k_atm = 1.9, nsqd = -sqrt(d), sqw = sqrt(wvc(h, t_atm));
+    double a1 = 0.006569, a2 = 0.01262; /* Athmospheric attenuation without water vapor. */
+    double b1 = -0.002276, b2 = -0.00667; /* Attenuation for water vapor. */
+    return k_atm * exp(nsqd * (a1 + b1 * sqw)) + (1.0 - k_atm) * exp(nsqd * (a2 + b2 * sqw));
+}
+
 // this is like Thermometry::sub_10001010() or ::tobj()
-void CalcFixRaw(float *wvc, float *atmp, float *divisor, float t_atmosphere, float humidity,
+void CalcFixRaw(float *mwvc, float *atmp, float *divisor, float t_atmosphere, float humidity,
                 float distance, float emiss, float t_refl, float *dividend) {
     float atm;
     double dVar2;
@@ -27,14 +42,16 @@ void CalcFixRaw(float *wvc, float *atmp, float *divisor, float t_atmosphere, flo
     // NOTE apparently matches wvc() exactly, so this is done and dusted
     dVar2 = exp((double)(t_atmosphere * 6.8455e-07 * t_atmosphere * t_atmosphere +
                          ((t_atmosphere * 0.06939 + 1.5587) - t_atmosphere * 0.00027816 * t_atmosphere)));
-    *wvc = (float)((double)humidity * dVar2);
+    //*mwvc = (float)((double)humidity * dVar2);
+    *mwvc = wvc(humidity, distance);
 
     // NOTE this matches my atmt() exactly, done figured out
-    dVar2 = exp((double)((SQRT(*wvc) * -0.002276 + 0.006569) *
-                         (float)((uint)SQRT(distance) ^ 0x80000000)));
-    dVar3 = exp((double)((float)((uint)SQRT(distance) ^ 0x80000000) *
-                         (SQRT(*wvc) * -0.00667 + 0.01262)));
-    atm = (float)(dVar3 * -0.8999999761581421 + dVar2 * 1.899999976158142);
+    dVar2 = exp((double)((SQRT(*mwvc) * -0.002276 + 0.006569) *
+                         (float)((uint)SQRT(distance))));
+    dVar3 = exp((double)((float)((uint)SQRT(distance)) *
+                         (SQRT(*mwvc) * -0.00667 + 0.01262)));
+    atm = (float)(dVar3 * -0.9 + dVar2 * 1.9);
+    atm = atmt(humidity, t_atmosphere, distance);
     *atmp = atm;
 
     *divisor = 1.0 / (atm * emiss); // this is reciprocal of "divisor" in tobj()
@@ -42,6 +59,7 @@ void CalcFixRaw(float *wvc, float *atmp, float *divisor, float t_atmosphere, flo
     //atm = *atmp; // no-op
     dVar3 = pow((double)(t_atmosphere + 273.15), 4.0);
     *dividend = (float)dVar3 * (1.0 - *atmp) + (1.0 - emiss) * (float)dVar2 * atm; // divident as in tobj()
+    LOGE("TTOT=--- end=%f or=%f mwvc=%f atmp=%f", *dividend, *divisor, *mwvc, *atmp);
     return;
 }
 
@@ -55,13 +73,13 @@ int GetFix(float fpatemp, int rangemode, int width) {
     int iVar1;
 
     iVar1 = 0;
-    if ((rangemode == 0x78) && (iVar1 = 0xaa, width != 0x100)) {
+    //if ((rangemode == 0x78) && (iVar1 = 0xaa, width != 0x100)) {
         iVar1 = (int)(390.0 - fpatemp * 7.05);
-        if ((short)iVar1 < 0) {
+/*        if ((short)iVar1 < 0) {
             iVar1 = 0;
         }
         return iVar1;
-    }
+    }*/
     return iVar1;
 }
 
@@ -174,6 +192,157 @@ void thermometrySearch2(int width, int height, float *temperatureTable, ushort *
     return;
 }
 
+
+void thermometryT4Line2(int width,int height,float *temperatureLUT,ushort *fourLinePara,
+                       float *floatFpaTemp,float *correction,float *reflTemp,float *airTemp,
+                       float *humidity,float *Emissivity,ushort *distance,int cameraLens,
+                       float shutterFix,int rangeMode)
+{
+    short fix;
+    float Ttot;
+    float fVar1;
+    double dVar2;
+    float dividend;
+    float local_70;
+    float local_6c;
+    float divisor;
+    float atmp;
+    float wvc;
+    float cal_05;
+    float cal_04;
+    float cal_03;
+    float cal_02;
+    float cal_01;
+    float local_48;
+    float local_44;
+    float local_40;
+    float shutterTempFixed;
+    float floatFpaTemp2;
+    int iterator_end;
+    float shutterTemp;
+    ushort shutterTempRaw;
+    ushort cal_00;
+    int distanceptr;
+    ushort fpaTemp;
+    ushort fpaAvg;
+    ushort *local_20;
+    int iterator;
+    float distance2;
+    int param2Offset;
+
+    wvc = 0.0;
+    atmp = 0.0;
+    divisor = 0.0;
+    local_6c = 0.0;
+    local_70 = 0.0;
+    dividend = 0.0;
+    param2Offset = 0;
+    fpaAvg = *fourLinePara;
+    fpaTemp = fourLinePara[1];
+    if (width == 256) {
+        *floatFpaTemp = 20.0 - (float)(fpaTemp - 8617) / 37.682;
+        param2Offset = width;
+    }
+    else if (width < 257) {
+        if (width == 0xf0) {
+            *floatFpaTemp = 20.0 - (float)(fpaTemp - 7800) / 36.0;
+            param2Offset = width;
+        }
+    }
+    else if (width == 384) {
+        *floatFpaTemp = 20.0 - (float)(fpaTemp - 7800) / 36.0;
+        param2Offset = 1152;
+    }
+    else if (width == 640) {
+        *floatFpaTemp = 20.0 - (float)(fpaTemp - 6867) / 33.8;
+        param2Offset = 1920;
+    }
+    cal_00 = fourLinePara[param2Offset];
+    shutterTempRaw = fourLinePara[(long)param2Offset + 1];
+    shutterTemp = (float)(uint)shutterTempRaw / 10.0 - 273.15;
+    cal_01 = *(float *)(fourLinePara + (param2Offset + 3));
+    cal_02 = *(float *)(fourLinePara + (param2Offset + 5));
+    cal_03 = *(float *)(fourLinePara + (param2Offset + 7));
+    cal_04 = *(float *)(fourLinePara + (param2Offset + 9));
+    cal_05 = *(float *)(fourLinePara + (param2Offset + 11));
+    *correction = *(float *)(fourLinePara + (param2Offset + 127));
+    *reflTemp = *(float *)(fourLinePara + (param2Offset + 129));
+    *airTemp = *(float *)(fourLinePara + (param2Offset + 131));
+    *humidity = *(float *)(fourLinePara + (param2Offset + 133));
+    *Emissivity = *(float *)(fourLinePara + (param2Offset + 135));
+    distanceptr = param2Offset + 137;
+    *distance = fourLinePara[distanceptr];
+    LOGE("floatfpa: %f, cal_00: %d", *floatFpaTemp, cal_00);
+
+    if (cameraLens == 68) {
+        distance2 = (float)((uint)*distance * 2 + (uint)*distance);
+    }
+    else if (cameraLens == 130) {
+        distance2 = (float)(uint)*distance;
+    }
+    else {
+        distance2 = (float)(uint)*distance;
+    }
+    local_20 = fourLinePara;
+    param2Offset = param2Offset + 11;
+    InitTempParam(&local_6c,&local_70,cal_01,cal_02);
+    CalcFixRaw(&wvc,&atmp,&divisor,*airTemp,*humidity,distance2,*Emissivity,*reflTemp,&dividend);
+    iterator_end = 0x4000;
+    floatFpaTemp2 = *floatFpaTemp;
+    shutterTempFixed = shutterTemp + shutterFix;
+    fix = GetFix(floatFpaTemp2,(ushort)rangeMode,(ushort)width);
+    cal_00 -= fix;
+    local_40 = cal_02 * shutterTempFixed + cal_01 * shutterTempFixed * shutterTempFixed;
+    local_44 = cal_04 * floatFpaTemp2 + cal_03 * floatFpaTemp2 * floatFpaTemp2 + cal_05;
+    if (cameraLens == 68) {
+        for (iterator = 0; iterator < iterator_end; iterator += 1) {
+            local_48 = (float)(iterator - (uint)cal_00) * local_44 + local_40;
+            dVar2 = sqrt((double)(local_48 / cal_01 + local_70));
+            local_48 = (float)(dVar2 - (double)local_6c);
+            Ttot = GetTempEvn(local_48,dividend,divisor);
+            if (60.0 <= distance2) {
+                fVar1 = 52.125;
+            }
+            else {
+                fVar1 = distance2 * 0.85 + 1.125;
+            }
+            temperatureLUT[iterator] = (fVar1 * (Ttot - *airTemp)) / 100.0 + Ttot;
+        }
+    }
+    else if (cameraLens == 130) {
+        for (iterator = 0; iterator < iterator_end; iterator += 1) {
+            local_48 = (float)(iterator - (uint)cal_00) * local_44 + local_40;
+            dVar2 = sqrt((double)(local_48 / cal_01 + local_70));
+            local_48 = (float)(dVar2 - (double)local_6c);
+            Ttot = GetTempEvn(local_48,dividend,divisor);
+            if (20.0 <= distance2) {
+                fVar1 = 15.875;
+            }
+            else {
+                fVar1 = distance2 * 0.85 - 1.125;
+            }
+            temperatureLUT[iterator] = (fVar1 * (Ttot - *airTemp)) / 100.0 + Ttot;
+        }
+    }
+    else {
+        for (iterator = 0; iterator < iterator_end; iterator += 1) {
+            local_48 = (float)(iterator - (uint)cal_00) * local_44 + local_40;
+            dVar2 = sqrt((double)(local_48 / cal_01 + local_70));
+            local_48 = (float)(dVar2 - (double)local_6c);
+            Ttot = GetTempEvn(local_48,dividend,divisor);
+            if (20.0 <= distance2) {
+                fVar1 = 15.875;
+            }
+            else {
+                fVar1 = distance2 * 0.85 - 1.125;
+            }
+            temperatureLUT[iterator] = (fVar1 * (Ttot - *airTemp)) / 100.0 + Ttot;
+        }
+    }
+    return;
+}
+
+#if 0
 void thermometryT4Line2(int width,int height,float *temperatureTable,ushort *fourLinePara,
                        float *floatFpaTmp,float *correction,float *Refltmp,float *Airtmp,float *humi,
                        float *emiss,ushort *distance,int cameraLens,float shutterFix,int rangeMode)
@@ -435,3 +604,4 @@ void thermometryT4Line2(int width,int height,float *temperatureTable,ushort *fou
     }*/
     return;
 }
+#endif
