@@ -155,9 +155,10 @@ unsigned int Thermometry::sub_10001180(float shutterTemp, int16_t cx) {
     LOGE("local_40: %f  _44: %f", fVar8, local_7c);
     LOGE("coretmp: %f, shut: %f", coretmp_, shutterTemp);
 
-    if (type_)
+    /*if (type_)
         v2 = 0;
-    else v2 = (signed int) (390.0 - fpatmp_ * 7.05);
+    else v2 = (signed int) (390.0 - fpatmp_ * 7.05);*/
+    v2 = 0xaa; // for 256px wide camera
     v19 = cx - v2; // cx is a variable from camera
     LOGE("v19 == %d, local_7c == %f, fvar8 == %f, v2 == %d", v19, local_7c, fVar8, v2);
 

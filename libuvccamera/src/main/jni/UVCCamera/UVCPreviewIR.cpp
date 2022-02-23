@@ -885,7 +885,7 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 		{
 			float max, min, tc, tarr[20000];
 			int mx, my, ax, ay;
-#if 0
+#if 1
 			tm.GetTmpData(0, HoldBuffer, &max, &mx, &my,  &min, &ax, &ay, &tc, tarr, NULL);
 			tm.UpdateParam(0, HoldBuffer);
 #else
