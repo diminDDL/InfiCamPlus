@@ -43,7 +43,6 @@
 
 // see: https://doi.org/10.3390/s17081718
 
-double absz = -273.15;
 double zeroc = 273.15;
 
 /* I find it strange the equations wvc and atmt are based on work with degrees Celcius without
@@ -138,64 +137,44 @@ void Thermometry::tobj(double h, double t_atm, double d, double e, double t_refl
 unsigned int Thermometry::sub_10001180(float shutterTemp, int16_t cx) {
     int16_t v2;
     uint16_t v3, v4;
-    int v5, v19, v21;
-    float *p, v7, v8, v9, v11, v13, v14, v15, Ttot, v18, v20, local_7c, fVar8;
-    double v12, v16;
-    unsigned int result;
+    int v19, v21;
+    float *p;
+    double v18, v20, local_7c, fVar8;
 
     // InitTempParam()
     flt_1000337C = flt_1000335C / (flt_10003360 + flt_10003360);
     flt_10003378 = flt_1000335C * flt_1000335C / (flt_10003360 * (4.0 * flt_10003360));
 
+    // TODO shutterTemp += shutterFix
     //     fVar8 = local_a0 * fVar7 * fVar7 + fVar7 * fVar8;
     //    local_7c = fVar6 * fpatemp2 * fpatemp2 + local_74f * fpatemp2 + local_7c;
     fVar8 = flt_10003360 * shutterTemp * shutterTemp + shutterTemp * flt_1000335C;
     local_7c = flt_1000339C * fpatemp2 * fpatemp2 + flt_10003398 * fpatemp2 + flt_10003394;
+
+
+
     if (type_)
         v2 = 0;
     else v2 = (signed int) (390.0 - fpatemp2 * 7.05);
     v3 = Distance_;
     v4 = cx - v2;
-    v5 = -v4;
     v19 = -v4;
     p = temperatureLUT;
     while (p - temperatureLUT < 16384) {
-        v20 = sqrt(((double) v19 * local_7c + fVar8) / flt_10003360 + flt_10003378) - flt_1000337C + 273.15; // TODO meant to be 0C in kelvin?
-        double test = pow(v20, 4);
-        // NOTE apparently all this does is pow(..., 4), but it rounds to the nearest decimal, meh.
-        /*Ttot = 1.0;
-        result = 4;
-        while (1) {
-            if (result & 1)
-                Ttot = Ttot * v20;
-            result >>= 1;
-            if (!result)
-                break;
-            v20 *= v20;
-        }*/
-        //LOGE("A = %f, B = %f", v20, test);
-        Ttot = v20 = test;
-
-
-        // NOTE this is added by me
-        //double i = p - temperatureLUT;
         //Ttot = sqrt((i * local_7c + fVar8) / /*local_a0*/ flt_10003360 + /*local_28*/ flt_10003378) - /*local_2c*/ flt_1000337C;
+        v20 = sqrt(((double) v19 * local_7c + fVar8) / flt_10003360 + flt_10003378) - flt_1000337C + 273.15; // TODO meant to be 0C in kelvin?
+        double Ttot = pow(v20, 4);
 
-        v13 = Ttot - dividend;
-        v14 = v13 / divisor;
-        v15 = pow(v14, 0.25);
-        v18 = v15 - 273.15;
+        v18 = pow((Ttot - dividend) / divisor, 0.25) - zeroc;
         if (v3 >= 20)
             v21 = 20;
         else
             v21 = v3;
-        ++v5;
-        v16 = (double) v21 * 0.85;
-        v19 = v5;
-        *p = v18 + (v16 - 1.125) * (v18 - airtmp_) / 100.0;
+        ++v19;
+        *p = v18 + ((double) v21 * 0.85 - 1.125) * (v18 - airtmp_) / 100.0;
         ++p;
     }
-    return result;
+    return 0;
 }
 
 void Thermometry::UpdateFixParam(float Emiss, float refltmp, float airtmp, float Humi, unsigned short Distance, float Fix) {
