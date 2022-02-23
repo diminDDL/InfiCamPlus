@@ -139,14 +139,18 @@ unsigned int Thermometry::sub_10001180(float shutterTemp, int16_t cx) {
     int16_t v2;
     uint16_t v3, v4;
     int v5, v19, v21;
-    float *p, v7, v8, v9, v11, v13, v14, v15, v17, v18, v20, v22, v23;
+    float *p, v7, v8, v9, v11, v13, v14, v15, Ttot, v18, v20, local_7c, fVar8;
     double v12, v16;
     unsigned int result;
 
+    // InitTempParam()
+    flt_1000337C = flt_1000335C / (flt_10003360 + flt_10003360);
+    flt_10003378 = flt_1000335C * flt_1000335C / (flt_10003360 * (4.0 * flt_10003360));
+
     //     fVar8 = local_a0 * fVar7 * fVar7 + fVar7 * fVar8;
     //    local_7c = fVar6 * fpatemp2 * fpatemp2 + local_74f * fpatemp2 + local_7c;
-    v23 = flt_10003360 * shutterTemp * shutterTemp + shutterTemp * flt_1000335C;
-    v22 = flt_1000339C * fpatemp2 * fpatemp2 + flt_10003398 * fpatemp2 + flt_10003394;
+    fVar8 = flt_10003360 * shutterTemp * shutterTemp + shutterTemp * flt_1000335C;
+    local_7c = flt_1000339C * fpatemp2 * fpatemp2 + flt_10003398 * fpatemp2 + flt_10003394;
     if (type_)
         v2 = 0;
     else v2 = (signed int) (390.0 - fpatemp2 * 7.05);
@@ -156,23 +160,28 @@ unsigned int Thermometry::sub_10001180(float shutterTemp, int16_t cx) {
     v19 = -v4;
     p = temperatureLUT;
     while (p - temperatureLUT < 16384) {
-        v7 = (double) v19 * v22 + v23;
+        v7 = (double) v19 * local_7c + fVar8;
         v8 = v7 / flt_10003360 + flt_10003378;
         v9 = sqrt(v8);
         result = 4;
         v11 = v9 - flt_1000337C;
         v20 = v11 + 273.15; // TODO meant to be 0C in kelvin?
-        v17 = 1.0;
+        Ttot = 1.0;
         while (1) {
             v12 = v20;
             if (result & 1)
-                v17 = v17 * v12;
+                Ttot = Ttot * v12;
             result >>= 1;
             if (!result)
                 break;
             v20 = v12 * v12;
         }
-        v13 = v17 - dividend;
+
+        // NOTE this is added by me
+        //double i = p - temperatureLUT;
+        //Ttot = sqrt((i * local_7c + fVar8) / /*local_a0*/ flt_10003360 + /*local_28*/ flt_10003378) - /*local_2c*/ flt_1000337C;
+
+        v13 = Ttot - dividend;
         v14 = v13 / divisor;
         v15 = pow(v14, 0.25);
         v18 = v15 - 273.15;
@@ -246,13 +255,9 @@ void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
         readParaFromDevFlag = 0;
     }
 
-    // InitTempParam()
-    flt_1000337C = flt_1000335C / (flt_10003360 + flt_10003360);
-    flt_10003378 = flt_1000335C * flt_1000335C / (flt_10003360 * (4.0 * flt_10003360));
-
     sub_10001010(Humi_, airtmp_, Distance_, Emiss_, refltmp_);
     // typea is shutter temperature
-    LOGE("*** Shut: %f, core: %f", *(float *) &typea, coretmp_);
+    //LOGE("*** Shut: %f, core: %f", *(float *) &typea, coretmp_);
     sub_10001180(*(float *) &typea, v5); // bug in IDA -- TODO (netman) wtf did they mean by "bug in IDA?"
 }
 
