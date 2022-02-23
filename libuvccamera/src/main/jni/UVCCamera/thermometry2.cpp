@@ -189,7 +189,7 @@ void thermometryT4Line2(int width,int height,float *temperatureTable,ushort *fou
     float fVar6;
     int in_GS_OFFSET;
     float10 Ttot;
-    float fVar7;
+    float shutterTemp;
     float fVar8;
     int local_a0;
     float local_a0;
@@ -359,11 +359,11 @@ void thermometryT4Line2(int width,int height,float *temperatureTable,ushort *fou
     // TODO manual parameters for test
     CalcFixRaw(&wvc, &atmp, &ldivisor, 21.0, 0.45, 1, 0.95, 21.0, &ldividend);
 
-    fVar7 = ((float)(uint)uVar2 / 10.0 - 273.15) + shutterFix;
+    shutterTemp = ((float)(uint)uVar2 / 10.0 - 273.15) + shutterFix;
     fpatemp2 = *floatFpaTmp;
     iter_tt_a = GetFix(fpatemp2,rangeMode,width);
     multivar1 = (uint)uVar3 - iter_tt_a & 0xffff;
-    fVar8 = local_a0 * fVar7 * fVar7 + fVar7 * fVar8;
+    fVar8 = local_a0 * shutterTemp * shutterTemp + shutterTemp * fVar8;
     local_7c = fVar6 * fpatemp2 * fpatemp2 + local_74f * fpatemp2 + local_7c;
     if (cameraLens == 68) {
         iter_tt_a = -multivar1;

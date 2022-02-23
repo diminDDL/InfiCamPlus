@@ -13,7 +13,7 @@ public:
     int type_, dev_type_, Height_, Width_;
 
     void sub_10001010(double h, double t_atm, double d, double e, double t_refl);
-    unsigned int sub_10001180(float a1, int16_t cx);
+    unsigned int sub_10001180(float shutterTemp, int16_t cx);
 
 public:
     int readParaFromDevFlag = 1; // TODO must this be here?

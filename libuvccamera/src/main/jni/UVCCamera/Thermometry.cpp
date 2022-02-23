@@ -135,7 +135,7 @@ void Thermometry::tobj(double h, double t_atm, double d, double e, double t_refl
     }*/
 }
 
-unsigned int Thermometry::sub_10001180(float a1, int16_t cx) {
+unsigned int Thermometry::sub_10001180(float shutterTemp, int16_t cx) {
     int16_t v2;
     uint16_t v3, v4;
     int v5, v19, v21;
@@ -145,7 +145,7 @@ unsigned int Thermometry::sub_10001180(float a1, int16_t cx) {
 
     //     fVar8 = local_a0 * fVar7 * fVar7 + fVar7 * fVar8;
     //    local_7c = fVar6 * fpatemp2 * fpatemp2 + local_74f * fpatemp2 + local_7c;
-    v23 = flt_10003360 * a1 * a1 + a1 * flt_1000335C;
+    v23 = flt_10003360 * shutterTemp * shutterTemp + shutterTemp * flt_1000335C;
     v22 = flt_1000339C * fpatemp2 * fpatemp2 + flt_10003398 * fpatemp2 + flt_10003394;
     if (type_)
         v2 = 0;
@@ -218,7 +218,7 @@ void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
         v2 = Height_ + 1;
     v3 = Width_ * v2;
     v5 = *(uint16_t *) &pbuff[2 * v3]; // +0 ???
-    typeb = *(uint16_t *) &pbuff[2 * v3 + 2]; // +2, shutter temperature
+    typeb = *(uint16_t *) &pbuff[2 * v3 + 2]; // +2, shutter temperature TODO this seems questionable compared to decompiled bin
     flt_10003360 = *(float*) &pbuff[2 * v3 + 6]; // +6 ???
     v7 = v3 + 127;
     v3 += 5;
@@ -252,6 +252,7 @@ void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
 
     sub_10001010(Humi_, airtmp_, Distance_, Emiss_, refltmp_);
     // typea is shutter temperature
+    LOGE("*** Shut: %f, core: %f", *(float *) &typea, coretmp_);
     sub_10001180(*(float *) &typea, v5); // bug in IDA -- TODO (netman) wtf did they mean by "bug in IDA?"
 }
 

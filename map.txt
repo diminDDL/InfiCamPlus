@@ -27,7 +27,7 @@ uint8_t *param = fourLinePara
 Location  | Datatype        | Parameter
 ------------------------------------------------------
   0 -   2 | 16bit uint      | Average FPA temperature (presumably same unit as FPA temperature)
-  2 -   4 | 16bit uint      | FPA temperature (convert to celcius is weird)
+  2 -   4 | 16bit uint      | FPA temperature (convert to celcius is weird and depends on camera)
   4 -   6 | 16bit uint      | Max point X
   6 -   8 | 16bit uint      | Max point Y
   8 -  10 | 16bit uint      | Max temperature
@@ -46,8 +46,8 @@ uint8_t *param = fourLinePara + amountPixels
 Location  | Datatype        | Parameter
 ------------------------------------------------------
   0 -   2 | 16bit something | ???
-  2 -   4 | 16bit uint?     | Shutter temperature (times 10, in kelvin)
-  4 -   6 | 16bit uint?     | Core temperature (times 10, in kelvin)
+  2 -   4 | 16bit uint?     | Shutter temperature (times 10, in kelvin) TODO questionable usages
+  4 -   6 | 16bit uint?     | Core temperature (times 10, in kelvin) TODO questionable usages
   6 -  10 | float (32bit)   | ??? (flt_10003360)
  10 -  14 | float (32bit)   | ??? (flt_1000335C)
  14 -  18 | float (32bit)   | ??? (flt_1000339C)
