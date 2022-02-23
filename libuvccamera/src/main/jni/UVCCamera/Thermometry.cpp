@@ -160,18 +160,22 @@ unsigned int Thermometry::sub_10001180(float shutterTemp, int16_t cx) {
     v19 = -v4;
     p = temperatureLUT;
     while (p - temperatureLUT < 16384) {
-        result = 4;
         v20 = sqrt(((double) v19 * local_7c + fVar8) / flt_10003360 + flt_10003378) - flt_1000337C + 273.15; // TODO meant to be 0C in kelvin?
-        Ttot = 1.0;
+        double test = pow(v20, 4);
+        // NOTE apparently all this does is pow(..., 4), but it rounds to the nearest decimal, meh.
+        /*Ttot = 1.0;
+        result = 4;
         while (1) {
-            v12 = v20;
             if (result & 1)
-                Ttot = Ttot * v12;
+                Ttot = Ttot * v20;
             result >>= 1;
             if (!result)
                 break;
-            v20 = v12 * v12;
-        }
+            v20 *= v20;
+        }*/
+        //LOGE("A = %f, B = %f", v20, test);
+        Ttot = v20 = test;
+
 
         // NOTE this is added by me
         //double i = p - temperatureLUT;
