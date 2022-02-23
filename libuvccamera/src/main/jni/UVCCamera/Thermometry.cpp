@@ -116,15 +116,15 @@ void Thermometry::tobj(double h, double t_atm, double d, double e, double t_refl
         temperatureLUT[i] = ttot + (ttot - t_atm) * dc;
     }
 
-    /*double l_flt_1000337C = flt_1000335C / (2.0 * flt_10003360);
+    /*double l_flt_1000337C = cal_02 / (2.0 * cal_01);
     double l_flt_1000337C_2 = pow(l_flt_1000337C, 2);
-    double v23 = flt_10003360 * pow(coretmp_, 2) + flt_1000335C * coretmp_;
-    double v22 = flt_1000339C * pow(fpatmp_, 2) + flt_10003398 * fpatmp_ + flt_10003394;
+    double v23 = cal_01 * pow(coretmp_, 2) + cal_02 * coretmp_;
+    double v22 = cal_03 * pow(fpatmp_, 2) + cal_04 * fpatmp_ + cal_05;
     double v2 = 390.0 - fpatmp_ * 7.05; // TODO python version has option to set 0, and int() around it
     //double v2 = 0;
 
     for (int i = 0; i < 16384; ++i) {
-        double ttot = sqrt(((i - (cx - v2)) * v22 + v23) / flt_10003360 + l_flt_1000337C_2) - l_flt_1000337C - absz;
+        double ttot = sqrt(((i - (cx - v2)) * v22 + v23) / cal_01 + l_flt_1000337C_2) - l_flt_1000337C - absz;
         double wtot = pow(ttot, 4);
         double tobj = pow((wtot - dividend) / divisor, 1.0 / 4.0) + absz;
 
@@ -136,33 +136,33 @@ void Thermometry::tobj(double h, double t_atm, double d, double e, double t_refl
 
 unsigned int Thermometry::sub_10001180(float shutterTemp, int16_t cx) {
     int16_t v2;
-    uint16_t v3, v4;
     int v19, v21;
     float *p;
     double v18, v20, local_7c, fVar8;
 
     // InitTempParam()
-    flt_1000337C = flt_1000335C / (flt_10003360 + flt_10003360);
-    flt_10003378 = flt_1000335C * flt_1000335C / (flt_10003360 * (4.0 * flt_10003360));
+    flt_1000337C = cal_02 / (cal_01 + cal_01);
+    flt_10003378 = cal_02 * cal_02 / (cal_01 * cal_01 * 4.0);
 
     // TODO shutterTemp += shutterFix
+    // TODO do we need fpaFix too?
     //     fVar8 = local_a0 * fVar7 * fVar7 + fVar7 * fVar8;
     //    local_7c = fVar6 * fpatemp2 * fpatemp2 + local_74f * fpatemp2 + local_7c;
-    fVar8 = flt_10003360 * shutterTemp * shutterTemp + shutterTemp * flt_1000335C;
-    local_7c = flt_1000339C * fpatemp2 * fpatemp2 + flt_10003398 * fpatemp2 + flt_10003394;
+    fVar8 = cal_01 * shutterTemp * shutterTemp + shutterTemp * cal_02;
+    local_7c = cal_03 * fpatemp2 * fpatemp2 + cal_04 * fpatemp2 + cal_05;
 
     if (type_)
         v2 = 0;
     else v2 = (signed int) (390.0 - fpatemp2 * 7.05);
-    v19 = v2 - cx; // cx is a variable from camera
-    LOGE("v19 == %d, local_7c == %f, fvar8 == %f", v19, local_7c, fVar8);
+    v19 = cx - v2; // cx is a variable from camera
+    LOGE("v19 == %d, local_7c == %f, fvar8 == %f, v2 == %d", v19, local_7c, fVar8, v2);
 
     for (int i = 0; i < 16384; ++i) {
-        //Ttot = sqrt((i * local_7c + fVar8) / /*local_a0*/ flt_10003360 + /*local_28*/ flt_10003378) - /*local_2c*/ flt_1000337C;
-        v20 = sqrt(((double) (v19 + i) * local_7c + fVar8) / flt_10003360 + flt_10003378) - flt_1000337C + zeroc; // TODO meant to be 0C in kelvin?
-        double Ttot = pow(v20, 4);
+        //wtot = sqrt((i * local_7c + fVar8) / /*local_a0*/ cal_01 + /*local_28*/ flt_10003378) - /*local_2c*/ flt_1000337C;
+        v20 = sqrt(((double) (i - v19) * local_7c + fVar8) / cal_01 + flt_10003378) - flt_1000337C + zeroc; // TODO meant to be 0C in kelvin?
+        double wtot = pow(v20, 4);
 
-        v18 = pow((Ttot - dividend) / divisor, 0.25) - zeroc;
+        v18 = pow((wtot - dividend) / divisor, 0.25) - zeroc;
         v21 = (Distance_ >= 20) ? 20 : Distance_;
         temperatureLUT[i] = v18 + ((double) v21 * 0.85 - 1.125) * (v18 - airtmp_) / 100.0;
     }
@@ -189,7 +189,7 @@ void Thermometry::GetFixParam(float *Emiss, float *refltmp, float *airtmp, float
 }
 
 void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
-    int v2, v3, v5, v7, v11, typeb;
+    int v2, v3, cal_00, v7, v11, typeb;
     float v6, v8, v9, v10, v12, v13, typea;
 
     type_ = type;
@@ -197,19 +197,19 @@ void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
     if (!dev_type_)
         v2 = Height_ + 1;
     v3 = Width_ * v2;
-    v5 = *(uint16_t *) &pbuff[2 * v3]; // +0 ???
+    cal_00 = *(int16_t *) &pbuff[2 * v3]; // +0 ???
     typeb = *(uint16_t *) &pbuff[2 * v3 + 2]; // +2, shutter temperature TODO this seems questionable compared to decompiled bin
-    flt_10003360 = *(float*) &pbuff[2 * v3 + 6]; // +6 ???
+    cal_01 = *(float*) &pbuff[2 * v3 + 6]; // +6 ???
     v7 = v3 + 127;
     v3 += 5;
-    flt_1000335C = *(float *) &pbuff[2 * v3]; // +10
+    cal_02 = *(float *) &pbuff[2 * v3]; // +10
     v3 += 2;
-    flt_1000339C = *(float *) &pbuff[2 * v3]; // +14
+    cal_03 = *(float *) &pbuff[2 * v3]; // +14
     v3 += 2;
-    flt_10003398 = *(float *) &pbuff[2 * v3]; // +18
-    flt_10003394 = *(float *) &pbuff[2 * v3 + 4]; // +22
+    cal_04 = *(float *) &pbuff[2 * v3]; // +18
+    cal_05 = *(float *) &pbuff[2 * v3 + 4]; // +22
 
-    LOGE("v5=%d a=%f b=%f c=%f d=%f e=%f", v5, flt_10003360, flt_1000335C, flt_1000339C, flt_10003398, flt_10003394);
+    LOGE("cal_00=%d a=%f b=%f c=%f d=%f e=%f", cal_00, cal_01, cal_02, cal_03, cal_04, cal_05);
 
     fpatemp2 = 20.0 - (double) (*(uint16_t *) &pbuff[2 * Width_ * Height_ + 2] - 8617) / 37.682; // TODO depends on camera
     typea = (double) typeb / 10.0 - zeroc; // TODO meant to be 0C in kelvin?
@@ -232,7 +232,7 @@ void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
     sub_10001010(Humi_, airtmp_, Distance_, Emiss_, refltmp_);
     // typea is shutter temperature
     //LOGE("*** Shut: %f, core: %f", *(float *) &typea, coretmp_);
-    sub_10001180(typea, v5); // bug in IDA -- TODO (netman) wtf did they mean by "bug in IDA?"
+    sub_10001180(typea, cal_00); // bug in IDA -- TODO (netman) wtf did they mean by "bug in IDA?"
 }
 
 int Thermometry::DataInit(int Width, int Height) {

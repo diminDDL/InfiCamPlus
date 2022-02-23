@@ -45,14 +45,14 @@ uint8_t *param = fourLinePara + amountPixels
 
 Location  | Datatype        | Parameter
 ------------------------------------------------------
-  0 -   2 | 16bit uint      | ??? (presumeably calibration value)
+  0 -   2 | 16bit uint      | ??? (cal_00 / v5 / cx) (presumeably calibration value)
   2 -   4 | 16bit uint      | Shutter temperature (times 10, in kelvin) TODO questionable usages
   4 -   6 | 16bit uint      | Core temperature (times 10, in kelvin) TODO questionable usages
-  6 -  10 | float (32bit)   | ??? (flt_10003360) (presumeably calibration value)
- 10 -  14 | float (32bit)   | ??? (flt_1000335C) (presumeably calibration value)
- 14 -  18 | float (32bit)   | ??? (flt_1000339C) (presumeably calibration value)
- 18 -  22 | float (32bit)   | ??? (flt_10003398) (presumeably calibration value)
- 22 -  26 | float (32bit)   | ??? (flt_10003394) (presumeably calibration value)
+  6 -  10 | float (32bit)   | ??? (cal_01 / flt_10003360) (presumeably calibration value)
+ 10 -  14 | float (32bit)   | ??? (cal_02 / flt_1000335C) (presumeably calibration value)
+ 14 -  18 | float (32bit)   | ??? (cal_03 / flt_1000339C) (presumeably calibration value)
+ 18 -  22 | float (32bit)   | ??? (cal_04 / flt_10003398) (presumeably calibration value)
+ 22 -  26 | float (32bit)   | ??? (cal_05 / flt_10003394) (presumeably calibration value)
  26 -  48 | ???             | ??? (unused by software)
  48 -  64 | 16 byte string  | Firmware version
  64 -  95 | 32 byte string  | Serial number

@@ -228,8 +228,8 @@ void thermometryT4Line2(int width,int height,float *temperatureTable,ushort *fou
     multivar1 = (uint)fourLinePara[1];
     if (width == 256) {
         iter_tt_b = 0x20a;
-        iVar5 = 0x202;
-        iVar4 = 0x200;
+        iVar5 = 0x202; // shutterTemp
+        iVar4 = 0x200; // cal_00
         local_48 = 0x100;
         off_distance = 0x312;
         off_emiss = 0x30e;
@@ -326,10 +326,10 @@ void thermometryT4Line2(int width,int height,float *temperatureTable,ushort *fou
     uVar3 = *(ushort *)(fourLinePara + iVar4);
     fVar8 = (float) *(ushort *)(fourLinePara + iter_tt_b);
     fVar6 = (float) *(ushort *)(fourLinePara + (int)local_a0);
-    pfVar1 = (float *)(fourLinePara + (int)local_74);
-    local_74f = *(uint16_t *)(fourLinePara + (int)local_7c);
+    pfVar1 = (float *)(fourLinePara + (int)local_74); // cal_05
+    local_74f = *(uint16_t *)(fourLinePara + (int)local_7c); // cal_04
     local_a0 = *(uint16_t *)(fourLinePara + iter_tt_a);
-    local_7c = (float) *(ushort *) pfVar1;
+    local_7c = (float) *(ushort *) pfVar1; // cal_05
     if ((width == 640) && (rangeMode == 400)) { // TODO do not forget to implement this
         local_74f = *(float *)(fourLinePara + local_48 + 0x14a);
         fVar8 = *(float *)(fourLinePara + local_48 + 0x146);
@@ -364,7 +364,7 @@ void thermometryT4Line2(int width,int height,float *temperatureTable,ushort *fou
     iter_tt_a = GetFix(fpatemp2,rangeMode,width);
     multivar1 = (uint)uVar3 - iter_tt_a & 0xffff;
     fVar8 = local_a0 * shutterTemp * shutterTemp + shutterTemp * fVar8;
-    local_7c = fVar6 * fpatemp2 * fpatemp2 + local_74f * fpatemp2 + local_7c;
+    local_7c = fVar6 * fpatemp2 * fpatemp2 + local_74f * fpatemp2 + local_7c; // local_74f == cal_04, local_7c = cal_05
     if (cameraLens == 68) {
         iter_tt_a = -multivar1;
         if (distance2 < 60.0) {

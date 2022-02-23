@@ -8,8 +8,8 @@ public:
     float Fix_, Distance_, refltmp_, airtmp_, Humi_, Emiss_;
     float fpatmp_, fpaavg_, orgavg_, coretmp_;
     float divisor, dividend;
-    float flt_10003360, flt_1000335C, flt_1000339C, fpatemp2, flt_10003398;
-    float flt_10003394, temperatureLUT[16384], flt_10003378, flt_1000337C;
+    float cal_01, cal_02, cal_03, fpatemp2, cal_04;
+    float cal_05, temperatureLUT[16384], flt_10003378, flt_1000337C;
     int type_, dev_type_, Height_, Width_;
 
     void sub_10001010(double h, double t_atm, double d, double e, double t_refl);
