@@ -160,12 +160,8 @@ unsigned int Thermometry::sub_10001180(float shutterTemp, int16_t cx) {
     v19 = -v4;
     p = temperatureLUT;
     while (p - temperatureLUT < 16384) {
-        v7 = (double) v19 * local_7c + fVar8;
-        v8 = v7 / flt_10003360 + flt_10003378;
-        v9 = sqrt(v8);
         result = 4;
-        v11 = v9 - flt_1000337C;
-        v20 = v11 + 273.15; // TODO meant to be 0C in kelvin?
+        v20 = sqrt(((double) v19 * local_7c + fVar8) / flt_10003360 + flt_10003378) - flt_1000337C + 273.15; // TODO meant to be 0C in kelvin?
         Ttot = 1.0;
         while (1) {
             v12 = v20;
