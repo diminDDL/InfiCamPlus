@@ -10,10 +10,10 @@ typedef float float10;
 
 #define SQRT sqrt
 
-float10 GetTempEvn(float Ttot, float dividend, float divisor) {
+float10 GetTempEvn(float wtot, float dividend, float divisor) {
     double dVar1;
 
-    dVar1 = pow((double)(Ttot + 273.15), 4.0);
+    dVar1 = pow((double)(wtot + 273.15), 4.0);
     dVar1 = pow((double)(((float)dVar1 - dividend) * divisor), 0.25);
     return (float10)((float)dVar1 - 273.15);
 }
@@ -59,7 +59,7 @@ void CalcFixRaw(float *mwvc, float *atmp, float *divisor, float t_atmosphere, fl
     //atm = *atmp; // no-op
     dVar3 = pow((double)(t_atmosphere + 273.15), 4.0);
     *dividend = (float)dVar3 * (1.0 - *atmp) + (1.0 - emiss) * (float)dVar2 * atm; // divident as in tobj()
-    LOGE("TTOT=--- end=%f or=%f mwvc=%f atmp=%f", *dividend, *divisor, *mwvc, *atmp);
+    //LOGE("TTOT=--- end=%f or=%f mwvc=%f atmp=%f", *dividend, *divisor, *mwvc, *atmp);
     return;
 }
 
@@ -192,7 +192,6 @@ void thermometrySearch2(int width, int height, float *temperatureTable, ushort *
     return;
 }
 
-
 void thermometryT4Line2(int width,int height,float *temperatureLUT,ushort *fourLinePara,
                        float *floatFpaTemp,float *correction,float *reflTemp,float *airTemp,
                        float *humidity,float *Emissivity,ushort *distance,int cameraLens,
@@ -272,7 +271,7 @@ void thermometryT4Line2(int width,int height,float *temperatureLUT,ushort *fourL
     *Emissivity = *(float *)(fourLinePara + (param2Offset + 135));
     distanceptr = param2Offset + 137;
     *distance = fourLinePara[distanceptr];
-    LOGE("floatfpa: %f, cal_00: %d", *floatFpaTemp, cal_00);
+    //LOGE("floatfpa: %f, cal_00: %d", *floatFpaTemp, cal_00);
 
     if (cameraLens == 68) {
         distance2 = (float)((uint)*distance * 2 + (uint)*distance);
@@ -294,9 +293,10 @@ void thermometryT4Line2(int width,int height,float *temperatureLUT,ushort *fourL
     cal_00 -= fix;
     local_40 = cal_02 * shutterTempFixed + cal_01 * shutterTempFixed * shutterTempFixed;
     local_44 = cal_04 * floatFpaTemp2 + cal_03 * floatFpaTemp2 * floatFpaTemp2 + cal_05;
+    //LOGE("local_40: %f  _44: %f", local_40, local_44);
     if (cameraLens == 68) {
         for (iterator = 0; iterator < iterator_end; iterator += 1) {
-            local_48 = (float)(iterator - (uint)cal_00) * local_44 + local_40;
+            local_48 = (float)(iterator - (int)cal_00) * local_44 + local_40;
             dVar2 = sqrt((double)(local_48 / cal_01 + local_70));
             local_48 = (float)(dVar2 - (double)local_6c);
             Ttot = GetTempEvn(local_48,dividend,divisor);
@@ -310,8 +310,9 @@ void thermometryT4Line2(int width,int height,float *temperatureLUT,ushort *fourL
         }
     }
     else if (cameraLens == 130) {
+        LOGE("cal_00=%d a=%f b=%f c=%f d=%f e=%f", cal_00, cal_01, cal_02, cal_03, cal_04, cal_05);
         for (iterator = 0; iterator < iterator_end; iterator += 1) {
-            local_48 = (float)(iterator - (uint)cal_00) * local_44 + local_40;
+            local_48 = (float)(iterator - (int)cal_00) * local_44 + local_40;
             dVar2 = sqrt((double)(local_48 / cal_01 + local_70));
             local_48 = (float)(dVar2 - (double)local_6c);
             Ttot = GetTempEvn(local_48,dividend,divisor);
@@ -326,7 +327,7 @@ void thermometryT4Line2(int width,int height,float *temperatureLUT,ushort *fourL
     }
     else {
         for (iterator = 0; iterator < iterator_end; iterator += 1) {
-            local_48 = (float)(iterator - (uint)cal_00) * local_44 + local_40;
+            local_48 = (float)(iterator - (int)cal_00) * local_44 + local_40;
             dVar2 = sqrt((double)(local_48 / cal_01 + local_70));
             local_48 = (float)(dVar2 - (double)local_6c);
             Ttot = GetTempEvn(local_48,dividend,divisor);

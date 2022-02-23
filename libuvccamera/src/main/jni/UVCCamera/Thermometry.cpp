@@ -134,7 +134,7 @@ void Thermometry::tobj(double h, double t_atm, double d, double e, double t_refl
     }*/
 }
 
-extern float GetTempEvn(float Ttot, float dividend, float divisor);
+extern float GetTempEvn(float wtot, float dividend, float divisor);
 
 unsigned int Thermometry::sub_10001180(float shutterTemp, int16_t cx) {
     int16_t v2;
@@ -152,6 +152,7 @@ unsigned int Thermometry::sub_10001180(float shutterTemp, int16_t cx) {
     fVar8 = cal_01 * shutterTemp * shutterTemp + shutterTemp * cal_02;
     local_7c = cal_03 * fpatmp_ * fpatmp_ + cal_04 * fpatmp_ + cal_05;
 
+    LOGE("local_40: %f  _44: %f", fVar8, local_7c);
     LOGE("coretmp: %f, shut: %f", coretmp_, shutterTemp);
 
     if (type_)
@@ -159,6 +160,8 @@ unsigned int Thermometry::sub_10001180(float shutterTemp, int16_t cx) {
     else v2 = (signed int) (390.0 - fpatmp_ * 7.05);
     v19 = cx - v2; // cx is a variable from camera
     LOGE("v19 == %d, local_7c == %f, fvar8 == %f, v2 == %d", v19, local_7c, fVar8, v2);
+
+    LOGE("END=%f OR=%f", dividend, divisor);
 
     for (int i = 0; i < 16384; ++i) {
         //wtot = sqrt((i * local_7c + fVar8) / /*local_a0*/ cal_01 + /*local_28*/ flt_10003378) - /*local_2c*/ flt_1000337C;
