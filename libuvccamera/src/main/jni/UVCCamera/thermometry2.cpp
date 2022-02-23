@@ -500,7 +500,7 @@ void thermometryT4Line2(int width,int height,float *temperatureTable,ushort *fou
     local_74f = *(uint16_t *)(fourLinePara + (int)local_7c); // cal_04
     local_a0 = *(uint16_t *)(fourLinePara + iter_tt_a);
     local_7c = (float) *(ushort *) pfVar1; // cal_05
-    if ((width == 640) && (rangeMode == 400)) { // TODO do not forget to implement this
+    if ((width == 640) && (rangeMode == 400)) { // TODO do not forget to implement this, or maybe do... 640px cameras where?
         local_74f = *(float *)(fourLinePara + local_48 + 0x14a);
         fVar8 = *(float *)(fourLinePara + local_48 + 0x146);
         fVar6 = *(float *)(fourLinePara + local_48 + 0x148);
