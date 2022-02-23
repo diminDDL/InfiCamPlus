@@ -151,28 +151,20 @@ unsigned int Thermometry::sub_10001180(float shutterTemp, int16_t cx) {
     fVar8 = flt_10003360 * shutterTemp * shutterTemp + shutterTemp * flt_1000335C;
     local_7c = flt_1000339C * fpatemp2 * fpatemp2 + flt_10003398 * fpatemp2 + flt_10003394;
 
-
-
     if (type_)
         v2 = 0;
     else v2 = (signed int) (390.0 - fpatemp2 * 7.05);
-    v3 = Distance_;
-    v4 = cx - v2;
-    v19 = -v4;
-    p = temperatureLUT;
-    while (p - temperatureLUT < 16384) {
+    v19 = v2 - cx; // cx is a variable from camera
+    LOGE("v19 == %d, local_7c == %f, fvar8 == %f", v19, local_7c, fVar8);
+
+    for (int i = 0; i < 16384; ++i) {
         //Ttot = sqrt((i * local_7c + fVar8) / /*local_a0*/ flt_10003360 + /*local_28*/ flt_10003378) - /*local_2c*/ flt_1000337C;
-        v20 = sqrt(((double) v19 * local_7c + fVar8) / flt_10003360 + flt_10003378) - flt_1000337C + 273.15; // TODO meant to be 0C in kelvin?
+        v20 = sqrt(((double) (v19 + i) * local_7c + fVar8) / flt_10003360 + flt_10003378) - flt_1000337C + zeroc; // TODO meant to be 0C in kelvin?
         double Ttot = pow(v20, 4);
 
         v18 = pow((Ttot - dividend) / divisor, 0.25) - zeroc;
-        if (v3 >= 20)
-            v21 = 20;
-        else
-            v21 = v3;
-        ++v19;
-        *p = v18 + ((double) v21 * 0.85 - 1.125) * (v18 - airtmp_) / 100.0;
-        ++p;
+        v21 = (Distance_ >= 20) ? 20 : Distance_;
+        temperatureLUT[i] = v18 + ((double) v21 * 0.85 - 1.125) * (v18 - airtmp_) / 100.0;
     }
     return 0;
 }
@@ -197,8 +189,8 @@ void Thermometry::GetFixParam(float *Emiss, float *refltmp, float *airtmp, float
 }
 
 void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
-    int v2, v3, v5, v7, v11, typea, typeb;
-    float v6, v8, v9, v10, v12, v13;
+    int v2, v3, v5, v7, v11, typeb;
+    float v6, v8, v9, v10, v12, v13, typea;
 
     type_ = type;
     v2 = Height_ + 3;
@@ -220,7 +212,7 @@ void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
     LOGE("v5=%d a=%f b=%f c=%f d=%f e=%f", v5, flt_10003360, flt_1000335C, flt_1000339C, flt_10003398, flt_10003394);
 
     fpatemp2 = 20.0 - (double) (*(uint16_t *) &pbuff[2 * Width_ * Height_ + 2] - 8617) / 37.682; // TODO depends on camera
-    *(float *) &typea = (double) typeb / 10.0 - 273.15; // TODO meant to be 0C in kelvin?
+    typea = (double) typeb / 10.0 - zeroc; // TODO meant to be 0C in kelvin?
     if (readParaFromDevFlag) {
         Fix_ = *(float *) &pbuff[2 * v7];
         v10 = *(float *) &pbuff[2 * v7 + 4];
@@ -240,7 +232,7 @@ void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
     sub_10001010(Humi_, airtmp_, Distance_, Emiss_, refltmp_);
     // typea is shutter temperature
     //LOGE("*** Shut: %f, core: %f", *(float *) &typea, coretmp_);
-    sub_10001180(*(float *) &typea, v5); // bug in IDA -- TODO (netman) wtf did they mean by "bug in IDA?"
+    sub_10001180(typea, v5); // bug in IDA -- TODO (netman) wtf did they mean by "bug in IDA?"
 }
 
 int Thermometry::DataInit(int Width, int Height) {
@@ -325,32 +317,6 @@ void Thermometry::GetTmpData(int type, uint8_t *pbuff, float *maxtmp, int *maxx,
         // TODO (netman)
         //memcpy(alltmp, temperatureLUT, sizeof(temperatureLUT));
     }
-    /*
-    v17 = alltmp;
-    v18 = 0;
-    if (v12 >= 4)
-    {
-        v19 = alltmp + 2;
-        v20 = ((unsigned int)(v12 - 4) >> 2) + 1;
-        v21 = (uint64_t)(v11 + 4);
-        v18 = 4 * v20;
-        do
-        {
-            v22 = *(uint16_t*)(v21 - 4);
-            v21 += 8;
-            v19 += 4;
-            --v20;
-            *(v19 - 6) = temperatureLUT[v22] + Fix_;
-            *(v19 - 5) = temperatureLUT[*(uint16_t*)(v21 - 10)] + Fix_;
-            *(v19 - 4) = temperatureLUT[*(uint16_t*)(v21 - 8)] + Fix_;
-            *(v19 - 3) = temperatureLUT[*(uint16_t*)(v21 - 6)] + Fix_;
-        } while (v20);
-        v17 = alltmp;
-    }
-    for (; v18 < v12; v17[v18 - 1] = temperatureLUT[v23] + Fix_)
-        v23 = *(uint16_t*)& v11[2 * v18++];
-}
-    */
 }
 
 void Thermometry::GetDevData(float *fpatmp, float *coretmp, int *fpaavg, int *orgavg) {
