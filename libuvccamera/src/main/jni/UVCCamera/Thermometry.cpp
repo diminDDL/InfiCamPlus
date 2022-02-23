@@ -134,6 +134,8 @@ void Thermometry::tobj(double h, double t_atm, double d, double e, double t_refl
     }*/
 }
 
+extern float GetTempEvn(float Ttot, float dividend, float divisor);
+
 unsigned int Thermometry::sub_10001180(float shutterTemp, int16_t cx) {
     int16_t v2;
     int v19, v21;
@@ -149,6 +151,8 @@ unsigned int Thermometry::sub_10001180(float shutterTemp, int16_t cx) {
     //    local_7c = fVar6 * fpatemp2 * fpatemp2 + local_74f * fpatemp2 + local_7c;
     fVar8 = cal_01 * shutterTemp * shutterTemp + shutterTemp * cal_02;
     local_7c = cal_03 * fpatmp_ * fpatmp_ + cal_04 * fpatmp_ + cal_05;
+
+    LOGE("coretmp: %f, shut: %f", coretmp_, shutterTemp);
 
     if (type_)
         v2 = 0;

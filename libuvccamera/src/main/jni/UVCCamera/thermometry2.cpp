@@ -9,11 +9,11 @@ typedef float float10;
 
 #define SQRT sqrt
 
-float10 GetTempEvn(float Ttot, float divisor, float divident) {
+float10 GetTempEvn(float Ttot, float dividend, float divisor) {
     double dVar1;
 
     dVar1 = pow((double)(Ttot + 273.15), 4.0);
-    dVar1 = pow((double)(((float)dVar1 - divisor) * divident), 0.25);
+    dVar1 = pow((double)(((float)dVar1 - dividend) * divisor), 0.25);
     return (float10)((float)dVar1 - 273.15);
 }
 
