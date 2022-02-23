@@ -216,6 +216,9 @@ void Thermometry::UpdateParam(int type, uint8_t *pbuff) {
     v3 += 2;
     flt_10003398 = *(float *) &pbuff[2 * v3]; // +18
     flt_10003394 = *(float *) &pbuff[2 * v3 + 4]; // +22
+
+    LOGE("v5=%d a=%f b=%f c=%f d=%f e=%f", v5, flt_10003360, flt_1000335C, flt_1000339C, flt_10003398, flt_10003394);
+
     fpatemp2 = 20.0 - (double) (*(uint16_t *) &pbuff[2 * Width_ * Height_ + 2] - 8617) / 37.682; // TODO depends on camera
     *(float *) &typea = (double) typeb / 10.0 - 273.15; // TODO meant to be 0C in kelvin?
     if (readParaFromDevFlag) {

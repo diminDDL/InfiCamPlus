@@ -35,7 +35,7 @@ Location  | Datatype        | Parameter
  12 -  14 | 16bit uint      | Min point Y
  14 -  16 | 16bit uint      | Min temperature
  16 -  18 | 16bit uint      | Average temperature (TODO: verify) also called orgAvg
- 18 -  24 | ???             | ???
+ 18 -  24 | ???             | ??? (unused by software)
  24 -  26 | 16bit uint      | Center temperature
  26 -  28 | 16bit uint      | User point 1 temperature
  28 -  30 | 16bit uint      | User point 2 temperature
@@ -45,18 +45,18 @@ uint8_t *param = fourLinePara + amountPixels
 
 Location  | Datatype        | Parameter
 ------------------------------------------------------
-  0 -   2 | 16bit something | ???
-  2 -   4 | 16bit uint?     | Shutter temperature (times 10, in kelvin) TODO questionable usages
-  4 -   6 | 16bit uint?     | Core temperature (times 10, in kelvin) TODO questionable usages
-  6 -  10 | float (32bit)   | ??? (flt_10003360)
- 10 -  14 | float (32bit)   | ??? (flt_1000335C)
- 14 -  18 | float (32bit)   | ??? (flt_1000339C)
- 18 -  22 | float (32bit)   | ??? (flt_10003398)
- 22 -  26 | float (32bit)   | ??? (flt_10003394)
- 26 -  48 | ???             | ???
+  0 -   2 | 16bit uint      | ??? (presumeably calibration value)
+  2 -   4 | 16bit uint      | Shutter temperature (times 10, in kelvin) TODO questionable usages
+  4 -   6 | 16bit uint      | Core temperature (times 10, in kelvin) TODO questionable usages
+  6 -  10 | float (32bit)   | ??? (flt_10003360) (presumeably calibration value)
+ 10 -  14 | float (32bit)   | ??? (flt_1000335C) (presumeably calibration value)
+ 14 -  18 | float (32bit)   | ??? (flt_1000339C) (presumeably calibration value)
+ 18 -  22 | float (32bit)   | ??? (flt_10003398) (presumeably calibration value)
+ 22 -  26 | float (32bit)   | ??? (flt_10003394) (presumeably calibration value)
+ 26 -  48 | ???             | ??? (unused by software)
  48 -  64 | 16 byte string  | Firmware version
  64 -  95 | 32 byte string  | Serial number
- 95 - 254 | ???             | ???
+ 95 - 254 | ???             | ??? (unused by software)
 ---User area, writeable by ABS_ZOOM command-----------
 254 - 258 | float (32bit)   | Correction
 258 - 262 | float (32bit)   | Reflected temperature
