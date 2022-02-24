@@ -576,57 +576,10 @@ int UVCPreviewIR::copyToSurface(uint8_t *frameData, ANativeWindow **window) {
 	return result; //RETURN(result, int);
 }
 
-
-uint8_t clamp(int16_t value)
-{
-	return value<0 ? 0 : (value>255 ? 255 : value);
-}
-
-void yuyv2rgb(uint8_t *rgb_image, uint8_t *yuyv_image, int width, int height) {
-	int y;
-	int cr;
-	int cb;
-
-	double r;
-	double g;
-	double b;
-
-	for (int i = 0, j = 0; i < width * height * 4; i += 4, j += 2) {
-		//first pixel
-		y = yuyv_image[j+0];
-		cb = 255;//yuyv_image[j+1];
-		cr = yuyv_image[j+1];
-
-		r = y + (1.4065 * (cr - 128));
-		g = y - (0.3455 * (cb - 128)) - (0.7169 * (cr - 128));
-		b = y + (1.7790 * (cb - 128));
-
-		//This prevents colour distortions in your rgb image
-		if (r < 0) r = 0;
-		else if (r > 255) r = 255;
-		if (g < 0) g = 0;
-		else if (g > 255) g = 255;
-		if (b < 0) b = 0;
-		else if (b > 255) b = 255;
-
-		rgb_image[i + 0] = (unsigned char)r;
-		rgb_image[i + 1] = (unsigned char)g;
-		rgb_image[i + 2] = (unsigned char)b;
-		rgb_image[i + 3] = (unsigned char)b;
-	}
-}
-
-
 void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow **window) {
 	unsigned short *tmp_buf = (unsigned short*) frameData;
 	//8005模式下yuyv转rgba
 	//uvc_yuyv2rgbx2(tmp_buf, RgbaHoldBuffer,requestWidth,requestHeight);
-	//memcpy(RgbaHoldBuffer, tmp_buf, requestWidth * requestHeight * 2);
-	yuyv2rgb(RgbaHoldBuffer, frameData, requestWidth, requestHeight);
-	if (LIKELY(*window))
-		copyToSurface(RgbaHoldBuffer, window);
-	return;
-
 
 	/**
 	 * 线性图像算法
