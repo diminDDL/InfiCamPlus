@@ -40,8 +40,7 @@ int Inficam::init(int width, int height, float dmul, int range) {
     this->width = width;
     this->height = height - 4;
     this->distance_multiplier = dmul;
-    this->range = range;
-    tbl1_offset = width * (height - 4);
+    s1_offset = width * (height - 4);
 
     cal_00_offset = 390.0;
     cal_00_fpamul = 7.05;
@@ -54,24 +53,24 @@ int Inficam::init(int width, int height, float dmul, int range) {
         case 640:
             fpa_off = 6867;
             fpa_div = 33.8;
-            tbl2_offset = tbl1_offset + width * 3;
+            s2_offset = s1_offset + width * 3;
             break;
         case 384:
             fpa_off = 7800;
             fpa_div = 36.0;
-            tbl2_offset = tbl1_offset + width * 3;
+            s2_offset = s1_offset + width * 3;
             break;
         case 256:
             fpa_off = 8617;
             fpa_div = 37.682;
-            tbl2_offset = tbl1_offset + width;
+            s2_offset = s1_offset + width;
             cal_00_offset = 170.0;
             cal_00_fpamul = 0.0;
             break;
         case 240:
             fpa_off = 7800;
             fpa_div = 36.0;
-            tbl2_offset = tbl1_offset + width;
+            s2_offset = s1_offset + width;
             break;
         default:
             ret = 0;
@@ -88,28 +87,28 @@ int Inficam::init(int width, int height, float dmul, int range) {
 }
 
 void Inficam::update(uint16_t *frame) {
-    fpa_average = read_u16(frame + tbl1_offset, 0);
-    uint16_t temp_fpa_raw = read_u16(frame + tbl1_offset, 1);
+    fpa_average = read_u16(frame + s1_offset, 0);
+    uint16_t temp_fpa_raw = read_u16(frame + s1_offset, 1);
     temp_fpa = 20.0 - ((float) (temp_fpa_raw - fpa_off)) / fpa_div;
-    temp_shutter = read_u16(frame + tbl2_offset, 1) / 10.0 - zeroc;
-    temp_core = read_u16(frame + tbl2_offset, 2) / 10.0 - zeroc;
-    float cal_00 = read_u16(frame + tbl2_offset, 0);
-    cal_01 = read_float(frame + tbl2_offset, 3);
-    float cal_02 = read_float(frame + tbl2_offset, 5);
-    float cal_03 = read_float(frame + tbl2_offset, 7);
-    float cal_04 = read_float(frame + tbl2_offset, 9);
-    float cal_05 = read_float(frame + tbl2_offset, 11);
-    temp_max_x = read_u16(frame + tbl1_offset, 2);
-    temp_max_y = read_u16(frame + tbl1_offset, 3);
-    temp_max = read_u16(frame + tbl1_offset, 4);
-    temp_min_x = read_u16(frame + tbl1_offset, 5);
-    temp_min_y = read_u16(frame + tbl1_offset, 6);
-    temp_min = read_u16(frame + tbl1_offset, 7);
-    temp_avg = read_u16(frame + tbl1_offset, 8);
-    temp_center = read_u16(frame + tbl1_offset, 12);
-    temp_user[0] = read_u16(frame + tbl1_offset, 13);
-    temp_user[1] = read_u16(frame + tbl1_offset, 14);
-    temp_user[2] = read_u16(frame + tbl1_offset, 15);
+    temp_shutter = read_u16(frame + s2_offset, 1) / 10.0 - zeroc;
+    temp_core = read_u16(frame + s2_offset, 2) / 10.0 - zeroc;
+    float cal_00 = read_u16(frame + s2_offset, 0);
+    cal_01 = read_float(frame + s2_offset, 3);
+    float cal_02 = read_float(frame + s2_offset, 5);
+    float cal_03 = read_float(frame + s2_offset, 7);
+    float cal_04 = read_float(frame + s2_offset, 9);
+    float cal_05 = read_float(frame + s2_offset, 11);
+    temp_max_x = read_u16(frame + s1_offset, 2);
+    temp_max_y = read_u16(frame + s1_offset, 3);
+    temp_max = read_u16(frame + s1_offset, 4);
+    temp_min_x = read_u16(frame + s1_offset, 5);
+    temp_min_y = read_u16(frame + s1_offset, 6);
+    temp_min = read_u16(frame + s1_offset, 7);
+    temp_avg = read_u16(frame + s1_offset, 8);
+    temp_center = read_u16(frame + s1_offset, 12);
+    temp_user[0] = read_u16(frame + s1_offset, 13);
+    temp_user[1] = read_u16(frame + s1_offset, 14);
+    temp_user[2] = read_u16(frame + s1_offset, 15);
 
     distance_adjusted = ((distance >= 20.0) ? 20.0 : distance) * distance_multiplier;
     float atm = atmt(humidity, temp_air, distance_adjusted);
@@ -152,15 +151,15 @@ void Inficam::temp(uint16_t *input, float *output, size_t len) {
 }
 
 void Inficam::readParams(uint16_t *frame) {
-    correction = read_float(frame + tbl2_offset, 127);
-    temp_reflected = read_float(frame + tbl2_offset, 129);
-    temp_air = read_float(frame + tbl2_offset, 131);
-    humidity = read_float(frame + tbl2_offset, 133);
-    emissivity = read_float(frame + tbl2_offset, 135);
-    distance = read_float(frame + tbl2_offset, 137);
+    correction = read_float(frame + s2_offset, 127);
+    temp_reflected = read_float(frame + s2_offset, 129);
+    temp_air = read_float(frame + s2_offset, 131);
+    humidity = read_float(frame + s2_offset, 133);
+    emissivity = read_float(frame + s2_offset, 135);
+    distance = read_float(frame + s2_offset, 137);
 }
 
 void Inficam::readVersion(uint16_t *frame, char *version_fw, char *serial) {
-    memcpy(version_fw, frame + tbl2_offset + 24, 16);
-    memcpy(serial, frame + tbl2_offset + 32, 32);
+    memcpy(version_fw, frame + s2_offset + 24, 16);
+    memcpy(serial, frame + s2_offset + 32, 32);
 }

@@ -7,7 +7,7 @@
 
 class Inficam {
     /* Set by init(). */
-    int width, height, lens, range, tbl1_offset, tbl2_offset, fpa_off;
+    int s1_offset, s2_offset, fpa_off;
     float fpa_div, distance_multiplier, cal_00_offset, cal_00_fpamul;
 
     /* Values used internally, updated by update(). */
@@ -16,6 +16,9 @@ class Inficam {
     int table_offset;
 
 public:
+    /* Dimensions of actual thermographic image, set by init(). */
+    int width, height;
+
     /* User parameters, set manually or read from camera with readParams().
      * Changes take effect for temp_single() after the next update(), and temp() after update().
      */
