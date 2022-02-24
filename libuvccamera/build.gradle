@@ -61,11 +61,11 @@ android {
         }
     }
 
-	/*sourceSets {
+	sourceSets {
 		main {
 			jniLibs.srcDir 'src/main/libs'
 		}
-	}*/
+	}
 
 	ndkVersion '23.1.7779620'
 
