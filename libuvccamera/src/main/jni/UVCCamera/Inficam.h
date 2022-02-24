@@ -79,8 +79,8 @@ public:
      */
     void readParams(uint16_t *frame);
 
-    /* Version is 16 bytes, serial is 32 bytes. */
-   void readVersion(uint16_t *frame, char *version_fw, char *serial);
+    /* The strings are 16 bytes, no guarantee of 0 termination. */
+   void readVersion(uint16_t *frame, char *product, char *serial, char *fw_version);
 };
 
 #endif /* __INFICAM_H__ */

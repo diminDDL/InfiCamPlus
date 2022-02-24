@@ -162,7 +162,8 @@ void Inficam::readParams(uint16_t *frame) {
     distance = read_float(frame + s2_offset, 137);
 }
 
-void Inficam::readVersion(uint16_t *frame, char *version_fw, char *serial) {
-    memcpy(version_fw, frame + s2_offset + 24, 16);
-    memcpy(serial, frame + s2_offset + 32, 32);
+void Inficam::readVersion(uint16_t *frame, char *product, char *serial, char *fw_version) {
+    memcpy(product, frame + s2_offset + 40, 16);
+    memcpy(serial, frame + s2_offset + 32, 16);
+    memcpy(fw_version, frame + s2_offset + 24, 16);
 }

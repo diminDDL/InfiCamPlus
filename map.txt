@@ -55,7 +55,8 @@ Location  | Datatype        | Parameter
  22 -  26 | float (32bit)   | ??? (cal_05 / flt_10003394) (presumeably calibration value)
  26 -  48 | ???             | ??? (unused by software)
  48 -  64 | 16 byte string  | Firmware version
- 64 -  95 | 32 byte string  | Serial number
+ 64 -  80 | 16 byte string  | Serial number
+ 80 -  95 | 16 byte string  | Product name
  95 - 254 | ???             | ??? (unused bgy software)
 ---User area, writeable by ABS_ZOOM command-----------
 254 - 258 | float (32bit)   | Correction
