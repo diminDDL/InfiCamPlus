@@ -52,7 +52,6 @@ android {
 		pickFirst "lib/**/libjpeg-turbo1500.so"
 		pickFirst "lib/**/libusb100.so"
 		pickFirst "lib/**/libuvc.so"
-		pickFirst "lib/**/libthermometry.so"
 	}
 
 	buildTypes {
@@ -62,11 +61,11 @@ android {
         }
     }
 
-	sourceSets {
+	/*sourceSets {
 		main {
 			jniLibs.srcDir 'src/main/libs'
 		}
-	}
+	}*/
 
 	ndkVersion '23.1.7779620'
 

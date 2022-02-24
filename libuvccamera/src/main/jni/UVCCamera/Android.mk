@@ -30,47 +30,6 @@ LOCAL_PATH	:= $(call my-dir)
 ######################################################################
 # Make shared library libUVCCamera.so
 ######################################################################
-include $(CLEAR_VARS)
-ifeq ($(TARGET_ARCH_ABI),armeabi)
-LOCAL_MODULE := thermometry
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
-LOCAL_SRC_FILES := ./libs/armeabi/libthermometry.so
-include $(PREBUILT_SHARED_LIBRARY)
-
-else ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
-LOCAL_MODULE := thermometry
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
-LOCAL_SRC_FILES := ./libs/armeabi-v7a/libthermometry.so
-include $(PREBUILT_SHARED_LIBRARY)
-
-else ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
-LOCAL_MODULE := thermometry
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
-LOCAL_SRC_FILES := ./libs/arm64-v8a/libthermometry.so
-include $(PREBUILT_SHARED_LIBRARY)
-
-else ifeq ($(TARGET_ARCH_ABI),x86_64)
-LOCAL_MODULE := thermometry
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
-LOCAL_SRC_FILES := ./libs/x86_64/libthermometry.so
-include $(PREBUILT_SHARED_LIBRARY)
-
-else ifeq ($(TARGET_ARCH_ABI),x86)
-LOCAL_MODULE := thermometry
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
-LOCAL_SRC_FILES := ./libs/x86/libthermometry.so
-include $(PREBUILT_SHARED_LIBRARY)
-
-else ifeq ($(TARGET_ARCH_ABI),mips)
-LOCAL_MODULE := thermometry
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
-LOCAL_SRC_FILES := ./libs/mips/libthermometry.so
-include $(PREBUILT_SHARED_LIBRARY)
-
-else
-$(error Target arch ABI not supported: $(TARGET_ARCH_ABI))
-endif
-
 
 include $(CLEAR_VARS)
 CFLAGS := -Werror
@@ -92,7 +51,7 @@ LOCAL_LDLIBS := -ldl
 LOCAL_LDLIBS += -llog -lOpenSLES
 LOCAL_LDLIBS += -landroid
 
-LOCAL_SHARED_LIBRARIES += usb100 uvc thermometry
+LOCAL_SHARED_LIBRARIES += usb100 uvc
 #LOCAL_ARM_MODE := arm
 #LOCAL_ALLOW_UNDEFINED_SYMBOLS := true
 LOCAL_SRC_FILES := \

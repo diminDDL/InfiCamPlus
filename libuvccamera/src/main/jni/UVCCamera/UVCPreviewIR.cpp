@@ -581,6 +581,9 @@ void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow **window) 
 	//8005模式下yuyv转rgba
 	//uvc_yuyv2rgbx2(tmp_buf, RgbaHoldBuffer,requestWidth,requestHeight);
 
+	// TODO we should generate a pallette that actually matches the temperature curve at each shutter.
+	//   Or use the calculated temperature to index a pallette.
+
 	/**
 	 * 线性图像算法
 	 * 图像效果不及专业级算法，但是处理效率快，对主频几乎没要求
