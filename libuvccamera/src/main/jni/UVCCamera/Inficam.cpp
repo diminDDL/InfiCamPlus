@@ -5,7 +5,7 @@
 
 static const float zeroc = 273.15;
 
-/* If endianness conversion is necessary, this is the place to be. */
+/* For big endian systems this may need modification, also temp() in header. */
 static inline uint16_t read_u16(uint16_t *src, int offset) {
     return src[offset];
 }

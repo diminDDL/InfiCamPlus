@@ -71,7 +71,7 @@ public:
     void temp(uint16_t *frame, float *output); /* Convert an entire frame. */
     void temp(uint16_t *input, float *output, size_t len);
     inline float temp(uint16_t val) {
-        return table[val & table_mask];
+        return table[val & table_mask]; /* For big-endian systems this may need changing. */
     }
 
     /* Read correction, temp_reflected, temp_air, humidity, emissivity and distance from stored

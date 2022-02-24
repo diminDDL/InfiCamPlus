@@ -68,3 +68,15 @@ Location  | Datatype        | Parameter
 
 The user values are saved by:
 	setValue(UVCCamera.CTRL_ZOOM_ABS, 0x80ff);
+
+CTRL_ZOOM_ABS is used with the following commands:
+	- < 0x80 in the high byte as an adress to write the low byte in user area
+	- 0x8000 to click the shutter
+	- 0x8004 called on start, not sure what it does, "切换数据输出8004原始8005yuv,80ff保存"
+		* 8005 sets a different mode, the camera seems to default to 0x8004
+			... or the camera remembers the last mode... maybe 0x80FF saves this too?
+		* Strong indications the output is YUV encoded video in 8005 mode.
+	- 0x8020 to set -20 to 120C range (followed by shutter)
+	- 0x8021 to set 120 to 400C range (followed by shutter)
+	- 0x80FF (as before) to store user area in non-volatile storage
+	- 0xEC.., 0xEE.. Set user point x, y to low bytes? "用户盲元表"
