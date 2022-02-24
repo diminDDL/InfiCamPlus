@@ -44,7 +44,6 @@
 #include "utilbase.h"
 #include "UVCPreviewIR.h"
 #include "libuvc_internal.h"
-#include "thermometry2.h"
 #include "Inficam.h"
 
 UVCPreviewIR::UVCPreviewIR(){
@@ -859,7 +858,7 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 	if(UNLIKELY(isNeedWriteTable))
 	{
 
-		thermometryT4Line(requestWidth,
+		/*thermometryT4Line(requestWidth,
 						  requestHeight,
 						  temperatureTable,
 						  fourLinePara,
@@ -872,13 +871,10 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 						  &distance,
 						  cameraLens,
 						  shutterFix,
-						  rangeMode);
+						  rangeMode);*/
 
 		LOGE(":: %f %f %f %f", Refltmp, Airtmp, humi, floatFpaTmp);
 
-		tm.readParaFromDevFlag = 0;
-		tm.DataInit(requestWidth, requestHeight);
-		tm.UpdateFixParam(emiss, Refltmp, Airtmp, humi, distance, correction);
 		ic.init(requestWidth, requestHeight, (cameraLens == 68) ? 3 : 1, rangeMode);
 		//ic.readParams((uint16_t *) HoldBuffer);
 		ic.readParams((uint16_t *) HoldBuffer);
@@ -890,48 +886,21 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 		LOGE("%f %f %f %f %f", ic.emissivity, ic.temp_reflected, ic.temp_air, ic.humidity, ic.distance);
 		ic.update_table((uint16_t *) HoldBuffer);
 
-		//tm.UpdateParam(0, HoldBuffer);
-		//tm.readParaFromDevFlag = 1;
+		//LOGE("min: %f, max: %f, tc: %f   %f", min, max, tc, temperatureTable[t_min]);
+		LOGE("a: %f %f %f %f %f", temperatureTable[5100], temperatureTable[5600], temperatureTable[5700], temperatureTable[10000], temperatureTable[15000]);
+		LOGE("c: %f %f %f %f %f", ic.table[5100], ic.table[5600], ic.table[5700], ic.table[10000], ic.table[15000]);
 
-		{
-			float max, min, tc, tarr[20000];
-			int mx, my, ax, ay;
-#if 1
-			tm.GetTmpData(0, HoldBuffer, &max, &mx, &my,  &min, &ax, &ay, &tc, tarr, NULL);
-			tm.UpdateParam(0, HoldBuffer);
-#else
-			thermometryT4Line2(requestWidth,
-							  requestHeight,
-							  tm.temperatureLUT,
-							  fourLinePara,
-							  &floatFpaTmp,
-							  &correction,
-							  &Refltmp,
-							  &Airtmp,
-							  &humi,
-							  &emiss,
-							  &distance,
-							  cameraLens,
-							  shutterFix,
-							  rangeMode);
-#endif
-			//LOGE("min: %f, max: %f, tc: %f   %f", min, max, tc, temperatureTable[t_min]);
-			LOGE("a: %f %f %f %f %f", temperatureTable[5100], temperatureTable[5600], temperatureTable[5700], temperatureTable[10000], temperatureTable[15000]);
-			LOGE("b: %f %f %f %f %f", tm.temperatureLUT[5100], tm.temperatureLUT[5600], tm.temperatureLUT[5700], tm.temperatureLUT[10000], tm.temperatureLUT[15000]);
-			LOGE("c: %f %f %f %f %f", ic.table[5100], ic.table[5600], ic.table[5700], ic.table[10000], ic.table[15000]);
-
-			LOGE("::: %f %f :::", ic.temp(ic.temp_center), ic.temp_fpa);
-			char version_fw[17], serial[33];
-			ic.readVersion((uint16_t *) HoldBuffer, version_fw, serial);
-			version_fw[16] = 0;
-			serial[32] = 0;
-			LOGE("VER  %s %s", version_fw, serial);
-			//LOGE("maxpos: %d %d, minpos: %d %d", mx, my, ax, ay);
-			/*int d;
-            float fpa, core;
-            tm.GetDevData(&fpa, &core, &d, &d);
-            LOGE("fpa: %f %f, core: %f %f", fpa, 20.0 - ((double) (uint16_t) fpaTmp - 7800.0) / 36.0, core, ((float)(uint16_t) coreTemper) / 10.0 -273.1);*/
-		}
+		LOGE("::: %f %f :::", ic.temp(ic.temp_center), ic.temp_fpa);
+		char version_fw[17], serial[33];
+		ic.readVersion((uint16_t *) HoldBuffer, version_fw, serial);
+		version_fw[16] = 0;
+		serial[32] = 0;
+		LOGE("VER  %s %s", version_fw, serial);
+		//LOGE("maxpos: %d %d, minpos: %d %d", mx, my, ax, ay);
+		/*int d;
+		float fpa, core;
+		tm.GetDevData(&fpa, &core, &d, &d);
+		LOGE("fpa: %f %f, core: %f %f", fpa, 20.0 - ((double) (uint16_t) fpaTmp - 7800.0) / 36.0, core, ((float)(uint16_t) coreTemper) / 10.0 -273.1);*/
 
 		isNeedWriteTable=false;
 	}
@@ -950,7 +919,20 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 
 		float* temperatureData=mCbTemper;
 		//根据8004或者8005模式来查表，8005模式下仅输出以上注释的10个参数，8004模式下数据以上参数+全局温度数据
-		thermometrySearch(requestWidth,requestHeight,temperatureTable,orgData,temperatureData,rangeMode,OUTPUTMODE);
+		//thermometrySearch(requestWidth,requestHeight,temperatureTable,orgData,temperatureData,rangeMode,OUTPUTMODE);
+		ic.update((uint16_t *) HoldBuffer);
+		ic.temp((uint16_t *) HoldBuffer, temperatureData + 10);
+		temperatureData[0] = ic.temp(ic.temp_center);
+		temperatureData[1] = ic.temp_max_x;
+		temperatureData[2] = ic.temp_max_y;
+		temperatureData[3] = ic.temp(ic.temp_max);
+		temperatureData[4] = ic.temp_min_x;
+		temperatureData[5] = ic.temp_min_y;
+		temperatureData[6] = ic.temp(ic.temp_min);
+		temperatureData[7] = ic.temp(ic.temp_user[0]);
+		temperatureData[8] = ic.temp(ic.temp_user[1]);
+		temperatureData[9] = ic.temp(ic.temp_user[2]);
+
 		////LOGE("centerTmp:%.2f,maxTmp:%.2f,minTmp:%.2f,avgTmp:%.2f\n",temperatureData[0],temperatureData[3],temperatureData[6],temperatureData[9]);
 
 		//temperatureData[7]=floatFpaTmp;
