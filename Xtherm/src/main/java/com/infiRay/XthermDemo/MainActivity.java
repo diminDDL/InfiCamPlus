@@ -689,7 +689,7 @@ public final class MainActivity extends BaseActivity {
         Airtmp = ByteUtil.getFloat(tempPara, 8);
         humi = ByteUtil.getFloat(tempPara, 12);
         emiss = ByteUtil.getFloat(tempPara, 16);
-        distance = ByteUtil.getShort(tempPara, 20);
+        distance = (short) ByteUtil.getFloat(tempPara, 20);
         stFix = String.valueOf(Fix);
         stRefltmp = String.valueOf(Refltmp);
         stAirtmp = String.valueOf(Airtmp);
@@ -777,9 +777,10 @@ public final class MainActivity extends BaseActivity {
                     break;
                 case R.id.distance_seekbar:
                     int currentProgressDi = seekBar.getProgress();
+                    float fltDi = currentProgressDi;
                     byte[] bIputDi = new byte[4];
-                    ByteUtil.putInt(bIputDi, currentProgressDi, 0);
-                    mSendCommand.sendShortCommand(5 * 4, bIputDi[0], bIputDi[1], 20, 40, 60);
+                    ByteUtil.putFloat(bIputDi, fltDi, 0);
+                    mSendCommand.sendFloatCommand(4 * 5, bIputDi[0], bIputDi[1], bIputDi[2], bIputDi[3], 20, 40, 60, 80, 120);
                     break;
 
             }

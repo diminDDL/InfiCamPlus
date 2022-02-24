@@ -27,7 +27,7 @@ public:
     float temp_air = 0.0;
     float humidity = 0.0;
     float emissivity = 0.0;
-    float distance = 0.0; // TODO distance is uint16 in the OG code, idk if we can store float on the camera
+    float distance = 0.0;
 
     /* Optional offsets to compensenate for errors. */
     float offset_temp_fpa = 0.0;

@@ -151,11 +151,14 @@ void Inficam::temp(uint16_t *input, float *output, size_t len) {
 }
 
 void Inficam::readParams(uint16_t *frame) {
+    // TODO presumeably this is just a 128 byte ram+eeprom area
+    //   maybe we should present it as such
     correction = read_float(frame + s2_offset, 127);
     temp_reflected = read_float(frame + s2_offset, 129);
     temp_air = read_float(frame + s2_offset, 131);
     humidity = read_float(frame + s2_offset, 133);
     emissivity = read_float(frame + s2_offset, 135);
+    /* NOTE Original Infiray software uses a uint16 for distance. */
     distance = read_float(frame + s2_offset, 137);
 }
 

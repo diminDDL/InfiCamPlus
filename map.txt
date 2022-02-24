@@ -63,5 +63,8 @@ Location  | Datatype        | Parameter
 262 - 266 | float (32bit)   | Air temperature
 266 - 270 | float (32bit)   | Humidity
 270 - 274 | float (32bit)   | Emissivity
-274 - 278 | float (32bit)   | Distance
-278 - ??? | ???             | Possibly more user area
+274 - 278 | 16bit uint      | Distance (NOTE i want to try and see if i can store a float there)
+278 - ??? | ???             | Possibly more user area (presumeably 128 bytes of it, java reads that much)
+
+The user values are saved by:
+	setValue(UVCCamera.CTRL_ZOOM_ABS, 0x80ff);
