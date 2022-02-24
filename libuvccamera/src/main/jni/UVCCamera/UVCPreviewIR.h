@@ -30,6 +30,7 @@
 #include <pthread.h>
 #include <android/native_window.h>
 #include "Thermometry.h"
+#include "Inficam.h"
 
 #define DEFAULT_PREVIEW_WIDTH 640
 #define DEFAULT_PREVIEW_HEIGHT 480
@@ -82,6 +83,7 @@ private:
 	jobject mTemperatureCallbackObj;
 
 	Thermometry tm;
+	Inficam ic;
 
 	int copyToSurface(uint8_t *frameData, ANativeWindow **window);
 	static void *temperature_thread_func(void *vptr_args);

@@ -45,6 +45,7 @@
 #include "UVCPreviewIR.h"
 #include "libuvc_internal.h"
 #include "thermometry2.h"
+#include "Inficam.h"
 
 UVCPreviewIR::UVCPreviewIR(){
 
@@ -878,6 +879,15 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 		tm.readParaFromDevFlag = 0;
 		tm.DataInit(requestWidth, requestHeight);
 		tm.UpdateFixParam(emiss, Refltmp, Airtmp, humi, distance, correction);
+		ic.init(requestWidth, requestHeight, cameraLens, rangeMode);
+		ic.update((uint16_t *) HoldBuffer);
+		ic.update_table((uint16_t *) HoldBuffer);
+		//ic.readparams((uint16_t *) HoldBuffer);
+		ic.emissivity = emiss;
+		ic.temp_reflected = Refltmp;
+		ic.temp_air = Airtmp;
+		ic.humidity = humi;
+		ic.distance = distance;
 
 		//tm.UpdateParam(0, HoldBuffer);
 		//tm.readParaFromDevFlag = 1;
@@ -907,6 +917,9 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 			//LOGE("min: %f, max: %f, tc: %f   %f", min, max, tc, temperatureTable[t_min]);
 			LOGE("a: %f %f %f %f", temperatureTable[5500], temperatureTable[5600], temperatureTable[5700], temperatureTable[5800]);
 			LOGE("b: %f %f %f %f", tm.temperatureLUT[5500], tm.temperatureLUT[5600], tm.temperatureLUT[5700], tm.temperatureLUT[5800]);
+			LOGE("c: %f %f %f %f", ic.table[5500], ic.table[5600], ic.table[5700], ic.table[5800]);
+
+			LOGE("::: %f %f :::", ic.temp_core, ic.temp_fpa);
 			//LOGE("maxpos: %d %d, minpos: %d %d", mx, my, ax, ay);
 			/*int d;
             float fpa, core;

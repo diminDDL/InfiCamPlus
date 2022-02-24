@@ -243,7 +243,7 @@ void thermometryT4Line2(int width,int height,float *temperatureLUT,ushort *fourL
         param2Offset = width;
     }
     else if (width < 257) {
-        if (width == 0xf0) {
+        if (width == 240) {
             *floatFpaTemp = 20.0 - (float)(fpaTemp - 7800) / 36.0;
             param2Offset = width;
         }
