@@ -38,7 +38,7 @@ static inline float atmt(float h, float t_atm, float d) {
 int Inficam::init(int width, int height, float dmul, int range) {
     int ret = 1;
     this->width = width;
-    this->height = height;
+    this->height = height - 4;
     this->distance_multiplier = dmul;
     this->range = range;
     tbl1_offset = width * (height - 4);
@@ -88,7 +88,7 @@ int Inficam::init(int width, int height, float dmul, int range) {
 }
 
 void Inficam::update(uint16_t *frame) {
-    //uint16_t temp_fpa_average_raw = read_u16(frame + tbl1_offset, 0); // TODO figure this out
+    fpa_average = read_u16(frame + tbl1_offset, 0);
     uint16_t temp_fpa_raw = read_u16(frame + tbl1_offset, 1);
     temp_fpa = 20.0 - ((float) (temp_fpa_raw - fpa_off)) / fpa_div;
     temp_shutter = read_u16(frame + tbl2_offset, 1) / 10.0 - zeroc;
@@ -161,6 +161,6 @@ void Inficam::readParams(uint16_t *frame) {
 }
 
 void Inficam::readVersion(uint16_t *frame, char *version_fw, char *serial) {
-    memcpy(version_fw, frame, 16);
-    memcpy(serial, frame, 32);
+    memcpy(version_fw, frame + tbl2_offset + 24, 16);
+    memcpy(serial, frame + tbl2_offset + 32, 32);
 }

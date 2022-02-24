@@ -918,7 +918,12 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 			LOGE("b: %f %f %f %f %f", tm.temperatureLUT[5100], tm.temperatureLUT[5600], tm.temperatureLUT[5700], tm.temperatureLUT[10000], tm.temperatureLUT[15000]);
 			LOGE("c: %f %f %f %f %f", ic.table[5100], ic.table[5600], ic.table[5700], ic.table[10000], ic.table[15000]);
 
-			LOGE("::: %f %f :::", ic.temp_core, ic.temp_fpa);
+			LOGE("::: %f %f :::", ic.temp(ic.temp_center), ic.temp_fpa);
+			char version_fw[17], serial[33];
+			ic.readVersion((uint16_t *) HoldBuffer, version_fw, serial);
+			version_fw[16] = 0;
+			serial[32] = 0;
+			LOGE("VER  %s %s", version_fw, serial);
 			//LOGE("maxpos: %d %d, minpos: %d %d", mx, my, ax, ay);
 			/*int d;
             float fpa, core;

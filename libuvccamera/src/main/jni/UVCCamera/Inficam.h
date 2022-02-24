@@ -17,7 +17,7 @@ class Inficam {
 
 public:
     /* User parameters, set manually or read from camera with readParams().
-     * Changes take effect after the next update().
+     * Changes take effect for temp_single() after the next update(), and temp() after update().
      */
     float correction = 0.0;
     float temp_reflected = 0.0;
@@ -37,6 +37,7 @@ public:
 
     /* Values read by update(). */
     float temp_fpa, temp_shutter, temp_core;
+    uint16_t fpa_average; /* I'm not exactly sure what this value is. */
     uint16_t temp_max_x, temp_max_y, temp_max; /* To get Celcius values use temp(). */
     uint16_t temp_min_x, temp_min_y, temp_min;
     uint16_t temp_avg, temp_center;
@@ -55,11 +56,18 @@ public:
     void update(uint16_t *frame); /* For when table is not needed. */
     float temp_single(uint16_t x); /* Does not need table, does use values from update(). */
 
-    /* Calls update(), for realtime use . */
-    void update_table(uint16_t *frame); /* Generate lookup table for converting to Celcius. */
-    void temp(uint16_t *frame, float *output); /* Requires table. */
-    void temp(uint16_t *input, float *output, size_t len); /* Requires table. */
-    inline float temp(uint16_t val) { /* Requires table. */
+    /* Generate lookup table for converting to Celcius, calls update().
+     * For realtime use I suggest using it only when the shutter closes as a calibration step, as
+     *   it is not a very fast function.
+     */
+    void update_table(uint16_t *frame);
+
+    /* Table based functions, much faster than temp_single() if you need to convert many values.
+     * They only work after calling update_table(), obviously.
+     */
+    void temp(uint16_t *frame, float *output); /* Convert an entire frame. */
+    void temp(uint16_t *input, float *output, size_t len);
+    inline float temp(uint16_t val) {
         return table[val & table_mask];
     }
 
