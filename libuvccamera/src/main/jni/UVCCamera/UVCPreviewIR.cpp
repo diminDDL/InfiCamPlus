@@ -879,10 +879,9 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 		tm.readParaFromDevFlag = 0;
 		tm.DataInit(requestWidth, requestHeight);
 		tm.UpdateFixParam(emiss, Refltmp, Airtmp, humi, distance, correction);
-		ic.init(requestWidth, requestHeight, cameraLens, rangeMode);
-		ic.update((uint16_t *) HoldBuffer);
+		ic.init(requestWidth, requestHeight, (cameraLens == 68) ? 3 : 1, rangeMode);
 		ic.update_table((uint16_t *) HoldBuffer);
-		//ic.readparams((uint16_t *) HoldBuffer);
+		//ic.readParams((uint16_t *) HoldBuffer);
 		ic.emissivity = emiss;
 		ic.temp_reflected = Refltmp;
 		ic.temp_air = Airtmp;
@@ -915,9 +914,9 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 							  rangeMode);
 #endif
 			//LOGE("min: %f, max: %f, tc: %f   %f", min, max, tc, temperatureTable[t_min]);
-			LOGE("a: %f %f %f %f", temperatureTable[5500], temperatureTable[5600], temperatureTable[5700], temperatureTable[5800]);
-			LOGE("b: %f %f %f %f", tm.temperatureLUT[5500], tm.temperatureLUT[5600], tm.temperatureLUT[5700], tm.temperatureLUT[5800]);
-			LOGE("c: %f %f %f %f", ic.table[5500], ic.table[5600], ic.table[5700], ic.table[5800]);
+			LOGE("a: %f %f %f %f %f", temperatureTable[5100], temperatureTable[5600], temperatureTable[5700], temperatureTable[10000], temperatureTable[15000]);
+			LOGE("b: %f %f %f %f %f", tm.temperatureLUT[5100], tm.temperatureLUT[5600], tm.temperatureLUT[5700], tm.temperatureLUT[10000], tm.temperatureLUT[15000]);
+			LOGE("c: %f %f %f %f %f", ic.table[5100], ic.table[5600], ic.table[5700], ic.table[10000], ic.table[15000]);
 
 			LOGE("::: %f %f :::", ic.temp_core, ic.temp_fpa);
 			//LOGE("maxpos: %d %d, minpos: %d %d", mx, my, ax, ay);

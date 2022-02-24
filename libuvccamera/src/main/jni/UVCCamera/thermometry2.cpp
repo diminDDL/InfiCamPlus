@@ -496,10 +496,10 @@ void thermometryT4Line2(int width,int height,float *temperatureTable,ushort *fou
     uVar3 = *(ushort *)(fourLinePara + iVar4);
     fVar8 = (float) *(ushort *)(fourLinePara + iter_tt_b);
     fVar6 = (float) *(ushort *)(fourLinePara + (int)local_a0);
-    pfVar1 = (float *)(fourLinePara + (int)local_74); // cal_05
-    local_74f = *(uint16_t *)(fourLinePara + (int)local_7c); // cal_04
+    pfVar1 = (float *)(fourLinePara + (int)local_74); // cal_05           - 0f16
+    local_74f = *(uint16_t *)(fourLinePara + (int)local_7c); // cal_04    - 0f12
     local_a0 = *(uint16_t *)(fourLinePara + iter_tt_a);
-    local_7c = (float) *(ushort *) pfVar1; // cal_05
+    local_7c = (float) *(ushort *) pfVar1; // cal_05                      - 0f16
     if ((width == 640) && (rangeMode == 400)) { // TODO do not forget to implement this, or maybe do... 640px cameras where?
         local_74f = *(float *)(fourLinePara + local_48 + 0x14a);
         fVar8 = *(float *)(fourLinePara + local_48 + 0x146);
