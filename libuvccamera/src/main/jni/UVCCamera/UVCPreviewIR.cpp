@@ -882,7 +882,7 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 		ic.temp_reflected = Refltmp;
 		ic.temp_air = Airtmp;
 		ic.humidity = humi;*/
-		ic.distance = distance;
+		//ic.distance = distance;
 		LOGE("%f %f %f %f %f", ic.emissivity, ic.temp_reflected, ic.temp_air, ic.humidity, ic.distance);
 		ic.update_table((uint16_t *) HoldBuffer);
 
