@@ -26,7 +26,7 @@ uint8_t *param = fourLinePara
 
 Location  | Datatype        | Parameter
 ------------------------------------------------------
-  0 -   2 | 16bit uint      | Average FPA temperature (presumably same unit as FPA temperature)
+  0 -   2 | 16bit uint      | FPA Average, whatever that means
   2 -   4 | 16bit uint      | FPA temperature (convert to celcius is weird and depends on camera)
   4 -   6 | 16bit uint      | Max point X
   6 -   8 | 16bit uint      | Max point Y
@@ -34,7 +34,7 @@ Location  | Datatype        | Parameter
  10 -  12 | 16bit uint      | Min point X
  12 -  14 | 16bit uint      | Min point Y
  14 -  16 | 16bit uint      | Min temperature
- 16 -  18 | 16bit uint      | Average temperature (TODO: verify) also called orgAvg
+ 16 -  18 | 16bit uint      | Average temperature (orgAvg elsewhere)
  18 -  24 | ???             | ??? (unused by software)
  24 -  26 | 16bit uint      | Center temperature
  26 -  28 | 16bit uint      | User point 1 temperature
@@ -56,7 +56,7 @@ Location  | Datatype        | Parameter
  26 -  48 | ???             | ??? (unused by software)
  48 -  64 | 16 byte string  | Firmware version
  64 -  95 | 32 byte string  | Serial number
- 95 - 254 | ???             | ??? (unused by software)
+ 95 - 254 | ???             | ??? (unused bgy software)
 ---User area, writeable by ABS_ZOOM command-----------
 254 - 258 | float (32bit)   | Correction
 258 - 262 | float (32bit)   | Reflected temperature

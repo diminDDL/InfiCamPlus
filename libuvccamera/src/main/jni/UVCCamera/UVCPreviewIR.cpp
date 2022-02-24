@@ -880,13 +880,15 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 		tm.DataInit(requestWidth, requestHeight);
 		tm.UpdateFixParam(emiss, Refltmp, Airtmp, humi, distance, correction);
 		ic.init(requestWidth, requestHeight, (cameraLens == 68) ? 3 : 1, rangeMode);
-		ic.update_table((uint16_t *) HoldBuffer);
 		//ic.readParams((uint16_t *) HoldBuffer);
-		ic.emissivity = emiss;
+		ic.readParams((uint16_t *) HoldBuffer);
+		/*ic.emissivity = emiss;
 		ic.temp_reflected = Refltmp;
 		ic.temp_air = Airtmp;
-		ic.humidity = humi;
+		ic.humidity = humi;*/
 		ic.distance = distance;
+		LOGE("%f %f %f %f %f", ic.emissivity, ic.temp_reflected, ic.temp_air, ic.humidity, ic.distance);
+		ic.update_table((uint16_t *) HoldBuffer);
 
 		//tm.UpdateParam(0, HoldBuffer);
 		//tm.readParaFromDevFlag = 1;
