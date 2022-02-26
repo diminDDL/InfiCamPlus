@@ -2,9 +2,11 @@ This code is originally from https://github.com/saki4510t/UVCCamera/
 It was modified by infiray, and later by netman.
 
 I'll try to explain the state of separate things here:
-    libjpeg-turbo-1.5.0 - commit ebaf03a18b577852bd6dc2bd57cedef5a8eef59f of saki4510t/UVCCamera (copied in by netman)
-        had to comment a line in Android.mk to make it build
     libusb              - commit ebaf03a18b577852bd6dc2bd57cedef5a8eef59f of saki4510t/UVCCamera (copied in by netman)
     libuvc              - commit ebaf03a18b577852bd6dc2bd57cedef5a8eef59f of saki4510t/UVCCamera (copied in by netman)
-    rapidjson           - commit ebaf03a18b577852bd6dc2bd57cedef5a8eef59f of saki4510t/UVCCamera (copied in by netman)
     UVCCamera           - modified a lot from anything upstream
+
+The following have now been deleted:
+    libjpeg-turbo-1.5.0 - commit ebaf03a18b577852bd6dc2bd57cedef5a8eef59f of saki4510t/UVCCamera (copied in by netman)
+        had to comment a line in Android.mk to make it build
+    rapidjson           - commit ebaf03a18b577852bd6dc2bd57cedef5a8eef59f of saki4510t/UVCCamera (copied in by netman)
