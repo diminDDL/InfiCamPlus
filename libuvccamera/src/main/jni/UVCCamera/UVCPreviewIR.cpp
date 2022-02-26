@@ -450,11 +450,8 @@ void UVCPreviewIR::do_preview(uvc_stream_ctrl_t *ctrl) {
                // }
             }
             pthread_mutex_unlock(&preview_mutex);
-            if (mTemperatureCallbackObj && mIsTemperaturing) {
-                ////LOGE("do_preview1");
+            if (mTemperatureCallbackObj && mIsTemperaturing)
                 pthread_cond_signal(&temperature_sync);
-            }
-            ////LOGE("do_preview4");
 
 	    }
 
@@ -664,30 +661,11 @@ distance  ushort  20-21
 version          112-127
 */
 int UVCPreviewIR:: getByteArrayTemperaturePara(uint8_t* para) {
-    uint8_t* TempPara;
-    switch (requestWidth)
-    {
-        case 384:
-        TempPara=HoldBuffer+(requestWidth*(requestHeight-1)+127)*2;
-        break;
-        case 240:
-        TempPara=HoldBuffer+(requestWidth*(requestHeight-3)+127)*2;
-        break;
-        case 256:
-        TempPara=HoldBuffer+(requestWidth*(requestHeight-3)+127)*2;
-        break;
-        case 640:
-        TempPara=HoldBuffer+(requestWidth*(requestHeight-1)+127)*2;
-        break;
-    }
-        memcpy(para, TempPara, 128*sizeof(uint8_t));
-        TempPara=TempPara-127*2+24*2;//version
-        memcpy(para+128-16, TempPara, 16*sizeof(uint8_t));
-        for(int j=0;j<16;j++){
-        //////LOGE("getByteArrayTemperaturePara version:%c",TempPara[j]);
-        }
-      //  //////LOGE("getByteArrayTemperaturePara:%d,%d,%d,%d,%d,%d",para[16],para[17],para[18],para[19],para[20],para[21]);
-        return true;
+    uint8_t* TempPara = HoldBuffer + ic.s2_offset * 2 + 254;
+	memcpy(para, TempPara, 128*sizeof(uint8_t));
+	TempPara=TempPara-127*2+24*2;//version
+	memcpy(para + 128 - 16, TempPara, 16 * sizeof(uint8_t));
+	return true;
 }
 
 int UVCPreviewIR::stopTemp() {
@@ -778,9 +756,7 @@ void UVCPreviewIR::do_temperature(JNIEnv *env) {
             pthread_cond_wait(&temperature_sync, &temperature_mutex);
             ////LOGE("do_temperature02");
             if(mIsTemperaturing)
-            {
                 do_temperature_callback(env, HoldBuffer);
-            }
             ////LOGE("do_temperature03");
         }
         pthread_mutex_unlock(&temperature_mutex);
