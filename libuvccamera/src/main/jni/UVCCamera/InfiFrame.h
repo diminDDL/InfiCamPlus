@@ -38,6 +38,7 @@ public:
     static const int table_len = 0x4000;
     static const int table_mask = 0x4000 - 1;
     float table[table_len]; /* Do not forget to always check bounds before access! */
+    uint32_t palette[table_len];
 
     /* Values read by update(). */
     float temp_fpa, temp_shutter, temp_core;
@@ -74,6 +75,12 @@ public:
     inline float temp(uint16_t val) {
         return table[val & table_mask]; /* For big-endian systems this may need changing. */
     }
+
+    /* Palette stuff, requires table. */
+    void palette_appy(uint16_t *input, uint32_t *output);
+    void palette_appy(uint16_t *input, uint32_t *output, size_t len);
+    void palette_appy(uint16_t *input, uint32_t *output, float min, float max);
+    void palette_appy(uint16_t *input, uint32_t *output, size_t len, float min, float max);
 
     /* Read correction, temp_reflected, temp_air, humidity, emissivity and distance from stored
      *   values on the camera. They are written with ABS_ZOOM command.

@@ -171,3 +171,22 @@ void InfiFrame::read_version(uint16_t *frame, char *product, char *serial, char 
     if (fw_version != NULL)
         memcpy(fw_version, frame + s2_offset + 24, 16);
 }
+
+void InfiFrame::palette_appy(uint16_t *input, uint32_t *output) {
+    palette_appy(input, output, width * height, temp(temp_min), temp(temp_max));
+}
+
+void InfiFrame::palette_appy(uint16_t *input, uint32_t *output, size_t len) {
+    palette_appy(input, output, len, temp(temp_min), temp(temp_max));
+}
+
+void InfiFrame::palette_appy(uint16_t *input, uint32_t *output, float min, float max) {
+    palette_appy(input, output, width * height, min, max);
+}
+
+void InfiFrame::palette_appy(uint16_t *input, uint32_t *output, size_t len, float min, float max) {
+    for (size_t i = 0; i < len; ++i) {
+        float frac = (fminf(fmaxf(temp(input[i]), min), max) - min) / (max - min);
+        output[i] = palette[((int) roundf(frac * (float) table_mask)) & table_mask];
+    }
+}

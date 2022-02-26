@@ -392,6 +392,17 @@ int UVCPreviewIR::prepare_preview(uvc_stream_ctrl_t *ctrl) {
 	memcpy(paletteHighRainbow, paletteRainbow, sizeof(paletteRainbow));
 	memcpy(paletteHighContrast, paletteIronRainbow, sizeof(palette3));
 
+
+	// TODO this is the new one
+	for (int i = 0; i + 4 <= sizeof(ic.palette); i += 4) {
+		double x = (double) i / (double) sizeof(ic.palette);
+		((uint8_t *) ic.palette)[i + 0] = round(255 * sqrt(x));
+		((uint8_t *) ic.palette)[i + 1] = round(255 * pow(x, 3));
+		((uint8_t *) ic.palette)[i + 2] = round(255 * fmax(0, sin(2 * M_PI * x)));
+		((uint8_t *) ic.palette)[i + 3] = 1;
+	}
+
+
     mInitData=new unsigned short[requestWidth*(requestHeight-4)+10];
 	result = uvc_get_stream_ctrl_format_size_fps(mDeviceHandle, ctrl,
 		!requestMode ? UVC_FRAME_FORMAT_YUYV : UVC_FRAME_FORMAT_MJPEG,
@@ -666,6 +677,7 @@ void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow *window) {
 			 }
 		  break;
 	 }
+	ic.palette_appy((uint16_t *) tmp_buf, (uint32_t *) RgbaHoldBuffer, requestWidth * 96);
 
 	if (LIKELY(window))
 		copyToSurface(RgbaHoldBuffer, window);
