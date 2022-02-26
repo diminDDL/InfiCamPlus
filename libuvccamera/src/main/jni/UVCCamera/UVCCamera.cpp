@@ -78,6 +78,13 @@ UVCCamera::~UVCCamera() {
 	EXIT();
 }
 
+void *UVCCamera::usb_handle_events(void *arg) {
+	UVCCamera *p = (UVCCamera *) arg;
+	while (!p->stopRunning)
+		libusb_handle_events_completed(p->usb_ctx, &p->stopRunning);
+	return NULL;
+}
+
 /**
  * カメラへ接続する
  */
@@ -87,18 +94,12 @@ int UVCCamera::connect(int vid, int pid, int fd, int busnum, int devaddr, const 
 	uvc_error_t result = UVC_ERROR_BUSY;
 	if (!mDeviceHandle && fd) {
 		if (UNLIKELY(!mContext)) {
-			// TODO originally usbfs is strdup'd, libusb holds on to the pointer so we should too
-
-            libusb_context *ctx = NULL;
-            //libusb_device_handle *devh;
-			libusb_set_option(ctx, LIBUSB_OPTION_NO_DEVICE_DISCOVERY, NULL);
-            libusb_init(&ctx);
-            //libusb_wrap_sys_device(NULL, (intptr_t)fd, &devh);
-
-			//result = uvc_init2(&mContext, NULL, usbfs);
-			result = uvc_init(&mContext, ctx);
-			mContext->own_usb_ctx = 1;
-			uvc_start_handler_thread(mContext);
+			// TODO error check, cleanup
+			usb_ctx = NULL;
+			libusb_set_option(usb_ctx, LIBUSB_OPTION_NO_DEVICE_DISCOVERY, NULL);
+            libusb_init(&usb_ctx);
+			result = uvc_init(&mContext, usb_ctx);
+			pthread_create(&usb_thread, NULL, usb_handle_events, (void*) this);
 
 //			libusb_set_debug(mContext->usb_ctx, LIBUSB_LOG_LEVEL_DEBUG);
 			if (UNLIKELY(result < 0)) {

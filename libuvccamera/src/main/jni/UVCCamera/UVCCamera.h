@@ -32,13 +32,19 @@
 #include <pthread.h>
 #include <android/native_window.h>
 #include "UVCPreviewIR.h"
+#include <libusb.h>
 
 class UVCCamera {
 	uvc_context_t *mContext;
-	int mFd;
+	int mFd, stopRunning = 0;
 	uvc_device_t *mDevice;
 	uvc_device_handle_t *mDeviceHandle;
 	UVCPreviewIR *mPreview;
+
+	libusb_context *usb_ctx;
+	pthread_t usb_thread;
+
+	static void *usb_handle_events(void *arg);
 
 public:
 	UVCCamera();

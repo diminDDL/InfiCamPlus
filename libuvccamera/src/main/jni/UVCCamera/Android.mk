@@ -55,6 +55,7 @@ LOCAL_SHARED_LIBRARIES += usb1.0 uvc
 LOCAL_SRC_FILES := \
 		UVCCamera.cpp \
 		UVCPreviewIR.cpp \
+		UVCDevice.cpp \
 		InfiFrame.cpp \
 		serenegiant_usb_UVCCamera.cpp
 
