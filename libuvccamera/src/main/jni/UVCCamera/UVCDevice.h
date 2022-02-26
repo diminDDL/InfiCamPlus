@@ -26,7 +26,10 @@ public:
     int connect(int fd);
     void disconnect();
 
-    int stream(uvc_frame_callback_t *cb);
+    int stream_start(uvc_frame_callback_t *cb, void *user_ptr);
+    void stream_stop();
+
+    int set_zoom_abs(uint16_t val);
 };
 
 #endif /* __UVCDEVICE_H__ */

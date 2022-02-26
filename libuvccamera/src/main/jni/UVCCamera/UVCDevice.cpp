@@ -81,12 +81,20 @@ void UVCDevice::disconnect() {
     width = height = 0;
 }
 
-int UVCDevice::stream(uvc_frame_callback_t *cb) {
+int UVCDevice::stream_start(uvc_frame_callback_t *cb, void *user_ptr) {
     uvc_stream_ctrl_t ctrl;
     /* 0 FPS means any. */
     if (uvc_get_stream_ctrl_format_size(uvc_devh, &ctrl, format, width, height, 0) != 0)
         return 4;
-    if (uvc_start_streaming(uvc_devh, &ctrl, cb, (void *) this, 0) != 0)
+    if (uvc_start_streaming(uvc_devh, &ctrl, cb, user_ptr, 0) != 0)
         return 5;
     return 0;
+}
+
+int UVCDevice::set_zoom_abs(uint16_t val) {
+   return uvc_set_zoom_abs(uvc_devh, val);
+}
+
+void UVCDevice::stream_stop() {
+   uvc_stop_streaming(uvc_devh);
 }
