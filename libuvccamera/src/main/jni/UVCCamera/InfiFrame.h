@@ -20,7 +20,7 @@ public:
     int width, height;
     int s1_offset, s2_offset;
 
-    /* User parameters, set manually or read from camera with readParams().
+    /* User parameters, set manually or read from camera with read_params().
      * Changes take effect for temp_single() after the next update(), and temp() after update().
      */
     float correction = 0.0;
@@ -78,12 +78,12 @@ public:
     /* Read correction, temp_reflected, temp_air, humidity, emissivity and distance from stored
      *   values on the camera. They are written with ABS_ZOOM command.
      */
-    void readParams(uint16_t *frame);
+    void read_params(uint16_t *frame);
 
     /* The strings are 16 bytes, no guarantee of 0 termination.
      * Accepts NULL for values you don't want copied.
      */
-   void readVersion(uint16_t *frame, char *product, char *serial, char *fw_version);
+   void read_version(uint16_t *frame, char *product, char *serial, char *fw_version);
 };
 
 #endif /* __INFICAM_H__ */

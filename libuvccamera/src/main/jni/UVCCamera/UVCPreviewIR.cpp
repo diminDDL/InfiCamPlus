@@ -459,7 +459,7 @@ void UVCPreviewIR::do_preview(uvc_stream_ctrl_t *ctrl) {
 				RgbaHoldBuffer = tmp_buf;
 
 				ic.update((uint16_t *) HoldBuffer);
-				ic.readVersion((uint16_t *) HoldBuffer, NULL, sn, cameraSoftVersion);
+				ic.read_version((uint16_t *) HoldBuffer, NULL, sn, cameraSoftVersion);
 				Refltmp = ic.temp_reflected;
 				Airtmp = ic.temp_air;
 				humi = ic.humidity;
@@ -792,8 +792,8 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 	if(UNLIKELY(isNeedWriteTable))
 	{
 		//ic.init(requestWidth, requestHeight, (cameraLens == 68) ? 3 : 1, rangeMode);
-		//ic.readParams((uint16_t *) HoldBuffer);
-		ic.readParams((uint16_t *) HoldBuffer);
+		//ic.read_params((uint16_t *) HoldBuffer);
+		ic.read_params((uint16_t *) HoldBuffer);
 		Refltmp = ic.temp_reflected;
 		Airtmp = ic.temp_air;
 		humi = ic.humidity;
@@ -807,7 +807,7 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 
 		LOGE("::: %f %f :::", ic.temp(ic.temp_center), ic.temp_fpa);
 		char product[17], version_fw[17], serial[17];
-		ic.readVersion((uint16_t *) HoldBuffer, product, serial, version_fw);
+		ic.read_version((uint16_t *) HoldBuffer, product, serial, version_fw);
 		product[16] = 0;
 		serial[16] = 0;
 		version_fw[16] = 0;

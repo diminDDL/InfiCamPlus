@@ -151,7 +151,7 @@ void InfiFrame::temp(uint16_t *input, float *output, size_t len) {
         output[i] = temp(input[i]);
 }
 
-void InfiFrame::readParams(uint16_t *frame) {
+void InfiFrame::read_params(uint16_t *frame) {
     // TODO presumeably this is just a 128 byte ram+eeprom area
     //   maybe we should present it as such
     correction = read_float(frame + s2_offset, 127);
@@ -163,7 +163,7 @@ void InfiFrame::readParams(uint16_t *frame) {
     distance = read_float(frame + s2_offset, 137);
 }
 
-void InfiFrame::readVersion(uint16_t *frame, char *product, char *serial, char *fw_version) {
+void InfiFrame::read_version(uint16_t *frame, char *product, char *serial, char *fw_version) {
     if (product != NULL)
         memcpy(product, frame + s2_offset + 40, 16);
     if (serial != NULL)
