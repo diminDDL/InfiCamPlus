@@ -152,8 +152,7 @@ void InfiFrame::temp(uint16_t *input, float *output, size_t len) {
 }
 
 void InfiFrame::read_params(uint16_t *frame) {
-    // TODO presumeably this is just a 128 byte ram+eeprom area
-    //   maybe we should present it as such
+    /* Presumeably this is just a 128 byte ram+eeprom area. */
     correction = read_float(frame + s2_offset, 127);
     temp_reflected = read_float(frame + s2_offset, 129);
     temp_air = read_float(frame + s2_offset, 131);
@@ -187,6 +186,6 @@ void InfiFrame::palette_appy(uint16_t *input, uint32_t *output, float min, float
 void InfiFrame::palette_appy(uint16_t *input, uint32_t *output, size_t len, float min, float max) {
     for (size_t i = 0; i < len; ++i) {
         float frac = (fminf(fmaxf(temp(input[i]), min), max) - min) / (max - min);
-        output[i] = palette[((int) roundf(frac * (float) table_mask)) & table_mask];
+        output[i] = palette[((int) roundf(frac * (float) palette_mask)) & palette_mask];
     }
 }

@@ -18,7 +18,7 @@ class InfiFrame {
 public:
     /* Dimensions of actual thermographic image, set by init(). */
     int width, height;
-    int s1_offset, s2_offset;
+    int s1_offset, s2_offset; // TODO Should probably be private.
 
     /* User parameters, set manually or read from camera with read_params().
      * Changes take effect for temp_single() after the next update(), and temp() after update().
@@ -36,8 +36,12 @@ public:
 
     /* Lookup table for temperature in celcius from pixel values, written by update_table(). */
     static const int table_len = 0x4000;
-    static const int table_mask = 0x4000 - 1;
+    static const int table_mask = table_len - 1;
     float table[table_len]; /* Do not forget to always check bounds before access! */
+
+    /* Palette for drawing palette_apply(). */
+    static const int palette_len = 0x4000;
+    static const int palette_mask = palette_len - 1;
     uint32_t palette[table_len];
 
     /* Values read by update(). */
