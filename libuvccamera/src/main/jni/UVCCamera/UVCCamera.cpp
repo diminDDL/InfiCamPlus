@@ -42,8 +42,11 @@
 #include "UVCCamera.h"
 #include "UVCPreviewIR.h"
 #include "libuvc_internal.h"
+#include "../libuvc/include/libuvc/libuvc.h"
 
 #define	LOCAL_DEBUG 0
+
+#include <libusb/libusb/libusb.h> // TODO is this the right place?
 
 /**
  * コンストラクタ
@@ -83,7 +86,15 @@ int UVCCamera::connect(int vid, int pid, int fd, int busnum, int devaddr, const 
 	if (!mDeviceHandle && fd) {
 		if (UNLIKELY(!mContext)) {
 			// TODO originally usbfs is strdup'd, libusb holds on to the pointer so we should too
-			result = uvc_init2(&mContext, NULL, usbfs);
+
+            libusb_context *ctx = NULL;
+            //libusb_device_handle *devh;
+			libusb_set_option(ctx, LIBUSB_OPTION_NO_DEVICE_DISCOVERY, NULL);
+            libusb_init(&ctx);
+            //libusb_wrap_sys_device(NULL, (intptr_t)fd, &devh);
+
+			//result = uvc_init2(&mContext, NULL, usbfs);
+			result = uvc_init(&mContext, ctx);
 //			libusb_set_debug(mContext->usb_ctx, LIBUSB_LOG_LEVEL_DEBUG);
 			if (UNLIKELY(result < 0)) {
 				LOGD("failed to init libuvc");
@@ -94,11 +105,15 @@ int UVCCamera::connect(int vid, int pid, int fd, int busnum, int devaddr, const 
 		fd = dup(fd); // TODO (netman) Why is it duplicated?
 		// 指定したvid,idを持つデバイスを検索, 見つかれば0を返してmDeviceに見つかったデバイスをセットする(既に1回uvc_ref_deviceを呼んである)
 //		result = uvc_find_device2(mContext, &mDevice, vid, pid, NULL, fd);
-		result = uvc_get_device_with_fd(mContext, &mDevice, vid, pid, NULL, fd, busnum, devaddr);
-		if (LIKELY(!result)) {
+		//result = uvc_get_device_with_fd(mContext, &mDevice, vid, pid, NULL, fd, busnum, devaddr);
+		//result = uvc_find_device()
+
+		uvc_wrap(fd, mContext, &mDeviceHandle);
+
+		if (1 || LIKELY(!result)) { // TODO
 			// カメラのopen処理
-			result = uvc_open(mDevice, &mDeviceHandle);
-			if (LIKELY(!result)) {
+			//result = uvc_open(mDevice, &mDeviceHandle);
+			if (1 || LIKELY(!result)) { // TODO
 				// open出来た時
 #if LOCAL_DEBUG
 				uvc_print_diag(mDeviceHandle, stderr);

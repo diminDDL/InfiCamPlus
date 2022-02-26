@@ -18,29 +18,19 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
+#include <time.h>
 
 #include "libusb.h"
 
-#if defined(_WIN32)
-#define msleep(msecs) Sleep(msecs)
-#else
-#include <unistd.h>
-#define msleep(msecs) usleep(1000*msecs)
-#endif
-
-#if !defined(bool)
-#define bool int
-#endif
-#if !defined(true)
-#define true (1 == 1)
-#endif
-#if !defined(false)
-#define false (!true)
+#if defined(_MSC_VER)
+#define snprintf _snprintf
+#define putenv _putenv
 #endif
 
 // Future versions of libusb will use usb_interface instead of interface
@@ -53,20 +43,28 @@ static bool extra_info = false;
 static bool force_device_request = false;	// For WCID descriptor queries
 static const char* binary_name = NULL;
 
-static int perr(char const *format, ...)
+static inline void msleep(int msecs)
+{
+#if defined(_WIN32)
+	Sleep(msecs);
+#else
+	const struct timespec ts = { msecs / 1000, (msecs % 1000) * 1000000L };
+	nanosleep(&ts, NULL);
+#endif
+}
+
+static void perr(char const *format, ...)
 {
 	va_list args;
-	int r;
 
 	va_start (args, format);
-	r = vfprintf(stderr, format, args);
+	vfprintf(stderr, format, args);
 	va_end(args);
-
-	return r;
 }
 
 #define ERR_EXIT(errcode) do { perr("   %s\n", libusb_strerror((enum libusb_error)errcode)); return -1; } while (0)
-#define CALL_CHECK(fcall) do { r=fcall; if (r < 0) ERR_EXIT(r); } while (0);
+#define CALL_CHECK(fcall) do { int _r=fcall; if (_r < 0) ERR_EXIT(_r); } while (0)
+#define CALL_CHECK_CLOSE(fcall, hdl) do { int _r=fcall; if (_r < 0) { libusb_close(hdl); ERR_EXIT(_r); } } while (0)
 #define B(x) (((x)!=0)?1:0)
 #define be_to_int32(buf) (((buf)[0]<<24)|((buf)[1]<<16)|((buf)[2]<<8)|(buf)[3])
 
@@ -90,6 +88,16 @@ static int perr(char const *format, ...)
 #define BOMS_RESET                    0xFF
 #define BOMS_GET_MAX_LUN              0xFE
 
+// Microsoft OS Descriptor
+#define MS_OS_DESC_STRING_INDEX		0xEE
+#define MS_OS_DESC_STRING_LENGTH	0x12
+#define MS_OS_DESC_VENDOR_CODE_OFFSET	0x10
+static const uint8_t ms_os_desc_string[] = {
+	MS_OS_DESC_STRING_LENGTH,
+	LIBUSB_DT_STRING,
+	'M', 0, 'S', 0, 'F', 0, 'T', 0, '1', 0, '0', 0, '0', 0,
+};
+
 // Section 5.1: Command Block Wrapper (CBW)
 struct command_block_wrapper {
 	uint8_t dCBWSignature[4];
@@ -109,7 +117,7 @@ struct command_status_wrapper {
 	uint8_t bCSWStatus;
 };
 
-static uint8_t cdb_length[256] = {
+static const uint8_t cdb_length[256] = {
 //	 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
 	06,06,06,06,06,06,06,06,06,06,06,06,06,06,06,06,  //  0
 	06,06,06,06,06,06,06,06,06,06,06,06,06,06,06,06,  //  1
@@ -170,7 +178,8 @@ static char* uuid_to_string(const uint8_t* uuid)
 {
 	static char uuid_string[40];
 	if (uuid == NULL) return NULL;
-	sprintf(uuid_string, "{%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+	snprintf(uuid_string, sizeof(uuid_string),
+		"{%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
 		uuid[0], uuid[1], uuid[2], uuid[3], uuid[4], uuid[5], uuid[6], uuid[7],
 		uuid[8], uuid[9], uuid[10], uuid[11], uuid[12], uuid[13], uuid[14], uuid[15]);
 	return uuid_string;
@@ -180,7 +189,6 @@ static char* uuid_to_string(const uint8_t* uuid)
 // removed by Sony
 static int display_ps3_status(libusb_device_handle *handle)
 {
-	int r;
 	uint8_t input_report[49];
 	uint8_t master_bt_address[8];
 	uint8_t device_bt_address[18];
@@ -212,7 +220,7 @@ static int display_ps3_status(libusb_device_handle *handle)
 			printf("\tRIGHT 3 pressed\n");
 			break;
 		case 0x08:
-			printf("\tSTART presed\n");
+			printf("\tSTART pressed\n");
 			break;
 		case 0x10:
 			printf("\tUP pressed\n");
@@ -238,7 +246,7 @@ static int display_ps3_status(libusb_device_handle *handle)
 			printf("\tLEFT 1 pressed\n");
 			break;
 		case 0x08:
-			printf("\tRIGHT 1 presed\n");
+			printf("\tRIGHT 1 pressed\n");
 			break;
 		case 0x10:
 			printf("\tTRIANGLE pressed\n");
@@ -271,7 +279,6 @@ static int display_ps3_status(libusb_device_handle *handle)
 // Input/Output reports described at http://euc.jp/periphs/xbox-controller.ja.html
 static int display_xbox_status(libusb_device_handle *handle)
 {
-	int r;
 	uint8_t input_report[20];
 	printf("\nReading XBox Input Report...\n");
 	CALL_CHECK(libusb_control_transfer(handle, LIBUSB_ENDPOINT_IN|LIBUSB_REQUEST_TYPE_CLASS|LIBUSB_RECIPIENT_INTERFACE,
@@ -292,7 +299,6 @@ static int display_xbox_status(libusb_device_handle *handle)
 
 static int set_xbox_actuators(libusb_device_handle *handle, uint8_t left, uint8_t right)
 {
-	int r;
 	uint8_t output_report[6];
 
 	printf("\nWriting XBox Controller Output Report...\n");
@@ -512,6 +518,7 @@ static int test_mass_storage(libusb_device_handle *handle, uint8_t endpoint_in, 
 		get_sense(handle, endpoint_in, endpoint_out);
 	}
 
+	// coverity[tainted_data]
 	data = (unsigned char*) calloc(1, block_size);
 	if (data == NULL) {
 		perr("   unable to allocate data buffer\n");
@@ -519,7 +526,7 @@ static int test_mass_storage(libusb_device_handle *handle, uint8_t endpoint_in, 
 	}
 
 	// Send Read
-	printf("Attempting to read %d bytes:\n", block_size);
+	printf("Attempting to read %u bytes:\n", block_size);
 	memset(cdb, 0, sizeof(cdb));
 
 	cdb[0] = 0x28;	// Read(10)
@@ -615,7 +622,7 @@ static int test_hid(libusb_device_handle *handle, uint8_t endpoint_in)
 	}
 	display_buffer_hex(hid_report_descriptor, descriptor_size);
 	if ((binary_dump) && ((fd = fopen(binary_name, "w")) != NULL)) {
-		if (fwrite(hid_report_descriptor, 1, descriptor_size, fd) != descriptor_size) {
+		if (fwrite(hid_report_descriptor, 1, descriptor_size, fd) != (size_t)descriptor_size) {
 			printf("   Error writing descriptor to file\n");
 		}
 		fclose(fd);
@@ -784,7 +791,7 @@ static void print_device_cap(struct libusb_bos_dev_capability_descriptor *dev_ca
 	}
 	default:
 		printf("    Unknown BOS device capability %02x:\n", dev_cap->bDevCapabilityType);
-	}	
+	}
 }
 
 static int test_device(uint16_t vid, uint16_t pid)
@@ -798,8 +805,8 @@ static int test_device(uint16_t vid, uint16_t pid)
 	int i, j, k, r;
 	int iface, nb_ifaces, first_iface = -1;
 	struct libusb_device_descriptor dev_desc;
-	const char* speed_name[5] = { "Unknown", "1.5 Mbit/s (USB LowSpeed)", "12 Mbit/s (USB FullSpeed)",
-		"480 Mbit/s (USB HighSpeed)", "5000 Mbit/s (USB SuperSpeed)"};
+	const char* const speed_name[6] = { "Unknown", "1.5 Mbit/s (USB LowSpeed)", "12 Mbit/s (USB FullSpeed)",
+		"480 Mbit/s (USB HighSpeed)", "5000 Mbit/s (USB SuperSpeed)", "10000 Mbit/s (USB SuperSpeedPlus)" };
 	char string[128];
 	uint8_t string_index[3];	// indexes of the string descriptors
 	uint8_t endpoint_in = 0, endpoint_out = 0;	// default IN and OUT endpoints
@@ -826,12 +833,12 @@ static int test_device(uint16_t vid, uint16_t pid)
 			printf(" (from root hub)\n");
 		}
 		r = libusb_get_device_speed(dev);
-		if ((r<0) || (r>4)) r=0;
+		if ((r<0) || (r>5)) r=0;
 		printf("             speed: %s\n", speed_name[r]);
 	}
 
 	printf("\nReading device descriptor:\n");
-	CALL_CHECK(libusb_get_device_descriptor(dev, &dev_desc));
+	CALL_CHECK_CLOSE(libusb_get_device_descriptor(dev, &dev_desc), handle);
 	printf("            length: %d\n", dev_desc.bLength);
 	printf("      device class: %d\n", dev_desc.bDeviceClass);
 	printf("               S/N: %d\n", dev_desc.iSerialNumber);
@@ -855,7 +862,9 @@ static int test_device(uint16_t vid, uint16_t pid)
 	}
 
 	printf("\nReading first configuration descriptor:\n");
-	CALL_CHECK(libusb_get_config_descriptor(dev, 0, &conf_desc));
+	CALL_CHECK_CLOSE(libusb_get_config_descriptor(dev, 0, &conf_desc), handle);
+	printf("              total length: %d\n", conf_desc->wTotalLength);
+	printf("         descriptor length: %d\n", conf_desc->bLength);
 	nb_ifaces = conf_desc->bNumInterfaces;
 	printf("             nb interfaces: %d\n", nb_ifaces);
 	if (nb_ifaces > 0)
@@ -907,6 +916,8 @@ static int test_device(uint16_t vid, uint16_t pid)
 	libusb_set_auto_detach_kernel_driver(handle, 1);
 	for (iface = 0; iface < nb_ifaces; iface++)
 	{
+		int ret = libusb_kernel_driver_active(handle, iface);
+		printf("\nKernel driver attached for interface %d: %d\n", iface, ret);
 		printf("\nClaiming interface %d...\n", iface);
 		r = libusb_claim_interface(handle, iface);
 		if (r != LIBUSB_SUCCESS) {
@@ -919,34 +930,37 @@ static int test_device(uint16_t vid, uint16_t pid)
 		if (string_index[i] == 0) {
 			continue;
 		}
-		if (libusb_get_string_descriptor_ascii(handle, string_index[i], (unsigned char*)string, 128) >= 0) {
+		if (libusb_get_string_descriptor_ascii(handle, string_index[i], (unsigned char*)string, sizeof(string)) > 0) {
 			printf("   String (0x%02X): \"%s\"\n", string_index[i], string);
 		}
 	}
-	// Read the OS String Descriptor
-	if (libusb_get_string_descriptor_ascii(handle, 0xEE, (unsigned char*)string, 128) >= 0) {
-		printf("   String (0x%02X): \"%s\"\n", 0xEE, string);
+
+	printf("\nReading OS string descriptor:");
+	r = libusb_get_string_descriptor(handle, MS_OS_DESC_STRING_INDEX, 0, (unsigned char*)string, MS_OS_DESC_STRING_LENGTH);
+	if (r == MS_OS_DESC_STRING_LENGTH && memcmp(ms_os_desc_string, string, sizeof(ms_os_desc_string)) == 0) {
 		// If this is a Microsoft OS String Descriptor,
 		// attempt to read the WinUSB extended Feature Descriptors
-		if (strncmp(string, "MSFT100", 7) == 0)
-			read_ms_winsub_feature_descriptors(handle, string[7], first_iface);
+		printf("\n");
+		read_ms_winsub_feature_descriptors(handle, string[MS_OS_DESC_VENDOR_CODE_OFFSET], first_iface);
+	} else {
+		printf(" no descriptor\n");
 	}
 
 	switch(test_mode) {
 	case USE_PS3:
-		CALL_CHECK(display_ps3_status(handle));
+		CALL_CHECK_CLOSE(display_ps3_status(handle), handle);
 		break;
 	case USE_XBOX:
-		CALL_CHECK(display_xbox_status(handle));
-		CALL_CHECK(set_xbox_actuators(handle, 128, 222));
+		CALL_CHECK_CLOSE(display_xbox_status(handle), handle);
+		CALL_CHECK_CLOSE(set_xbox_actuators(handle, 128, 222), handle);
 		msleep(2000);
-		CALL_CHECK(set_xbox_actuators(handle, 0, 0));
+		CALL_CHECK_CLOSE(set_xbox_actuators(handle, 0, 0), handle);
 		break;
 	case USE_HID:
 		test_hid(handle, endpoint_in);
 		break;
 	case USE_SCSI:
-		CALL_CHECK(test_mass_storage(handle, endpoint_in, endpoint_out));
+		CALL_CHECK_CLOSE(test_mass_storage(handle, endpoint_in, endpoint_out), handle);
 	case USE_GENERIC:
 		break;
 	}
@@ -965,6 +979,7 @@ static int test_device(uint16_t vid, uint16_t pid)
 
 int main(int argc, char** argv)
 {
+	static char debug_env_str[] = "LIBUSB_DEBUG=4";	// LIBUSB_LOG_LEVEL_DEBUG
 	bool show_help = false;
 	bool debug_mode = false;
 	const struct libusb_version* version;
@@ -972,7 +987,7 @@ int main(int argc, char** argv)
 	size_t i, arglen;
 	unsigned tmp_vid, tmp_pid;
 	uint16_t endian_test = 0xBE00;
-	char* error_lang = NULL;
+	char *error_lang = NULL, *old_dbg_str = NULL, str[256];
 
 	// Default to generic, expecting VID:PID
 	VID = 0;
@@ -1088,13 +1103,23 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
+	// xusb is commonly used as a debug tool, so it's convenient to have debug output during libusb_init(),
+	// but since we can't call on libusb_set_option() before libusb_init(), we use the env variable method
+	old_dbg_str = getenv("LIBUSB_DEBUG");
+	if (debug_mode) {
+		if (putenv(debug_env_str) != 0)
+			printf("Unable to set debug level\n");
+	}
+
 	version = libusb_get_version();
 	printf("Using libusb v%d.%d.%d.%d\n\n", version->major, version->minor, version->micro, version->nano);
 	r = libusb_init(NULL);
 	if (r < 0)
 		return r;
 
-	libusb_set_debug(NULL, debug_mode?LIBUSB_LOG_LEVEL_DEBUG:LIBUSB_LOG_LEVEL_INFO);
+	// If not set externally, and no debug option was given, use info log level
+	if ((old_dbg_str == NULL) && (!debug_mode))
+		libusb_set_option(NULL, LIBUSB_OPTION_LOG_LEVEL, LIBUSB_LOG_LEVEL_INFO);
 	if (error_lang != NULL) {
 		r = libusb_setlocale(error_lang);
 		if (r < 0)
@@ -1104,6 +1129,11 @@ int main(int argc, char** argv)
 	test_device(VID, PID);
 
 	libusb_exit(NULL);
+
+	if (debug_mode) {
+		snprintf(str, sizeof(str), "LIBUSB_DEBUG=%s", (old_dbg_str == NULL)?"":old_dbg_str);
+		str[sizeof(str) - 1] = 0;	// Windows may not NUL terminate the string
+	}
 
 	return 0;
 }

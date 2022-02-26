@@ -48,7 +48,7 @@ android {
     }
 
 	packagingOptions {
-		pickFirst "lib/**/libusb100.so"
+		pickFirst "lib/**/libusb-1.0.so"
 		pickFirst "lib/**/libuvc.so"
 	}
 

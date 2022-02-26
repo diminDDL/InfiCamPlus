@@ -6,13 +6,17 @@
 # .git/hooks/ with the following content:
 # #!/bin/sh
 # if [ -x .private/post-rewrite.sh ]; then
-#   source .private/post-rewrite.sh
+#   . .private/post-rewrite.sh
 # fi
 #
 # NOTE: These versioning hooks are intended to be used *INTERNALLY* by the
 # libusb development team and are NOT intended to solve versioning for any
 # derivative branch, such as one you would create for private development.
 #
+
+if [ -n "$LIBUSB_SKIP_NANO" ]; then
+  exit 0
+fi
 
 case "$1" in
   amend)

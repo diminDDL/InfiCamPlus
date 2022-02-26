@@ -1,6 +1,3 @@
-# modified saki@serenegiant <t_saki@serenegiant.com>
-# Copyright (C)2014-2016
-#
 # Android build config for libusb
 # Copyright © 2012-2013 RealVNC Ltd. <toby.gray@realvnc.com>
 #
@@ -18,59 +15,46 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 #
-######################################################################
-# libusb.a
-######################################################################
-LOCAL_PATH			:= $(call my-dir)/../..
+
+LOCAL_PATH := $(call my-dir)
+LIBUSB_ROOT_REL := ../..
+LIBUSB_ROOT_ABS := $(LOCAL_PATH)/../..
+
+# libusb
+
 include $(CLEAR_VARS)
 
-# changed linux_usbfs.c => android_usbfs.c
-# changed linux_netlink.c => android_netlink.c
-# these sources are also modified.
 LOCAL_SRC_FILES := \
-	libusb/core.c \
-	libusb/descriptor.c \
-	libusb/hotplug.c \
-	libusb/io.c \
-	libusb/sync.c \
-	libusb/strerror.c \
-	libusb/os/android_usbfs.c \
-	libusb/os/poll_posix.c \
-	libusb/os/threads_posix.c \
-	libusb/os/android_netlink.c
+  $(LIBUSB_ROOT_REL)/libusb/core.c \
+  $(LIBUSB_ROOT_REL)/libusb/descriptor.c \
+  $(LIBUSB_ROOT_REL)/libusb/hotplug.c \
+  $(LIBUSB_ROOT_REL)/libusb/io.c \
+  $(LIBUSB_ROOT_REL)/libusb/sync.c \
+  $(LIBUSB_ROOT_REL)/libusb/strerror.c \
+  $(LIBUSB_ROOT_REL)/libusb/os/linux_usbfs.c \
+  $(LIBUSB_ROOT_REL)/libusb/os/events_posix.c \
+  $(LIBUSB_ROOT_REL)/libusb/os/threads_posix.c \
+  $(LIBUSB_ROOT_REL)/libusb/os/linux_netlink.c
 
 LOCAL_C_INCLUDES += \
-	$(LOCAL_PATH)/ \
-	$(LOCAL_PATH)/libusb \
-	$(LOCAL_PATH)/libusb/os \
-	$(LOCAL_PATH)/../ \
-	$(LOCAL_PATH)/../include \
-	$(LOCAL_PATH)/android \
+  $(LOCAL_PATH)/.. \
+  $(LIBUSB_ROOT_ABS)/libusb \
+  $(LIBUSB_ROOT_ABS)/libusb/os
 
 LOCAL_EXPORT_C_INCLUDES := \
-	$(LOCAL_PATH)/ \
-	$(LOCAL_PATH)/libusb
+  $(LIBUSB_ROOT_ABS)/libusb
 
-# add some flags
-LOCAL_CFLAGS := $(LOCAL_C_INCLUDES:%=-I%)
-LOCAL_CFLAGS += -DANDROID_NDK
-LOCAL_CFLAGS += -DLOG_NDEBUG
-LOCAL_CFLAGS += -DACCESS_RAW_DESCRIPTORS
-LOCAL_CFLAGS += -O3 -fstrict-aliasing -fprefetch-loop-arrays
-LOCAL_EXPORT_LDLIBS += -llog
-LOCAL_ARM_MODE := arm
+LOCAL_CFLAGS := -fvisibility=hidden -pthread
 
-LOCAL_MODULE := libusb100_static
-include $(BUILD_STATIC_LIBRARY)
+LOCAL_LDLIBS := -llog
 
-######################################################################
-# libusb100.so
-######################################################################
-include $(CLEAR_VARS)
-LOCAL_MODULE_TAGS := optional
-LOCAL_EXPORT_LDLIBS += -llog
+ifeq ($(USE_PC_NAME),1)
+  LOCAL_MODULE := usb-1.0
+else
+  LOCAL_MODULE := libusb1.0
+  $(warning Building to legacy library name libusb1.0, which differs from pkg-config.)
+  $(warning Use ndk-build USE_PC_NAME=1 to change the module name to the compatible usb-1.0.)
+  $(warning USE_PC_NAME=1 may be the default in the future.)
+endif
 
-LOCAL_WHOLE_STATIC_LIBRARIES = libusb100_static
-
-LOCAL_MODULE := libusb100
 include $(BUILD_SHARED_LIBRARY)

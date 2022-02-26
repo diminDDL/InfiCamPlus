@@ -45,6 +45,7 @@
 #include "UVCPreviewIR.h"
 #include "libuvc_internal.h"
 #include "InfiFrame.h"
+#include "../libuvc/include/libuvc/libuvc.h"
 
 JavaVM *savedVm; // TODO this is lame
 
@@ -129,9 +130,11 @@ int UVCPreviewIR::setPreviewSize(int width, int height, int min_fps, int max_fps
 		requestBandwidth = bandwidth;
 
 		uvc_stream_ctrl_t ctrl;
-		result = uvc_get_stream_ctrl_format_size_fps(mDeviceHandle, &ctrl,
+		/*result = uvc_get_stream_ctrl_format_size_fps(mDeviceHandle, &ctrl,
 			!requestMode ? UVC_FRAME_FORMAT_YUYV : UVC_FRAME_FORMAT_MJPEG,
-			requestWidth, requestHeight, requestMinFps, requestMaxFps);
+			requestWidth, requestHeight, requestMinFps, requestMaxFps);*/
+		// TODO is this any good?
+		result = uvc_get_stream_ctrl_format_size(mDeviceHandle, &ctrl, !requestMode ? UVC_FRAME_FORMAT_YUYV : UVC_FRAME_FORMAT_MJPEG, requestWidth, requestHeight, 25);
 	  ////LOGE("uvc_get_stream_ctrl_format_size_fps=%d", result);
 	}
 	RETURN(result, int);
@@ -287,7 +290,7 @@ int UVCPreviewIR::stopPreview() {
 
 void UVCPreviewIR::uvc_preview_frame_callback(struct uvc_frame *frame, void *vptr_args)
 {
-    //LOGE("uvc_preview_frame_callback00");
+    LOGE("uvc_preview_frame_callback00");
     UVCPreviewIR *preview = reinterpret_cast<UVCPreviewIR *>(vptr_args);
     unsigned short* tmp_buf = (unsigned short*)frame;
     ////LOGE("uvc_preview_frame_callback00  tmp_buf:%d,%d,%d,%d",tmp_buf[384*144*4],tmp_buf[384*144*4+1],tmp_buf[384*144*4+2],tmp_buf[384*144*4+3]);
@@ -295,7 +298,7 @@ void UVCPreviewIR::uvc_preview_frame_callback(struct uvc_frame *frame, void *vpt
     ////LOGE("uvc_preview_frame_callback hold_bytes:%d,preview->frameBytes:%d",hold_bytes,preview->frameBytes);
 
     size_t frameBytes = preview->requestWidth * preview->requestHeight * 2;
-    if(LIKELY( preview->isRunning()) && frame->actual_bytes >= frameBytes)
+    if(LIKELY( preview->isRunning()) && frame->data_bytes >= frameBytes)
     {
 		//LOGE("uvc_preview_frame_callback01");
 		memcpy(preview->OutBuffer, frame->data, frameBytes);
@@ -306,7 +309,7 @@ void UVCPreviewIR::uvc_preview_frame_callback(struct uvc_frame *frame, void *vpt
 		preview->HoldBuffer = tmp_buf;
 		pthread_cond_signal(&preview->preview_sync);
     }
-    //LOGE("uvc_preview_frame_callback03");
+    LOGE("uvc_preview_frame_callback03");
 }
 
 void *UVCPreviewIR::preview_thread_func(void *vptr_args)
@@ -370,10 +373,12 @@ int UVCPreviewIR::prepare_preview(uvc_stream_ctrl_t *ctrl) {
 	}*/
 
     mInitData=new unsigned short[requestWidth*(requestHeight-4)+10];
-	result = uvc_get_stream_ctrl_format_size_fps(mDeviceHandle, ctrl,
+	/*result = uvc_get_stream_ctrl_format_size_fps(mDeviceHandle, ctrl,
 		!requestMode ? UVC_FRAME_FORMAT_YUYV : UVC_FRAME_FORMAT_MJPEG,
 		requestWidth, requestHeight, requestMinFps, requestMaxFps
-	);
+	);*/
+	// TODO verify
+	result = uvc_get_stream_ctrl_format_size(mDeviceHandle, ctrl, !requestMode ? UVC_FRAME_FORMAT_YUYV : UVC_FRAME_FORMAT_MJPEG, requestWidth, requestHeight, 25);
 	////LOGE("re:%d,frameSize=(%d,%d)@%d,%d",result, requestWidth, requestHeight, requestMinFps,requestMaxFps);
 	if (LIKELY(!result))
 	{
@@ -381,12 +386,15 @@ int UVCPreviewIR::prepare_preview(uvc_stream_ctrl_t *ctrl) {
                 uvc_print_stream_ctrl(ctrl, stderr);
         #endif
 		uvc_frame_desc_t *frame_desc;
-		result = uvc_get_frame_desc(mDeviceHandle, ctrl, &frame_desc);
-		if (LIKELY(!result))
+		//result = uvc_get_frame_desc(mDeviceHandle, ctrl, &frame_desc);
+		//if (LIKELY(!result))
+		if (1)
 		 {
-			frameWidth = frame_desc->wWidth;
-			frameHeight = frame_desc->wHeight;
-			////LOGE("frameSize=(%d,%d)@%s", frameWidth, frameHeight, (!requestMode ? "YUYV" : "MJPEG"));
+			//frameWidth = frame_desc->wWidth;
+			//frameHeight = frame_desc->wHeight;
+			frameWidth = requestWidth;
+			frameHeight = requestHeight;
+			LOGE("frameSize=(%d,%d)@%s", frameWidth, frameHeight, (!requestMode ? "YUYV" : "MJPEG"));
 			pthread_mutex_lock(&preview_mutex);
 			if (LIKELY(mPreviewWindow)) {
 				ANativeWindow_setBuffersGeometry(mPreviewWindow,
@@ -401,7 +409,7 @@ int UVCPreviewIR::prepare_preview(uvc_stream_ctrl_t *ctrl) {
 	}
 	else
 	 {
-		////LOGE("could not negotiate with camera:err=%d", result);
+		LOGE("could not negotiate with camera:err=%d", result);
 	 }
 	ic.init(requestWidth, requestHeight, (cameraLens == 68) ? 3 : 1, rangeMode);
 	RETURN(result, int);
@@ -410,13 +418,17 @@ int UVCPreviewIR::prepare_preview(uvc_stream_ctrl_t *ctrl) {
 void UVCPreviewIR::do_preview(uvc_stream_ctrl_t *ctrl) {
 	ENTER();
     //////LOGE("do_preview");
-	uvc_error_t result = uvc_start_streaming_bandwidth(mDeviceHandle, ctrl, uvc_preview_frame_callback, (void *)this, requestBandwidth, 0);
+	//uvc_error_t result = uvc_start_streaming_bandwidth(mDeviceHandle, ctrl, uvc_preview_frame_callback, (void *)this, requestBandwidth, 0);
+	uvc_error_t result = uvc_start_streaming(mDeviceHandle, ctrl, uvc_preview_frame_callback, (void *) this, 0);
 	if (LIKELY(!result)) {
 		for ( ; LIKELY(isRunning()) ; )
 		{
+			LOGE("RUNNING...");
             pthread_mutex_lock(&preview_mutex);
             {
+				LOGE("WAIT... %d", isRunning());
                 pthread_cond_wait(&preview_sync, &preview_mutex);
+				LOGE("GO!");
 
 				// swap the buffers rgba
 				uint8_t *tmp_buf = RgbaOutBuffer;
@@ -444,7 +456,9 @@ void UVCPreviewIR::do_preview(uvc_stream_ctrl_t *ctrl) {
 				mIsComputed=true;
             }
             pthread_mutex_unlock(&preview_mutex);
+			LOGE("LOOPEND RUNNING...");
 	    }
+		LOGE("STOP RUNNING...");
 
 		uvc_stop_streaming(mDeviceHandle);
 	} else {
