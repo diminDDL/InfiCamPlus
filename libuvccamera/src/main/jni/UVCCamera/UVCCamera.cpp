@@ -53,7 +53,6 @@ UVCCamera::UVCCamera()
 	mContext(NULL),
 	mDevice(NULL),
 	mDeviceHandle(NULL),
-	mStatusCallback(NULL),
 	mPreview(NULL) {
 
 	ENTER();
@@ -104,7 +103,6 @@ int UVCCamera::connect(int vid, int pid, int fd, int busnum, int devaddr, const 
 				uvc_print_diag(mDeviceHandle, stderr);
 #endif
 				mFd = fd;
-				mStatusCallback = new UVCStatusCallback(mDeviceHandle);
 				mPreview = new UVCPreviewIR(mDeviceHandle);
 			} else {
 				// open出来なかった時
@@ -152,15 +150,6 @@ int UVCCamera::release() {
         mFd = -1;
     }
 	RETURN(0, int);
-}
-
-int UVCCamera::setStatusCallback(JNIEnv *env, jobject status_callback_obj) {
-	ENTER();
-	int result = EXIT_FAILURE;
-	if (mStatusCallback) {
-		result = mStatusCallback->setCallback(env, status_callback_obj);
-	}
-	RETURN(result, int);
 }
 
 char *UVCCamera::getSupportedSize() {

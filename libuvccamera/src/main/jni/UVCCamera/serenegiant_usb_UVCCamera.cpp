@@ -165,19 +165,6 @@ JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeRelease(JNIEnv *env, jclass 
 	RETURN(result, jint);
 }
 
-//======================================================================
-JNIEXPORT jint Java_com_serenegiant_UVCCamera_Java_com_serenegiant_UVCCamera_nativeSetStatusCallback(JNIEnv *env, jobject thiz, ID_TYPE id_camera,
-                                    jobject jIStatusCallback) {
-	jint result = JNI_ERR;
-	ENTER();
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
-	if (LIKELY(camera)) {
-		jobject status_callback_obj = env->NewGlobalRef(jIStatusCallback);
-		result = camera->setStatusCallback(env, status_callback_obj);
-	}
-	RETURN(result, jint);
-}
-
 JNIEXPORT jstring Java_com_serenegiant_UVCCamera_nativeGetSupportedSize(JNIEnv *env, jclass thiz, ID_TYPE id_camera) {
 	ENTER();
 	jstring result = NULL;

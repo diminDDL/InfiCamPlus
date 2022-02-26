@@ -78,8 +78,6 @@ public class UVCCamera {
 
 	// these fields from here are accessed from native code and do not change name and remove
     protected long mNativePtr;
-    protected int mBrightnessMin, mBrightnessMax, mBrightnessDef; // TODO (netman) I am not sure we need the brightness and contrast stuff
-    protected int mContrastMin, mContrastMax, mContrastDef;
     // until here
 
     /**
