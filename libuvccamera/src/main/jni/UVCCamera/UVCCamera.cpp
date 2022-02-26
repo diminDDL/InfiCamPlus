@@ -82,6 +82,7 @@ int UVCCamera::connect(int vid, int pid, int fd, int busnum, int devaddr, const 
 	uvc_error_t result = UVC_ERROR_BUSY;
 	if (!mDeviceHandle && fd) {
 		if (UNLIKELY(!mContext)) {
+			// TODO originally usbfs is strdup'd, libusb holds on to the pointer so we should too
 			result = uvc_init2(&mContext, NULL, usbfs);
 //			libusb_set_debug(mContext->usb_ctx, LIBUSB_LOG_LEVEL_DEBUG);
 			if (UNLIKELY(result < 0)) {

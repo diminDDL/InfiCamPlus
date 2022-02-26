@@ -122,6 +122,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		final CameraThread thread = mWeakThread.get();
 		return thread != null && thread.isCameraOpened();
 	}
+
 	public byte [] getTemperaturePara(int len) {
 		final CameraThread thread = mWeakThread.get();
 		if((thread != null)&&(thread.mUVCCamera)!=null) {
