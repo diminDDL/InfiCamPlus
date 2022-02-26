@@ -133,8 +133,8 @@ int UVCPreviewIR::setPreviewSize(int width, int height, int min_fps, int max_fps
 		/*result = uvc_get_stream_ctrl_format_size_fps(mDeviceHandle, &ctrl,
 			!requestMode ? UVC_FRAME_FORMAT_YUYV : UVC_FRAME_FORMAT_MJPEG,
 			requestWidth, requestHeight, requestMinFps, requestMaxFps);*/
-		// TODO is this any good?
-		result = uvc_get_stream_ctrl_format_size(mDeviceHandle, &ctrl, !requestMode ? UVC_FRAME_FORMAT_YUYV : UVC_FRAME_FORMAT_MJPEG, requestWidth, requestHeight, 25);
+		// TODO what purpose does this serve, do we even need this?
+		result = uvc_get_stream_ctrl_format_size(mDeviceHandle, &ctrl, !requestMode ? UVC_FRAME_FORMAT_YUYV : UVC_FRAME_FORMAT_MJPEG, requestWidth, requestHeight, 0);
 	  ////LOGE("uvc_get_stream_ctrl_format_size_fps=%d", result);
 	}
 	RETURN(result, int);
@@ -377,8 +377,8 @@ int UVCPreviewIR::prepare_preview(uvc_stream_ctrl_t *ctrl) {
 		!requestMode ? UVC_FRAME_FORMAT_YUYV : UVC_FRAME_FORMAT_MJPEG,
 		requestWidth, requestHeight, requestMinFps, requestMaxFps
 	);*/
-	// TODO verify
-	result = uvc_get_stream_ctrl_format_size(mDeviceHandle, ctrl, !requestMode ? UVC_FRAME_FORMAT_YUYV : UVC_FRAME_FORMAT_MJPEG, requestWidth, requestHeight, 25);
+	// TODO do we need to free() this ctrl stuff etc?
+	result = uvc_get_stream_ctrl_format_size(mDeviceHandle, ctrl, !requestMode ? UVC_FRAME_FORMAT_YUYV : UVC_FRAME_FORMAT_MJPEG, requestWidth, requestHeight, 0);
 	////LOGE("re:%d,frameSize=(%d,%d)@%d,%d",result, requestWidth, requestHeight, requestMinFps,requestMaxFps);
 	if (LIKELY(!result))
 	{
@@ -417,18 +417,13 @@ int UVCPreviewIR::prepare_preview(uvc_stream_ctrl_t *ctrl) {
 
 void UVCPreviewIR::do_preview(uvc_stream_ctrl_t *ctrl) {
 	ENTER();
-    LOGE("do_preview 111");
-	//uvc_error_t result = uvc_start_streaming_bandwidth(mDeviceHandle, ctrl, uvc_preview_frame_callback, (void *)this, requestBandwidth, 0);
 	uvc_error_t result = uvc_start_streaming(mDeviceHandle, ctrl, uvc_preview_frame_callback, (void *) this, 0);
 	if (LIKELY(!result)) {
 		for ( ; LIKELY(isRunning()) ; )
 		{
-			LOGE("RUNNING...");
             pthread_mutex_lock(&preview_mutex);
             {
-				LOGE("WAIT... %d", isRunning());
                 pthread_cond_wait(&preview_sync, &preview_mutex);
-				LOGE("GO!");
 
 				// swap the buffers rgba
 				uint8_t *tmp_buf = RgbaOutBuffer;
@@ -456,9 +451,7 @@ void UVCPreviewIR::do_preview(uvc_stream_ctrl_t *ctrl) {
 				mIsComputed=true;
             }
             pthread_mutex_unlock(&preview_mutex);
-			LOGE("LOOPEND RUNNING...");
 	    }
-		LOGE("STOP RUNNING...");
 
 		uvc_stop_streaming(mDeviceHandle);
 	} else {
