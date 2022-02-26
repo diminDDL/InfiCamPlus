@@ -35,16 +35,16 @@
 ######################################################################
 # libuvc_static.a (static library with static link to libjpeg, libusb1.0)
 ######################################################################
-LOCAL_PATH	:= $(call my-dir)/..
+LOCAL_PATH	:= $(call my-dir)/../libuvc
 include $(CLEAR_VARS)
 
 LOCAL_C_INCLUDES += \
-	$(LOCAL_PATH)/.. \
+	$(LOCAL_PATH)/../libuvc_build \
 	$(LOCAL_PATH)/include \
 	$(LOCAL_PATH)/include/libuvc
 
 LOCAL_EXPORT_C_INCLUDES := \
-	$(LOCAL_PATH)/ \
+	$(LOCAL_PATH) \
 	$(LOCAL_PATH)/include \
 	$(LOCAL_PATH)/include/libuvc
 
@@ -60,13 +60,13 @@ LOCAL_ARM_MODE := arm
 LOCAL_SHARED_LIBRARIES += usb1.0
 
 LOCAL_SRC_FILES := \
-	src/ctrl.c \
-	src/ctrl-gen.c \
-	src/device.c \
-	src/diag.c \
-	src/frame.c \
-	src/init.c \
-	src/stream.c
+	$(LOCAL_PATH)/src/ctrl.c \
+	$(LOCAL_PATH)/src/ctrl-gen.c \
+	$(LOCAL_PATH)/src/device.c \
+	$(LOCAL_PATH)/src/diag.c \
+	$(LOCAL_PATH)/src/frame.c \
+	$(LOCAL_PATH)/src/init.c \
+	$(LOCAL_PATH)/src/stream.c
 
 LOCAL_MODULE := libuvc_static
 include $(BUILD_STATIC_LIBRARY)

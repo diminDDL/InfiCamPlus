@@ -4,7 +4,7 @@
 # * 
 # * Copyright (c) 2014-2017 saki t_saki@serenegiant.com
 # * 
-# * File name: Android.mk
+# * File name: libuvc.mk
 # * 
 # * Licensed under the Apache License, Version 2.0 (the "License");
 # * you may not use this file except in compliance with the License.
@@ -34,7 +34,9 @@ LOCAL_PATH	:= $(call my-dir)
 include $(CLEAR_VARS)
 CFLAGS := -Werror
 
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/../libusb/libusb
+LOCAL_C_INCLUDES := \
+	$(LOCAL_PATH)/../libusb/libusb \
+	$(LOCAL_PATH)/../libuvc_build
 
 LOCAL_CFLAGS := $(LOCAL_C_INCLUDES:%=-I%)
 LOCAL_CFLAGS += -DANDROID_NDK
