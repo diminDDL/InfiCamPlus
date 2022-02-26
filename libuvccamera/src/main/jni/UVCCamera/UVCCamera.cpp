@@ -229,14 +229,6 @@ void UVCCamera::whenShutRefresh() {
 	EXIT();
 }
 
-void UVCCamera::whenChangeTempPara() {
-	ENTER();
-	if (mDeviceHandle) {
-		//return mPreview->whenChangeTempPara();
-	}
-	EXIT();
-}
-
 int UVCCamera::stopPreview() {
 	ENTER();
 	if (LIKELY(mPreview)) {

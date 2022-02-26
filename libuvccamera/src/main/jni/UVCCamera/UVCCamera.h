@@ -67,7 +67,6 @@ public:
 	void setShutterFix(float mShutterFix);
 	void setCameraLens(int mCameraLens);
 	int getByteArrayTemperaturePara(uint8_t* para);
-	void whenChangeTempPara();
 
 	char *getSupportedSize(const uvc_device_handle_t *deviceHandle);
 };

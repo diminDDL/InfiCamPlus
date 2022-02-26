@@ -354,18 +354,15 @@ public class UVCCamera {
     private final native int nativeConnect(long id_camera, int venderId, int productId, int fileDescriptor, int busNum, int devAddr, String usbfs);
 
     private static final native int nativeRelease(final long id_camera);
-	private static final native int nativeSetStatusCallback(final long mNativePtr, final IStatusCallback callback);
     private static final native int nativeSetPreviewSize(final long id_camera, final int width, final int height, final int min_fps, final int max_fps, final int mode, final float bandwidth);
     private static final native String nativeGetSupportedSize(final long id_camera);
     private static final native int nativeStartPreview(final long id_camera);
     private static final native int nativeStopPreview(final long id_camera);
     private static final native int nativeSetPreviewDisplay(final long id_camera, final Surface surface);
-    private static final native int nativeGetByteArrayPicture(final long mNativePtr,byte[] frame);
 	private static final native int nativeSetUserPalette(final long mNativePtr,int typeOfPalette,byte[] palette);
 	private static final native byte[] nativeGetByteArrayTemperaturePara(final long mNativePtr,int len);
 	private static final native int nativeSetTemperatureCallback(final long mNativePtr,  final ITemperatureCallback callback);
 	private static final native void nativeWhenShutRefresh(final long mNativePtr);
-	private static final native void nativeWhenChangeTempPara(final long mNativePtr);
 	private static final native void nativeChangePalette(final long id_camera, int typeOfPalette);
 	private static final native void nativeSetTempRange(final long id_camera, int range);
 	private static final native void nativeSetShutterFix(final long id_camera, float mShutterFix);

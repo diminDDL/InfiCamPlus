@@ -39,6 +39,8 @@
 #include "libUVCCamera.h"
 #include "UVCCamera.h"
 
+extern "C" {
+
 /**
  * set the value into the long field
  * @param env: this param should not be null
@@ -118,7 +120,7 @@ jint setField_int(JNIEnv *env, jobject java_obj, const char *field_name, jint va
 	return val;
 }
 
-static ID_TYPE nativeCreate(JNIEnv *env, jobject thiz) {
+JNIEXPORT ID_TYPE Java_com_serenegiant_UVCCamera_nativeCreate(JNIEnv *env, jobject thiz) {
 	ENTER();
 	UVCCamera *camera = new UVCCamera();
 	setField_long(env, thiz, "mNativePtr", reinterpret_cast<ID_TYPE>(camera));
@@ -126,7 +128,7 @@ static ID_TYPE nativeCreate(JNIEnv *env, jobject thiz) {
 }
 
 // native側のカメラオブジェクトを破棄
-static void nativeDestroy(JNIEnv *env, jobject thiz, ID_TYPE id_camera) {
+JNIEXPORT void Java_com_serenegiant_UVCCamera_nativeDestroy(JNIEnv *env, jobject thiz, ID_TYPE id_camera) {
 	ENTER();
 	setField_long(env, thiz, "mNativePtr", 0);
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
@@ -138,7 +140,7 @@ static void nativeDestroy(JNIEnv *env, jobject thiz, ID_TYPE id_camera) {
 
 //======================================================================
 // カメラへ接続
-static jint nativeConnect(JNIEnv *env, jobject thiz, ID_TYPE id_camera, jint vid, jint pid,
+JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeConnect(JNIEnv *env, jobject thiz, ID_TYPE id_camera, jint vid, jint pid,
                           jint fd, jint busNum, jint devAddr, jstring usbfs_str) {
 	ENTER();
 	int result = JNI_ERR;
@@ -153,7 +155,7 @@ static jint nativeConnect(JNIEnv *env, jobject thiz, ID_TYPE id_camera, jint vid
 }
 
 // カメラとの接続を解除
-static jint nativeRelease(JNIEnv *env, jobject thiz, ID_TYPE id_camera) {
+JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeRelease(JNIEnv *env, jclass thiz, ID_TYPE id_camera) {
 	ENTER();
 	int result = JNI_ERR;
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
@@ -164,7 +166,7 @@ static jint nativeRelease(JNIEnv *env, jobject thiz, ID_TYPE id_camera) {
 }
 
 //======================================================================
-static jint nativeSetStatusCallback(JNIEnv *env, jobject thiz, ID_TYPE id_camera,
+JNIEXPORT jint Java_com_serenegiant_UVCCamera_Java_com_serenegiant_UVCCamera_nativeSetStatusCallback(JNIEnv *env, jobject thiz, ID_TYPE id_camera,
                                     jobject jIStatusCallback) {
 	jint result = JNI_ERR;
 	ENTER();
@@ -176,7 +178,7 @@ static jint nativeSetStatusCallback(JNIEnv *env, jobject thiz, ID_TYPE id_camera
 	RETURN(result, jint);
 }
 
-static jobject nativeGetSupportedSize(JNIEnv *env, jobject thiz, ID_TYPE id_camera) {
+JNIEXPORT jstring Java_com_serenegiant_UVCCamera_nativeGetSupportedSize(JNIEnv *env, jclass thiz, ID_TYPE id_camera) {
 	ENTER();
 	jstring result = NULL;
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
@@ -187,10 +189,10 @@ static jobject nativeGetSupportedSize(JNIEnv *env, jobject thiz, ID_TYPE id_came
 			free(c_str);
 		}
 	}
-	RETURN(result, jobject);
+	RETURN(result, jstring);
 }
 
-static jbyteArray nativeGetByteArrayTemperaturePara(JNIEnv *env, jobject thiz, ID_TYPE id_camera,
+JNIEXPORT jbyteArray Java_com_serenegiant_UVCCamera_nativeGetByteArrayTemperaturePara(JNIEnv *env, jclass thiz, ID_TYPE id_camera,
                                                     int len) {
 	ENTER();
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
@@ -206,7 +208,7 @@ static jbyteArray nativeGetByteArrayTemperaturePara(JNIEnv *env, jobject thiz, I
 	return array;
 }
 
-static jint nativeSetUserPalette(JNIEnv *env, jobject thiz, ID_TYPE id_camera, jint typeOfPalette,
+JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeSetUserPalette(JNIEnv *env, jclass thiz, ID_TYPE id_camera, jint typeOfPalette,
                                  jbyteArray palette) {
 	ENTER();
 	int status=0;
@@ -221,7 +223,7 @@ static jint nativeSetUserPalette(JNIEnv *env, jobject thiz, ID_TYPE id_camera, j
 
 //======================================================================
 // プレビュー画面の大きさをセット
-static jint nativeSetPreviewSize(JNIEnv *env, jobject thiz, ID_TYPE id_camera, jint width,
+JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeSetPreviewSize(JNIEnv *env, jclass thiz, ID_TYPE id_camera, jint width,
                                  jint height, jint min_fps, jint max_fps, jint mode,
                                  jfloat bandwidth) {
 	ENTER();
@@ -232,7 +234,7 @@ static jint nativeSetPreviewSize(JNIEnv *env, jobject thiz, ID_TYPE id_camera, j
 	RETURN(JNI_ERR, jint);
 }
 
-static jint nativeStartPreview(JNIEnv *env, jobject thiz, ID_TYPE id_camera) {
+JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeStartPreview(JNIEnv *env, jclass thiz, ID_TYPE id_camera) {
 	ENTER();
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
@@ -242,7 +244,7 @@ static jint nativeStartPreview(JNIEnv *env, jobject thiz, ID_TYPE id_camera) {
 }
 
 // プレビューを停止
-static jint nativeStopPreview(JNIEnv *env, jobject thiz, ID_TYPE id_camera) {
+JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeStopPreview(JNIEnv *env, jclass thiz, ID_TYPE id_camera) {
 	jint result = JNI_ERR;
 	ENTER();
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
@@ -252,7 +254,7 @@ static jint nativeStopPreview(JNIEnv *env, jobject thiz, ID_TYPE id_camera) {
 	RETURN(result, jint);
 }
 
-static jint nativeSetPreviewDisplay(JNIEnv *env, jobject thiz, ID_TYPE id_camera,
+JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeSetPreviewDisplay(JNIEnv *env, jclass thiz, ID_TYPE id_camera,
                                     jobject jSurface) {
 	jint result = JNI_ERR;
 	ENTER();
@@ -264,7 +266,7 @@ static jint nativeSetPreviewDisplay(JNIEnv *env, jobject thiz, ID_TYPE id_camera
 	RETURN(result, jint);
 }
 
-static jint nativeSetTemperatureCallback(JNIEnv *env, jobject thiz, ID_TYPE id_camera,
+JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeSetTemperatureCallback(JNIEnv *env, jclass thiz, ID_TYPE id_camera,
                                          jobject jITemperatureCallback) {
 //LOGE("nativeSetTemperatureCallback1");
 	jint result = JNI_ERR;
@@ -278,7 +280,7 @@ static jint nativeSetTemperatureCallback(JNIEnv *env, jobject thiz, ID_TYPE id_c
 	RETURN(result, jint);
 }
 
-static void nativeWhenShutRefresh(JNIEnv *env, jobject thiz,ID_TYPE id_camera) {
+JNIEXPORT void Java_com_serenegiant_UVCCamera_nativeWhenShutRefresh(JNIEnv *env, jclass thiz,ID_TYPE id_camera) {
 //LOGE("nativeWhenShutRefresh");
 	ENTER();
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
@@ -288,17 +290,7 @@ static void nativeWhenShutRefresh(JNIEnv *env, jobject thiz,ID_TYPE id_camera) {
 	EXIT();
 }
 
-static void nativeWhenChangeTempPara(JNIEnv *env, jobject thiz,ID_TYPE id_camera) {
-//LOGE("nativeWhenShutRefresh");
-	ENTER();
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
-	if (LIKELY(camera)) {
-		camera->whenChangeTempPara();
-	}
-	EXIT();
-}
-
-static jint nativeStartStopTemp(JNIEnv *env, jobject thiz, ID_TYPE id_camera, jint startStop) {
+JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeStartStopTemp(JNIEnv *env, jclass thiz, ID_TYPE id_camera, jint startStop) {
 	jint result = JNI_ERR;
 	ENTER();
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
@@ -312,7 +304,7 @@ static jint nativeStartStopTemp(JNIEnv *env, jobject thiz, ID_TYPE id_camera, ji
 	RETURN(result, jint);
 }
 
-static void nativeChangePalette(JNIEnv *env, jobject thiz, ID_TYPE id_camera, jint typeOfPalette) {
+JNIEXPORT void Java_com_serenegiant_UVCCamera_nativeChangePalette(JNIEnv *env, jclass thiz, ID_TYPE id_camera, jint typeOfPalette) {
 	ENTER();
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
@@ -321,7 +313,7 @@ static void nativeChangePalette(JNIEnv *env, jobject thiz, ID_TYPE id_camera, ji
 	EXIT();
 }
 
-static void nativeSetTempRange(JNIEnv *env, jobject thiz, ID_TYPE id_camera, jint range) {
+JNIEXPORT void Java_com_serenegiant_UVCCamera_nativeSetTempRange(JNIEnv *env, jclass thiz, ID_TYPE id_camera, jint range) {
 	ENTER();
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
@@ -330,7 +322,7 @@ static void nativeSetTempRange(JNIEnv *env, jobject thiz, ID_TYPE id_camera, jin
 	EXIT();
 }
 
-static void nativeSetShutterFix(JNIEnv *env, jobject thiz, ID_TYPE id_camera, jfloat mShutterFix) {
+JNIEXPORT void Java_com_serenegiant_UVCCamera_nativeSetShutterFix(JNIEnv *env, jclass thiz, ID_TYPE id_camera, jfloat mShutterFix) {
 	ENTER();
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
@@ -339,7 +331,7 @@ static void nativeSetShutterFix(JNIEnv *env, jobject thiz, ID_TYPE id_camera, jf
 	EXIT();
 }
 
-static void nativeSetCameraLens(JNIEnv *env, jobject thiz, ID_TYPE id_camera, jint mCameraLens) {
+JNIEXPORT void Java_com_serenegiant_UVCCamera_nativeSetCameraLens(JNIEnv *env, jclass thiz, ID_TYPE id_camera, jint mCameraLens) {
 	ENTER();
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
@@ -348,7 +340,7 @@ static void nativeSetCameraLens(JNIEnv *env, jobject thiz, ID_TYPE id_camera, ji
 	EXIT();
 }
 
-static jint nativeSetZoom(JNIEnv *env, jobject thiz, ID_TYPE id_camera, jint zoom) {
+JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeSetZoom(JNIEnv *env, jclass thiz, ID_TYPE id_camera, jint zoom) {
 	jint result = JNI_ERR;
 	ENTER();
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
@@ -358,62 +350,4 @@ static jint nativeSetZoom(JNIEnv *env, jobject thiz, ID_TYPE id_camera, jint zoo
 	RETURN(result, jint);
 }
 
-//**********************************************************************
-//
-//**********************************************************************
-jint registerNativeMethods(JNIEnv* env, const char *class_name, JNINativeMethod *methods,
-                           int num_methods) {
-	int result = 0;
-
-	jclass clazz = env->FindClass(class_name);
-	if (LIKELY(clazz)) {
-		int result = env->RegisterNatives(clazz, methods, num_methods);
-		if (UNLIKELY(result < 0)) {
-			LOGE("registerNativeMethods failed(class=%s)", class_name);
-		}
-	} else {
-		LOGE("registerNativeMethods: class'%s' not found", class_name);
-	}
-	return result;
-}
-
-static JNINativeMethod methods[] = {
-	{ "nativeCreate",                       "()J", (void *) nativeCreate },
-	{ "nativeDestroy",                      "(J)V", (void *) nativeDestroy },
-
-	{ "nativeConnect",                      "(JIIIIILjava/lang/String;)I", (void *) nativeConnect },
-	{ "nativeRelease",                      "(J)I", (void *) nativeRelease },
-
-	{ "nativeSetTemperatureCallback",       "(JLcom/serenegiant/ITemperatureCallback;)I", (void *) nativeSetTemperatureCallback },
-    { "nativeWhenShutRefresh",              "(J)V", (void *) nativeWhenShutRefresh },
-    { "nativeWhenChangeTempPara",           "(J)V", (void *) nativeWhenChangeTempPara },
-
-	{ "nativeSetStatusCallback",            "(JLcom/serenegiant/IStatusCallback;)I", (void *) nativeSetStatusCallback },
-
-	{ "nativeGetSupportedSize",             "(J)Ljava/lang/String;", (void *) nativeGetSupportedSize },
-	{ "nativeSetPreviewSize",               "(JIIIIIF)I", (void *) nativeSetPreviewSize },
-	{ "nativeStartPreview",                 "(J)I", (void *) nativeStartPreview },
-	{ "nativeStopPreview",                  "(J)I", (void *) nativeStopPreview },
-	{ "nativeSetPreviewDisplay",            "(JLandroid/view/Surface;)I", (void *) nativeSetPreviewDisplay },
-    { "nativeSetUserPalette",               "(JI[B)I", (void *) nativeSetUserPalette },
-	{ "nativeGetByteArrayTemperaturePara",  "(JI)[B", (void *) nativeGetByteArrayTemperaturePara },
-
-    { "nativeStartStopTemp",                "(JI)I", (void *) nativeStartStopTemp },
-
-    { "nativeChangePalette",                "(JI)V", (void *) nativeChangePalette },
-    { "nativeSetTempRange",                 "(JI)V", (void *) nativeSetTempRange },
-    { "nativeSetShutterFix",                "(JF)V", (void *) nativeSetShutterFix },
-    { "nativeSetCameraLens",                "(JI)V", (void *) nativeSetCameraLens },
-
-	{ "nativeSetZoom",                      "(JI)I", (void *) nativeSetZoom },
-};
-
-int register_uvccamera(JNIEnv *env) {
-	LOGV("register_uvccamera:");
-	if (registerNativeMethods(env,
-		"com/serenegiant/UVCCamera",
-		methods, NUM_ARRAY_ELEMENTS(methods)) < 0) {
-		return -1;
-	}
-	return 0;
-}
+} /* extern "C" */
