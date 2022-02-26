@@ -79,7 +79,9 @@ public:
      */
     void readParams(uint16_t *frame);
 
-    /* The strings are 16 bytes, no guarantee of 0 termination. */
+    /* The strings are 16 bytes, no guarantee of 0 termination.
+     * Accepts NULL for values you don't want copied.
+     */
    void readVersion(uint16_t *frame, char *product, char *serial, char *fw_version);
 };
 

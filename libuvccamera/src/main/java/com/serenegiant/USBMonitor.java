@@ -630,6 +630,7 @@ public final class USBMonitor {
 	public static final String getDeviceKeyName(final UsbDevice device, final boolean useNewAPI) {
 		return getDeviceKeyName(device, null, useNewAPI);
 	}
+
 	/**
 	 * USB機器毎の設定保存用にデバイスキー名を生成する。この機器名をHashMapのキーにする
 	 * UsbDeviceがopenしている時のみ有効

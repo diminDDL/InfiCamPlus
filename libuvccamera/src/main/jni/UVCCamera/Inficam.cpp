@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <cstring> /* memcpy() */
+#include <cstdlib> /* NULL */
 
 static const float zeroc = 273.15;
 
@@ -163,7 +164,10 @@ void Inficam::readParams(uint16_t *frame) {
 }
 
 void Inficam::readVersion(uint16_t *frame, char *product, char *serial, char *fw_version) {
-    memcpy(product, frame + s2_offset + 40, 16);
-    memcpy(serial, frame + s2_offset + 32, 16);
-    memcpy(fw_version, frame + s2_offset + 24, 16);
+    if (product != NULL)
+        memcpy(product, frame + s2_offset + 40, 16);
+    if (serial != NULL)
+        memcpy(serial, frame + s2_offset + 32, 16);
+    if (fw_version != NULL)
+        memcpy(fw_version, frame + s2_offset + 24, 16);
 }

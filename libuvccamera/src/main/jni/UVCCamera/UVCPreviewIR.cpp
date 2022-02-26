@@ -61,8 +61,6 @@ UVCPreviewIR::UVCPreviewIR(uvc_device_handle_t *devh)
 	requestBandwidth(DEFAULT_BANDWIDTH),
 	frameWidth(DEFAULT_PREVIEW_WIDTH),
 	frameHeight(DEFAULT_PREVIEW_HEIGHT),
-	frameBytes(DEFAULT_PREVIEW_WIDTH * DEFAULT_PREVIEW_HEIGHT * 2),	// YUYV
-	frameMode(0),
 	previewFormat(WINDOW_FORMAT_RGBX_8888),
 	mIsRunning(false),
 	isNeedWriteTable(true),
@@ -75,16 +73,10 @@ UVCPreviewIR::UVCPreviewIR(uvc_device_handle_t *devh)
     mTypeOfPalette=0;
     rangeMode=120;
     floatFpaTmp=0;
-    correction=0;
     Refltmp=0;
     Airtmp=0;
     humi=0;
-    emiss=0;
-    distance=0;
     cameraLens=130;//130;//镜头大小:目前支持两种，68：使用6.8mm镜头，130：使用13mm镜头,默认130。
-    shutterFix=0;
-    shutTemper=0;
-    coreTemper=0;
     memset(sn, 0, 32);
     memset(cameraSoftVersion, 0, 16);
     memset(UserPalette,0,3*256*sizeof(unsigned char));
@@ -309,8 +301,7 @@ void UVCPreviewIR::uvc_preview_frame_callback(struct uvc_frame *frame, void *vpt
 		memcpy(preview->OutBuffer, frame->data, frameBytes);
 		//LOGE("uvc_preview_frame_callback02");
 		/* swap the buffers org */
-		uint8_t* tmp_buf = NULL;
-		tmp_buf = preview->OutBuffer;
+		uint8_t *tmp_buf = preview->OutBuffer;
 		preview->OutBuffer = preview->HoldBuffer;
 		preview->HoldBuffer = tmp_buf;
 		pthread_cond_signal(&preview->preview_sync);
@@ -409,13 +400,12 @@ int UVCPreviewIR::prepare_preview(uvc_stream_ctrl_t *ctrl) {
 			frameWidth = requestWidth;
 			frameHeight = requestHeight;
 		}
-		frameMode = requestMode;
-		frameBytes = frameWidth * frameHeight * (!requestMode ? 2 : 4);
 	}
 	else
 	 {
 		////LOGE("could not negotiate with camera:err=%d", result);
 	 }
+	ic.init(requestWidth, requestHeight, (cameraLens == 68) ? 3 : 1, rangeMode);
 	RETURN(result, int);
 }
 
@@ -423,8 +413,7 @@ void UVCPreviewIR::do_preview(uvc_stream_ctrl_t *ctrl) {
 	ENTER();
     //////LOGE("do_preview");
 	uvc_error_t result = uvc_start_streaming_bandwidth(mDeviceHandle, ctrl, uvc_preview_frame_callback, (void *)this, requestBandwidth, 0);
-	if (LIKELY(!result))
-	{
+	if (LIKELY(!result)) {
 		//pthread_create(&capture_thread, NULL, capture_thread_func, (void *)this);
 	    //pthread_create(&temperature_thread, NULL, temperature_thread_func, (void *)this);
         #if LOCAL_DEBUG
@@ -439,84 +428,29 @@ void UVCPreviewIR::do_preview(uvc_stream_ctrl_t *ctrl) {
                 //LOGE("waitPreviewFrame");
                 pthread_cond_wait(&preview_sync, &preview_mutex);
                 //LOGE("waitPreviewFrame02");
-                uint8_t *tmp_buf=NULL;
-              //if(OutPixelFormat==3)//RGBA 32bit输出
-              //  {
-                    mIsComputed=false;
-                    // swap the buffers rgba
-                    tmp_buf = RgbaOutBuffer;
-                    RgbaOutBuffer = RgbaHoldBuffer;
-                    RgbaHoldBuffer = tmp_buf;
-                    unsigned short *orgData = (unsigned short*)HoldBuffer;
-                    unsigned short *fourLinePara = orgData+requestWidth*(requestHeight-4);//后四行参数
-                        int amountPixels=0;
-                        switch (requestWidth)
-                        {
-                            case 384:
-                                amountPixels=requestWidth*(4-1);
-                                break;
-                            case 240:
-                                amountPixels=requestWidth*(4-3);
-                                break;
-                            case 256:
-                                amountPixels=requestWidth*(4-3);
-                                break;
-                            case 640:
-                                amountPixels=requestWidth*(4-1);
-                                break;
-                        }
-                    ////LOGE("cpyPara  amountPixels:%d ",amountPixels);
-                    memcpy(&shutTemper,fourLinePara+amountPixels+1,sizeof(unsigned short));
-                    ////LOGE("cpyPara  shutTemper:%d ",shutTemper);
-                    memcpy(&coreTemper,fourLinePara+amountPixels+2,sizeof(unsigned short));//外壳
-                   // //LOGE("cpyPara  coreTemper:%d ",coreTemper);
-                    ////LOGE("cpyPara  floatShutTemper:%f,floatCoreTemper:%f,floatFpaTmp:%f\n",floatShutTemper,floatCoreTemper,floatFpaTmp);
-                    memcpy((uint8_t*)cameraSoftVersion,fourLinePara+amountPixels+24,16*sizeof(uint8_t));//camera soft version
-                    //LOGE("cameraSoftVersion:%s\n",cameraSoftVersion);
-                    memcpy((uint8_t*)sn,fourLinePara+amountPixels+32,32*sizeof(uint8_t));//SN
-                    //LOGE("sn:%s\n",sn);
-                    int userArea=amountPixels+127;
-                    memcpy(&correction,fourLinePara+userArea,sizeof( float));//修正
-                    userArea=userArea+2;
-                    memcpy(&Refltmp,fourLinePara+userArea,sizeof( float));//反射温度
-                    userArea=userArea+2;
-                    memcpy(&Airtmp,fourLinePara+userArea,sizeof( float));//环境温度
-                    userArea=userArea+2;
-                    memcpy(&humi,fourLinePara+userArea,sizeof( float));//湿度
-                    userArea=userArea+2;
-                    memcpy(&emiss,fourLinePara+userArea,sizeof( float));//发射率
-                    userArea=userArea+2;
-                    memcpy(&distance,fourLinePara+userArea,sizeof(unsigned short));//距离
-                    //LOGE("cpyPara  distance:%d ",distance);
-                    amountPixels=requestWidth*(requestHeight-4);
-                    detectAvg=orgData[amountPixels];
-                    amountPixels++;
-                    fpaTmp=orgData[amountPixels];
-                    amountPixels++;
-                    maxx1=orgData[amountPixels];
-                    amountPixels++;
-                    maxy1=orgData[amountPixels];
-                    amountPixels++;
-					t_max=orgData[amountPixels];
-                    //printf("cpyPara  max:%d ",max);
-                    amountPixels++;
-                    minx1=orgData[amountPixels];
-                    amountPixels++;
-                    miny1=orgData[amountPixels];
-                    amountPixels++;
-					t_min=orgData[amountPixels];
-                    amountPixels++;
-					t_avg=orgData[amountPixels];
-					//LOGE("min: %d %d %d, max: %d %d %d, avg: %d", minx1, miny1, t_min, maxx1, maxy1, t_max, t_avg);
-                    //LOGE("waitPreviewFrame04");
-                    draw_preview_one(HoldBuffer, &mPreviewWindow);
-                    tmp_buf=NULL;
-                    mIsComputed=true;
+
+				//if(OutPixelFormat==3)//RGBA 32bit输出
+				//  {
+
+				// swap the buffers rgba
+				uint8_t *tmp_buf = RgbaOutBuffer;
+				RgbaOutBuffer = RgbaHoldBuffer;
+				RgbaHoldBuffer = tmp_buf;
+
+				ic.update((uint16_t *) HoldBuffer);
+				ic.readVersion((uint16_t *) HoldBuffer, NULL, sn, cameraSoftVersion);
+				Refltmp = ic.temp_reflected;
+				Airtmp = ic.temp_air;
+				humi = ic.humidity;
+				t_max = ic.temp_max;
+				t_min = ic.temp_min;
+
+				draw_preview_one(HoldBuffer, mPreviewWindow);
+				mIsComputed=true;
                // }
             }
             pthread_mutex_unlock(&preview_mutex);
-            if(mTemperatureCallbackObj&&mIsTemperaturing)
-            {
+            if (mTemperatureCallbackObj && mIsTemperaturing) {
                 ////LOGE("do_preview1");
                 pthread_cond_signal(&temperature_sync);
             }
@@ -542,12 +476,12 @@ void UVCPreviewIR::do_preview(uvc_stream_ctrl_t *ctrl) {
 }
 
 // transfer specific frame data to the Surface(ANativeWindow)
-int UVCPreviewIR::copyToSurface(uint8_t *frameData, ANativeWindow **window) {
+int UVCPreviewIR::copyToSurface(uint8_t *frameData, ANativeWindow *window) {
 	// ENTER();
 	int result = 0;
-	if (LIKELY(*window)) {
+	if (LIKELY(window)) {
 		ANativeWindow_Buffer buffer;
-		if (LIKELY(ANativeWindow_lock(*window, &buffer, NULL) == 0)) {
+		if (LIKELY(ANativeWindow_lock(window, &buffer, NULL) == 0)) {
 			// source = frame data, destination = Surface(ANativeWindow)
 			const uint8_t *src = frameData;
 			const int src_w = requestWidth * PREVIEW_PIXEL_BYTES;
@@ -566,7 +500,7 @@ int UVCPreviewIR::copyToSurface(uint8_t *frameData, ANativeWindow **window) {
 				src += src_w;
 			}
 
-			ANativeWindow_unlockAndPost(*window);
+			ANativeWindow_unlockAndPost(window);
 		} else {
 			result = -1;
 		}
@@ -576,7 +510,7 @@ int UVCPreviewIR::copyToSurface(uint8_t *frameData, ANativeWindow **window) {
 	return result; //RETURN(result, int);
 }
 
-void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow **window) {
+void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow *window) {
 	unsigned short *tmp_buf = (unsigned short*) frameData;
 	//8005模式下yuyv转rgba
 	//uvc_yuyv2rgbx2(tmp_buf, RgbaHoldBuffer,requestWidth,requestHeight);
@@ -617,10 +551,12 @@ void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow **window) 
 			for(int i = 0; i < requestWidth * (requestHeight - 4); i++) {
 				int gray = (int)(tmp_buf[i] - t_min) * (sizeof(paletteIronRainbow) / 3 - 1) / span;
 				int paletteNum = 3 * gray;
-				RgbaHoldBuffer[4 * i + 0] = (unsigned char) paletteIronRainbow[paletteNum + 0];
-				RgbaHoldBuffer[4 * i + 1] = (unsigned char) paletteIronRainbow[paletteNum + 1];
-				RgbaHoldBuffer[4 * i + 2] = (unsigned char) paletteIronRainbow[paletteNum + 2];
-				RgbaHoldBuffer[4 * i + 3] = 1;
+				if (gray < sizeof(paletteIronRainbow) / 3) { // TODO this is probly slow and we should range check all of em
+					RgbaHoldBuffer[4 * i + 0] = (unsigned char) paletteIronRainbow[paletteNum + 0];
+					RgbaHoldBuffer[4 * i + 1] = (unsigned char) paletteIronRainbow[paletteNum + 1];
+					RgbaHoldBuffer[4 * i + 2] = (unsigned char) paletteIronRainbow[paletteNum + 2];
+					RgbaHoldBuffer[4 * i + 3] = 1;
+				}
 			}
 			break;
 		case 3:
@@ -713,7 +649,7 @@ void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow **window) 
 		  break;
 	 }
 
-	if (LIKELY(*window))
+	if (LIKELY(window))
 		copyToSurface(RgbaHoldBuffer, window);
 }
 
@@ -856,36 +792,15 @@ void UVCPreviewIR::do_temperature(JNIEnv *env) {
 
 void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 	ENTER();
-    unsigned short* orgData=(unsigned short *)HoldBuffer;
-    unsigned short* fourLinePara=orgData+requestWidth*(requestHeight-4);//后四行参数
 	if(UNLIKELY(isNeedWriteTable))
 	{
-
-		/*thermometryT4Line(requestWidth,
-						  requestHeight,
-						  temperatureTable,
-						  fourLinePara,
-						  &floatFpaTmp,
-						  &correction,
-						  &Refltmp,
-						  &Airtmp,
-						  &humi,
-						  &emiss,
-						  &distance,
-						  cameraLens,
-						  shutterFix,
-						  rangeMode);*/
-
-		LOGE(":: %f %f %f %f", Refltmp, Airtmp, humi, floatFpaTmp);
-
-		ic.init(requestWidth, requestHeight, (cameraLens == 68) ? 3 : 1, rangeMode);
+		//ic.init(requestWidth, requestHeight, (cameraLens == 68) ? 3 : 1, rangeMode);
 		//ic.readParams((uint16_t *) HoldBuffer);
 		ic.readParams((uint16_t *) HoldBuffer);
-		/*ic.emissivity = emiss;
-		ic.temp_reflected = Refltmp;
-		ic.temp_air = Airtmp;
-		ic.humidity = humi;*/
-		//ic.distance = distance;
+		Refltmp = ic.temp_reflected;
+		Airtmp = ic.temp_air;
+		humi = ic.humidity;
+
 		LOGE("%f %f %f %f %f", ic.emissivity, ic.temp_reflected, ic.temp_air, ic.humidity, ic.distance);
 		ic.update_table((uint16_t *) HoldBuffer);
 
@@ -910,43 +825,22 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 	}
 
 
-	/*temperatureData[0]=centerTmp;
-    temperatureData[1]=(float)maxx1;
-    temperatureData[2]=(float)maxy1;
-    temperatureData[3]=maxTmp;
-    temperatureData[4]=(float)minx1;
-    temperatureData[5]=(float)miny1;
-    temperatureData[6]=minTmp;
-    temperatureData[7]=point1Tmp;
-    temperatureData[8]=point2Tmp;
-    temperatureData[9]=point3Tmp;*/
+	float* temperatureData = mCbTemper;
+	ic.update((uint16_t *) HoldBuffer);
+	ic.temp((uint16_t *) HoldBuffer, temperatureData + 10);
+	temperatureData[0] = ic.temp(ic.temp_center);
+	temperatureData[1] = ic.temp_max_x;
+	temperatureData[2] = ic.temp_max_y;
+	temperatureData[3] = ic.temp(ic.temp_max);
+	temperatureData[4] = ic.temp_min_x;
+	temperatureData[5] = ic.temp_min_y;
+	temperatureData[6] = ic.temp(ic.temp_min);
+	temperatureData[7] = ic.temp(ic.temp_user[0]);
+	temperatureData[8] = ic.temp(ic.temp_user[1]);
+	temperatureData[9] = ic.temp(ic.temp_user[2]);
 
-		float* temperatureData=mCbTemper;
-		//根据8004或者8005模式来查表，8005模式下仅输出以上注释的10个参数，8004模式下数据以上参数+全局温度数据
-		//thermometrySearch(requestWidth,requestHeight,temperatureTable,orgData,temperatureData,rangeMode,OUTPUTMODE);
-		ic.update((uint16_t *) HoldBuffer);
-		ic.temp((uint16_t *) HoldBuffer, temperatureData + 10);
-		temperatureData[0] = ic.temp(ic.temp_center);
-		temperatureData[1] = ic.temp_max_x;
-		temperatureData[2] = ic.temp_max_y;
-		temperatureData[3] = ic.temp(ic.temp_max);
-		temperatureData[4] = ic.temp_min_x;
-		temperatureData[5] = ic.temp_min_y;
-		temperatureData[6] = ic.temp(ic.temp_min);
-		temperatureData[7] = ic.temp(ic.temp_user[0]);
-		temperatureData[8] = ic.temp(ic.temp_user[1]);
-		temperatureData[9] = ic.temp(ic.temp_user[2]);
+	////LOGE("centerTmp:%.2f,maxTmp:%.2f,minTmp:%.2f,avgTmp:%.2f\n",temperatureData[0],temperatureData[3],temperatureData[6],temperatureData[9]);
 
-		////LOGE("centerTmp:%.2f,maxTmp:%.2f,minTmp:%.2f,avgTmp:%.2f\n",temperatureData[0],temperatureData[3],temperatureData[6],temperatureData[9]);
-
-		//temperatureData[7]=floatFpaTmp;
-		//temperatureData[8]=floatShutTemper;
-		//memcpy(&temperatureData[7],&RgbaHoldBuffer[(maxy1*384+maxx1)*4],4);
-		//LOGE("RgbaHoldBuffer71:%d",RgbaHoldBuffer[(maxy1*384+maxx1)*4]);
-		//LOGE("RgbaHoldBuffer72:%d",RgbaHoldBuffer[(maxy1*384+maxx1)*4+1]);
-		//LOGE("RgbaHoldBuffer73:%d",RgbaHoldBuffer[(maxy1*384+maxx1)*4+2]);
-		//LOGE("RgbaHoldBuffer74:%d",RgbaHoldBuffer[(maxy1*384+maxx1)*4+3]);
-		//memcpy(&temperatureData[8],&RgbaHoldBuffer[(miny1*384+minx1)*4],4);
 	jfloatArray mNCbTemper = env->NewFloatArray(requestWidth*(requestHeight-4)+10);
 	env->SetFloatArrayRegion(mNCbTemper, 0, 10+requestWidth*(requestHeight-4), mCbTemper);
 	if (mTemperatureCallbackObj != NULL) {
@@ -957,9 +851,7 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 	}
 	////LOGE("do_temperature_callback DeleteLocalRef(mNCbTemper)");
 	env->DeleteLocalRef(mNCbTemper);
-	temperatureData = NULL;
-	orgData = NULL;
-	fourLinePara = NULL;
+	//temperatureData = NULL;
     ////LOGE("do_temperature_callback EXIT();");
 	EXIT();
 }
