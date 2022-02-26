@@ -30,16 +30,36 @@ int UVCDevice::connect(int fd) {
     }
     if (pthread_create(&usb_thread, NULL, usb_handle_events, (void*) this)) {
         disconnect();
-        return 5;
+        return 3;
     }
     if (uvc_init(&uvc_ctx, usb_ctx)) {
         disconnect();
-        return 3;
+        return 4;
     }
     if (uvc_wrap(fd, uvc_ctx, &uvc_devh)) {
         disconnect();
-        return 4;
+        return 5;
     }
+
+    /* Get the first supported size. */
+    const uvc_format_desc_t *format = uvc_get_format_descs(uvc_devh);
+    uvc_frame_desc_t *frame = NULL;
+    if (format == NULL) {
+        disconnect();
+        return 6;
+    }
+    if (format->bDescriptorSubtype != UVC_VS_FORMAT_UNCOMPRESSED) {
+        disconnect();
+        return 2;
+    }
+    frame = format->frame_descs;
+    if (frame == NULL) {
+        disconnect();
+        return 3;
+    }
+    width = frame->wWidth;
+    height = frame->wHeight;
+
     return 0;
 }
 
@@ -55,5 +75,18 @@ void UVCDevice::disconnect() {
         libusb_exit(usb_ctx);
         usb_ctx = NULL;
     }
-    close(usb_fd);
+    if (usb_fd >= 0)
+        close(usb_fd);
+    usb_fd = -1;
+    width = height = 0;
+}
+
+int UVCDevice::stream(uvc_frame_callback_t *cb) {
+    uvc_stream_ctrl_t ctrl;
+    /* 0 FPS means any. */
+    if (uvc_get_stream_ctrl_format_size(uvc_devh, &ctrl, format, width, height, 0) != 0)
+        return 4;
+    if (uvc_start_streaming(uvc_devh, &ctrl, cb, (void *) this, 0) != 0)
+        return 5;
+    return 0;
 }

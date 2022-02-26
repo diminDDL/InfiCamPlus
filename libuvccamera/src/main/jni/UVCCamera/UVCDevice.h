@@ -7,7 +7,7 @@
 #include <cstdlib> /* NULL */
 
 class UVCDevice {
-    int usb_fd = 0;
+    int usb_fd = -1;
     libusb_context *usb_ctx = NULL;
     pthread_t usb_thread;
     int usb_thread_stop = 1;
@@ -18,10 +18,15 @@ class UVCDevice {
     static void *usb_handle_events(void *arg);
 
 public:
+    uint16_t width, height;
+    uvc_frame_format format = UVC_FRAME_FORMAT_ANY;
+
     ~UVCDevice();
 
     int connect(int fd);
     void disconnect();
+
+    int stream(uvc_frame_callback_t *cb);
 };
 
 #endif /* __UVCDEVICE_H__ */
