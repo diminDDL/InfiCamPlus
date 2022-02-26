@@ -54,29 +54,8 @@ public class UVCCamera {
 	public static final int FRAME_FORMAT_YUYV = 0;
 	public static final int FRAME_FORMAT_MJPEG = 1;
 
-	public static final int PIXEL_FORMAT_RAW = 0;
-	public static final int PIXEL_FORMAT_YUV = 1;
-	public static final int PIXEL_FORMAT_RGB565 = 2;
-	public static final int PIXEL_FORMAT_RGBX = 3;
-	public static final int PIXEL_FORMAT_YUV420SP = 4;
-	public static final int PIXEL_FORMAT_NV21 = 5;		// = YVU420SemiPlanar
-
-	//--------------------------------------------------------------------------------
     public static final int CTRL_ZOOM_ABS		= 0x00000200;	// D9:  Zoom (Absolute)
 
-    public static final int PU_BRIGHTNESS		= 0x80000001;	// D0: Brightness
-    public static final int PU_CONTRAST			= 0x80000002;	// D1: Contrast
-
-	// uvc_status_class from libuvc.h
-	public static final int STATUS_CLASS_CONTROL = 0x10;
-	public static final int STATUS_CLASS_CONTROL_CAMERA = 0x11;
-	public static final int STATUS_CLASS_CONTROL_PROCESSING = 0x12;
-
-	// uvc_status_attribute from libuvc.h
-	public static final int STATUS_ATTRIBUTE_VALUE_CHANGE = 0x00;
-	public static final int STATUS_ATTRIBUTE_INFO_CHANGE = 0x01;
-	public static final int STATUS_ATTRIBUTE_FAILURE_CHANGE = 0x02;
-	public static final int STATUS_ATTRIBUTE_UNKNOWN = 0xff;
 	private static boolean isLoaded;
 	static {
 		if (!isLoaded) {
@@ -197,19 +176,6 @@ public class UVCCamera {
     	return !TextUtils.isEmpty(mSupportedSize) ? mSupportedSize : (mSupportedSize = nativeGetSupportedSize(mNativePtr));
     }
 
-	public Size getPreviewSize() {
-		Size result = null;
-		final List<Size> list = getSupportedSizeList();
-		for (final Size sz: list) {
-			if ((sz.width == mCurrentWidth)
-				|| (sz.height == mCurrentHeight)) {
-				result =sz;
-				break;
-			}
-		}
-		return result;
-	}
-	
 	/**
 	 * Set preview size and preview mode
 	 * @param width
