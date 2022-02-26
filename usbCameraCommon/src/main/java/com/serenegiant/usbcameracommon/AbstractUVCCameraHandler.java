@@ -554,6 +554,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 				callOnError(e);
 			}
 			String mSupportedSize = mUVCCamera.getSupportedSize();
+			Log.e("TEST TODO", mSupportedSize);
 			int find_str_postion= mSupportedSize.indexOf("384x292");
 			if(find_str_postion>=0){
 				mWidth=384;
