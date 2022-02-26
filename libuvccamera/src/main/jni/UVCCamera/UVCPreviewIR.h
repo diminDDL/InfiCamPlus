@@ -32,7 +32,7 @@
 #include "UVCPreviewIR.h"
 #include <pthread.h>
 #include <android/native_window.h>
-#include "Inficam.h"
+#include "InfiFrame.h"
 
 #define DEFAULT_PREVIEW_WIDTH 640
 #define DEFAULT_PREVIEW_HEIGHT 480
@@ -82,7 +82,7 @@ private:
 	pthread_cond_t temperature_sync;
 	jobject mTemperatureCallbackObj;
 
-	Inficam ic;
+	InfiFrame ic;
 
 	int copyToSurface(uint8_t *frameData, ANativeWindow *window);
 	static void *temperature_thread_func(void *vptr_args);

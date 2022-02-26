@@ -44,7 +44,7 @@
 #include "utilbase.h"
 #include "UVCPreviewIR.h"
 #include "libuvc_internal.h"
-#include "Inficam.h"
+#include "InfiFrame.h"
 
 JavaVM *savedVm; // TODO this is lame
 

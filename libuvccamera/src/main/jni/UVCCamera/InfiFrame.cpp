@@ -1,4 +1,4 @@
-#include "Inficam.h"
+#include "InfiFrame.h"
 
 #include <cstdint>
 #include <cstring> /* memcpy() */
@@ -36,7 +36,7 @@ static inline float atmt(float h, float t_atm, float d) {
     return k_atm * expf(nsqd * (a1 + b1 * sqw)) + (1.0 - k_atm) * expf(nsqd * (a2 + b2 * sqw));
 }
 
-int Inficam::init(int width, int height, float dmul, int range) {
+int InfiFrame::init(int width, int height, float dmul, int range) {
     int ret = 1;
     this->width = width;
     this->height = height - 4;
@@ -87,7 +87,7 @@ int Inficam::init(int width, int height, float dmul, int range) {
     return ret;
 }
 
-void Inficam::update(uint16_t *frame) {
+void InfiFrame::update(uint16_t *frame) {
     fpa_average = read_u16(frame + s1_offset, 0);
     uint16_t temp_fpa_raw = read_u16(frame + s1_offset, 1);
     temp_fpa = 20.0 - ((float) (temp_fpa_raw - fpa_off)) / fpa_div;
@@ -129,29 +129,29 @@ void Inficam::update(uint16_t *frame) {
     table_offset = cal_00 - ((cal_00_corr > 0) ? cal_00_corr : 0);
 }
 
-float Inficam::temp_single(uint16_t x) {
+float InfiFrame::temp_single(uint16_t x) {
     float wtot = powf(sqrtf(((float) (x - table_offset) * cal_d + cal_c) / cal_01 + cal_b) -
             cal_a + zeroc, 4);
     float ttot = powf((wtot - numerator_sub) / denominator, 0.25) - zeroc;
     return ttot + (distance_adjusted * 0.85 - 1.125) * (ttot - temp_air) / 100.0 + correction;
 }
 
-void Inficam::update_table(uint16_t *frame) {
+void InfiFrame::update_table(uint16_t *frame) {
     update(frame);
     for (int i = 0; i < table_len; ++i)
         table[i] = temp_single(i);
 }
 
-void Inficam::temp(uint16_t *input, float *output) {
+void InfiFrame::temp(uint16_t *input, float *output) {
     temp(input, output, width * height);
 }
 
-void Inficam::temp(uint16_t *input, float *output, size_t len) {
+void InfiFrame::temp(uint16_t *input, float *output, size_t len) {
     for (size_t i = 0; i < len; ++i)
         output[i] = temp(input[i]);
 }
 
-void Inficam::readParams(uint16_t *frame) {
+void InfiFrame::readParams(uint16_t *frame) {
     // TODO presumeably this is just a 128 byte ram+eeprom area
     //   maybe we should present it as such
     correction = read_float(frame + s2_offset, 127);
@@ -163,7 +163,7 @@ void Inficam::readParams(uint16_t *frame) {
     distance = read_float(frame + s2_offset, 137);
 }
 
-void Inficam::readVersion(uint16_t *frame, char *product, char *serial, char *fw_version) {
+void InfiFrame::readVersion(uint16_t *frame, char *product, char *serial, char *fw_version) {
     if (product != NULL)
         memcpy(product, frame + s2_offset + 40, 16);
     if (serial != NULL)

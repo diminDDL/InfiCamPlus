@@ -5,7 +5,7 @@
 #include <cstddef> /* size_t */
 #include <string>
 
-class Inficam {
+class InfiFrame {
     /* Set by init(). */
     int fpa_off;
     float fpa_div, distance_multiplier, cal_00_offset, cal_00_fpamul;
