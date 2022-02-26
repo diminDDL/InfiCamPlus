@@ -36,7 +36,10 @@
 #include <jni.h>
 #include <android/native_window_jni.h>
 
-#include "libUVCCamera.h"
+#include <jni.h>
+#include "libusb.h"
+#include "libuvc.h"
+#include "utilbase.h"
 #include "UVCCamera.h"
 
 extern "C" {

@@ -25,7 +25,10 @@
 #ifndef UVCPREVIEW_IR_H_
 #define UVCPREVIEW_IR_H_
 
-#include "libUVCCamera.h"
+#include <jni.h>
+#include "libusb.h"
+#include "libuvc.h"
+#include "utilbase.h"
 #include "UVCPreviewIR.h"
 #include <pthread.h>
 #include <android/native_window.h>
@@ -101,7 +104,7 @@ private:
     float Airtmp;
     float humi;
     int cameraLens;
-    float shutterFix;
+    float shutterFix; // TODO, also fpaFix
 	//end -测温相关参数
 
     char sn[32];//camera序列码

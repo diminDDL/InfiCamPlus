@@ -166,7 +166,7 @@ int UVCCamera::setPreviewSize(int width, int height, int min_fps, int max_fps, i
 	if (mPreview) {
 		result = mPreview->setPreviewSize(width, height, min_fps, max_fps, mode, bandwidth);
 	}
-		RETURN(result, int);
+	RETURN(result, int);
 }
 
 int UVCCamera::setPreviewDisplay(ANativeWindow *preview_window) {
