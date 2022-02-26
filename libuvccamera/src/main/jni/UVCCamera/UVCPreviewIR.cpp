@@ -46,6 +46,27 @@
 #include "libuvc_internal.h"
 #include "Inficam.h"
 
+JavaVM *savedVm; // TODO this is lame
+
+extern "C" {
+	jint JNI_OnLoad(JavaVM *vm, void *reserved) {
+	#if LOCAL_DEBUG
+		LOGD("JNI_OnLoad");
+	#endif
+
+		JNIEnv *env;
+		if (vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6) != JNI_OK) {
+			return JNI_ERR;
+		}
+		// register native methods
+		savedVm = vm;
+	#if LOCAL_DEBUG
+		LOGD("JNI_OnLoad:finshed:result=%d", result);
+	#endif
+		return JNI_VERSION_1_6;
+	}
+}
+
 UVCPreviewIR::UVCPreviewIR(){
 
 }
@@ -727,7 +748,7 @@ void *UVCPreviewIR::temperature_thread_func(void *vptr_args) {
 	UVCPreviewIR *preview = reinterpret_cast<UVCPreviewIR *>(vptr_args);
 	if (LIKELY(preview))
 	{
-        JavaVM *vm = getVM();
+        JavaVM *vm = savedVm;
 		JNIEnv *env;
 		//attach to JavaVM
 		vm->AttachCurrentThread(&env, NULL);

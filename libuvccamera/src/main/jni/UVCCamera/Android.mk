@@ -55,8 +55,6 @@ LOCAL_SHARED_LIBRARIES += usb100 uvc
 #LOCAL_ARM_MODE := arm
 #LOCAL_ALLOW_UNDEFINED_SYMBOLS := true
 LOCAL_SRC_FILES := \
-		_onload.cpp \
-		utilbase.cpp \
 		UVCCamera.cpp \
 		UVCPreviewIR.cpp \
 		Inficam.cpp \
