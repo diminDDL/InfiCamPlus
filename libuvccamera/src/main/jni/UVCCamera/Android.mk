@@ -34,11 +34,7 @@ LOCAL_PATH	:= $(call my-dir)
 include $(CLEAR_VARS)
 CFLAGS := -Werror
 
-LOCAL_C_INCLUDES := \
-		$(LOCAL_PATH)/ \
-		$(LOCAL_PATH)/../ \
-		$(LOCAL_PATH)/../rapidjson/include \
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/include
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/../libusb/libusb
 
 LOCAL_CFLAGS := $(LOCAL_C_INCLUDES:%=-I%)
 LOCAL_CFLAGS += -DANDROID_NDK

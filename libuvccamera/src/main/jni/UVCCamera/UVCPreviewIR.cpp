@@ -417,7 +417,7 @@ int UVCPreviewIR::prepare_preview(uvc_stream_ctrl_t *ctrl) {
 
 void UVCPreviewIR::do_preview(uvc_stream_ctrl_t *ctrl) {
 	ENTER();
-    //////LOGE("do_preview");
+    LOGE("do_preview 111");
 	//uvc_error_t result = uvc_start_streaming_bandwidth(mDeviceHandle, ctrl, uvc_preview_frame_callback, (void *)this, requestBandwidth, 0);
 	uvc_error_t result = uvc_start_streaming(mDeviceHandle, ctrl, uvc_preview_frame_callback, (void *) this, 0);
 	if (LIKELY(!result)) {

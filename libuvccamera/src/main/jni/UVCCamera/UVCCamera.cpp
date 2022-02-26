@@ -41,12 +41,14 @@
 #include <string.h>
 #include "UVCCamera.h"
 #include "UVCPreviewIR.h"
-#include "libuvc_internal.h"
-#include "../libuvc/include/libuvc/libuvc.h"
 
 #define	LOCAL_DEBUG 0
 
-#include <libusb/libusb/libusb.h> // TODO is this the right place?
+#include <libusb.h> // TODO is this the right place?
+extern "C" {
+#include "../libuvc/include/libuvc/libuvc_internal.h"
+};
+#include "../libuvc/include/libuvc/libuvc.h"
 
 /**
  * コンストラクタ
@@ -95,6 +97,9 @@ int UVCCamera::connect(int vid, int pid, int fd, int busnum, int devaddr, const 
 
 			//result = uvc_init2(&mContext, NULL, usbfs);
 			result = uvc_init(&mContext, ctx);
+			mContext->own_usb_ctx = 1;
+			uvc_start_handler_thread(mContext);
+
 //			libusb_set_debug(mContext->usb_ctx, LIBUSB_LOG_LEVEL_DEBUG);
 			if (UNLIKELY(result < 0)) {
 				LOGD("failed to init libuvc");
@@ -102,7 +107,7 @@ int UVCCamera::connect(int vid, int pid, int fd, int busnum, int devaddr, const 
 			}
 		}
 		// カメラ機能フラグをクリア
-		fd = dup(fd); // TODO (netman) Why is it duplicated?
+		//fd = dup(fd); // TODO (netman) Why is it duplicated?
 		// 指定したvid,idを持つデバイスを検索, 見つかれば0を返してmDeviceに見つかったデバイスをセットする(既に1回uvc_ref_deviceを呼んである)
 //		result = uvc_find_device2(mContext, &mDevice, vid, pid, NULL, fd);
 		//result = uvc_get_device_with_fd(mContext, &mDevice, vid, pid, NULL, fd, busnum, devaddr);
@@ -196,10 +201,10 @@ int UVCCamera::setPreviewDisplay(ANativeWindow *preview_window) {
 
 int UVCCamera::setTemperatureCallback(JNIEnv *env, jobject temperature_callback_obj) {
 	ENTER();
-		LOGE("setTemperatureCallback");
+	LOGE("setTemperatureCallback");
 	int result = EXIT_FAILURE;
 	if (mPreview) {
-	LOGE("setTemperatureCallback  result");
+		LOGE("setTemperatureCallback  result");
 		result = mPreview->setTemperatureCallback(env, temperature_callback_obj);
 	}
 	RETURN(result, int);
