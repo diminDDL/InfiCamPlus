@@ -60,7 +60,6 @@ LOCAL_SRC_FILES := \
 		UVCCamera.cpp \
 		UVCPreviewIR.cpp \
 		UVCStatusCallback.cpp \
-		Parameters.cpp \
 		Inficam.cpp \
 		serenegiant_usb_UVCCamera.cpp
 
