@@ -93,10 +93,6 @@ UVCPreviewIR::UVCPreviewIR(uvc_device_handle_t *devh)
 	mIsComputed=true;
     mTypeOfPalette=0;
     rangeMode=120;
-    floatFpaTmp=0;
-    Refltmp=0;
-    Airtmp=0;
-    humi=0;
     cameraLens=130;//130;//镜头大小:目前支持两种，68：使用6.8mm镜头，130：使用13mm镜头,默认130。
     memset(sn, 0, 32);
     memset(cameraSoftVersion, 0, 16);
@@ -471,9 +467,6 @@ void UVCPreviewIR::do_preview(uvc_stream_ctrl_t *ctrl) {
 
 				ic.update((uint16_t *) HoldBuffer);
 				ic.read_version((uint16_t *) HoldBuffer, NULL, sn, cameraSoftVersion);
-				Refltmp = ic.temp_reflected;
-				Airtmp = ic.temp_air;
-				humi = ic.humidity;
 				t_max = ic.temp_max;
 				t_min = ic.temp_min;
 
@@ -541,18 +534,19 @@ int UVCPreviewIR::copyToSurface(uint8_t *frameData, ANativeWindow *window) {
 
 void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow *window) {
 	unsigned short *tmp_buf = (unsigned short*) frameData;
-	//8005模式下yuyv转rgba
-	//uvc_yuyv2rgbx2(tmp_buf, RgbaHoldBuffer,requestWidth,requestHeight);
 
-	// TODO we should generate a pallette that actually matches the temperature curve at each shutter.
-	//   Or use the calculated temperature to index a pallette.
+	if(UNLIKELY(isNeedWriteTable)) {
+		ic.read_params((uint16_t *) frameData);
+		ic.update_table((uint16_t *) frameData);
+		isNeedWriteTable=false;
+	}
 
 	/**
 	 * 线性图像算法
 	 * 图像效果不及专业级算法，但是处理效率快，对主频几乎没要求
 	 *
 	 */
-	int avgSubMin= (t_avg - t_min) > 0 ? (t_avg - t_min) : 1;
+	/*int avgSubMin= (t_avg - t_min) > 0 ? (t_avg - t_min) : 1;
 	int maxSubAvg= (t_max - t_avg) > 0 ? (t_max - t_avg) : 1;
 	int ro1 = (t_avg - t_min) > 97 ? 97 : (t_avg - t_min);
 	int ro2 = (t_max - t_avg) > 157 ? 157 : (t_max - t_avg);
@@ -676,8 +670,8 @@ void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow *window) {
 				 }
 			 }
 		  break;
-	 }
-	ic.palette_appy((uint16_t *) tmp_buf, (uint32_t *) RgbaHoldBuffer, requestWidth * 96);
+	 } */
+	ic.palette_appy((uint16_t *) frameData, (uint32_t *) RgbaHoldBuffer);
 
 	if (LIKELY(window))
 		copyToSurface(RgbaHoldBuffer, window);
@@ -801,38 +795,6 @@ void UVCPreviewIR::do_temperature(JNIEnv *env) {
 
 void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 	ENTER();
-	if(UNLIKELY(isNeedWriteTable))
-	{
-		//ic.init(requestWidth, requestHeight, (cameraLens == 68) ? 3 : 1, rangeMode);
-		//ic.read_params((uint16_t *) HoldBuffer);
-		ic.read_params((uint16_t *) HoldBuffer);
-		Refltmp = ic.temp_reflected;
-		Airtmp = ic.temp_air;
-		humi = ic.humidity;
-
-		LOGE("%f %f %f %f %f", ic.emissivity, ic.temp_reflected, ic.temp_air, ic.humidity, ic.distance);
-		ic.update_table((uint16_t *) HoldBuffer);
-
-		//LOGE("min: %f, max: %f, tc: %f   %f", min, max, tc, temperatureTable[t_min]);
-		LOGE("a: %f %f %f %f %f", temperatureTable[5100], temperatureTable[5600], temperatureTable[5700], temperatureTable[10000], temperatureTable[15000]);
-		LOGE("c: %f %f %f %f %f", ic.table[5100], ic.table[5600], ic.table[5700], ic.table[10000], ic.table[15000]);
-
-		LOGE("::: %f %f :::", ic.temp(ic.temp_center), ic.temp_fpa);
-		char product[17], version_fw[17], serial[17];
-		ic.read_version((uint16_t *) HoldBuffer, product, serial, version_fw);
-		product[16] = 0;
-		serial[16] = 0;
-		version_fw[16] = 0;
-		LOGE("VER  %s %s %s", product, serial, version_fw);
-		//LOGE("maxpos: %d %d, minpos: %d %d", mx, my, ax, ay);
-		/*int d;
-		float fpa, core;
-		tm.GetDevData(&fpa, &core, &d, &d);
-		LOGE("fpa: %f %f, core: %f %f", fpa, 20.0 - ((double) (uint16_t) fpaTmp - 7800.0) / 36.0, core, ((float)(uint16_t) coreTemper) / 10.0 -273.1);*/
-
-		isNeedWriteTable=false;
-	}
-
 
 	float* temperatureData = mCbTemper;
 	ic.update((uint16_t *) HoldBuffer);
@@ -848,20 +810,13 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 	temperatureData[8] = ic.temp(ic.temp_user[1]);
 	temperatureData[9] = ic.temp(ic.temp_user[2]);
 
-	////LOGE("centerTmp:%.2f,maxTmp:%.2f,minTmp:%.2f,avgTmp:%.2f\n",temperatureData[0],temperatureData[3],temperatureData[6],temperatureData[9]);
-
 	jfloatArray mNCbTemper = env->NewFloatArray(requestWidth*(requestHeight-4)+10);
 	env->SetFloatArrayRegion(mNCbTemper, 0, 10+requestWidth*(requestHeight-4), mCbTemper);
 	if (mTemperatureCallbackObj != NULL) {
-		////LOGE("do_temperature_callback mTemperatureCallbackObj1");
 		env->CallVoidMethod(mTemperatureCallbackObj, iTemperatureCallback.onReceiveTemperature, mNCbTemper);
-		////LOGE("do_temperature_callback2 frameNumber:%d",frameNumber);
 		env->ExceptionClear();
 	}
-	////LOGE("do_temperature_callback DeleteLocalRef(mNCbTemper)");
 	env->DeleteLocalRef(mNCbTemper);
-	//temperatureData = NULL;
-    ////LOGE("do_temperature_callback EXIT();");
 	EXIT();
 }
 

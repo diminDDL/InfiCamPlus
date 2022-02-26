@@ -99,10 +99,6 @@ private:
     int mTypeOfPalette;
 	//测温相关参数，详见thermometry.h
     int rangeMode;
-    float floatFpaTmp;
-    float Refltmp;
-    float Airtmp;
-    float humi;
     int cameraLens;
     float shutterFix; // TODO, also fpaFix
 	//end -测温相关参数
