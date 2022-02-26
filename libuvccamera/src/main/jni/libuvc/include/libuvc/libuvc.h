@@ -428,6 +428,25 @@ typedef void(uvc_button_callback_t)(int button,
                                     int state,
                                     void *user_ptr);
 
+/** Structure representing a UVC device descriptor.
+ *
+ * (This isn't a standard structure.)
+ */
+typedef struct uvc_device_descriptor {
+  /** Vendor ID */
+  uint16_t idVendor;
+  /** Product ID */
+  uint16_t idProduct;
+  /** UVC compliance level, e.g. 0x0100 (1.0), 0x0110 */
+  uint16_t bcdUVC;
+  /** Serial number (null if unavailable) */
+  const char *serialNumber;
+  /** Device-reported manufacturer name (or null) */
+  const char *manufacturer;
+  /** Device-reporter product name (or null) */
+  const char *product;
+} uvc_device_descriptor_t;
+
 /** An image frame received from the UVC device
  * @ingroup streaming
  */
@@ -511,8 +530,29 @@ typedef struct uvc_still_ctrl {
 uvc_error_t uvc_init(uvc_context_t **ctx, struct libusb_context *usb_ctx);
 void uvc_exit(uvc_context_t *ctx);
 
+uvc_error_t uvc_get_device_list(
+    uvc_context_t *ctx,
+    uvc_device_t ***list);
+void uvc_free_device_list(uvc_device_t **list, uint8_t unref_devices);
+
+uvc_error_t uvc_get_device_descriptor(
+    uvc_device_t *dev,
+    uvc_device_descriptor_t **desc);
+void uvc_free_device_descriptor(
+    uvc_device_descriptor_t *desc);
+
 uint8_t uvc_get_bus_number(uvc_device_t *dev);
 uint8_t uvc_get_device_address(uvc_device_t *dev);
+
+uvc_error_t uvc_find_device(
+    uvc_context_t *ctx,
+    uvc_device_t **dev,
+    int vid, int pid, const char *sn);
+
+uvc_error_t uvc_find_devices(
+    uvc_context_t *ctx,
+    uvc_device_t ***devs,
+    int vid, int pid, const char *sn);
 
 #if LIBUSB_API_VERSION >= 0x01000107
 uvc_error_t uvc_wrap(

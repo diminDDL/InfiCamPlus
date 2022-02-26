@@ -148,6 +148,15 @@ void uvc_print_diag(uvc_device_handle_t *devh, FILE *stream) {
     uvc_streaming_interface_t *stream_if;
     int stream_idx = 0;
 
+    uvc_device_descriptor_t *desc;
+    uvc_get_device_descriptor(devh->dev, &desc);
+
+    fprintf(stream, "DEVICE CONFIGURATION (%04x:%04x/%s) ---\n",
+        desc->idVendor, desc->idProduct,
+        desc->serialNumber ? desc->serialNumber : "[none]");
+
+    uvc_free_device_descriptor(desc);
+
     fprintf(stream, "Status: %s\n", devh->streams ? "streaming" : "idle");
 
     fprintf(stream, "VideoControl:\n"

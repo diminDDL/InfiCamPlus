@@ -115,6 +115,154 @@ int uvc_already_open(uvc_context_t *ctx, struct libusb_device *usb_dev) {
   return 0;
 }
 
+/** @brief Finds a camera identified by vendor, product and/or serial number
+ * @ingroup device
+ *
+ * @param[in] ctx UVC context in which to search for the camera
+ * @param[out] dev Reference to the camera, or NULL if not found
+ * @param[in] vid Vendor ID number, optional
+ * @param[in] pid Product ID number, optional
+ * @param[in] sn Serial number or NULL
+ * @return Error finding device or UVC_SUCCESS
+ */
+uvc_error_t uvc_find_device(
+    uvc_context_t *ctx, uvc_device_t **dev,
+    int vid, int pid, const char *sn) {
+  uvc_error_t ret = UVC_SUCCESS;
+
+  uvc_device_t **list;
+  uvc_device_t *test_dev;
+  int dev_idx;
+  int found_dev;
+
+  UVC_ENTER();
+
+  ret = uvc_get_device_list(ctx, &list);
+
+  if (ret != UVC_SUCCESS) {
+    UVC_EXIT(ret);
+    return ret;
+  }
+
+  dev_idx = 0;
+  found_dev = 0;
+
+  while (!found_dev && (test_dev = list[dev_idx++]) != NULL) {
+    uvc_device_descriptor_t *desc;
+
+    if (uvc_get_device_descriptor(test_dev, &desc) != UVC_SUCCESS)
+      continue;
+
+    if ((!vid || desc->idVendor == vid)
+        && (!pid || desc->idProduct == pid)
+        && (!sn || (desc->serialNumber && !strcmp(desc->serialNumber, sn))))
+      found_dev = 1;
+
+    uvc_free_device_descriptor(desc);
+  }
+
+  if (found_dev)
+    uvc_ref_device(test_dev);
+
+  uvc_free_device_list(list, 1);
+
+  if (found_dev) {
+    *dev = test_dev;
+    UVC_EXIT(UVC_SUCCESS);
+    return UVC_SUCCESS;
+  } else {
+    UVC_EXIT(UVC_ERROR_NO_DEVICE);
+    return UVC_ERROR_NO_DEVICE;
+  }
+}
+
+/** @brief Finds all cameras identified by vendor, product and/or serial number
+ * @ingroup device
+ *
+ * @param[in] ctx UVC context in which to search for the camera
+ * @param[out] devs List of matching cameras
+ * @param[in] vid Vendor ID number, optional
+ * @param[in] pid Product ID number, optional
+ * @param[in] sn Serial number or NULL
+ * @return Error finding device or UVC_SUCCESS
+ */
+uvc_error_t uvc_find_devices(
+    uvc_context_t *ctx, uvc_device_t ***devs,
+    int vid, int pid, const char *sn) {
+  uvc_error_t ret = UVC_SUCCESS;
+
+  uvc_device_t **list;
+  uvc_device_t *test_dev;
+  int dev_idx;
+  int found_dev;
+
+  uvc_device_t **list_internal;
+  int num_uvc_devices;
+
+  UVC_ENTER();
+
+  ret = uvc_get_device_list(ctx, &list);
+
+  if (ret != UVC_SUCCESS) {
+    UVC_EXIT(ret);
+    return ret;
+  }
+
+  num_uvc_devices = 0;
+  dev_idx = 0;
+  found_dev = 0;
+
+  list_internal = malloc(sizeof(*list_internal));
+  *list_internal = NULL;
+
+  while ((test_dev = list[dev_idx++]) != NULL) {
+    uvc_device_descriptor_t *desc;
+
+    if (uvc_get_device_descriptor(test_dev, &desc) != UVC_SUCCESS)
+      continue;
+
+    if ((!vid || desc->idVendor == vid)
+        && (!pid || desc->idProduct == pid)
+        && (!sn || (desc->serialNumber && !strcmp(desc->serialNumber, sn)))) {
+      found_dev = 1;
+      uvc_ref_device(test_dev);
+
+      num_uvc_devices++;
+      list_internal = realloc(list_internal, (num_uvc_devices + 1) * sizeof(*list_internal));
+
+      list_internal[num_uvc_devices - 1] = test_dev;
+      list_internal[num_uvc_devices] = NULL;
+    }
+
+    uvc_free_device_descriptor(desc);
+  }
+
+  uvc_free_device_list(list, 1);
+
+  if (found_dev) {
+    *devs = list_internal;
+    UVC_EXIT(UVC_SUCCESS);
+    return UVC_SUCCESS;
+  } else {
+    UVC_EXIT(UVC_ERROR_NO_DEVICE);
+    return UVC_ERROR_NO_DEVICE;
+  }
+}
+
+/** @brief Get the number of the bus to which the device is attached
+ * @ingroup device
+ */
+uint8_t uvc_get_bus_number(uvc_device_t *dev) {
+  return libusb_get_bus_number(dev->usb_dev);
+}
+
+/** @brief Get the number assigned to the device within its bus
+ * @ingroup device
+ */
+uint8_t uvc_get_device_address(uvc_device_t *dev) {
+  return libusb_get_device_address(dev->usb_dev);
+}
+
 static uvc_error_t uvc_open_internal(uvc_device_t *dev, struct libusb_device_handle *usb_devh, uvc_device_handle_t **devh);
 
 #if LIBUSB_API_VERSION >= 0x01000107
@@ -192,6 +340,7 @@ static uvc_error_t uvc_open_internal(
     uvc_device_handle_t **devh) {
   uvc_error_t ret;
   uvc_device_handle_t *internal_devh;
+  struct libusb_device_descriptor desc;
 
   UVC_ENTER();
 
@@ -211,7 +360,8 @@ static uvc_error_t uvc_open_internal(
   if (ret != UVC_SUCCESS)
     goto fail;
 
-  internal_devh->is_isight = 0;
+  libusb_get_device_descriptor(dev->usb_dev, &desc);
+  internal_devh->is_isight = (desc.idVendor == 0x05ac && desc.idProduct == 0x8501);
 
   if (internal_devh->info->ctrl_if.bEndpointAddress) {
     internal_devh->status_xfer = libusb_alloc_transfer(0);
@@ -376,6 +526,288 @@ void uvc_free_device_info(uvc_device_info_t *info) {
     libusb_free_config_descriptor(info->config);
 
   free(info);
+
+  UVC_EXIT_VOID();
+}
+
+static uvc_error_t get_device_descriptor(
+        uvc_device_handle_t *devh,
+        uvc_device_descriptor_t **desc) {
+  uvc_device_descriptor_t *desc_internal;
+  struct libusb_device_descriptor usb_desc;
+  struct libusb_device_handle *usb_devh = devh->usb_devh;
+  uvc_error_t ret;
+
+  UVC_ENTER();
+
+  ret = libusb_get_device_descriptor(devh->dev->usb_dev, &usb_desc);
+
+  if (ret != UVC_SUCCESS) {
+    UVC_EXIT(ret);
+    return ret;
+  }
+
+  desc_internal = calloc(1, sizeof(*desc_internal));
+  desc_internal->idVendor = usb_desc.idVendor;
+  desc_internal->idProduct = usb_desc.idProduct;
+
+  unsigned char buf[64];
+
+  int bytes = libusb_get_string_descriptor_ascii(
+          usb_devh, usb_desc.iSerialNumber, buf, sizeof(buf));
+
+  if (bytes > 0)
+    desc_internal->serialNumber = strdup((const char*) buf);
+
+  bytes = libusb_get_string_descriptor_ascii(
+          usb_devh, usb_desc.iManufacturer, buf, sizeof(buf));
+
+  if (bytes > 0)
+    desc_internal->manufacturer = strdup((const char*) buf);
+
+  bytes = libusb_get_string_descriptor_ascii(
+          usb_devh, usb_desc.iProduct, buf, sizeof(buf));
+
+  if (bytes > 0)
+    desc_internal->product = strdup((const char*) buf);
+
+  *desc = desc_internal;
+
+  UVC_EXIT(ret);
+  return ret;
+}
+
+/**
+ * @brief Get a descriptor that contains the general information about
+ * a device
+ * @ingroup device
+ *
+ * Free *desc with uvc_free_device_descriptor when you're done.
+ *
+ * @param dev Device to fetch information about
+ * @param[out] desc Descriptor structure
+ * @return Error if unable to fetch information, else SUCCESS
+ */
+uvc_error_t uvc_get_device_descriptor(
+    uvc_device_t *dev,
+    uvc_device_descriptor_t **desc) {
+  uvc_device_descriptor_t *desc_internal;
+  struct libusb_device_descriptor usb_desc;
+  struct libusb_device_handle *usb_devh;
+  uvc_error_t ret;
+
+  UVC_ENTER();
+
+  ret = libusb_get_device_descriptor(dev->usb_dev, &usb_desc);
+
+  if (ret != UVC_SUCCESS) {
+    UVC_EXIT(ret);
+    return ret;
+  }
+
+  desc_internal = calloc(1, sizeof(*desc_internal));
+  desc_internal->idVendor = usb_desc.idVendor;
+  desc_internal->idProduct = usb_desc.idProduct;
+
+  if (libusb_open(dev->usb_dev, &usb_devh) == 0) {
+    unsigned char buf[64];
+
+    int bytes = libusb_get_string_descriptor_ascii(
+        usb_devh, usb_desc.iSerialNumber, buf, sizeof(buf));
+
+    if (bytes > 0)
+      desc_internal->serialNumber = strdup((const char*) buf);
+
+    bytes = libusb_get_string_descriptor_ascii(
+        usb_devh, usb_desc.iManufacturer, buf, sizeof(buf));
+
+    if (bytes > 0)
+      desc_internal->manufacturer = strdup((const char*) buf);
+
+    bytes = libusb_get_string_descriptor_ascii(
+        usb_devh, usb_desc.iProduct, buf, sizeof(buf));
+
+    if (bytes > 0)
+      desc_internal->product = strdup((const char*) buf);
+
+    libusb_close(usb_devh);
+  } else {
+    UVC_DEBUG("can't open device %04x:%04x, not fetching serial etc.",
+	      usb_desc.idVendor, usb_desc.idProduct);
+  }
+
+  *desc = desc_internal;
+
+  UVC_EXIT(ret);
+  return ret;
+}
+
+/**
+ * @brief Frees a device descriptor created with uvc_get_device_descriptor
+ * @ingroup device
+ *
+ * @param desc Descriptor to free
+ */
+void uvc_free_device_descriptor(
+    uvc_device_descriptor_t *desc) {
+  UVC_ENTER();
+
+  if (desc->serialNumber)
+    free((void*) desc->serialNumber);
+
+  if (desc->manufacturer)
+    free((void*) desc->manufacturer);
+
+  if (desc->product)
+    free((void*) desc->product);
+
+  free(desc);
+
+  UVC_EXIT_VOID();
+}
+
+/**
+ * @brief Get a list of the UVC devices attached to the system
+ * @ingroup device
+ *
+ * @note Free the list with uvc_free_device_list when you're done.
+ *
+ * @param ctx UVC context in which to list devices
+ * @param list List of uvc_device structures
+ * @return Error if unable to list devices, else SUCCESS
+ */
+uvc_error_t uvc_get_device_list(
+    uvc_context_t *ctx,
+    uvc_device_t ***list) {
+  struct libusb_device **usb_dev_list;
+  struct libusb_device *usb_dev;
+  int num_usb_devices;
+
+  uvc_device_t **list_internal;
+  int num_uvc_devices;
+
+  /* per device */
+  int dev_idx;
+  struct libusb_config_descriptor *config;
+  struct libusb_device_descriptor desc;
+  uint8_t got_interface;
+
+  /* per interface */
+  int interface_idx;
+  const struct libusb_interface *interface;
+
+  /* per altsetting */
+  int altsetting_idx;
+  const struct libusb_interface_descriptor *if_desc;
+
+  UVC_ENTER();
+
+  num_usb_devices = libusb_get_device_list(ctx->usb_ctx, &usb_dev_list);
+
+  if (num_usb_devices < 0) {
+    UVC_EXIT(UVC_ERROR_IO);
+    return UVC_ERROR_IO;
+  }
+
+  list_internal = malloc(sizeof(*list_internal));
+  *list_internal = NULL;
+
+  num_uvc_devices = 0;
+  dev_idx = -1;
+
+  while ((usb_dev = usb_dev_list[++dev_idx]) != NULL) {
+    got_interface = 0;
+
+    if (libusb_get_config_descriptor(usb_dev, 0, &config) != 0)
+      continue;
+
+    if ( libusb_get_device_descriptor ( usb_dev, &desc ) != LIBUSB_SUCCESS )
+      continue;
+
+    for (interface_idx = 0;
+	 !got_interface && interface_idx < config->bNumInterfaces;
+	 ++interface_idx) {
+      interface = &config->interface[interface_idx];
+
+      for (altsetting_idx = 0;
+	   !got_interface && altsetting_idx < interface->num_altsetting;
+	   ++altsetting_idx) {
+	if_desc = &interface->altsetting[altsetting_idx];
+
+        // Skip TIS cameras that definitely aren't UVC even though they might
+        // look that way
+
+        if ( 0x199e == desc.idVendor && desc.idProduct  >= 0x8201 &&
+            desc.idProduct <= 0x8208 ) {
+          continue;
+        }
+
+        // Special case for Imaging Source cameras
+	/* Video, Streaming */
+        if ( 0x199e == desc.idVendor && ( 0x8101 == desc.idProduct ||
+            0x8102 == desc.idProduct ) &&
+            if_desc->bInterfaceClass == 255 &&
+            if_desc->bInterfaceSubClass == 2 ) {
+	  got_interface = 1;
+	}
+
+	/* Video, Streaming */
+	if (if_desc->bInterfaceClass == 14 && if_desc->bInterfaceSubClass == 2) {
+	  got_interface = 1;
+	}
+      }
+    }
+
+    libusb_free_config_descriptor(config);
+
+    if (got_interface) {
+      uvc_device_t *uvc_dev = malloc(sizeof(*uvc_dev));
+      uvc_dev->ctx = ctx;
+      uvc_dev->ref = 0;
+      uvc_dev->usb_dev = usb_dev;
+      uvc_ref_device(uvc_dev);
+
+      num_uvc_devices++;
+      list_internal = realloc(list_internal, (num_uvc_devices + 1) * sizeof(*list_internal));
+
+      list_internal[num_uvc_devices - 1] = uvc_dev;
+      list_internal[num_uvc_devices] = NULL;
+
+      UVC_DEBUG("    UVC: %d", dev_idx);
+    } else {
+      UVC_DEBUG("non-UVC: %d", dev_idx);
+    }
+  }
+
+  libusb_free_device_list(usb_dev_list, 1);
+
+  *list = list_internal;
+
+  UVC_EXIT(UVC_SUCCESS);
+  return UVC_SUCCESS;
+}
+
+/**
+ * @brief Frees a list of device structures created with uvc_get_device_list.
+ * @ingroup device
+ *
+ * @param list Device list to free
+ * @param unref_devices Decrement the reference counter for each device
+ * in the list, and destroy any entries that end up with zero references
+ */
+void uvc_free_device_list(uvc_device_t **list, uint8_t unref_devices) {
+  uvc_device_t *dev;
+  int dev_idx = 0;
+
+  UVC_ENTER();
+
+  if (unref_devices) {
+    while ((dev = list[dev_idx++]) != NULL) {
+      uvc_unref_device(dev);
+    }
+  }
+
+  free(list);
 
   UVC_EXIT_VOID();
 }
@@ -626,8 +1058,20 @@ uvc_error_t uvc_scan_control(uvc_device_handle_t *devh, uvc_device_info_t *info)
   ret = UVC_SUCCESS;
   if_desc = NULL;
 
+  uvc_device_descriptor_t* dev_desc;
+  int haveTISCamera = 0;
+  get_device_descriptor ( devh, &dev_desc );
+  if ( 0x199e == dev_desc->idVendor && ( 0x8101 == dev_desc->idProduct ||
+      0x8102 == dev_desc->idProduct )) {
+    haveTISCamera = 1;
+  }
+  uvc_free_device_descriptor ( dev_desc );
+
   for (interface_idx = 0; interface_idx < info->config->bNumInterfaces; ++interface_idx) {
     if_desc = &info->config->interface[interface_idx].altsetting[0];
+
+    if ( haveTISCamera && if_desc->bInterfaceClass == 255 && if_desc->bInterfaceSubClass == 1) // Video, Control
+      break;
 
     if (if_desc->bInterfaceClass == 14 && if_desc->bInterfaceSubClass == 1) // Video, Control
       break;
