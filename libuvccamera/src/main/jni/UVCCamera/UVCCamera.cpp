@@ -312,6 +312,7 @@ int UVCCamera::setZoom(int zoom) {
 }
 
 char *UVCCamera::getSupportedSize(const uvc_device_handle_t *deviceHandle) {
+	// TODO make something sensible to just return default or supported sizes instead
 	char buf[256] = { 0 };
 	if (deviceHandle->info->stream_ifs) {
 		uvc_streaming_interface_t *stream_if;
