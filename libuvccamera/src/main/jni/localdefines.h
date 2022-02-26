@@ -31,8 +31,6 @@
 #define LOG_TAG "libUVCCamera"
 #endif
 
-#define LIBUVC_HAS_JPEG
-
 // write back array that got by getXXXArrayElements into original Java object and release its array
 #define	ARRAYELEMENTS_COPYBACK_AND_RELEASE 0
 // write back array that got by getXXXArrayElements into origianl Java object but do not release its array

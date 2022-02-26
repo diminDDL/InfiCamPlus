@@ -49,7 +49,6 @@ android {
     }
 
 	packagingOptions {
-		pickFirst "lib/**/libjpeg-turbo1500.so"
 		pickFirst "lib/**/libusb100.so"
 		pickFirst "lib/**/libuvc.so"
 	}
