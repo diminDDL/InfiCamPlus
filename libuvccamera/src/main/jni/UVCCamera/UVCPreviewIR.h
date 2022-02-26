@@ -76,25 +76,14 @@ private:
     volatile bool mIsComputed;
 	Fields_iTemperatureCallback iTemperatureCallback;
 	//ir temperature
-    bool mIsTemperaturing;
-	pthread_t temperature_thread;
-	pthread_mutex_t temperature_mutex;
-	pthread_cond_t temperature_sync;
 	jobject mTemperatureCallbackObj;
 
 	InfiFrame ic;
 
 	int copyToSurface(uint8_t *frameData, ANativeWindow *window);
-	static void *temperature_thread_func(void *vptr_args);
-    void do_temperature(JNIEnv *env);
     void do_temperature_callback(JNIEnv *env, uint8_t *frameData);
 
 	//ir temp para
-    int frameNumber;
-    /**
-     *temperatureTable:温度映射表
-     */
-    float temperatureTable[16384];
     bool isNeedWriteTable;
     int mTypeOfPalette;
 	//测温相关参数，详见thermometry.h
@@ -107,14 +96,6 @@ private:
     char cameraSoftVersion[16];//camera软件版本
 
     float mCbTemper[640*512+10] ;
-    unsigned short t_max;
-    unsigned short t_min;
-    unsigned short t_avg;
-    unsigned char paletteIronRainbow[65536 * 3]; // TODO (netman) This is probably far bigger than sensible if this is right we expect at most 16384 possible temp values: https://github.com/mcguire-steve/ht301_ircam/blob/master/src/XthermDll.cpp
-    unsigned char palette3[256*3];//256*3 彩虹1
-    unsigned char paletteRainbow[65536 * 3];
-    unsigned char paletteHighRainbow[65536 * 3];
-    unsigned char paletteHighContrast[347 *3];//448*3 高对比彩虹
     unsigned char UserPalette[256*3];
 
 	void clearDisplay();
@@ -122,12 +103,8 @@ private:
 	static void *preview_thread_func(void *vptr_args);
 	int prepare_preview(uvc_stream_ctrl_t *ctrl);
 	void do_preview(uvc_stream_ctrl_t *ctrl);
-	void draw_preview_one(uint8_t* frameData, ANativeWindow *window);
 
 public:
-	static const int START = 1;  // #1
-	static const int STOP = 2;
-
 	UVCPreviewIR();
 	UVCPreviewIR(uvc_device_handle_t *devh);
 	~UVCPreviewIR();
@@ -137,8 +114,6 @@ public:
 	int setTemperatureCallback(JNIEnv *env, jobject temperature_callback_obj);
 	int startPreview();
 	int stopPreview();
-	int stopTemp();
-	int startTemp();
 	void changePalette(int typeOfPalette);
 	void setTempRange(int range);
 	void setShutterFix(float mShutterFix);

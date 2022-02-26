@@ -226,24 +226,6 @@ int UVCCamera::stopPreview() {
 	RETURN(0, int);
 }
 
-int UVCCamera::stopTemp() {
-	ENTER();
-	int result = EXIT_FAILURE;
-	if (mPreview) {
-		result = mPreview->stopTemp();
-	}
-	RETURN(result, int);
-}
-
-int UVCCamera::startTemp() {
-	ENTER();
-	int result = EXIT_FAILURE;
-	if (mPreview) {
-		result = mPreview->startTemp();
-	}
-	RETURN(result, int);
-}
-
 void UVCCamera::changePalette(int typeOfPalette) {
 	ENTER();
  	if (mPreview) {

@@ -56,9 +56,6 @@ public:
 	int stopPreview();
 	int setZoom(int zoom);
 
-	int stopTemp();
-	int startTemp();
-
 	void changePalette(int typeOfPalette);
 	void setTempRange(int range);
 	void setShutterFix(float mShutterFix);

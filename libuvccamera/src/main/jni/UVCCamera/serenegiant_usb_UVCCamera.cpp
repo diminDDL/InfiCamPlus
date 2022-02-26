@@ -278,20 +278,6 @@ JNIEXPORT void Java_com_serenegiant_UVCCamera_nativeWhenShutRefresh(JNIEnv *env,
 	EXIT();
 }
 
-JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeStartStopTemp(JNIEnv *env, jclass thiz, ID_TYPE id_camera, jint startStop) {
-	jint result = JNI_ERR;
-	ENTER();
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
-	if (LIKELY(camera)) {
-		if(startStop) {//1 start 0stop
-			result = camera->startTemp();
-		} else {
-			result = camera->stopTemp();
-		}
-	}
-	RETURN(result, jint);
-}
-
 JNIEXPORT void Java_com_serenegiant_UVCCamera_nativeChangePalette(JNIEnv *env, jclass thiz, ID_TYPE id_camera, jint typeOfPalette) {
 	ENTER();
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);

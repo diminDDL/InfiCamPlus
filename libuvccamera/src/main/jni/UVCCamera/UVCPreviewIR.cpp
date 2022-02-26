@@ -85,8 +85,6 @@ UVCPreviewIR::UVCPreviewIR(uvc_device_handle_t *devh)
 	previewFormat(WINDOW_FORMAT_RGBX_8888),
 	mIsRunning(false),
 	isNeedWriteTable(true),
-	frameNumber(0),
-	mIsTemperaturing(false),
 	mTemperatureCallbackObj(NULL)
 {
 	ENTER();
@@ -99,8 +97,6 @@ UVCPreviewIR::UVCPreviewIR(uvc_device_handle_t *devh)
     memset(UserPalette,0,3*256*sizeof(unsigned char));
 	pthread_cond_init(&preview_sync, NULL);
 	pthread_mutex_init(&preview_mutex, NULL);
-	pthread_cond_init(&temperature_sync,NULL);
-	pthread_mutex_init(&temperature_mutex,NULL);
 	EXIT();
 }
 
@@ -113,8 +109,6 @@ UVCPreviewIR::~UVCPreviewIR() {
 	////LOGE("~UVCPreviewIR() 1");
 	pthread_mutex_destroy(&preview_mutex);
 	pthread_cond_destroy(&preview_sync);
-	pthread_mutex_destroy(&temperature_mutex);
-    pthread_cond_destroy(&temperature_sync);
     ////LOGE("~UVCPreviewIR() 8");
 	EXIT();
 }
@@ -166,7 +160,7 @@ int UVCPreviewIR::setTemperatureCallback(JNIEnv *env,jobject temperature_callbac
 	ENTER();
 	//pthread_create(&temperature_thread, NULL, temperature_thread_func, (void *)this);
 	////LOGE("setTemperatureCallback01");
-	pthread_mutex_lock(&temperature_mutex);
+	pthread_mutex_lock(&preview_mutex);
 	{
 		if (!env->IsSameObject(mTemperatureCallbackObj, temperature_callback_obj))	{
 		////LOGE("setTemperatureCallback !env->IsSameObject");
@@ -197,7 +191,7 @@ int UVCPreviewIR::setTemperatureCallback(JNIEnv *env,jobject temperature_callbac
 
 		}
 	}
-    pthread_mutex_unlock(&temperature_mutex);
+    pthread_mutex_unlock(&preview_mutex);
 	RETURN(0, int);
 }
 
@@ -272,17 +266,6 @@ int UVCPreviewIR::stopPreview() {
 		{
 		    ////LOGE("UVCPreviewIR::terminate preview thread: EXIT_SUCCESS");
 		}
-		if(mIsTemperaturing)
-		{
-		    mIsTemperaturing=false;
-            if (pthread_join(temperature_thread, NULL) != EXIT_SUCCESS) {
-                ////LOGE("UVCPreviewIR::terminate temperature_thread: pthread_join failed");
-            }
-            else
-            {
-                ////LOGE("UVCPreviewIR::terminate temperature_thread: pthread_join success");
-            }
-        }
 		//clearDisplay();
 	}
 	pthread_mutex_lock(&preview_mutex);
@@ -355,17 +338,18 @@ int UVCPreviewIR::prepare_preview(uvc_stream_ctrl_t *ctrl) {
     RgbaHoldBuffer = new unsigned char[requestWidth*(requestHeight-4)*4];
 
     // TODO (netman) This is temporary generating a palette thing, dunno what the plan is yet, but it doesn't belong here.
-	for (int i = 0; i + 3 <= sizeof(paletteIronRainbow); i += 3) {
-		double x = (double) i / (double) sizeof(paletteIronRainbow);
-		paletteIronRainbow[i + 0] = round(255 * sqrt(x));
-		paletteIronRainbow[i + 1] = round(255 * pow(x, 3));
-		paletteIronRainbow[i + 2] = round(255 * fmax(0, sin(2 * M_PI * x)));
+	for (int i = 0; i + 4 <= sizeof(ic.palette); i += 4) {
+		double x = (double) i / (double) sizeof(ic.palette);
+		((uint8_t *) ic.palette)[i + 0] = round(255 * sqrt(x));
+		((uint8_t *) ic.palette)[i + 1] = round(255 * pow(x, 3));
+		((uint8_t *) ic.palette)[i + 2] = round(255 * fmax(0, sin(2 * M_PI * x)));
+		((uint8_t *) ic.palette)[i + 3] = 255;
 	}
 
 	// TODO (netman) This is temporary generating a palette thing, dunno what the plan is yet, but it doesn't belong here.
 	// TODO add partial (0-270 degrees) rainbow, where cold is blue and red is hot
-	for (int i = 0; i + 3 <= sizeof(paletteRainbow); i += 3) {
-		double h = 360.0 - (double) i / (double) sizeof(paletteRainbow) * 360.0;
+	/*for (int i = 0; i + 4 <= sizeof(ic.palette); i += 4) {
+		double h = 360.0 - (double) i / (double) sizeof(ic.palette) * 360.0;
 		double x = (1 - abs(fmod(h / 60.0, 2) - 1));
 		double r, g, b;
 		if (h >= 0 && h < 60)
@@ -379,25 +363,11 @@ int UVCPreviewIR::prepare_preview(uvc_stream_ctrl_t *ctrl) {
 		else if(h >= 240 && h < 300)
 			r = x, g = 0, b = 1;
 		else r = 1, g = 0, b = x;
-		paletteRainbow[i + 0] = round(255 * r);
-		paletteRainbow[i + 1] = round(255 * g);
-		paletteRainbow[i + 2] = round(255 * b);
-	}
-
-	memcpy(palette3, paletteRainbow, sizeof(palette3));
-	memcpy(paletteHighRainbow, paletteRainbow, sizeof(paletteRainbow));
-	memcpy(paletteHighContrast, paletteIronRainbow, sizeof(palette3));
-
-
-	// TODO this is the new one
-	for (int i = 0; i + 4 <= sizeof(ic.palette); i += 4) {
-		double x = (double) i / (double) sizeof(ic.palette);
-		((uint8_t *) ic.palette)[i + 0] = round(255 * sqrt(x));
-		((uint8_t *) ic.palette)[i + 1] = round(255 * pow(x, 3));
-		((uint8_t *) ic.palette)[i + 2] = round(255 * fmax(0, sin(2 * M_PI * x)));
-		((uint8_t *) ic.palette)[i + 3] = 1;
-	}
-
+		((uint8_t *) ic.palette)[i + 0] = round(255 * r);
+		((uint8_t *) ic.palette)[i + 1] = round(255 * g);
+		((uint8_t *) ic.palette)[i + 2] = round(255 * b);
+		((uint8_t *) ic.palette)[i + 3] = 255;
+	}*/
 
     mInitData=new unsigned short[requestWidth*(requestHeight-4)+10];
 	result = uvc_get_stream_ctrl_format_size_fps(mDeviceHandle, ctrl,
@@ -442,54 +412,41 @@ void UVCPreviewIR::do_preview(uvc_stream_ctrl_t *ctrl) {
     //////LOGE("do_preview");
 	uvc_error_t result = uvc_start_streaming_bandwidth(mDeviceHandle, ctrl, uvc_preview_frame_callback, (void *)this, requestBandwidth, 0);
 	if (LIKELY(!result)) {
-		//pthread_create(&capture_thread, NULL, capture_thread_func, (void *)this);
-	    //pthread_create(&temperature_thread, NULL, temperature_thread_func, (void *)this);
-        #if LOCAL_DEBUG
-		LOGI("Streaming...");
-        #endif
-	    // yuvyv mode
 		for ( ; LIKELY(isRunning()) ; )
 		{
-            //LOGE("do_preview0");
             pthread_mutex_lock(&preview_mutex);
             {
-                //LOGE("waitPreviewFrame");
                 pthread_cond_wait(&preview_sync, &preview_mutex);
-                //LOGE("waitPreviewFrame02");
-
-				//if(OutPixelFormat==3)//RGBA 32bit输出
-				//  {
 
 				// swap the buffers rgba
 				uint8_t *tmp_buf = RgbaOutBuffer;
 				RgbaOutBuffer = RgbaHoldBuffer;
 				RgbaHoldBuffer = tmp_buf;
 
-				ic.update((uint16_t *) HoldBuffer);
-				ic.read_version((uint16_t *) HoldBuffer, NULL, sn, cameraSoftVersion);
-				t_max = ic.temp_max;
-				t_min = ic.temp_min;
+				// Update table.
+				if(isNeedWriteTable) {
+					ic.read_params((uint16_t *) HoldBuffer);
+					ic.update_table((uint16_t *) HoldBuffer); // TODO remember the temperature thing also needs this.
+					ic.read_version((uint16_t *) HoldBuffer, NULL, sn, cameraSoftVersion); // TODO need this?
+					isNeedWriteTable=false;
+				}
 
-				draw_preview_one(HoldBuffer, mPreviewWindow);
+				// Draw preview.
+				ic.palette_appy((uint16_t *) HoldBuffer, (uint32_t *) RgbaHoldBuffer);
+				if (mPreviewWindow)
+					copyToSurface(RgbaHoldBuffer, mPreviewWindow);
+
+				JNIEnv *env;
+				savedVm->AttachCurrentThread(&env, NULL);
+				do_temperature_callback(env, HoldBuffer);
+				savedVm->DetachCurrentThread();
+
 				mIsComputed=true;
-               // }
             }
             pthread_mutex_unlock(&preview_mutex);
-            if (mTemperatureCallbackObj && mIsTemperaturing)
-                pthread_cond_signal(&temperature_sync);
-
 	    }
 
-		//pthread_cond_signal(&capture_sync);
-
-
-#if LOCAL_DEBUG
-		LOGI("preview_thread_func:wait for all callbacks complete");
-#endif
 		uvc_stop_streaming(mDeviceHandle);
-#if LOCAL_DEBUG
-		LOGI("Streaming finished");
-#endif
 	} else {
 		uvc_perror(result, "failed start_streaming");
 	}
@@ -532,151 +489,6 @@ int UVCPreviewIR::copyToSurface(uint8_t *frameData, ANativeWindow *window) {
 	return result; //RETURN(result, int);
 }
 
-void UVCPreviewIR::draw_preview_one(uint8_t *frameData, ANativeWindow *window) {
-	unsigned short *tmp_buf = (unsigned short*) frameData;
-
-	if(UNLIKELY(isNeedWriteTable)) {
-		ic.read_params((uint16_t *) frameData);
-		ic.update_table((uint16_t *) frameData);
-		isNeedWriteTable=false;
-	}
-
-	/**
-	 * 线性图像算法
-	 * 图像效果不及专业级算法，但是处理效率快，对主频几乎没要求
-	 *
-	 */
-	/*int avgSubMin= (t_avg - t_min) > 0 ? (t_avg - t_min) : 1;
-	int maxSubAvg= (t_max - t_avg) > 0 ? (t_max - t_avg) : 1;
-	int ro1 = (t_avg - t_min) > 97 ? 97 : (t_avg - t_min);
-	int ro2 = (t_max - t_avg) > 157 ? 157 : (t_max - t_avg);
-	int span = t_max - t_min;
-	switch (mTypeOfPalette) {
-		case 0:
-			for(int i = 0; i < requestWidth * (requestHeight - 4); i++) {
-				int gray = (tmp_buf[i] - t_min) * 255 / span;
-				RgbaHoldBuffer[4 * i + 0] = (unsigned char) gray;
-				RgbaHoldBuffer[4 * i + 1] = (unsigned char) gray;
-				RgbaHoldBuffer[4 * i + 2] = (unsigned char) gray;
-				RgbaHoldBuffer[4 * i + 3] = 1;
-			}
-			break;
-		case 1:
-			for(int i = 0; i < requestWidth * (requestHeight - 4); i++) {
-				int gray = 255 - (tmp_buf[i] - t_min) * 255 / span;
-				RgbaHoldBuffer[4 * i + 0] = (unsigned char) gray;
-				RgbaHoldBuffer[4 * i + 1] = (unsigned char) gray;
-				RgbaHoldBuffer[4 * i + 2] = (unsigned char) gray;
-				RgbaHoldBuffer[4 * i + 3] = 1;
-			}
-			break;
-		case 2:
-			for(int i = 0; i < requestWidth * (requestHeight - 4); i++) {
-				int gray = (int)(tmp_buf[i] - t_min) * (sizeof(paletteIronRainbow) / 3 - 1) / span;
-				int paletteNum = 3 * gray;
-				if (gray < sizeof(paletteIronRainbow) / 3) { // TODO this is probly slow and we should range check all of em
-					RgbaHoldBuffer[4 * i + 0] = (unsigned char) paletteIronRainbow[paletteNum + 0];
-					RgbaHoldBuffer[4 * i + 1] = (unsigned char) paletteIronRainbow[paletteNum + 1];
-					RgbaHoldBuffer[4 * i + 2] = (unsigned char) paletteIronRainbow[paletteNum + 2];
-					RgbaHoldBuffer[4 * i + 3] = 1;
-				}
-			}
-			break;
-		case 3:
-		  ro1= (t_avg - t_min) > 132 ? 132 : (t_avg - t_min);
-		  ro2= (t_max - t_avg) > 214 ? 214 : (t_max - t_avg);
-		  for(int i=0; i<requestHeight-4; i++)
-			{
-				for(int j=0; j<requestWidth; j++)
-				{
-					//printf("i:%d,j:%d\n",i,j);
-					//黑白：灰度值0-254单通道。 paletteIronRainbow：（0-254）×3三通道。两个都是255，所以使用254
-					int gray=0;
-					 if(tmp_buf[i*requestWidth+j] > t_avg)
-					 {
-						 gray = (int)(ro2 * (tmp_buf[i*requestWidth+j] - t_avg) / maxSubAvg + 132);
-					 }
-					 else
-					 {
-						 gray = (int)(ro1 * (tmp_buf[i*requestWidth+j] - t_avg) / avgSubMin + 132);
-					 }
-					int paletteNum=3*gray;
-					RgbaHoldBuffer[4*(i*requestWidth+j)]=(unsigned char)paletteHighContrast[paletteNum];
-					RgbaHoldBuffer[4*(i*requestWidth+j)+1]=(unsigned char)paletteHighContrast[paletteNum+1];
-					RgbaHoldBuffer[4*(i*requestWidth+j)+2]=(unsigned char)paletteHighContrast[paletteNum+2];
-					RgbaHoldBuffer[4*(i*requestWidth+j)+3]=1;
-				}
-			}
-			break;
-		case 4:
-			for(int i = 0; i < requestWidth * (requestHeight - 4); i++) {
-				int gray = (int)(tmp_buf[i] - t_min) * (sizeof(paletteRainbow) / 3 - 1) / span;
-				int paletteNum = 3 * gray;
-				RgbaHoldBuffer[4 * i + 0] = (unsigned char) paletteRainbow[paletteNum + 0];
-				RgbaHoldBuffer[4 * i + 1] = (unsigned char) paletteRainbow[paletteNum + 1];
-				RgbaHoldBuffer[4 * i + 2] = (unsigned char) paletteRainbow[paletteNum + 2];
-				RgbaHoldBuffer[4 * i + 3] = 1;
-			}
-			break;
-		 case 5:
-			ro1= (t_avg - t_min) > 97 ? 97 : (t_avg - t_min);
-			ro2= (t_max - t_avg) > 158 ? 158 : (t_max - t_avg);
-		   for(int i=0; i<requestHeight-4; i++)
-			 {
-				 for(int j=0; j<requestWidth; j++)
-				 {
-					 //printf("i:%d,j:%d\n",i,j);
-					 //黑白：灰度值0-254单通道。 paletteIronRainbow：（0-254）×3三通道。两个都是255，所以使用254
-					  int gray=0;
-					  if(tmp_buf[i*requestWidth+j] > t_avg)
-					  {
-						  gray = (int)(ro2 * (tmp_buf[i*requestWidth+j] - t_avg) / maxSubAvg + 97);
-					  }
-					  else
-					  {
-						  gray = (int)(ro1 * (tmp_buf[i*requestWidth+j] - t_avg) / avgSubMin + 97);
-					  }
-					 int paletteNum=3*gray;
-					 RgbaHoldBuffer[4*(i*requestWidth+j)]=(unsigned char)palette3[paletteNum];
-					 RgbaHoldBuffer[4*(i*requestWidth+j)+1]=(unsigned char)palette3[paletteNum+1];
-					 RgbaHoldBuffer[4*(i*requestWidth+j)+2]=(unsigned char)palette3[paletteNum+2];
-					 RgbaHoldBuffer[4*(i*requestWidth+j)+3]=1;
-				 }
-			 }
-		 break;
-		 case 6:
-		 ro1= (t_avg - t_min) > 97 ? 97 : (t_avg - t_min);
-		 ro2= (t_max - t_avg) > 158 ? 158 : (t_max - t_avg);
-		  for(int i=0; i<requestHeight-4; i++)
-			 {
-				 for(int j=0; j<requestWidth; j++)
-				 {
-					 //printf("i:%d,j:%d\n",i,j);
-					 //黑白：灰度值0-254单通道。 paletteIronRainbow：（0-254）×3三通道。两个都是255，所以使用254
-					 int gray=0;
-					   if(tmp_buf[i*requestWidth+j] > t_avg)
-					   {
-						   gray = (int)(ro2 * (tmp_buf[i*requestWidth+j] - t_avg) / maxSubAvg + 97);
-					   }
-					   else
-					   {
-						   gray = (int)(ro1 * (tmp_buf[i*requestWidth+j] - t_avg) / avgSubMin + 97);
-					   }
-					  int paletteNum=3*gray;
-					 RgbaHoldBuffer[4*(i*requestWidth+j)]=(unsigned char)UserPalette[paletteNum];
-					 RgbaHoldBuffer[4*(i*requestWidth+j)+1]=(unsigned char)UserPalette[paletteNum+1];
-					 RgbaHoldBuffer[4*(i*requestWidth+j)+2]=(unsigned char)UserPalette[paletteNum+2];
-					 RgbaHoldBuffer[4*(i*requestWidth+j)+3]=1;
-				 }
-			 }
-		  break;
-	 } */
-	ic.palette_appy((uint16_t *) frameData, (uint32_t *) RgbaHoldBuffer);
-
-	if (LIKELY(window))
-		copyToSurface(RgbaHoldBuffer, window);
-}
-
 /*
 在这里可以返回测温相关参数
 fix       float 0-3
@@ -695,108 +507,10 @@ int UVCPreviewIR:: getByteArrayTemperaturePara(uint8_t* para) {
 	return true;
 }
 
-int UVCPreviewIR::stopTemp() {
-    ENTER();
-	pthread_mutex_lock(&temperature_mutex);
-	{
-		if (isRunning() && mIsTemperaturing)
-		 {
-	        ////LOGE("stopTemp");
-			mIsTemperaturing = false;
-			pthread_cond_signal(&temperature_sync);
-			pthread_cond_wait(&temperature_sync, &temperature_mutex);	// wait finishing Temperatur
-		}
-	}
-	pthread_mutex_unlock(&temperature_mutex);
-    if (pthread_join(temperature_thread, NULL) != EXIT_SUCCESS)
-    {
-        ////LOGE("UVCPreviewIR::stopTemp temperature_thread: pthread_join failed");
-    }
-    else
-    {
-        ////LOGE("UVCPreviewIR::stopTemp temperature_thread: pthread_join success");
-    }
-	RETURN(0, int);
-}
-
-int UVCPreviewIR::startTemp() {
-	ENTER();
-	pthread_mutex_lock(&temperature_mutex);
-	{
-		if (isRunning()&&(!mIsTemperaturing))
-		 {
-	        ////LOGE("startTemp");
-			mIsTemperaturing = true;
-		 }
-	}
-	pthread_mutex_unlock(&temperature_mutex);
-	if(pthread_create(&temperature_thread, NULL, temperature_thread_func, (void *)this)==0)
-	{
-	    ////LOGE("UVCPreviewIR::startTemp temperature_thread: pthread_create success");
-	}
-	else
-	{
-	    ////LOGE("UVCPreviewIR::startTemp temperature_thread: pthread_create failed");
-	}
-	RETURN(0, int);
-}
-
-//======================================================================
-/*
- * thread function for ir
- * @param vptr_args pointer to UVCPreviewIR instance
- */
-// static
-void *UVCPreviewIR::temperature_thread_func(void *vptr_args) {
-	int result;
-    ////LOGE("temperature_thread_func");
-	ENTER();
-	UVCPreviewIR *preview = reinterpret_cast<UVCPreviewIR *>(vptr_args);
-	if (LIKELY(preview))
-	{
-        JavaVM *vm = savedVm;
-		JNIEnv *env;
-		//attach to JavaVM
-		vm->AttachCurrentThread(&env, NULL);
-		////LOGE("temperature_thread_func do_temperature");
-		preview->do_temperature(env);	// never return until finish previewing
-		//detach from JavaVM
-		vm->DetachCurrentThread();
-		MARK("DetachCurrentThread");
-	}
-	PRE_EXIT();
-	pthread_exit(NULL);
-}
-
-/**
- * the actual function for temperature
- */
-void UVCPreviewIR::do_temperature(JNIEnv *env) {
-	ENTER();
-    ////LOGE("do_temperature mIsTemperaturing:%d",mIsTemperaturing);
-	 for (;isRunning()&&mIsTemperaturing;)
-    {
-
-        pthread_mutex_lock(&temperature_mutex);
-        {
-            ////LOGE("do_temperature01");
-            pthread_cond_wait(&temperature_sync, &temperature_mutex);
-            ////LOGE("do_temperature02");
-            if(mIsTemperaturing)
-                do_temperature_callback(env, HoldBuffer);
-            ////LOGE("do_temperature03");
-        }
-        pthread_mutex_unlock(&temperature_mutex);
-    }
-    pthread_cond_broadcast(&temperature_sync);
-    ////LOGE("do_temperature EXIT");
-	EXIT();
-}
-
 void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 	ENTER();
 
-	float* temperatureData = mCbTemper;
+	float *temperatureData = mCbTemper;
 	ic.update((uint16_t *) HoldBuffer);
 	ic.temp((uint16_t *) HoldBuffer, temperatureData + 10);
 	temperatureData[0] = ic.temp(ic.temp_center);
@@ -822,11 +536,11 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 
 //打快门更新表
 void UVCPreviewIR::whenShutRefresh() {
-    pthread_mutex_lock(&temperature_mutex);
+    pthread_mutex_lock(&preview_mutex);
     {
         isNeedWriteTable=true;
     }
-    pthread_mutex_unlock(&temperature_mutex);
+    pthread_mutex_unlock(&preview_mutex);
 }
 
 void UVCPreviewIR::setUserPalette(uint8_t *palette, int typeOfPalette) {

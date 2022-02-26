@@ -782,7 +782,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
 
 			if ((mUVCCamera == null) || mIsTemperaturing) return;
 			mIsTemperaturing=true;
-			mUVCCamera.startTemp();
 			mWeakCameraView.get().setTemperatureCbing(true);
 		}
         public  void handleRelayout(int rotate){
@@ -807,7 +806,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			}
 			mIsTemperaturing=false;
 			mWeakCameraView.get().setTemperatureCbing(false);
-			mUVCCamera.stopTemp();
 		}
 
 		public void handleStopRecording() {
