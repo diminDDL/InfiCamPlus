@@ -225,18 +225,17 @@ void UVCPreviewIR::uvc_preview_frame_callback(InfiCam *cam, uint32_t *rgb, float
 		savedVm->AttachCurrentThread(&env, NULL);
 
 		float *temperatureData = p->mCbTemper;
-		// TODO
 		memcpy(temperatureData + 10, temp, p->cam.infi.width * p->cam.infi.height * sizeof(float));
-		/*temperatureData[0] = cam.infi.temp(cam.infi.temp_center);
-        temperatureData[1] = cam.infi.temp_max_x;
-        temperatureData[2] = cam.infi.temp_max_y;
-        temperatureData[3] = cam.infi.temp(cam.infi.temp_max);
-        temperatureData[4] = cam.infi.temp_min_x;
-        temperatureData[5] = cam.infi.temp_min_y;
-        temperatureData[6] = cam.infi.temp(cam.infi.temp_min);
-        temperatureData[7] = cam.infi.temp(cam.infi.temp_user[0]);
-        temperatureData[8] = cam.infi.temp(cam.infi.temp_user[1]);
-        temperatureData[9] = cam.infi.temp(cam.infi.temp_user[2]);*/
+		temperatureData[0] = p->cam.infi.temp(p->cam.infi.temp_center);
+        temperatureData[1] = p->cam.infi.temp_max_x;
+        temperatureData[2] = p->cam.infi.temp_max_y;
+        temperatureData[3] = p->cam.infi.temp(p->cam.infi.temp_max);
+        temperatureData[4] = p->cam.infi.temp_min_x;
+        temperatureData[5] = p->cam.infi.temp_min_y;
+        temperatureData[6] = p->cam.infi.temp(p->cam.infi.temp_min);
+        temperatureData[7] = p->cam.infi.temp(p->cam.infi.temp_user[0]);
+        temperatureData[8] = p->cam.infi.temp(p->cam.infi.temp_user[1]);
+        temperatureData[9] = p->cam.infi.temp(p->cam.infi.temp_user[2]);
 
 		jfloatArray mNCbTemper = env->NewFloatArray(p->cam.infi.width*p->cam.infi.height+10);
 		env->SetFloatArrayRegion(mNCbTemper, 0, 10+p->cam.infi.width*p->cam.infi.height, p->mCbTemper);

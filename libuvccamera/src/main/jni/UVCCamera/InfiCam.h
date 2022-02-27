@@ -29,7 +29,10 @@ class InfiCam {
 
 public:
     static const int palette_len = InfiFrame::palette_len;
-    InfiFrame infi; /* Updated before each stream CB with info relevant to the frame. */
+    /* InfiFrame class gets updated before each stream CB with info relevant to the frame.
+     * The width and height in there are valid after connect().
+     */
+    InfiFrame infi;
 
     ~InfiCam();
 
