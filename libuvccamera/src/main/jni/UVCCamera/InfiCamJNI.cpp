@@ -73,11 +73,11 @@ JNIEXPORT void Java_com_serenegiant_InfiCam_calibrate(JNIEnv *env, jclass cl) {
 }
 
 JNIEXPORT jint Java_com_serenegiant_InfiCam_nativeSetPalette(JNIEnv *env, jclass cl, jintArray palette) {
-    jint *arr = env->GetIntArrayElements(palette, 0);
-    if (env->GetArrayLength(palette) < cam.palette_len || arr == NULL) {
-        env->ReleaseIntArrayElements(palette, arr, JNI_ABORT);
+    if (env->GetArrayLength(palette) < cam.palette_len)
         return 1;
-    }
+    jint *arr = env->GetIntArrayElements(palette, NULL);
+    if (arr == NULL)
+        return 2;
     cam.set_palette((uint32_t *) arr);
     env->ReleaseIntArrayElements(palette, arr, JNI_ABORT);
     return 0;
