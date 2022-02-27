@@ -143,10 +143,6 @@ void InfiCam::store_params() {
     dev.set_zoom_abs(CMD_STORE);
 }
 
-void InfiCam::set_palette(uint32_t *palette) {
-    memcpy(infi.palette, palette, palette_len * sizeof(uint32_t));
-}
-
 void InfiCam::update_table() {
     table_invalid = 1;
 }
@@ -158,4 +154,8 @@ void InfiCam::calibrate() {
     pthread_mutex_lock(&frame_callback_mutex);
     update_table(); /* Xtherm (sometimes) does this 100ms before CMD_SHUTTER, but why? */
     pthread_mutex_unlock(&frame_callback_mutex);
+}
+
+void InfiCam::set_palette(uint32_t *palette) {
+    memcpy(infi.palette, palette, palette_len * sizeof(uint32_t));
 }
