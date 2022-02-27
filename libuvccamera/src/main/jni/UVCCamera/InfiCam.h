@@ -16,7 +16,8 @@ class InfiCam {
     uint32_t *frame_rgb;
     float *frame_temp;
     pthread_mutex_t frame_callback_mutex;
-    int streaming = 0, table_invalid = 0;
+    int connected = 0, streaming = 0, table_invalid = 0;
+    int range = 120;
 
     static const int CMD_SHUTTER = 0x8000;
     static const int CMD_MODE_TEMP = 0x8004;
@@ -44,13 +45,23 @@ public:
 
     ~InfiCam();
 
-    int connect(int fd);
+    int connect(int fd); /* See InfiFrame.h for dmul, range. */
     void disconnect();
     int stream_start(frame_callback_t *cb, void *user_ptr); /* CB arguments valid until return. */
     void stream_stop();
 
-    /* Setting parameters, only works while streaming, only valid after next frame for
-     *   temp_single() from raw data and calibrate()/table_invalid() for all else.
+    /* Set range, valid values are 120 and 400 (see InfiFrame class).
+     * Changes take effect after update/update_table().
+     */
+    void set_range(int range);
+
+    /* Distance multiplier, 3.0 for 6.8mm lens, 1.0 for 13mm lens.
+     * Changes only take effect after update_table().
+     */
+    void set_distance_multiplier(float dm);
+
+    /* Setting parameters, only works while streaming.
+     * Changes only take effect after update_table().
      */
     void set_correction(float corr);
     void set_temp_reflected(float t_ref);
@@ -64,7 +75,7 @@ public:
     void update_table();
     void calibrate();
 
-    void set_palette(uint32_t *palette);
+    void set_palette(uint32_t *palette); /* Length must be palette_len. */
 };
 
 #endif /* __INFICAM_H__ */

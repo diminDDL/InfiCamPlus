@@ -39,12 +39,16 @@ int InfiCam::connect(int fd) {
         return 1;
     if (dev.connect(fd))
         return 2;
-    infi.init(dev.width, dev.height, 1.0, 120); // TODO the dmul and range values
+    if (infi.init(dev.width, dev.height))
+        return 3;
     dev.set_zoom_abs(CMD_MODE_TEMP);
+    connected = 1;
+    set_range(range);
     return 0;
 }
 
 void InfiCam::disconnect() {
+    connected = 0;
     stream_stop();
     dev.disconnect();
     pthread_mutex_destroy(&frame_callback_mutex);
@@ -76,6 +80,24 @@ void InfiCam::stream_stop() {
     frame_rgb = NULL;
     frame_temp = NULL;
     streaming = 0;
+}
+
+void InfiCam::set_range(int range) {
+    this->range = range;
+    if (connected) {
+        pthread_mutex_lock(&frame_callback_mutex);
+        infi.range = range;
+        dev.set_zoom_abs((range == 400) ? CMD_RANGE_400 : CMD_RANGE_120);
+        pthread_mutex_unlock(&frame_callback_mutex);
+    }
+}
+
+void InfiCam::set_distance_multiplier(float dm) {
+    if (connected)
+        pthread_mutex_lock(&frame_callback_mutex);
+    infi.distance_multiplier = dm;
+    if (connected)
+        pthread_mutex_unlock(&frame_callback_mutex);
 }
 
 void InfiCam::set_correction(float corr) {
@@ -159,3 +181,4 @@ void InfiCam::calibrate() {
 void InfiCam::set_palette(uint32_t *palette) {
     memcpy(infi.palette, palette, palette_len * sizeof(uint32_t));
 }
+

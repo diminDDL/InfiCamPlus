@@ -8,7 +8,7 @@
 class InfiFrame {
     /* Set by init(). */
     int fpa_off, s1_offset, s2_offset;
-    float fpa_div, distance_multiplier, cal_00_offset, cal_00_fpamul;
+    float fpa_div, cal_00_offset, cal_00_fpamul;
 
     /* Values used internally, updated by update(). */
     float distance_adjusted, numerator_sub, denominator;
@@ -29,7 +29,19 @@ public:
     float emissivity = 0.0;
     float distance = 0.0;
 
-    /* Optional offsets to compensenate for errors. */
+    /* Distance multiplier, 3.0 for 6.8mm lens, 1.0 for 13mm lens.
+     * Changes affect temp_single() only after update() and table dependent things after
+     *   update_table().
+     */
+    float distance_multiplier = 1.0;
+
+    /*   range: 120 or 400 (-20-120 / 120-400 Celcius).
+     * Changes affect temp_single() only after update() and table dependent things after
+     *   update_table().
+     */
+    int range = 120;
+
+    /* Optional offsets to compensenate for errors, 0 is normally fine. */
     float offset_temp_fpa = 0.0;
     float offset_temp_shutter = 0.0;
 
@@ -53,12 +65,10 @@ public:
 
     /* Before any of the other functions, call this one.
      *   width, height: As reported by the UVC driver.
-     *   dmul: Distance multiplier, 3.0 for 6.8mm lens, 1.0 for 13mm lens.
-     *   range: 120 or 400 (-20-120 / 120-400 Celcius).
      * Returns 1 on success, 0 on failure. Failure means the parameters given do not match a
      *   supported camera.
      */
-    int init(int width, int height, float dmul, int range);
+    int init(int width, int height);
 
     /* Always check that frame is large enough first. */
     void update(uint16_t *frame); /* For when table is not needed. */

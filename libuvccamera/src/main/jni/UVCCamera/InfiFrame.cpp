@@ -36,11 +36,9 @@ static inline float atmt(float h, float t_atm, float d) {
     return k_atm * expf(nsqd * (a1 + b1 * sqw)) + (1.0 - k_atm) * expf(nsqd * (a2 + b2 * sqw));
 }
 
-int InfiFrame::init(int width, int height, float dmul, int range) {
-    int ret = 1;
+int InfiFrame::init(int width, int height) {
     this->width = width;
     this->height = height - 4;
-    this->distance_multiplier = dmul;
     s1_offset = width * (height - 4);
 
     cal_00_offset = 390.0;
@@ -74,17 +72,12 @@ int InfiFrame::init(int width, int height, float dmul, int range) {
             s2_offset = s1_offset + width;
             break;
         default:
-            ret = 0;
-    }
-
-    if (range != 120) {
-        cal_00_offset = 0.0;
-        cal_00_fpamul = 0.0;
+            return 1;
     }
 
     if (height < 4)
-        ret = 0;
-    return ret;
+        return 2;
+    return 0;
 }
 
 void InfiFrame::update(uint16_t *frame) {
@@ -125,7 +118,10 @@ void InfiFrame::update(uint16_t *frame) {
     cal_c = cal_01 * powf(ts, 2) + ts * cal_02;
     cal_d = cal_03 * powf(tfpa, 2) + cal_04 * tfpa + cal_05;
 
-    int cal_00_corr = roundf(cal_00_offset - tfpa * cal_00_fpamul);
+
+    int cal_00_corr = 0;
+    if (range == 120)
+        roundf(cal_00_offset - tfpa * cal_00_fpamul);
     table_offset = cal_00 - ((cal_00_corr > 0) ? cal_00_corr : 0);
 }
 
