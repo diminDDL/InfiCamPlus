@@ -57,6 +57,7 @@ LOCAL_SRC_FILES := \
 		UVCDevice.cpp \
 		InfiFrame.cpp \
 		InfiCam.cpp \
+		InfiCamJNI.cpp \
 		serenegiant_usb_UVCCamera.cpp
 
 LOCAL_MODULE    := UVCCamera

@@ -30,7 +30,6 @@ void InfiCam::set_float(int addr, float val) {
 }
 
 InfiCam::~InfiCam() {
-    stream_stop();
     dev.disconnect();
 }
 

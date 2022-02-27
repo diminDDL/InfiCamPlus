@@ -45,7 +45,7 @@ public:
 
     ~InfiCam();
 
-    int connect(int fd); /* See InfiFrame.h for dmul, range. */
+    int connect(int fd);
     void disconnect();
     int stream_start(frame_callback_t *cb, void *user_ptr); /* CB arguments valid until return. */
     void stream_stop();
