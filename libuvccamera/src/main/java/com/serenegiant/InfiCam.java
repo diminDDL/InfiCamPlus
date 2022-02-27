@@ -1,6 +1,8 @@
 package com.serenegiant;
 
 public class InfiCam {
+    static final int paletteLen = 0x4000;
+
     native static int connect(int fd);
     native static void disconnect();
 
