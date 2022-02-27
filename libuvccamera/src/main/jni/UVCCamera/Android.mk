@@ -51,12 +51,10 @@ LOCAL_SHARED_LIBRARIES += usb1.0 uvc
 #LOCAL_ARM_MODE := arm
 #LOCAL_ALLOW_UNDEFINED_SYMBOLS := true
 LOCAL_SRC_FILES := \
-		UVCPreviewIR.cpp \
 		UVCDevice.cpp \
 		InfiFrame.cpp \
 		InfiCam.cpp \
-		InfiCamJNI.cpp \
-		serenegiant_usb_UVCCamera.cpp
+		InfiCamJNI.cpp
 
 LOCAL_MODULE    := UVCCamera
 include $(BUILD_SHARED_LIBRARY)

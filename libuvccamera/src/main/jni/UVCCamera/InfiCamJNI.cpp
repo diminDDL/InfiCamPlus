@@ -9,21 +9,20 @@ extern "C" {
 InfiCam cam;
 ANativeWindow *window = NULL;
 
-// transfer specific frame data to the Surface(ANativeWindow)
-int copyToSurface(uint8_t *frameData, ANativeWindow *window) {
-    int result = 0;
+void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, void *user_ptr) {
+    if (window == NULL)
+        return;
     ANativeWindow_Buffer buffer;
-
     if (ANativeWindow_lock(window, &buffer, NULL) == 0) {
         // source = frame data, destination = Surface(ANativeWindow)
-        const uint8_t *src = frameData;
-        const int src_w = cam.infi.width * 4;
+        const uint8_t *src = (uint8_t *) rgb;
+        const int src_w = cam->infi.width * 4;
         const int dst_w = buffer.width * 4;
         const int dst_step = buffer.stride * 4;
 
         // set w and h to be the smallest of the two rectangles
         const int w = src_w < dst_w ? src_w : dst_w;
-        const int h = cam.infi.height < buffer.height ? cam.infi.height : buffer.height;
+        const int h = cam->infi.height < buffer.height ? cam->infi.height : buffer.height;
 
         // transfer from frame data to the Surface
         uint8_t *dst = (uint8_t *) buffer.bits;
@@ -34,16 +33,7 @@ int copyToSurface(uint8_t *frameData, ANativeWindow *window) {
         }
 
         ANativeWindow_unlockAndPost(window);
-    } else {
-        result = -1;
     }
-
-    return result;
-}
-
-void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, void *user_ptr) {
-    if (window)
-        copyToSurface((uint8_t *) rgb, window);
 }
 
 JNIEXPORT jint Java_com_serenegiant_InfiCam_connect(JNIEnv *env, jclass cl, jint fd) {
@@ -66,6 +56,47 @@ JNIEXPORT jint Java_com_serenegiant_InfiCam_startStream(JNIEnv *env, jclass cl, 
         ((uint8_t *) palette)[i + 3] = 255;
     }
     cam.set_palette(palette);
+
+    // TODO (netman) This is temporary generating a palette thing, dunno what the plan is yet, but it doesn't belong here.
+    // TODO add partial (0-270 degrees) rainbow, where cold is blue and red is hot
+    /*for (int i = 0; i + 4 <= sizeof(ic.palette); i += 4) {
+        double h = 360.0 - (double) i / (double) sizeof(ic.palette) * 360.0;
+        double x = (1 - abs(fmod(h / 60.0, 2) - 1));
+        double r, g, b;
+        if (h >= 0 && h < 60)
+            r = 1, g = x, b = 0;
+        else if(h >= 60 && h < 120)
+            r = x, g = 1, b = 0;
+        else if(h >= 120 && h < 180)
+            r = 0, g = 1, b = x;
+        else if(h >= 180 && h < 240)
+            r = 0, g = x, b = 1;
+        else if(h >= 240 && h < 300)
+            r = x, g = 0, b = 1;
+        else r = 1, g = 0, b = x;
+        ((uint8_t *) ic.palette)[i + 0] = round(255 * r);
+        ((uint8_t *) ic.palette)[i + 1] = round(255 * g);
+        ((uint8_t *) ic.palette)[i + 2] = round(255 * b);
+        ((uint8_t *) ic.palette)[i + 3] = 255;
+    }*/
+
+    /* TODO note to self the callback thing went as follows:
+
+        savedVm->AttachCurrentThread(&env, NULL);
+
+		float *temperatureData = p->mCbTemper;
+		....
+
+		jfloatArray mNCbTemper = env->NewFloatArray(p->cam.infi.width*p->cam.infi.height+10);
+		env->SetFloatArrayRegion(mNCbTemper, 0, 10+p->cam.infi.width*p->cam.infi.height, p->mCbTemper);
+		if (p->mTemperatureCallbackObj != NULL) {
+			env->CallVoidMethod(p->mTemperatureCallbackObj, p->iTemperatureCallback.onReceiveTemperature, mNCbTemper);
+			env->ExceptionClear();
+		}
+		env->DeleteLocalRef(mNCbTemper);
+
+		savedVm->DetachCurrentThread();
+     */
 
     if (surface == NULL)
         return 1;
