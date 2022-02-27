@@ -183,7 +183,7 @@ int UVCPreviewIR::setPreviewDisplay(ANativeWindow *preview_window) {
 	RETURN(0, int);
 }
 
-int UVCPreviewIR::setTemperatureCallback(JNIEnv *env,jobject temperature_callback_obj){
+int UVCPreviewIR::setTemperatureCallback(JNIEnv *env,jobject temperature_callback_obj) {
 	ENTER();
 	//pthread_create(&temperature_thread, NULL, temperature_thread_func, (void *)this);
 	////LOGE("setTemperatureCallback01");
@@ -328,8 +328,10 @@ void UVCPreviewIR::do_preview() {
 			ic.update_table((uint16_t *) HoldBuffer); // TODO remember the temperature thing also needs this.
 			ic.read_version((uint16_t *) HoldBuffer, NULL, sn, cameraSoftVersion); // TODO need this?
 			isNeedWriteTable=false;
+			LOGE("myinfo %d %d %f %f %d %d", width, height, ic.temp(ic.temp_max), ic.temp(ic.temp_min), ic.temp_max, ic.temp_min);
 		}
 
+		ic.update((uint16_t *) HoldBuffer);
 		// Draw preview.
 		ic.palette_appy((uint16_t *) HoldBuffer, (uint32_t *) RgbaHoldBuffer);
 		if (mPreviewWindow)
@@ -380,6 +382,7 @@ int UVCPreviewIR::copyToSurface(uint8_t *frameData, ANativeWindow *window) {
 			result = -1;
 		}
 	} else {
+		LOGE("No window");
 		result = -1;
 	}
 	return result; //RETURN(result, int);
@@ -407,7 +410,6 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 	ENTER();
 
 	float *temperatureData = mCbTemper;
-	ic.update((uint16_t *) HoldBuffer);
 	ic.temp((uint16_t *) HoldBuffer, temperatureData + 10);
 	temperatureData[0] = ic.temp(ic.temp_center);
 	temperatureData[1] = ic.temp_max_x;

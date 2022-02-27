@@ -1068,9 +1068,9 @@ public final class MainActivity extends BaseActivity {
                     }
                     break;
                 case R.id.button_shut:
-                    if (isTemperaturing) {
+                    //if (isTemperaturing) {
                         whenShutRefresh();
-                    }
+                    //}
                     setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8000);
                     break;
                 case R.id.button_set:
@@ -1703,9 +1703,9 @@ public final class MainActivity extends BaseActivity {
                     public void run() {
                         if (isPreviewing) {
                             setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8000);//每隔三分钟打一次快门
-                            if (isTemperaturing) {
+                            //if (isTemperaturing) {
                                 whenShutRefresh();
-                            }
+                            //}
                             Log.e(TAG, "每隔3分钟执行一次操作");
                         }
                     }
