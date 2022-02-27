@@ -68,26 +68,18 @@ extern "C" {
 	}
 }
 
-void UVCPreviewIR::connect2() {
-	OutBuffer = new unsigned char[width*(height)*2];
-	HoldBuffer = new unsigned char[width*(height)*2];
-	RgbaOutBuffer = new unsigned char[width*(height-4)*4];
-	RgbaHoldBuffer = new unsigned char[width*(height-4)*4];
-}
-
 UVCPreviewIR::UVCPreviewIR() :	mPreviewWindow(NULL),
-								  previewFormat(WINDOW_FORMAT_RGBX_8888),
 								  mIsRunning(false),
 								  isNeedWriteTable(true),
 								  mTemperatureCallbackObj(NULL) {
 
 	// TODO (netman) This is temporary generating a palette thing, dunno what the plan is yet, but it doesn't belong here.
-	for (int i = 0; i + 4 <= sizeof(ic.palette); i += 4) {
-		double x = (double) i / (double) sizeof(ic.palette);
-		((uint8_t *) ic.palette)[i + 0] = round(255 * sqrt(x));
-		((uint8_t *) ic.palette)[i + 1] = round(255 * pow(x, 3));
-		((uint8_t *) ic.palette)[i + 2] = round(255 * fmax(0, sin(2 * M_PI * x)));
-		((uint8_t *) ic.palette)[i + 3] = 255;
+	for (int i = 0; i + 4 <= sizeof(cam.infi.palette); i += 4) {
+		double x = (double) i / (double) sizeof(cam.infi.palette);
+		((uint8_t *) cam.infi.palette)[i + 0] = round(255 * sqrt(x));
+		((uint8_t *) cam.infi.palette)[i + 1] = round(255 * pow(x, 3));
+		((uint8_t *) cam.infi.palette)[i + 2] = round(255 * fmax(0, sin(2 * M_PI * x)));
+		((uint8_t *) cam.infi.palette)[i + 3] = 255;
 	}
 
 	// TODO (netman) This is temporary generating a palette thing, dunno what the plan is yet, but it doesn't belong here.
@@ -128,10 +120,6 @@ UVCPreviewIR::~UVCPreviewIR() {
 		ANativeWindow_release(mPreviewWindow);
 	mPreviewWindow = NULL;
 	SAFE_DELETE(mInitData);
-	SAFE_DELETE_ARRAY(OutBuffer);
-	SAFE_DELETE_ARRAY(HoldBuffer);
-	SAFE_DELETE_ARRAY(RgbaOutBuffer);
-	SAFE_DELETE_ARRAY(RgbaHoldBuffer);
 }
 
 inline const bool UVCPreviewIR::isRunning() const { return mIsRunning; }
@@ -147,7 +135,7 @@ int UVCPreviewIR::setPreviewDisplay(ANativeWindow *preview_window) {
 			mPreviewWindow = preview_window;
 			if (LIKELY(mPreviewWindow)) {
 				ANativeWindow_setBuffersGeometry(mPreviewWindow,
-					width, height-4, previewFormat);
+												 cam.infi.width, cam.infi.height, WINDOW_FORMAT_RGBX_8888);
 			}
 		}
 	}
@@ -200,22 +188,12 @@ int UVCPreviewIR::startPreview() {
 
 	pthread_mutex_lock(&preview_mutex);
 	if (LIKELY(mPreviewWindow)) {
-		ANativeWindow_setBuffersGeometry(mPreviewWindow, width, height - 4, previewFormat);//ir软件384*292中，实质384*288图像数据，4行其他数据
+		ANativeWindow_setBuffersGeometry(mPreviewWindow, cam.infi.width, cam.infi.height, WINDOW_FORMAT_RGBX_8888);//ir软件384*292中，实质384*288图像数据，4行其他数据
 		////LOGE("ANativeWindow_setBuffersGeometry:(%d,%d)", frameWidth, frameHeight);
 	}
 	pthread_mutex_unlock(&preview_mutex);
-	ic.init(width, height, (cameraLens == 68) ? 3 : 1, rangeMode);
-	LOGE("WH  %d %d", width, height);
-
-	int result = 0;
-    if (!isRunning())
-	{
-		mIsRunning = true;
-		int ret = stream_start(uvc_preview_frame_callback, (void *) this);
-		LOGE("RETERA %d %d %d", ret, width, height);
-	}
-	////LOGE("STARTPREVIEW RESULT2:%d",result);
-	RETURN(result, int);
+	cam.stream_start(uvc_preview_frame_callback, this);
+	return 0;
 }
 
 int UVCPreviewIR::stopPreview() {
@@ -224,7 +202,7 @@ int UVCPreviewIR::stopPreview() {
 	bool b = isRunning();
 	if (LIKELY(b)) {
 		mIsRunning = false;
-		stream_stop();
+		cam.stream_stop();
 	}
 	pthread_mutex_lock(&preview_mutex);
 	if (mPreviewWindow) {
@@ -237,59 +215,27 @@ int UVCPreviewIR::stopPreview() {
 	RETURN(0, int);
 }
 
-void UVCPreviewIR::uvc_preview_frame_callback(struct uvc_frame *frame, void *vptr_args) {
-    UVCPreviewIR *preview = reinterpret_cast<UVCPreviewIR *>(vptr_args);
-    unsigned short* tmp_buf = (unsigned short*)frame;
-    ////LOGE("uvc_preview_frame_callback00  tmp_buf:%d,%d,%d,%d",tmp_buf[384*144*4],tmp_buf[384*144*4+1],tmp_buf[384*144*4+2],tmp_buf[384*144*4+3]);
-
-    ////LOGE("uvc_preview_frame_callback hold_bytes:%d,preview->frameBytes:%d",hold_bytes,preview->frameBytes);
-
-    size_t frameBytes = preview->width * preview->height * 2;
-    if(LIKELY( preview->isRunning()) && frame->data_bytes >= frameBytes)
-    {
-		//LOGE("uvc_preview_frame_callback01");
-		memcpy(preview->OutBuffer, frame->data, frameBytes);
-		//LOGE("uvc_preview_frame_callback02");
-		/* swap the buffers org */
-		uint8_t *tmp_buf = preview->OutBuffer;
-		preview->OutBuffer = preview->HoldBuffer;
-		preview->HoldBuffer = tmp_buf;
-
-		preview->do_preview();
-    }
-}
-
-void UVCPreviewIR::do_preview() {
-	ENTER();
-
-	pthread_mutex_lock(&preview_mutex);
+void UVCPreviewIR::uvc_preview_frame_callback(uint32_t *rgb, float *temp, uint16_t *raw, void *user_ptr) {
+    UVCPreviewIR *p = reinterpret_cast<UVCPreviewIR *>(user_ptr);
+	pthread_mutex_lock(&p->preview_mutex);
 	{
-
-		// swap the buffers rgba
-		uint8_t *tmp_buf = RgbaOutBuffer;
-		RgbaOutBuffer = RgbaHoldBuffer;
-		RgbaHoldBuffer = tmp_buf;
-
 		// Update table.
-		if(isNeedWriteTable) {
-			ic.read_params((uint16_t *) HoldBuffer);
-			ic.update_table((uint16_t *) HoldBuffer); // TODO remember the temperature thing also needs this.
-			isNeedWriteTable=false;
-			LOGE("myinfo %d %d %f %f %d %d", width, height, ic.temp(ic.temp_max), ic.temp(ic.temp_min), ic.temp_max, ic.temp_min);
+		if(p->isNeedWriteTable) {
+			p->cam.infi.read_params((uint16_t *) raw);
+			p->cam.infi.update_table((uint16_t *) raw); // TODO remember the temperature thing also needs this.
+			p->isNeedWriteTable=false;
+			//LOGE("myinfo %d %d %f %f %d %d", width, height, ic.temp(ic.temp_max), ic.temp(ic.temp_min), ic.temp_max, ic.temp_min);
 		}
 
-		ic.update((uint16_t *) HoldBuffer);
-		// Draw preview.
-		ic.palette_appy((uint16_t *) HoldBuffer, (uint32_t *) RgbaHoldBuffer);
-		if (mPreviewWindow)
-			copyToSurface(RgbaHoldBuffer, mPreviewWindow);
+		if (p->mPreviewWindow)
+			p->copyToSurface((uint8_t *) rgb, p->mPreviewWindow);
 
 		JNIEnv *env;
 		savedVm->AttachCurrentThread(&env, NULL);
-		do_temperature_callback(env, HoldBuffer);
+		p->do_temperature_callback(env, (uint8_t *) raw);
 		savedVm->DetachCurrentThread();
 	}
-	pthread_mutex_unlock(&preview_mutex);
+	pthread_mutex_unlock(&p->preview_mutex);
 
 	// TODO how to ensure stream_stop() is called?
 	//stream_stop();
@@ -306,13 +252,13 @@ int UVCPreviewIR::copyToSurface(uint8_t *frameData, ANativeWindow *window) {
 		if (LIKELY(ANativeWindow_lock(window, &buffer, NULL) == 0)) {
 			// source = frame data, destination = Surface(ANativeWindow)
 			const uint8_t *src = frameData;
-			const int src_w = width * PREVIEW_PIXEL_BYTES;
+			const int src_w = cam.infi.width * PREVIEW_PIXEL_BYTES;
 			const int dst_w = buffer.width * PREVIEW_PIXEL_BYTES;
 			const int dst_step = buffer.stride * PREVIEW_PIXEL_BYTES;
 
 			// set w and h to be the smallest of the two rectangles
 			const int w = src_w < dst_w ? src_w : dst_w;
-			const int h = height < buffer.height ? height : buffer.height;
+			const int h = cam.infi.height < buffer.height ? cam.infi.height : buffer.height;
 
 			// transfer from frame data to the Surface
 			uint8_t *dst = (uint8_t *) buffer.bits;
@@ -344,10 +290,11 @@ distance  ushort  20-21
 version          112-127
 */
 int UVCPreviewIR:: getByteArrayTemperaturePara(uint8_t* para) {
-    uint8_t* TempPara = HoldBuffer + ic.s2_offset * 2 + 254;
+    /*uint8_t* TempPara = HoldBuffer + ic.s2_offset * 2 + 254;
 	memcpy(para, TempPara, 128*sizeof(uint8_t));
 	TempPara=TempPara-127*2+24*2;//version
-	memcpy(para + 128 - 16, TempPara, 16 * sizeof(uint8_t));
+	memcpy(para + 128 - 16, TempPara, 16 * sizeof(uint8_t));*/
+    // TODO
 	return true;
 }
 
@@ -355,20 +302,20 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 	ENTER();
 
 	float *temperatureData = mCbTemper;
-	ic.temp((uint16_t *) HoldBuffer, temperatureData + 10);
-	temperatureData[0] = ic.temp(ic.temp_center);
-	temperatureData[1] = ic.temp_max_x;
-	temperatureData[2] = ic.temp_max_y;
-	temperatureData[3] = ic.temp(ic.temp_max);
-	temperatureData[4] = ic.temp_min_x;
-	temperatureData[5] = ic.temp_min_y;
-	temperatureData[6] = ic.temp(ic.temp_min);
-	temperatureData[7] = ic.temp(ic.temp_user[0]);
-	temperatureData[8] = ic.temp(ic.temp_user[1]);
-	temperatureData[9] = ic.temp(ic.temp_user[2]);
+	cam.infi.temp((uint16_t *) frameData, temperatureData + 10);
+	temperatureData[0] = cam.infi.temp(cam.infi.temp_center);
+	temperatureData[1] = cam.infi.temp_max_x;
+	temperatureData[2] = cam.infi.temp_max_y;
+	temperatureData[3] = cam.infi.temp(cam.infi.temp_max);
+	temperatureData[4] = cam.infi.temp_min_x;
+	temperatureData[5] = cam.infi.temp_min_y;
+	temperatureData[6] = cam.infi.temp(cam.infi.temp_min);
+	temperatureData[7] = cam.infi.temp(cam.infi.temp_user[0]);
+	temperatureData[8] = cam.infi.temp(cam.infi.temp_user[1]);
+	temperatureData[9] = cam.infi.temp(cam.infi.temp_user[2]);
 
-	jfloatArray mNCbTemper = env->NewFloatArray(width*(height-4)+10);
-	env->SetFloatArrayRegion(mNCbTemper, 0, 10+width*(height-4), mCbTemper);
+	jfloatArray mNCbTemper = env->NewFloatArray(cam.infi.width*cam.infi.height+10);
+	env->SetFloatArrayRegion(mNCbTemper, 0, 10+cam.infi.width*cam.infi.height, mCbTemper);
 	if (mTemperatureCallbackObj != NULL) {
 		env->CallVoidMethod(mTemperatureCallbackObj, iTemperatureCallback.onReceiveTemperature, mNCbTemper);
 		env->ExceptionClear();
@@ -419,7 +366,7 @@ void UVCPreviewIR::setCameraLens(int mCameraLens) {
 char *UVCPreviewIR::getSupportedSize() {
 	// TODO make something sensible to just return default or supported sizes instead
 	char buf[256] = { 0 };
-	snprintf(buf, sizeof(buf), "%dx%d", width, height);
+	snprintf(buf, sizeof(buf), "%dx%d", cam.dev.width, cam.dev.height);
 	buf[sizeof(buf)-1] = '\0';
 	RETURN(strdup(buf), char *);
 }

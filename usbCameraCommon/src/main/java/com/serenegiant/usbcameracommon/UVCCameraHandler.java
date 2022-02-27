@@ -33,53 +33,6 @@ public class UVCCameraHandler extends AbstractUVCCameraHandler {
 	private static UVCCameraHandler mUVCCameraHandler;
 
 	/**
-	 * create UVCCameraHandler, use MediaVideoEncoder, try MJPEG, default bandwidth
-	 * @param parent
-	 * @param cameraView
-	 * @param width
-	 * @param height
-	 * @return
-	 */
-	public static final UVCCameraHandler createHandler(
-			final Activity parent, final UVCCameraTextureView cameraView,
-			final int width, final int height) {
-
-		return createHandler(parent, cameraView, 1, width, height, UVCCamera.FRAME_FORMAT_MJPEG, UVCCamera.DEFAULT_BANDWIDTH,null);
-	}
-
-	/**
-	 * create UVCCameraHandler, use MediaVideoEncoder, try MJPEG
-	 * @param parent
-	 * @param cameraView
-	 * @param width
-	 * @param height
-	 * @param bandwidthFactor
-	 * @return
-	 */
-	public static final UVCCameraHandler createHandler(
-			final Activity parent, final UVCCameraTextureView cameraView,
-			final int width, final int height, final float bandwidthFactor) {
-
-		return createHandler(parent, cameraView, 1, width, height, UVCCamera.FRAME_FORMAT_MJPEG,null);
-	}
-
-	/**
-	 * create UVCCameraHandler, try MJPEG, default bandwidth
-	 * @param parent
-	 * @param cameraView
-	 * @param encoderType 0: use MediaSurfaceEncoder, 1: use MediaVideoEncoder, 2: use MediaVideoBufferEncoder
-	 * @param width
-	 * @param height
-	 * @return
-	 */
-	public static final UVCCameraHandler createHandler(
-			final Activity parent, final UVCCameraTextureView cameraView,
-			final int encoderType, final int width, final int height,ITemperatureCallback temperatureCallback) {
-
-		return createHandler(parent, cameraView, encoderType, width, height, UVCCamera.FRAME_FORMAT_MJPEG, UVCCamera.DEFAULT_BANDWIDTH,null);
-	}
-
-	/**
 	 * create UVCCameraHandler, default bandwidth
 	 * @param parent
 	 * @param cameraView
@@ -93,7 +46,7 @@ public class UVCCameraHandler extends AbstractUVCCameraHandler {
 			final Activity parent, final UVCCameraTextureView cameraView,
 			final int encoderType, final int width, final int height, final int format,ITemperatureCallback temperatureCallback) {
 
-		return createHandler(parent, cameraView, encoderType, width, height, format, UVCCamera.DEFAULT_BANDWIDTH,temperatureCallback);
+		return createHandler(parent, cameraView, encoderType, width, height, format, 1.0f, temperatureCallback);
 	}
 
 	/**

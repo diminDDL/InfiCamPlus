@@ -149,8 +149,7 @@ JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeConnect(JNIEnv *env, jobject
 	const char *c_usbfs = env->GetStringUTFChars(usbfs_str, JNI_FALSE);
 	if (LIKELY(camera && (fd > 0))) {
 //		libusb_set_debug(NULL, LIBUSB_LOG_LEVEL_DEBUG);
-		result =  camera->connect(fd);
-		camera->connect2();
+		result =  camera->cam.connect(fd);
 	}
 	env->ReleaseStringUTFChars(usbfs_str, c_usbfs);
 	RETURN(result, jint);
@@ -162,7 +161,7 @@ JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeRelease(JNIEnv *env, jclass 
 	int result = JNI_OK;
 	UVCPreviewIR *camera = reinterpret_cast<UVCPreviewIR *>(id_camera);
 	if (LIKELY(camera)) {
-		camera->disconnect();
+		camera->cam.disconnect();
 	}
 	RETURN(result, jint);
 }
@@ -307,7 +306,7 @@ JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeSetZoom(JNIEnv *env, jclass 
 	ENTER();
 	UVCPreviewIR *camera = reinterpret_cast<UVCPreviewIR *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->set_zoom_abs(zoom);
+		result = camera->cam.dev.set_zoom_abs(zoom);
 	}
 	RETURN(result, jint);
 }

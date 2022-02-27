@@ -22,6 +22,11 @@ int InfiCam::connect(int fd) {
     return 0;
 }
 
+void InfiCam::disconnect() {
+    stream_stop();
+    dev.disconnect();
+}
+
 int InfiCam::stream_start(inficam_frame_callback_t *cb, void *user_ptr) {
     frame_rgb = (uint32_t *) calloc(infi.width * infi.height, sizeof(uint32_t));
     frame_temp = (float *) calloc(infi.width * infi.height, sizeof(float));

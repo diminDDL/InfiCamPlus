@@ -32,44 +32,23 @@
 #include "UVCDevice.h"
 #include <pthread.h>
 #include <android/native_window.h>
-#include "InfiFrame.h"
-
-#define DEFAULT_PREVIEW_WIDTH 640
-#define DEFAULT_PREVIEW_HEIGHT 480
-#define DEFAULT_PREVIEW_FPS_MIN 1
-#define DEFAULT_PREVIEW_FPS_MAX 30
-#define DEFAULT_PREVIEW_MODE 0
-#define DEFAULT_BANDWIDTH 1.0f
-
-#define PIXEL_FORMAT_RAW 0		// same as PIXEL_FORMAT_YUV
-#define PIXEL_FORMAT_YUV 1
-#define PIXEL_FORMAT_RGB565 2
-#define PIXEL_FORMAT_RGBX 3
-#define PIXEL_FORMAT_YUV20SP 4
-#define PIXEL_FORMAT_NV21 5		// YVU420SemiPlanar
+#include "InfiCam.h"
 
 typedef struct {
 	jmethodID onReceiveTemperature;
 } Fields_iTemperatureCallback;
 
-class UVCPreviewIR : public UVCDevice {
+class UVCPreviewIR {
 private:
 	inline const bool isRunning() const;
     unsigned short *mInitData;
 	ANativeWindow *mPreviewWindow;
 	volatile bool mIsRunning;
-	unsigned char *OutBuffer; // 使用完的buffer
-	unsigned char *HoldBuffer; // 充满新数据的buffer
-	unsigned char *RgbaOutBuffer;
-	unsigned char *RgbaHoldBuffer;
 	pthread_mutex_t preview_mutex;
-	int previewFormat;
 
 	Fields_iTemperatureCallback iTemperatureCallback;
 	//ir temperature
 	jobject mTemperatureCallbackObj;
-
-	InfiFrame ic;
 
 	int copyToSurface(uint8_t *frameData, ANativeWindow *window);
     void do_temperature_callback(JNIEnv *env, uint8_t *frameData);
@@ -85,14 +64,14 @@ private:
     float mCbTemper[640*512+10] ;
     unsigned char UserPalette[256*3];
 
-	static void uvc_preview_frame_callback(struct uvc_frame *frame, void *vptr_args);
-	void do_preview();
+	static void uvc_preview_frame_callback(uint32_t *rgb, float *temp, uint16_t *raw, void *user_ptr);
 
 public:
+	InfiCam cam;
+
 	UVCPreviewIR();
 	~UVCPreviewIR();
 
-	void connect2();
     void whenShutRefresh();
 	int setPreviewDisplay(ANativeWindow *preview_window);
 	int setTemperatureCallback(JNIEnv *env, jobject temperature_callback_obj);
