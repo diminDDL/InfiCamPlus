@@ -98,7 +98,6 @@ private:
 
 public:
 	UVCPreviewIR();
-	UVCPreviewIR(uvc_device_handle_t *devh);
 	~UVCPreviewIR();
 
 	void connect2();

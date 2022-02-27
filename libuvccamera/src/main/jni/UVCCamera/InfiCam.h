@@ -1,13 +1,28 @@
 #ifndef __INFICAM_H__
 #define __INFICAM_H__
 
-#include "libuvc.h"
+#include "UVCDevice.h"
+#include "InfiFrame.h"
+#include <cstdint>
+
+typedef void (inficam_frame_callback_t)(uint32_t *rgb, float *temp, uint16_t *raw, void *user_ptr);
 
 class InfiCam {
-    uvc_context_t *mContext;
-    uvc_device_t *mDevice;
-    uvc_device_handle_t *mDeviceHandle;
+    UVCDevice dev;
+    InfiFrame infi;
+    inficam_frame_callback_t *frame_callback;
+    void *frame_callback_arg;
+    uint32_t *frame_rgb;
+    float *frame_temp;
 
+    static void uvc_callback(uvc_frame_t *frame, void *user_ptr);
+
+public:
+    ~InfiCam();
+
+    int connect(int fd);
+    int stream_start(inficam_frame_callback_t *cb, void *user_ptr);
+    void stream_stop();
 };
 
 #endif /* __INFICAM_H__ */

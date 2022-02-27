@@ -11,6 +11,7 @@ class UVCDevice {
     libusb_context *usb_ctx = NULL;
     pthread_t usb_thread;
     int usb_thread_stop = 1;
+    int usb_thread_valid = 0;
 
     uvc_context_t *uvc_ctx = NULL;
     uvc_device_handle_t *uvc_devh = NULL;
@@ -23,9 +24,11 @@ public:
 
     ~UVCDevice();
 
+    // TODO perhaps we should make a mechanism to notify the user if the device disconnects
     int connect(int fd); /* Closes the FD on disconnect. */
     void disconnect();
 
+    /* The callback gets called from a dedicated thread (it's ok to block in the callback). */
     int stream_start(uvc_frame_callback_t *cb, void *user_ptr);
     void stream_stop();
 

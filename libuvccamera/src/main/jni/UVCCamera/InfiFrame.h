@@ -1,5 +1,5 @@
-#ifndef __INFICAM_H__
-#define __INFICAM_H__
+#ifndef __INFIFRAME_H__
+#define __INFIFRAME_H__
 
 #include <cstdint>
 #include <cstddef> /* size_t */
@@ -55,7 +55,7 @@ public:
     /* Before any of the other functions, call this one.
      *   width, height: As reported by the UVC driver.
      *   dmul: Distance multiplier, 3.0 for 6.8mm lens, 1.0 for 13mm lens.
-     *   range: 120 or 400 (-20-... Celcius).
+     *   range: 120 or 400 (-20-120 / 120-400 Celcius).
      * Returns 1 on success, 0 on failure. Failure means the parameters given do not match a
      *   supported camera.
      */
@@ -97,4 +97,4 @@ public:
    void read_version(uint16_t *frame, char *product, char *serial, char *fw_version);
 };
 
-#endif /* __INFICAM_H__ */
+#endif /* __INFIFRAME_H__ */

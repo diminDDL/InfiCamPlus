@@ -124,25 +124,6 @@ UVCPreviewIR::UVCPreviewIR() :	mPreviewWindow(NULL),
 
 }
 
-UVCPreviewIR::UVCPreviewIR(uvc_device_handle_t *devh)
-:	mPreviewWindow(NULL),
-	previewFormat(WINDOW_FORMAT_RGBX_8888),
-	mIsRunning(false),
-	isNeedWriteTable(true),
-	mTemperatureCallbackObj(NULL)
-{
-	ENTER();
-	mIsComputed=true;
-    mTypeOfPalette=0;
-    rangeMode=120;
-    cameraLens=130;//130;//镜头大小:目前支持两种，68：使用6.8mm镜头，130：使用13mm镜头,默认130。
-    memset(sn, 0, 32);
-    memset(cameraSoftVersion, 0, 16);
-    memset(UserPalette,0,3*256*sizeof(unsigned char));
-    pthread_mutex_init(&preview_mutex, NULL);
-	EXIT();
-}
-
 UVCPreviewIR::~UVCPreviewIR() {
 	ENTER();
 	pthread_mutex_destroy(&preview_mutex);

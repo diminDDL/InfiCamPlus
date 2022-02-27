@@ -33,6 +33,7 @@ int UVCDevice::connect(int fd) {
         disconnect();
         return 3;
     }
+    usb_thread_valid = 1;
     if (uvc_init(&uvc_ctx, usb_ctx)) {
         disconnect();
         return 4;
@@ -71,7 +72,10 @@ void UVCDevice::disconnect() {
         uvc_ctx = NULL;
         uvc_devh = NULL;
     }
-    pthread_join(usb_thread, NULL); /* Thread may exist regardless of uvc_ctx. */
+    if (usb_thread_valid) {
+        pthread_join(usb_thread, NULL); /* Thread may exist regardless of uvc_ctx. */
+        usb_thread_valid = 0;
+    }
     if (usb_ctx != NULL) {
         libusb_exit(usb_ctx);
         usb_ctx = NULL;
@@ -84,18 +88,24 @@ void UVCDevice::disconnect() {
 
 int UVCDevice::stream_start(uvc_frame_callback_t *cb, void *user_ptr) {
     uvc_stream_ctrl_t ctrl;
+    if (uvc_devh == NULL)
+        return 1;
     /* 0 FPS means any. */
     if (uvc_get_stream_ctrl_format_size(uvc_devh, &ctrl, format, width, height, 0))
-        return 4;
+        return 2;
     if (uvc_start_streaming(uvc_devh, &ctrl, cb, user_ptr, 0))
-        return 5;
+        return 3;
     return 0;
 }
 
-int UVCDevice::set_zoom_abs(uint16_t val) {
-   return uvc_set_zoom_abs(uvc_devh, val);
+void UVCDevice::stream_stop() {
+    if (uvc_devh == NULL)
+        return;
+    uvc_stop_streaming(uvc_devh);
 }
 
-void UVCDevice::stream_stop() {
-   uvc_stop_streaming(uvc_devh);
+int UVCDevice::set_zoom_abs(uint16_t val) {
+    if (uvc_devh == NULL)
+        return 1;
+    return uvc_set_zoom_abs(uvc_devh, val);
 }
