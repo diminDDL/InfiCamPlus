@@ -16,7 +16,7 @@ class InfiCam {
     uint32_t *frame_rgb;
     float *frame_temp;
     pthread_mutex_t frame_callback_mutex;
-    int streaming = 0, update_table = 0;
+    int streaming = 0, table_invalid = 0;
 
     static const int CMD_SHUTTER = 0x8000;
     static const int CMD_MODE_TEMP = 0x8004;
@@ -49,7 +49,9 @@ public:
     int stream_start(frame_callback_t *cb, void *user_ptr); /* CB arguments valid until return. */
     void stream_stop();
 
-    /* Setting parameters, only works while streaming. */
+    /* Setting parameters, only works while streaming, only valid after next frame for
+     *   temp_single() from raw data and calibrate()/table_invalid() for all else.
+     */
     void set_correction(float corr);
     void set_temp_reflected(float t_ref);
     void set_temp_air(float t_air);
@@ -59,9 +61,10 @@ public:
     void set_params(float corr, float t_ref, float t_air, float humi, float emi, float dist);
     void store_params(); /* Store user memory to camera so values remain when reconnecting. */
 
-    void set_palette(uint32_t *palette);
-
+    void update_table();
     void calibrate();
+
+    void set_palette(uint32_t *palette);
 };
 
 #endif /* __INFICAM_H__ */

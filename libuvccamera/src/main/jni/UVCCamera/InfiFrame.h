@@ -33,7 +33,7 @@ public:
     float offset_temp_fpa = 0.0;
     float offset_temp_shutter = 0.0;
 
-    /* Lookup table for temperature in celcius from pixel values, written by update_table(). */
+    /* Lookup table for temperature in celcius from pixel values, written by table_invalid(). */
     static const int table_len = 0x4000;
     static const int table_mask = table_len - 1;
     float table[table_len]; /* Do not forget to always check bounds before access! */
@@ -71,7 +71,7 @@ public:
     void update_table(uint16_t *frame);
 
     /* Table based functions, much faster than temp_single() if you need to convert many values.
-     * They only work after calling update_table(), obviously.
+     * They only work after calling table_invalid(), obviously.
      */
     void temp(uint16_t *frame, float *output); /* Convert an entire frame. */
     void temp(uint16_t *input, float *output, size_t len);

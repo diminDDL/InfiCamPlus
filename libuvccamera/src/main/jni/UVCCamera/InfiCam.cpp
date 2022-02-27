@@ -8,10 +8,10 @@ void InfiCam::uvc_callback(uvc_frame_t *frame, void *user_ptr) {
         return;
     pthread_mutex_lock(&p->frame_callback_mutex);
 
-    if (p->update_table) {
+    if (p->table_invalid) {
         p->infi.read_params((uint16_t *) frame->data);
         p->infi.update_table((uint16_t *) frame->data);
-        p->update_table = 0;
+        p->table_invalid = 0;
     } else p->infi.update((uint16_t *) frame->data);
     p->infi.temp((uint16_t *) frame->data, p->frame_temp);
     p->infi.palette_appy(p->frame_temp, p->frame_rgb);
@@ -147,11 +147,15 @@ void InfiCam::set_palette(uint32_t *palette) {
     memcpy(infi.palette, palette, palette_len * sizeof(uint32_t));
 }
 
+void InfiCam::update_table() {
+    table_invalid = 1;
+}
+
 void InfiCam::calibrate() {
     if (!streaming)
         return;
     dev.set_zoom_abs(CMD_SHUTTER);
     pthread_mutex_lock(&frame_callback_mutex);
-    update_table = 1; /* Xtherm (sometimes) does this 100ms before CMD_SHUTTER, but why? */
+    update_table(); /* Xtherm (sometimes) does this 100ms before CMD_SHUTTER, but why? */
     pthread_mutex_unlock(&frame_callback_mutex);
 }
