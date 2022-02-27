@@ -55,9 +55,7 @@ typedef struct {
 class UVCPreviewIR : public UVCDevice {
 private:
 	inline const bool isRunning() const;
-	inline const bool isComputed() const;
     unsigned short *mInitData;
-	uvc_device_handle_t *mDeviceHandle;
 	ANativeWindow *mPreviewWindow;
 	volatile bool mIsRunning;
 	unsigned char *OutBuffer; // 使用完的buffer
@@ -67,7 +65,6 @@ private:
 	pthread_mutex_t preview_mutex;
 	int previewFormat;
 
-    volatile bool mIsComputed;
 	Fields_iTemperatureCallback iTemperatureCallback;
 	//ir temperature
 	jobject mTemperatureCallbackObj;
@@ -79,20 +76,15 @@ private:
 
 	//ir temp para
     bool isNeedWriteTable;
-    int mTypeOfPalette;
 	//测温相关参数，详见thermometry.h
     int rangeMode;
     int cameraLens;
     float shutterFix; // TODO, also fpaFix
 	//end -测温相关参数
 
-    char sn[32];//camera序列码
-    char cameraSoftVersion[16];//camera软件版本
-
     float mCbTemper[640*512+10] ;
     unsigned char UserPalette[256*3];
 
-	void clearDisplay();
 	static void uvc_preview_frame_callback(struct uvc_frame *frame, void *vptr_args);
 	void do_preview();
 

@@ -425,8 +425,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		private final WeakReference<UVCCameraTextureView> mWeakCameraView;
 		private final int mEncoderType;
 		private final Set<CameraCallback> mCallbacks = new CopyOnWriteArraySet<CameraCallback>();
-		private int mWidth, mHeight, mPreviewMode;
-		private float mBandwidthFactor;
+		private int mWidth, mHeight;
 		private boolean mIsPreviewing;
 		private boolean mIsTemperaturing;
 		private boolean mIsRecording;
@@ -472,8 +471,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			System.setProperty("org.apache.poi.javax.xml.stream.XMLOutputFactory", "com.fasterxml.aalto.stax.OutputFactoryImpl");
 			System.setProperty("org.apache.poi.javax.xml.stream.XMLEventFactory", "com.fasterxml.aalto.stax.EventFactoryImpl");
 			CameraThreadTemperatureCallback=temperatureCallback;
-			mPreviewMode = format;
-			mBandwidthFactor = bandwidthFactor;
 			mWeakParent = new WeakReference<Activity>(parent);
 			mWeakCameraView = new WeakReference<UVCCameraTextureView>(cameraView);
 			loadShutterSound(parent);
@@ -481,7 +478,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		private  float[] temperatureData=new float[640*512+10];
 		private byte[] ByteTemperatureData=new byte[(640*512+10)*4];
 		private short[] ShortTemperatureData=new short[640*512+10];
-		private Handler mMySubHandler;
+
 		@Override
 		protected void finalize() throws Throwable {
 			Log.i(TAG, "CameraThread#finalize");

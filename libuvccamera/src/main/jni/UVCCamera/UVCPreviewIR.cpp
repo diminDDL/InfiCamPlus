@@ -113,12 +113,8 @@ UVCPreviewIR::UVCPreviewIR() :	mPreviewWindow(NULL),
 		((uint8_t *) ic.palette)[i + 3] = 255;
 	}*/
 
-	mIsComputed=true;
-	mTypeOfPalette=0;
 	rangeMode=120;
 	cameraLens=130;//130;//镜头大小:目前支持两种，68：使用6.8mm镜头，130：使用13mm镜头,默认130。
-	memset(sn, 0, 32);
-	memset(cameraSoftVersion, 0, 16);
 	memset(UserPalette,0,3*256*sizeof(unsigned char));
 	pthread_mutex_init(&preview_mutex, NULL);
 
@@ -139,7 +135,6 @@ UVCPreviewIR::~UVCPreviewIR() {
 }
 
 inline const bool UVCPreviewIR::isRunning() const { return mIsRunning; }
-inline const bool UVCPreviewIR::isComputed() const { return mIsComputed; }
 
 int UVCPreviewIR::setPreviewDisplay(ANativeWindow *preview_window) {
 	ENTER();
@@ -197,30 +192,6 @@ int UVCPreviewIR::setTemperatureCallback(JNIEnv *env,jobject temperature_callbac
 	}
     pthread_mutex_unlock(&preview_mutex);
 	RETURN(0, int);
-}
-
-void UVCPreviewIR::clearDisplay() {
-	ENTER();
-////LOGE("clearDisplay");
-	ANativeWindow_Buffer buffer;
-	pthread_mutex_lock(&preview_mutex);
-	{
-		if (LIKELY(mPreviewWindow)) {
-			if (LIKELY(ANativeWindow_lock(mPreviewWindow, &buffer, NULL) == 0)) {
-				uint8_t *dest = (uint8_t *)buffer.bits;
-				const size_t bytes = buffer.width * PREVIEW_PIXEL_BYTES;
-				const int stride = buffer.stride * PREVIEW_PIXEL_BYTES;
-				for (int i = 0; i < buffer.height; i++) {
-					memset(dest, 0, bytes);
-					dest += stride;
-				}
-				ANativeWindow_unlockAndPost(mPreviewWindow);
-			}
-		}
-	}
-	pthread_mutex_unlock(&preview_mutex);
-
-	EXIT();
 }
 
 int UVCPreviewIR::startPreview() {
@@ -303,7 +274,6 @@ void UVCPreviewIR::do_preview() {
 		if(isNeedWriteTable) {
 			ic.read_params((uint16_t *) HoldBuffer);
 			ic.update_table((uint16_t *) HoldBuffer); // TODO remember the temperature thing also needs this.
-			ic.read_version((uint16_t *) HoldBuffer, NULL, sn, cameraSoftVersion); // TODO need this?
 			isNeedWriteTable=false;
 			LOGE("myinfo %d %d %f %f %d %d", width, height, ic.temp(ic.temp_max), ic.temp(ic.temp_min), ic.temp_max, ic.temp_min);
 		}
@@ -318,8 +288,6 @@ void UVCPreviewIR::do_preview() {
 		savedVm->AttachCurrentThread(&env, NULL);
 		do_temperature_callback(env, HoldBuffer);
 		savedVm->DetachCurrentThread();
-
-		mIsComputed=true;
 	}
 	pthread_mutex_unlock(&preview_mutex);
 
@@ -421,12 +389,11 @@ void UVCPreviewIR::whenShutRefresh() {
 void UVCPreviewIR::setUserPalette(uint8_t *palette, int typeOfPalette) {
 	////LOGE("SetUserPalette OUT:%X\n",palette);
 	memcpy(UserPalette,palette,3*256*sizeof(unsigned char));
-	mTypeOfPalette=typeOfPalette;
 }
 
 void UVCPreviewIR::changePalette(int typeOfPalette) {
     ENTER();
-    mTypeOfPalette=typeOfPalette;
+    //mTypeOfPalette=typeOfPalette;
     EXIT();
 }
 
