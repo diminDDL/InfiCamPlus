@@ -7,7 +7,7 @@
 
 class InfiFrame {
     /* Set by init(). */
-    int fpa_off;
+    int fpa_off, s1_offset, s2_offset;
     float fpa_div, distance_multiplier, cal_00_offset, cal_00_fpamul;
 
     /* Values used internally, updated by update(). */
@@ -18,7 +18,6 @@ class InfiFrame {
 public:
     /* Dimensions of actual thermographic image, set by init(). */
     int width, height;
-    int s1_offset, s2_offset; // TODO Should probably be private.
 
     /* User parameters, set manually or read from camera with read_params().
      * Changes take effect for temp_single() after the next update(), and temp() after update().

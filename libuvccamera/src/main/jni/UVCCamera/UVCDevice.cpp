@@ -7,7 +7,7 @@
 
 void *UVCDevice::usb_handle_events(void *arg) {
     UVCDevice *p = (UVCDevice *) arg;
-    while (!p->usb_thread_stop) // TODO don't we kinda need a mutex or so to set this? especially the _completed argument
+    while (!p->usb_thread_stop)
         libusb_handle_events(p->usb_ctx);
     return NULL;
 }

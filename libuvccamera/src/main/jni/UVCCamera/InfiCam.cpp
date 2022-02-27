@@ -15,7 +15,8 @@ void InfiCam::uvc_callback(uvc_frame_t *frame, void *user_ptr) {
     } else p->infi.update((uint16_t *) frame->data);
     p->infi.temp((uint16_t *) frame->data, p->frame_temp);
     p->infi.palette_appy(p->frame_temp, p->frame_rgb);
-    p->frame_callback(p->frame_rgb, p->frame_temp, (uint16_t *) frame->data, p->frame_callback_arg);
+    p->frame_callback(p, p->frame_rgb, p->frame_temp, (uint16_t *) frame->data,
+                      p->frame_callback_arg);
 
     pthread_mutex_unlock(&p->frame_callback_mutex);
 }
@@ -31,8 +32,6 @@ int InfiCam::connect(int fd) {
     if (dev.connect(fd))
         return 2;
     infi.init(dev.width, dev.height, 1.0, 120); // TODO the dmul and range values
-    width = infi.width;
-    height = infi.height;
     dev.set_zoom_abs(CMD_MODE_TEMP);
     return 0;
 }
@@ -41,11 +40,9 @@ void InfiCam::disconnect() {
     stream_stop();
     dev.disconnect();
     pthread_mutex_destroy(&frame_callback_mutex);
-    width = 0;
-    height = 0;
 }
 
-int InfiCam::stream_start(inficam_frame_callback_t *cb, void *user_ptr) {
+int InfiCam::stream_start(frame_callback_t *cb, void *user_ptr) {
     frame_rgb = (uint32_t *) calloc(infi.width * infi.height, sizeof(uint32_t));
     frame_temp = (float *) calloc(infi.width * infi.height, sizeof(float));
     if (frame_rgb == NULL || frame_temp == NULL) {
@@ -91,6 +88,24 @@ void InfiCam::set_params(float corr, float t_ref, float t_air, float humi, float
     infi.offset_temp_shutter = off_shut;
     if (streaming)
         pthread_mutex_unlock(&frame_callback_mutex);
+}
+
+void InfiCam::set_float(int addr, float val) {
+    uint8_t *p = (uint8_t *) &val;
+    dev.set_zoom_abs((((addr + 0) & 0x7F) << 8) | p[0]);
+    dev.set_zoom_abs((((addr + 1) & 0x7F) << 8) | p[1]);
+    dev.set_zoom_abs((((addr + 2) & 0x7F) << 8) | p[2]);
+    dev.set_zoom_abs((((addr + 3) & 0x7F) << 8) | p[3]);
+}
+
+void InfiCam::set_u16(int addr, uint16_t val) {
+    dev.set_zoom_abs((((addr + 0) & 0x7F) << 8) | ((val >> 0) & 0xFF));
+    dev.set_zoom_abs((((addr + 1) & 0x7F) << 8) | ((val >> 8) & 0xFF));
+}
+
+void InfiCam::store_params() {
+    // TODO when to write the params to the camera etc?
+    dev.set_zoom_abs(CMD_STORE);
 }
 
 void InfiCam::set_palette(uint32_t *palette) {

@@ -6,12 +6,12 @@
 #include <cstdint>
 #include <pthread.h>
 
-typedef void (inficam_frame_callback_t)(uint32_t *rgb, float *temp, uint16_t *raw, void *user_ptr);
-
 class InfiCam {
+    typedef void (frame_callback_t)(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw,
+                void *user_ptr);
+
     UVCDevice dev;
-    InfiFrame infi;
-    inficam_frame_callback_t *frame_callback;
+    frame_callback_t *frame_callback;
     void *frame_callback_arg;
     uint32_t *frame_rgb;
     float *frame_temp;
@@ -28,19 +28,23 @@ class InfiCam {
     static void uvc_callback(uvc_frame_t *frame, void *user_ptr);
 
 public:
-    int width = 0, height = 0;
     static const int palette_len = InfiFrame::palette_len;
+    InfiFrame infi; /* Updated before each stream CB with info relevant to the frame. */
 
     ~InfiCam();
 
     int connect(int fd);
     void disconnect();
-    int stream_start(inficam_frame_callback_t *cb, void *user_ptr);
+    int stream_start(frame_callback_t *cb, void *user_ptr); /* CB arguments valid until return. */
     void stream_stop();
 
     void set_params(float corr, float t_ref, float t_air, float humi, float emi, float dist);
     void set_params(float corr, float t_ref, float t_air, float humi, float emi, float dist,
                     float off_fpa, float off_shut);
+
+    void set_float(int addr, float val); /* Write to camera user memory. */
+    void set_u16(int addr, uint16_t val);
+    void store_params(); /* Store user memory to camera so values remain when reconnecting. */
 
     void set_palette(uint32_t *palette);
 

@@ -62,7 +62,7 @@ private:
     float mCbTemper[640*512+10] ;
     unsigned char UserPalette[256*3];
 
-	static void uvc_preview_frame_callback(uint32_t *rgb, float *temp, uint16_t *raw, void *user_ptr);
+	static void uvc_preview_frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, void *user_ptr);
 
 public:
 	InfiCam cam;
