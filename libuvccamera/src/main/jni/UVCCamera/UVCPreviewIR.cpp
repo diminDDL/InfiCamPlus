@@ -289,9 +289,7 @@ int UVCPreviewIR::stopPreview() {
 	RETURN(0, int);
 }
 
-void UVCPreviewIR::uvc_preview_frame_callback(struct uvc_frame *frame, void *vptr_args)
-{
-    LOGE("uvc_preview_frame_callback00");
+void UVCPreviewIR::uvc_preview_frame_callback(struct uvc_frame *frame, void *vptr_args) {
     UVCPreviewIR *preview = reinterpret_cast<UVCPreviewIR *>(vptr_args);
     unsigned short* tmp_buf = (unsigned short*)frame;
     ////LOGE("uvc_preview_frame_callback00  tmp_buf:%d,%d,%d,%d",tmp_buf[384*144*4],tmp_buf[384*144*4+1],tmp_buf[384*144*4+2],tmp_buf[384*144*4+3]);
@@ -310,9 +308,7 @@ void UVCPreviewIR::uvc_preview_frame_callback(struct uvc_frame *frame, void *vpt
 		preview->HoldBuffer = tmp_buf;
 
 		preview->do_preview();
-		LOGE("uvc_preview_frame_callback666");
     }
-    LOGE("uvc_preview_frame_callback03");
 }
 
 void UVCPreviewIR::do_preview() {

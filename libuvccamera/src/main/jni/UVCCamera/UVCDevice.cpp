@@ -4,11 +4,12 @@
 #include <libuvc.h>
 #include <pthread.h>
 #include <unistd.h> /* close() */
+#include <libuvc_internal.h>
 
 void *UVCDevice::usb_handle_events(void *arg) {
     UVCDevice *p = (UVCDevice *) arg;
-    while (!p->usb_thread_stop)
-        libusb_handle_events_completed(p->usb_ctx, &p->usb_thread_stop);
+    while (!p->usb_thread_stop) // TODO don't we kinda need a mutex or so to set this? especially the _completed argument
+        libusb_handle_events(p->usb_ctx);
     return NULL;
 }
 
@@ -64,13 +65,13 @@ int UVCDevice::connect(int fd) {
 }
 
 void UVCDevice::disconnect() {
+    usb_thread_stop = 1; /* Next step closes libusb devh and wakes the thread. */
     if (uvc_ctx != NULL) {
-        uvc_exit(uvc_ctx); /* This also closes the devh. */
+        uvc_exit(uvc_ctx); /* This also closes the libusb devh. */
         uvc_ctx = NULL;
         uvc_devh = NULL;
     }
-    usb_thread_stop = 1;
-    pthread_join(usb_thread, NULL);
+    pthread_join(usb_thread, NULL); /* Thread may exist regardless of uvc_ctx. */
     if (usb_ctx != NULL) {
         libusb_exit(usb_ctx);
         usb_ctx = NULL;
