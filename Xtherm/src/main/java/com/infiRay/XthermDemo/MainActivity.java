@@ -85,12 +85,12 @@ import com.hjq.permissions.OnPermission;
 import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
 import com.serenegiant.DeviceFilter;
+import com.serenegiant.InfiCam;
 import com.serenegiant.MyApp;
 import com.serenegiant.encoder.MediaMuxerWrapper;
 import com.serenegiant.USBMonitor;
 import com.serenegiant.USBMonitor.OnDeviceConnectListener;
 import com.serenegiant.USBMonitor.UsbControlBlock;
-import com.serenegiant.UVCCamera;
 import com.serenegiant.usbcameracommon.UVCCameraHandler;
 import com.serenegiant.utils.PermissionCheck;
 import com.serenegiant.widget.AutoFitTextureView;
@@ -120,19 +120,16 @@ public final class MainActivity extends BaseActivity {
     /**
      * preview resolution(width)
      * if your camera does not support specific resolution and mode,
-     * {@link UVCCamera#setPreviewSize(int, int, int)} throw exception
      */
     private static final int PREVIEW_WIDTH = 384;
     /**
      * preview resolution(height)
      * if your camera does not support specific resolution and mode,
-     * {@link UVCCamera#setPreviewSize(int, int, int)} throw exception
      */
     private static final int PREVIEW_HEIGHT = 292;
     /**
      * preview mode
      * if your camera does not support specific resolution and mode,
-     * {@link UVCCamera#setPreviewSize(int, int, int)} throw exception
      * 0:YUYV, other:MJPEG
      */
     private static final int PREVIEW_MODE = 0;
@@ -197,7 +194,6 @@ public final class MainActivity extends BaseActivity {
     private int UnitTemperature = 0, palette;
     private int TemperatureRange = 120;
     private boolean IsAlreadyOnCreate = false;
-    private sendCommand mSendCommand;
     private AlertDialog ConnectOurDeviceAlert;
     private Timer timerEveryTime;
     private Camera2Helper mCamera2Helper;
@@ -407,7 +403,6 @@ public final class MainActivity extends BaseActivity {
             mCursorBlue = BitmapFactory.decodeResource(getResources(), R.mipmap.cursorblue);
             mCursorGreen = BitmapFactory.decodeResource(getResources(), R.mipmap.cursorgreen);
             mWatermarkLogo = BitmapFactory.decodeResource(getResources(), R.mipmap.xtherm);
-            mSendCommand = new sendCommand();
             XXPermissions.with(MainActivity.this)
                     .permission(Permission.RECORD_AUDIO)
 //                    .permission(Permission.WRITE_EXTERNAL_STORAGE)
@@ -743,44 +738,32 @@ public final class MainActivity extends BaseActivity {
                 case R.id.emissivity_seekbar:
                     int currentProgressEm = seekBar.getProgress();
                     float fiputEm = currentProgressEm / 100.0f;
-                    byte[] iputEm = new byte[4];
-                    ByteUtil.putFloat(iputEm, fiputEm, 0);
-                    mSendCommand.sendFloatCommand(4 * 4, iputEm[0], iputEm[1], iputEm[2], iputEm[3], 20, 40, 60, 80, 120);
+                    InfiCam.setEmissivity(fiputEm);
                     break;
                 case R.id.correction_seekbar:
                     int currentProgressCo = seekBar.getProgress();
                     float fiputCo = (currentProgressCo - 30) / 10.0f;
-                    byte[] iputCo = new byte[4];
-                    ByteUtil.putFloat(iputCo, fiputCo, 0);
-                    mSendCommand.sendFloatCommand(0 * 4, iputCo[0], iputCo[1], iputCo[2], iputCo[3], 20, 40, 60, 80, 120);
+                    InfiCam.setCorrection(fiputCo);
                     break;
                 case R.id.reflection_seekbar:
                     int currentProgressRe = seekBar.getProgress();
                     float fiputRe = currentProgressRe - 10.0f;
-                    byte[] iputRe = new byte[4];
-                    ByteUtil.putFloat(iputRe, fiputRe, 0);
-                    mSendCommand.sendFloatCommand(1 * 4, iputRe[0], iputRe[1], iputRe[2], iputRe[3], 20, 40, 60, 80, 120);
+                    InfiCam.setTempReflected(fiputRe);
                     break;
                 case R.id.amb_temp_seekbar:
                     int currentProgressAm = seekBar.getProgress();
                     float fiputAm = currentProgressAm - 10.0f;
-                    byte[] iputAm = new byte[4];
-                    ByteUtil.putFloat(iputAm, fiputAm, 0);
-                    mSendCommand.sendFloatCommand(2 * 4, iputAm[0], iputAm[1], iputAm[2], iputAm[3], 20, 40, 60, 80, 120);
+                    InfiCam.setTempAir(fiputAm);
                     break;
                 case R.id.humidity_seekbar:
                     int currentProgressHu = seekBar.getProgress();
                     float fiputHu = currentProgressHu / 100.0f;
-                    byte[] iputHu = new byte[4];
-                    ByteUtil.putFloat(iputHu, fiputHu, 0);
-                    mSendCommand.sendFloatCommand(3 * 4, iputHu[0], iputHu[1], iputHu[2], iputHu[3], 20, 40, 60, 80, 120);
+                    InfiCam.setHumidity(fiputHu);
                     break;
                 case R.id.distance_seekbar:
                     int currentProgressDi = seekBar.getProgress();
                     float fltDi = currentProgressDi;
-                    byte[] bIputDi = new byte[4];
-                    ByteUtil.putFloat(bIputDi, fltDi, 0);
-                    mSendCommand.sendFloatCommand(4 * 5, bIputDi[0], bIputDi[1], bIputDi[2], bIputDi[3], 20, 40, 60, 80, 120);
+                    InfiCam.setDistance(fltDi);
                     break;
 
             }
@@ -1155,7 +1138,7 @@ public final class MainActivity extends BaseActivity {
 
                     break;
                 case R.id.save_button:
-                    setValue(UVCCamera.CTRL_ZOOM_ABS, 0x80ff);
+                    InfiCam.storeParams();
                     Toast.makeText(getApplicationContext(), "保存成功", Toast.LENGTH_SHORT).show();
                     break;
                 case R.id.button_camera:
@@ -1320,7 +1303,8 @@ public final class MainActivity extends BaseActivity {
                                 @Override
                                 public void run() {
                                     //whenShutRefresh();
-                                    setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8021);//400。C
+                                    //setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8021);//400。C
+                                    InfiCam.setRange(400);
                                 }
                             }, 100);
                             Handler handler4 = new Handler();
@@ -1341,7 +1325,8 @@ public final class MainActivity extends BaseActivity {
                                 @Override
                                 public void run() {
                                     //whenShutRefresh();
-                                    setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8020);//120。C
+                                    //setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8020);//120。C
+                                    InfiCam.setRange(120);
                                 }
                             }, 100);
                             Handler handler4 = new Handler();
@@ -1505,14 +1490,14 @@ public final class MainActivity extends BaseActivity {
                             handler1.postDelayed(new Runnable() {
                                 @Override
                                 public void run() {
-                                    setValue(UVCCamera.CTRL_ZOOM_ABS, posx);
+                                    //setValue(UVCCamera.CTRL_ZOOM_ABS, posx);
                                 }
                             }, 10);
                             Handler handler2 = new Handler();
                             handler2.postDelayed(new Runnable() {
                                 @Override
                                 public void run() {
-                                    setValue(UVCCamera.CTRL_ZOOM_ABS, posy);
+                                    //setValue(UVCCamera.CTRL_ZOOM_ABS, posy);
                                 }
                             }, 40);
                         }
@@ -1727,10 +1712,6 @@ public final class MainActivity extends BaseActivity {
 
     //================================================================================
 
-    private int setValue(final int flag, final int value) {
-        return mCameraHandler != null ? mCameraHandler.setValue(flag, value) : 0;
-    }
-
     private void calibrate() {
         if (mCameraHandler != null) {
             mCameraHandler.whenShutRefresh();
@@ -1813,82 +1794,6 @@ public final class MainActivity extends BaseActivity {
     }
 
     /*****************计时器*******************/
-
-    public class sendCommand {
-        int psitionAndValue0 = 0, psitionAndValue1 = 0, psitionAndValue2 = 0, psitionAndValue3 = 0;
-
-        public void sendFloatCommand(int position, byte value0, byte value1, byte value2, byte value3, int interval0, int interval1, int interval2, int interval3, int interval4) {
-            psitionAndValue0 = (position << 8) | (0x000000ff & value0);
-            Handler handler0 = new Handler();
-            handler0.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    mCameraHandler.setValue(UVCCamera.CTRL_ZOOM_ABS, psitionAndValue0);
-                }
-            }, interval0);
-
-            psitionAndValue1 = ((position + 1) << 8) | (0x000000ff & value1);
-            handler0.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    mCameraHandler.setValue(UVCCamera.CTRL_ZOOM_ABS, psitionAndValue1);
-                }
-            }, interval1);
-            psitionAndValue2 = ((position + 2) << 8) | (0x000000ff & value2);
-
-            handler0.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    mCameraHandler.setValue(UVCCamera.CTRL_ZOOM_ABS, psitionAndValue2);
-                }
-            }, interval2);
-
-            psitionAndValue3 = ((position + 3) << 8) | (0x000000ff & value3);
-
-            handler0.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    mCameraHandler.setValue(UVCCamera.CTRL_ZOOM_ABS, psitionAndValue3);
-                }
-            }, interval3);
-
-            handler0.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    mCameraHandler.whenShutRefresh();
-                }
-            }, interval4);
-
-        }
-
-        public void sendShortCommand(int position, byte value0, byte value1, int interval0, int interval1, int interval2) {
-            psitionAndValue0 = (position << 8) | (0x000000ff & value0);
-            Handler handler0 = new Handler();
-            handler0.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    mCameraHandler.setValue(UVCCamera.CTRL_ZOOM_ABS, psitionAndValue0);
-                }
-            }, interval0);
-
-            psitionAndValue1 = ((position + 1) << 8) | (0x000000ff & value1);
-            handler0.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    mCameraHandler.setValue(UVCCamera.CTRL_ZOOM_ABS, psitionAndValue1);
-                }
-            }, interval1);
-
-            handler0.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    mCameraHandler.whenShutRefresh();
-                }
-            }, interval2);
-
-        }
-
-    }
 
     public static synchronized String getVersionName(Context context) {
         try {

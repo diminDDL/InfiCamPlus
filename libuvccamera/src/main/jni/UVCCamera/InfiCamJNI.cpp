@@ -54,7 +54,19 @@ JNIEXPORT void Java_com_serenegiant_InfiCam_disconnect(JNIEnv *env, jclass cl) {
     cam.disconnect();
 }
 
-JNIEXPORT jint Java_com_serenegiant_InfiCam_nativeStartStream(JNIEnv *env, jclass cl, jobject surface) {
+JNIEXPORT jint Java_com_serenegiant_InfiCam_startStream(JNIEnv *env, jclass cl, jobject surface) {
+
+    // TODO!!
+    uint32_t palette[InfiCam::palette_len];
+    for (int i = 0; i + 4 <= sizeof(palette); i += 4) {
+        double x = (double) i / (double) sizeof(palette);
+        ((uint8_t *) palette)[i + 0] = round(255 * sqrt(x));
+        ((uint8_t *) palette)[i + 1] = round(255 * pow(x, 3));
+        ((uint8_t *) palette)[i + 2] = round(255 * fmax(0, sin(2 * M_PI * x)));
+        ((uint8_t *) palette)[i + 3] = 255;
+    }
+    cam.set_palette(palette);
+
     if (surface == NULL)
         return 1;
     if (window != NULL)
@@ -71,7 +83,7 @@ JNIEXPORT jint Java_com_serenegiant_InfiCam_nativeStartStream(JNIEnv *env, jclas
     return 0;
 }
 
-JNIEXPORT void Java_com_serenegiant_InfiCam_nativeStopStream(JNIEnv *env, jclass cl) {
+JNIEXPORT void Java_com_serenegiant_InfiCam_stopStream(JNIEnv *env, jclass cl) {
     if (window != NULL)
         ANativeWindow_release(window);
     window = NULL;

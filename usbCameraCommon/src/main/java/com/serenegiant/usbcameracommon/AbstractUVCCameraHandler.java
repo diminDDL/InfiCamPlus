@@ -42,6 +42,7 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 
 
+import com.serenegiant.InfiCam;
 import com.serenegiant.MyApp;
 import com.serenegiant.encoder.MediaAudioEncoder;
 import com.serenegiant.encoder.MediaEncoder;
@@ -51,7 +52,6 @@ import com.serenegiant.encoder.MediaVideoBufferEncoder;
 import com.serenegiant.encoder.MediaVideoEncoder;
 import com.serenegiant.ITemperatureCallback;
 import com.serenegiant.USBMonitor;
-import com.serenegiant.UVCCamera;
 import com.serenegiant.widget.UVCCameraTextureView;
 
 
@@ -124,10 +124,11 @@ abstract class AbstractUVCCameraHandler extends Handler {
 
 	public byte [] getTemperaturePara(int len) {
 		final CameraThread thread = mWeakThread.get();
-		if((thread != null)&&(thread.mUVCCamera)!=null) {
+		// TODO (netman) fix the temperature number stuff
+		/*if((thread != null)&&(thread.mUVCCamera)!=null) {
 			return thread.mUVCCamera.getByteArrayTemperaturePara(len);
 		}
-		else{
+		else*/{
 			byte[] para=new byte[len];
 			return para;
 		}
@@ -146,11 +147,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
 	public boolean isTemperaturing() {
 		final CameraThread thread = mWeakThread.get();
 		return thread != null && thread.isTemperaturing();
-	}
-
-	public boolean isEqual(final UsbDevice device) {
-		final CameraThread thread = mWeakThread.get();
-		return (thread != null) && thread.isEqual(device);
 	}
 
 	protected boolean isCameraThread() {
@@ -306,36 +302,8 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		sendMessage(obtainMessage(MSG_MEDIA_UPDATE, path));
 	}
 
-	public int setValue(final int flag, final int value) {
-		checkReleased();
-		final CameraThread thread = mWeakThread.get();
-		final UVCCamera camera =(thread != null ? thread.mUVCCamera : null);
-		if (camera != null) {
-			if (flag==UVCCamera.CTRL_ZOOM_ABS)
-			{
-				camera.setZoom(value);
-				return 1;
-			}
-		}
-		return 100;
-	}
-
 	public void whenShutRefresh() {
-		checkReleased();
-		final CameraThread thread = mWeakThread.get();
-		final UVCCamera camera =(thread != null ? thread.mUVCCamera : null);
-		if (camera != null) {
-			camera.whenShutRefresh();
-		}
-	}
-
-	public void whenChangeTempPara() {
-		checkReleased();
-		final CameraThread thread = mWeakThread.get();
-		final UVCCamera camera =(thread != null ? thread.mUVCCamera : null);
-		if (camera != null) {
-			camera.whenChangeTempPara();
-		}
+		InfiCam.calibrate();
 	}
 
 	@Override
@@ -424,10 +392,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		private SoundPool mSoundPool;
 		private int mSoundId;
 		private AbstractUVCCameraHandler mHandler;
-		/**
-		 * for accessing UVC camera
-		 */
-		private UVCCamera mUVCCamera;
+
 		/**
 		 * muxer for audio/video recording
 		 */
@@ -499,73 +464,40 @@ abstract class AbstractUVCCameraHandler extends Handler {
 
 		public boolean isCameraOpened() {
 			synchronized (mSync) {
-				return mUVCCamera != null;
+				return true; // TODO (netman)
 			}
 		}
 
 		public boolean isTemperaturing() {
 			synchronized (mSync) {
-				return mUVCCamera != null && mIsTemperaturing;
+				return true; // TODO (netman)
 			}
 		}
+
 		public boolean isPreviewing() {
 			synchronized (mSync) {
-				return mUVCCamera != null && mIsPreviewing;
+				return true; // TODO (netman)
 			}
 		}
 
 		public boolean isRecording() {
 			synchronized (mSync) {
-				return (mUVCCamera != null) && (mMuxer != null);
+				return /*(mUVCCamera != null) &&*/ (mMuxer != null); // TODO (netman)
 			}
-		}
-
-		public boolean isEqual(final UsbDevice device) {
-			return (mUVCCamera != null) && (mUVCCamera.getDevice() != null) && mUVCCamera.getDevice().equals(device);
 		}
 
 		public void handleOpen(final USBMonitor.UsbControlBlock ctrlBlock) {
 			if (DEBUG) Log.v(TAG_THREAD, "handleOpen:");
 		//	handleClose();
 			try {
-				final UVCCamera camera;
-				camera = new UVCCamera();
-
-				camera.open(ctrlBlock);
-				synchronized (mSync) {
-					mUVCCamera = camera;
-				}
+				InfiCam.connect(ctrlBlock.getFileDescriptor()); // TODO (netman) error check
 				callOnOpen();
 			} catch (final Exception e) {
 				callOnError(e);
 			}
-			String mSupportedSize = mUVCCamera.getSupportedSize();
-			Log.e("TEST TODO", mSupportedSize);
-			int find_str_postion= mSupportedSize.indexOf("384x292");
-			if(find_str_postion>=0){
-				mWidth=384;
-				mHeight=292;
-                Log.e(TAG, "handleOpen: 384 DEVICE " );
-			}
-			find_str_postion= mSupportedSize.indexOf("240x184");
-            if(find_str_postion>=0){
-				mWidth=240;
-				mHeight=184;
-                Log.e(TAG, "handleOpen: 240 DEVICE " );
-			}
-            find_str_postion= mSupportedSize.indexOf("256x196");
-            if(find_str_postion>=0){
-                mWidth=256;
-                mHeight=196;
-                Log.e(TAG, "handleOpen: 256 DEVICE " );
-            }
-			find_str_postion= mSupportedSize.indexOf("640x516");
-			if(find_str_postion>=0){
-				mWidth=640;
-				mHeight=516;
-				Log.e(TAG, "handleOpen: 640 DEVICE " );
-			}
-			if (DEBUG) Log.i(TAG, "supportedSize:" + (mUVCCamera != null ? mUVCCamera.getSupportedSize() : null));
+			mWidth = InfiCam.width;
+			mHeight = InfiCam.height;
+			if (DEBUG) Log.i(TAG, "supportedSize: " + mWidth + "x" + mHeight);
 		}
 
 		public void handleClose() {
@@ -581,23 +513,13 @@ abstract class AbstractUVCCameraHandler extends Handler {
                 mIsTemperaturing=false;
                 handleStopTemperaturing();
             }
-			final UVCCamera camera;
-			synchronized (mSync) {
-				camera = mUVCCamera;
-				mUVCCamera = null;
-			}
-			if (camera != null) {
-//				camera.stopPreview();
-				mIsPreviewing=false;
-				camera.destroy();
-				callOnClose();
-			}
+			InfiCam.disconnect();
 		}
 
 		public void handleStartPreview(final Object surface) {
-            Log.e(TAG, "handleStartPreview:mUVCCamera"+mUVCCamera+" mIsPreviewing:"+mIsPreviewing);
+            //Log.e(TAG, "handleStartPreview:mUVCCamera"+mUVCCamera+" mIsPreviewing:"+mIsPreviewing);
 			if (DEBUG) Log.v(TAG_THREAD, "handleStartPreview:");
-			if ((mUVCCamera == null) || mIsPreviewing) return;
+			if (mIsPreviewing) return;
 			Log.e(TAG, "handleStartPreview2 ");
 			try {
 				Log.e(TAG, "handleStartPreview3 mWidth: "+mWidth+"mHeight:"+mHeight);
@@ -610,18 +532,23 @@ abstract class AbstractUVCCameraHandler extends Handler {
 					return;
 				}
 			}
+			Surface s = null;
 			if (surface instanceof SurfaceHolder) {
 				Log.e(TAG, "SurfaceHolder:" );
-				mUVCCamera.setPreviewDisplay((SurfaceHolder)surface);
+				//mUVCCamera.setPreviewDisplay((SurfaceHolder)surface);
+				s = ((SurfaceHolder)surface).getSurface();
 			}else if (surface instanceof Surface) {
 				Log.e(TAG, "Surface:" );
-				mUVCCamera.setPreviewDisplay((Surface)surface);
+				//mUVCCamera.setPreviewDisplay((Surface)surface);
+				s = (Surface) surface;
 			} else if(surface instanceof SurfaceTexture){
 				Log.e(TAG, "SurfaceTexture:" );
-				mUVCCamera.setPreviewTexture((SurfaceTexture)surface);
+				//mUVCCamera.setPreviewTexture((SurfaceTexture)surface);
+				s = new Surface((SurfaceTexture)surface);
 			}
             Log.e(TAG, "handleStartPreview: startPreview1" );
-			mUVCCamera.startPreview();
+			//mUVCCamera.startPreview();
+			InfiCam.startStream(s);
 			Log.e(TAG, "handleStartPreview: startPreview2" );
 
 			/*===========================================================================
@@ -638,7 +565,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			 *==========================================================================*/
 			mWeakCameraView.get().setSuportWH(mWidth,mHeight);
 			ITemperatureCallback mTempCb= mWeakCameraView.get().getTemperatureCallback();
-			mUVCCamera.setTemperatureCallback(mTempCb);
+			//mUVCCamera.setTemperatureCallback(mTempCb); // TODO (netman)
 			mWeakCameraView.get().setTemperatureCbing(false);
 			if (MyApp.isT3) {
 				mWeakCameraView.get().setRotation(180);
@@ -652,10 +579,11 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		public void handleStopPreview() {
 			if (DEBUG) Log.v(TAG_THREAD, "handleStopPreview:");
 			if (mIsPreviewing) {
-				if (mUVCCamera != null) {
+		/*		if (mUVCCamera != null) {
 
 					mUVCCamera.stopPreview();
-				}
+				}*/
+				InfiCam.stopStream();
 				synchronized (mSync) {
 					mIsPreviewing = false;
 					mSync.notifyAll();
@@ -721,7 +649,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		public void handleStartRecording() {
 			if (DEBUG) Log.v(TAG_THREAD, "handleStartRecording:");
 			try {
-				if ((mUVCCamera == null) || (mMuxer != null)) return;
+				if (/*(mUVCCamera == null) ||*/ (mMuxer != null)) return;
 				final MediaMuxerWrapper muxer = new MediaMuxerWrapper(".mp4");	// if you record audio only, ".m4a" is also OK.
 				MediaVideoBufferEncoder videoEncoder = null;
 				switch (mEncoderType) {
@@ -764,12 +692,12 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		public  void handleStartTemperaturing() {
 			if (DEBUG) Log.v(TAG_THREAD, "handleStartTemperaturing:");
 
-			if ((mUVCCamera == null) || mIsTemperaturing) return;
+			if (/*(mUVCCamera == null) ||*/ mIsTemperaturing) return;
 			mIsTemperaturing=true;
 			mWeakCameraView.get().setTemperatureCbing(true);
 		}
         public  void handleRelayout(int rotate){
-            if (mUVCCamera == null)  return;
+            //if (mUVCCamera == null)  return;
             mWeakCameraView.get().relayout(rotate);
         }
 		public  void handleWatermarkOnOff(boolean isWatermaker){
@@ -785,9 +713,9 @@ abstract class AbstractUVCCameraHandler extends Handler {
 
 		public void handleStopTemperaturing() {
 			if (DEBUG) Log.v(TAG_THREAD, "handleStopTemperaturing:");
-			if ((mUVCCamera == null) ){
+			/*if ((mUVCCamera == null) ){
 				return;
-			}
+			}*/
 			mIsTemperaturing=false;
 			mWeakCameraView.get().setTemperatureCbing(false);
 		}
@@ -1093,16 +1021,18 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		}
 
 		public void handleChangePalette(int typeOfPalette) {
-			if ((mUVCCamera == null) ){
+			// TODO (netman)
+			/*if ((mUVCCamera == null) ){
 				return;
 			}
-			mUVCCamera.changePalette(typeOfPalette);
+			mUVCCamera.changePalette(typeOfPalette);*/
 		}
 		public void handleSetTempRange(int range) {
-			if ((mUVCCamera == null) ){
+			// TODO (netman)
+			/*if ((mUVCCamera == null) ){
 				return;
 			}
-			mUVCCamera.setTempRange(range);
+			mUVCCamera.setTempRange(range);*/
 		}
 	}
 }
