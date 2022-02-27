@@ -7,6 +7,44 @@
 extern "C" {
 
 InfiCam cam;
+ANativeWindow *window = NULL;
+
+// transfer specific frame data to the Surface(ANativeWindow)
+int copyToSurface(uint8_t *frameData, ANativeWindow *window) {
+    int result = 0;
+    ANativeWindow_Buffer buffer;
+
+    if (ANativeWindow_lock(window, &buffer, NULL) == 0) {
+        // source = frame data, destination = Surface(ANativeWindow)
+        const uint8_t *src = frameData;
+        const int src_w = cam.infi.width * 4;
+        const int dst_w = buffer.width * 4;
+        const int dst_step = buffer.stride * 4;
+
+        // set w and h to be the smallest of the two rectangles
+        const int w = src_w < dst_w ? src_w : dst_w;
+        const int h = cam.infi.height < buffer.height ? cam.infi.height : buffer.height;
+
+        // transfer from frame data to the Surface
+        uint8_t *dst = (uint8_t *) buffer.bits;
+        for (int i = 0; i < h; ++i) {
+            memcpy(dst, src, w);
+            dst += dst_step;
+            src += src_w;
+        }
+
+        ANativeWindow_unlockAndPost(window);
+    } else {
+        result = -1;
+    }
+
+    return result;
+}
+
+void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, void *user_ptr) {
+    if (window)
+        copyToSurface((uint8_t *) rgb, window);
+}
 
 JNIEXPORT jint Java_com_serenegiant_InfiCam_connect(JNIEnv *env, jclass cl, jint fd) {
     return cam.connect(fd);
@@ -16,9 +54,27 @@ JNIEXPORT void Java_com_serenegiant_InfiCam_disconnect(JNIEnv *env, jclass cl) {
     cam.disconnect();
 }
 
-// TODO start stream
+JNIEXPORT jint Java_com_serenegiant_InfiCam_nativeStartStream(JNIEnv *env, jclass cl, jobject surface) {
+    if (surface == NULL)
+        return 1;
+    if (window != NULL)
+        ANativeWindow_release(window);
+    window = ANativeWindow_fromSurface(env, surface);
+    if (window == NULL)
+        return 2;
+    // TODO we must release the window too, when, how? maybe we should have the functions not necessarily be static also
+    ANativeWindow_setBuffersGeometry(window, cam.infi.width, cam.infi.height, WINDOW_FORMAT_RGBX_8888);
+    if (cam.stream_start(frame_callback, NULL)) {
+        ANativeWindow_release(window);
+        return 3;
+    }
+    return 0;
+}
 
 JNIEXPORT void Java_com_serenegiant_InfiCam_nativeStopStream(JNIEnv *env, jclass cl) {
+    if (window != NULL)
+        ANativeWindow_release(window);
+    window = NULL;
     cam.stream_stop();
 }
 
