@@ -33,6 +33,7 @@ int InfiCam::connect(int fd) {
     infi.init(dev.width, dev.height, 1.0, 120); // TODO the dmul and range values
     width = infi.width;
     height = infi.height;
+    dev.set_zoom_abs(CMD_MODE_TEMP);
     return 0;
 }
 

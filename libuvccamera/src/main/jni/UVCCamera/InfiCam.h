@@ -18,6 +18,8 @@ class InfiCam {
     int streaming = 0, update_table = 0;
 
     static const int CMD_SHUTTER = 0x8000;
+    static const int CMD_MODE_TEMP = 0x8004;
+    static const int CMD_MODE_YUV = 0x8005;
 
     static void uvc_callback(uvc_frame_t *frame, void *user_ptr);
 

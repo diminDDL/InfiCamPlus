@@ -1640,13 +1640,13 @@ public final class MainActivity extends BaseActivity {
                 UnitTemperature = sharedPreferences.getInt("UnitTemperature", 0);
                 mUVCCameraView.setUnitTemperature(UnitTemperature);
                 Handler handler = new Handler();
-                handler.postDelayed(new Runnable() {
+                /*handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8004);//切换数据输出8004原始8005yuv,80ff保存
                         //setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8005);//切换数据输出8004原始8005yuv,80ff保存
                     }
-                }, 300);
+                }, 300);*/
                 mUVCCameraView.setBitmap(mCursorRed, mCursorGreen, mCursorBlue, mCursorYellow, mWatermarkLogo);
                 handler.postDelayed(new Runnable() {
                     @Override
