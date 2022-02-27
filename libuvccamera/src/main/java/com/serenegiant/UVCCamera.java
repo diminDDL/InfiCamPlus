@@ -113,8 +113,6 @@ public class UVCCamera {
     	if (mNativePtr != 0 && TextUtils.isEmpty(mSupportedSize)) {
     		mSupportedSize = nativeGetSupportedSize(mNativePtr);
 		}
-		nativeSetPreviewSize(mNativePtr, DEFAULT_PREVIEW_WIDTH, DEFAULT_PREVIEW_HEIGHT,
-			DEFAULT_PREVIEW_MIN_FPS, DEFAULT_PREVIEW_MAX_FPS, DEFAULT_PREVIEW_MODE, DEFAULT_BANDWIDTH);
     }
 
 	/**
@@ -172,72 +170,6 @@ public class UVCCamera {
 	public synchronized String getSupportedSize() {
     	return !TextUtils.isEmpty(mSupportedSize) ? mSupportedSize : (mSupportedSize = nativeGetSupportedSize(mNativePtr));
     }
-
-	/**
-	 * Set preview size and preview mode
-	 * @param width
-	   @param height
-	 */
-	public void setPreviewSize(final int width, final int height) {
-		setPreviewSize(width, height, DEFAULT_PREVIEW_MIN_FPS, DEFAULT_PREVIEW_MAX_FPS, mCurrentFrameFormat, mCurrentBandwidthFactor);
-	}
-
-	/**
-	 * Set preview size and preview mode
-	 * @param width
-	 * @param height
-	 * @param frameFormat either FRAME_FORMAT_YUYV(0) or FRAME_FORMAT_MJPEG(1)
-	 */
-	public void setPreviewSize(final int width, final int height, final int frameFormat) {
-		setPreviewSize(width, height, DEFAULT_PREVIEW_MIN_FPS, DEFAULT_PREVIEW_MAX_FPS, frameFormat, mCurrentBandwidthFactor);
-	}
-	
-	/**
-	 * Set preview size and preview mode
-	 * @param width
-	   @param height
-	   @param frameFormat either FRAME_FORMAT_YUYV(0) or FRAME_FORMAT_MJPEG(1)
-	   @param bandwidth [0.0f,1.0f]
-	 */
-	public void setPreviewSize(final int width, final int height, final int frameFormat, final float bandwidth) {
-		setPreviewSize(width, height, DEFAULT_PREVIEW_MIN_FPS, DEFAULT_PREVIEW_MAX_FPS, frameFormat, bandwidth);
-	}
-
-	/**
-	 * Set preview size and preview mode
-	 * @param width
-	 * @param height
-	 * @param min_fps
-	 * @param max_fps
-	 * @param frameFormat either FRAME_FORMAT_YUYV(0) or FRAME_FORMAT_MJPEG(1)
-	 * @param bandwidthFactor
-	 */
-	public void setPreviewSize(final int width, final int height, final int min_fps, final int max_fps, final int frameFormat, final float bandwidthFactor) {
-		if ((width == 0) || (height == 0))
-			throw new IllegalArgumentException("invalid preview size");
-		if (mNativePtr != 0) {
-			final int result = nativeSetPreviewSize(mNativePtr, width, height, min_fps, max_fps, frameFormat, bandwidthFactor);
-			if (result != 0)
-				throw new IllegalArgumentException("Failed to set preview size");
-			mCurrentFrameFormat = frameFormat;
-			mCurrentWidth = width;
-			mCurrentHeight = height;
-			mCurrentBandwidthFactor = bandwidthFactor;
-		}
-	}
-
-	private static final void addSize(final JSONObject format, final int formatType, final int frameType, final List<Size> size_list) throws JSONException {
-		final JSONArray size = format.getJSONArray("size");
-		final int size_nums = size.length();
-		for (int j = 0; j < size_nums; j++) {
-			final String[] sz = size.getString(j).split("x");
-			try {
-				size_list.add(new Size(formatType, frameType, j, Integer.parseInt(sz[0]), Integer.parseInt(sz[1])));
-			} catch (final Exception e) {
-				break;
-			}
-		}
-	}
 
     /**
      * set preview surface with SurfaceHolder</br>
@@ -351,7 +283,6 @@ public class UVCCamera {
     private final native int nativeConnect(long id_camera, int venderId, int productId, int fileDescriptor, int busNum, int devAddr, String usbfs);
 
     private static final native int nativeRelease(final long id_camera);
-    private static final native int nativeSetPreviewSize(final long id_camera, final int width, final int height, final int min_fps, final int max_fps, final int mode, final float bandwidth);
     private static final native String nativeGetSupportedSize(final long id_camera);
     private static final native int nativeStartPreview(final long id_camera);
     private static final native int nativeStopPreview(final long id_camera);

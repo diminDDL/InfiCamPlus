@@ -63,11 +63,6 @@
 #undef USE_LOGALL
 #endif
 
-// Absolute class name of Java object
-// if you change the package name of UVCCamera library, you must fix these
-#define		JTYPE_SYSTEM				"Ljava/lang/System;"
-#define		JTYPE_UVCCAMERA				"Lcom/serenegiant/UVCCamera;"
-//
 typedef		jlong						ID_TYPE;
 
 #endif /* LOCALDEFINES_H_ */

@@ -210,19 +210,6 @@ JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeSetUserPalette(JNIEnv *env, 
 	RETURN(status,jint);
 }
 
-//======================================================================
-// プレビュー画面の大きさをセット
-JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeSetPreviewSize(JNIEnv *env, jclass thiz, ID_TYPE id_camera, jint width,
-                                 jint height, jint min_fps, jint max_fps, jint mode,
-                                 jfloat bandwidth) {
-	ENTER();
-	UVCPreviewIR *camera = reinterpret_cast<UVCPreviewIR *>(id_camera);
-	if (LIKELY(camera)) {
-		return camera->setPreviewSize(width, height, min_fps, max_fps, mode, bandwidth);
-	}
-	RETURN(JNI_ERR, jint);
-}
-
 JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeStartPreview(JNIEnv *env, jclass thiz, ID_TYPE id_camera) {
 	ENTER();
 	UVCPreviewIR *camera = reinterpret_cast<UVCPreviewIR *>(id_camera);

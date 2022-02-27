@@ -615,12 +615,10 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			if ((mUVCCamera == null) || mIsPreviewing) return;
 			Log.e(TAG, "handleStartPreview2 ");
 			try {
-				mUVCCamera.setPreviewSize(mWidth, mHeight, 1, 26, mPreviewMode, mBandwidthFactor);
 				Log.e(TAG, "handleStartPreview3 mWidth: "+mWidth+"mHeight:"+mHeight);
 			} catch (final IllegalArgumentException e) {
 				try {
 					// fallback to YUV mode
-					mUVCCamera.setPreviewSize(mWidth, mHeight, 1,26, UVCCamera.DEFAULT_PREVIEW_MODE, mBandwidthFactor);
 					Log.e(TAG, "handleStartPreview4");
 				} catch (final IllegalArgumentException e1) {
 					callOnError(e1);

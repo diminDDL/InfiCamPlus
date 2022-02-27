@@ -141,10 +141,6 @@ UVCPreviewIR::~UVCPreviewIR() {
 inline const bool UVCPreviewIR::isRunning() const { return mIsRunning; }
 inline const bool UVCPreviewIR::isComputed() const { return mIsComputed; }
 
-int UVCPreviewIR::setPreviewSize(int width, int height, int min_fps, int max_fps, int mode, float bandwidth) {
-	return 0;
-}
-
 int UVCPreviewIR::setPreviewDisplay(ANativeWindow *preview_window) {
 	ENTER();
 	////LOGE("setPreviewDisplay");

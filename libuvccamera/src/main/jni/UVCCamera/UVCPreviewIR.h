@@ -102,7 +102,6 @@ public:
 
 	void connect2();
     void whenShutRefresh();
-	int setPreviewSize(int width, int height, int min_fps, int max_fps, int mode, float bandwidth);
 	int setPreviewDisplay(ANativeWindow *preview_window);
 	int setTemperatureCallback(JNIEnv *env, jobject temperature_callback_obj);
 	int startPreview();
