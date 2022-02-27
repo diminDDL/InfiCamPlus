@@ -9,7 +9,7 @@ void InfiCam::uvc_callback(uvc_frame_t *frame, void *user_ptr) {
     pthread_mutex_lock(&p->frame_callback_mutex);
 
     if (p->update_table) {
-        p->infi.read_params((uint16_t *) frame->data); // TODO temporary?
+        p->infi.read_params((uint16_t *) frame->data);
         p->infi.update_table((uint16_t *) frame->data);
         p->update_table = 0;
     } else p->infi.update((uint16_t *) frame->data);
@@ -19,6 +19,14 @@ void InfiCam::uvc_callback(uvc_frame_t *frame, void *user_ptr) {
                       p->frame_callback_arg);
 
     pthread_mutex_unlock(&p->frame_callback_mutex);
+}
+
+void InfiCam::set_float(int addr, float val) {
+    uint8_t *p = (uint8_t *) &val;
+    dev.set_zoom_abs((((addr + 0) & 0x7F) << 8) | p[0]);
+    dev.set_zoom_abs((((addr + 1) & 0x7F) << 8) | p[1]);
+    dev.set_zoom_abs((((addr + 2) & 0x7F) << 8) | p[2]);
+    dev.set_zoom_abs((((addr + 3) & 0x7F) << 8) | p[3]);
 }
 
 InfiCam::~InfiCam() {
@@ -70,41 +78,68 @@ void InfiCam::stream_stop() {
     streaming = 0;
 }
 
+void InfiCam::set_correction(float corr) {
+    if (!streaming)
+        return;
+    pthread_mutex_lock(&frame_callback_mutex);
+    set_float(ADDR_CORRECTION, corr);
+    pthread_mutex_unlock(&frame_callback_mutex);
+}
+
+void InfiCam::set_temp_reflected(float t_ref) {
+    if (!streaming)
+        return;
+    pthread_mutex_lock(&frame_callback_mutex);
+    set_float(ADDR_TEMP_REFLECTED, t_ref);
+    pthread_mutex_unlock(&frame_callback_mutex);
+}
+
+void InfiCam::set_temp_air(float t_air) {
+    if (!streaming)
+        return;
+    pthread_mutex_lock(&frame_callback_mutex);
+    set_float(ADDR_TEMP_AIR, t_air);
+    pthread_mutex_unlock(&frame_callback_mutex);
+}
+
+void InfiCam::set_humidity(float humi) {
+    if (!streaming)
+        return;
+    pthread_mutex_lock(&frame_callback_mutex);
+    set_float(ADDR_HUMIDITY, humi);
+    pthread_mutex_unlock(&frame_callback_mutex);
+}
+
+void InfiCam::set_emissivity(float emi) {
+    if (!streaming)
+        return;
+    pthread_mutex_lock(&frame_callback_mutex);
+    set_float(ADDR_EMISSIVITY, emi);
+    pthread_mutex_unlock(&frame_callback_mutex);
+}
+
+void InfiCam::set_distance(float dist) {
+    if (!streaming)
+        return;
+    pthread_mutex_lock(&frame_callback_mutex);
+    set_float(ADDR_DISTANCE, dist);
+    pthread_mutex_unlock(&frame_callback_mutex);
+}
+
 void InfiCam::set_params(float corr, float t_ref, float t_air, float humi, float emi, float dist) {
-    set_params(corr, t_ref, t_air, humi, emi, dist, 0.0, 0.0);
-}
-
-void InfiCam::set_params(float corr, float t_ref, float t_air, float humi, float emi, float dist,
-                         float off_fpa, float off_shut) {
-    if (streaming)
-        pthread_mutex_lock(&frame_callback_mutex);
-    infi.correction = corr;
-    infi.temp_reflected = t_ref;
-    infi.temp_air = t_air;
-    infi.humidity = humi;
-    infi.emissivity = emi;
-    infi.distance = dist;
-    infi.offset_temp_fpa = off_fpa;
-    infi.offset_temp_shutter = off_shut;
-    if (streaming)
-        pthread_mutex_unlock(&frame_callback_mutex);
-}
-
-void InfiCam::set_float(int addr, float val) {
-    uint8_t *p = (uint8_t *) &val;
-    dev.set_zoom_abs((((addr + 0) & 0x7F) << 8) | p[0]);
-    dev.set_zoom_abs((((addr + 1) & 0x7F) << 8) | p[1]);
-    dev.set_zoom_abs((((addr + 2) & 0x7F) << 8) | p[2]);
-    dev.set_zoom_abs((((addr + 3) & 0x7F) << 8) | p[3]);
-}
-
-void InfiCam::set_u16(int addr, uint16_t val) {
-    dev.set_zoom_abs((((addr + 0) & 0x7F) << 8) | ((val >> 0) & 0xFF));
-    dev.set_zoom_abs((((addr + 1) & 0x7F) << 8) | ((val >> 8) & 0xFF));
+    if (!streaming)
+        return;
+    pthread_mutex_lock(&frame_callback_mutex);
+    set_float(ADDR_CORRECTION, corr);
+    set_float(ADDR_TEMP_REFLECTED, t_ref);
+    set_float(ADDR_TEMP_AIR, t_air);
+    set_float(ADDR_HUMIDITY, humi);
+    set_float(ADDR_EMISSIVITY, emi);
+    set_float(ADDR_DISTANCE, dist);
+    pthread_mutex_unlock(&frame_callback_mutex);
 }
 
 void InfiCam::store_params() {
-    // TODO when to write the params to the camera etc?
     dev.set_zoom_abs(CMD_STORE);
 }
 

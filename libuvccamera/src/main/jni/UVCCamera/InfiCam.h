@@ -25,7 +25,15 @@ class InfiCam {
     static const int CMD_RANGE_400 = 0x8021;
     static const int CMD_STORE = 0x80FF;
 
+    static const int ADDR_CORRECTION = 0;
+    static const int ADDR_TEMP_REFLECTED = 4;
+    static const int ADDR_TEMP_AIR = 8;
+    static const int ADDR_HUMIDITY = 12;
+    static const int ADDR_EMISSIVITY = 16;
+    static const int ADDR_DISTANCE = 20;
+
     static void uvc_callback(uvc_frame_t *frame, void *user_ptr);
+    void set_float(int addr, float val); /* Write to camera user memory, needs lock. */
 
 public:
     static const int palette_len = InfiFrame::palette_len;
@@ -41,12 +49,14 @@ public:
     int stream_start(frame_callback_t *cb, void *user_ptr); /* CB arguments valid until return. */
     void stream_stop();
 
+    /* Setting parameters, only works while streaming. */
+    void set_correction(float corr);
+    void set_temp_reflected(float t_ref);
+    void set_temp_air(float t_air);
+    void set_humidity(float humi);
+    void set_emissivity(float emi);
+    void set_distance(float dist);
     void set_params(float corr, float t_ref, float t_air, float humi, float emi, float dist);
-    void set_params(float corr, float t_ref, float t_air, float humi, float emi, float dist,
-                    float off_fpa, float off_shut);
-
-    void set_float(int addr, float val); /* Write to camera user memory. */
-    void set_u16(int addr, uint16_t val);
     void store_params(); /* Store user memory to camera so values remain when reconnecting. */
 
     void set_palette(uint32_t *palette);
