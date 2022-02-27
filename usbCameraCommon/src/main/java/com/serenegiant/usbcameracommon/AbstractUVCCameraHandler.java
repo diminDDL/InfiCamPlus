@@ -27,7 +27,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
-import android.hardware.usb.UsbDevice;
 import android.media.AudioManager;
 import android.media.MediaScannerConnection;
 import android.media.SoundPool;
@@ -71,6 +70,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 abstract class AbstractUVCCameraHandler extends Handler {
 	private static final boolean DEBUG = true;	// TODO set false on release
 	private static final String TAG = "AbsUVCCameraHandler";
+	public static InfiCam infiCam = new InfiCam();
 
 	public interface CameraCallback {
 		public void onOpen();
@@ -303,7 +303,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 	}
 
 	public void whenShutRefresh() {
-		InfiCam.calibrate();
+		infiCam.calibrate();
 	}
 
 	@Override
@@ -386,6 +386,8 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		private boolean mIsTemperaturing;
 		private boolean mIsRecording;
 		public  ITemperatureCallback CameraThreadTemperatureCallback;
+
+
 		/**
 		 * shutter sound
 		 */
@@ -398,6 +400,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		 */
 		private MediaMuxerWrapper mMuxer;
 		private MediaVideoBufferEncoder mVideoEncoder;
+
 		/**
 		 *
 		 * @param clazz Class extends AbstractUVCCameraHandler
@@ -490,13 +493,13 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			if (DEBUG) Log.v(TAG_THREAD, "handleOpen:");
 		//	handleClose();
 			try {
-				InfiCam.connect(ctrlBlock.getFileDescriptor()); // TODO (netman) error check
+				infiCam.connect(ctrlBlock.getFileDescriptor()); // TODO (netman) error check
 				callOnOpen();
 			} catch (final Exception e) {
 				callOnError(e);
 			}
-			mWidth = InfiCam.width;
-			mHeight = InfiCam.height;
+			mWidth = infiCam.width;
+			mHeight = infiCam.height;
 			if (DEBUG) Log.i(TAG, "supportedSize: " + mWidth + "x" + mHeight);
 		}
 
@@ -513,7 +516,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
                 mIsTemperaturing=false;
                 handleStopTemperaturing();
             }
-			InfiCam.disconnect();
+			infiCam.disconnect();
 		}
 
 		public void handleStartPreview(final Object surface) {
@@ -522,7 +525,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			if (mIsPreviewing) return;
 			Log.e(TAG, "handleStartPreview2 ");
 			try {
-				Log.e(TAG, "handleStartPreview3 mWidth: "+mWidth+"mHeight:"+mHeight);
+				Log.e(TAG, "handleStartPreview3: "+mWidth+"x"+mHeight);
 			} catch (final IllegalArgumentException e) {
 				try {
 					// fallback to YUV mode
@@ -548,7 +551,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			}
             Log.e(TAG, "handleStartPreview: startPreview1" );
 			//mUVCCamera.startPreview();
-			InfiCam.startStream(s);
+			infiCam.nativeStartStream(s);
 			Log.e(TAG, "handleStartPreview: startPreview2" );
 
 			/*===========================================================================
@@ -583,7 +586,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 
 					mUVCCamera.stopPreview();
 				}*/
-				InfiCam.stopStream();
+				infiCam.stopStream();
 				synchronized (mSync) {
 					mIsPreviewing = false;
 					mSync.notifyAll();

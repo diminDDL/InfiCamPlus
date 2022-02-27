@@ -8,7 +8,7 @@
 
 class InfiCam {
     typedef void (frame_callback_t)(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw,
-                void *user_ptr);
+                                    void *user_ptr);
 
     UVCDevice dev;
     frame_callback_t *frame_callback;

@@ -734,36 +734,37 @@ public final class MainActivity extends BaseActivity {
         @Override
         public void onStopTrackingTouch(SeekBar seekBar) {
             int id = seekBar.getId();
+            InfiCam infiCam = mCameraHandler.infiCam;
             switch (id) {
                 case R.id.emissivity_seekbar:
                     int currentProgressEm = seekBar.getProgress();
                     float fiputEm = currentProgressEm / 100.0f;
-                    InfiCam.setEmissivity(fiputEm);
+                    infiCam.setEmissivity(fiputEm);
                     break;
                 case R.id.correction_seekbar:
                     int currentProgressCo = seekBar.getProgress();
                     float fiputCo = (currentProgressCo - 30) / 10.0f;
-                    InfiCam.setCorrection(fiputCo);
+                    infiCam.setCorrection(fiputCo);
                     break;
                 case R.id.reflection_seekbar:
                     int currentProgressRe = seekBar.getProgress();
                     float fiputRe = currentProgressRe - 10.0f;
-                    InfiCam.setTempReflected(fiputRe);
+                    infiCam.setTempReflected(fiputRe);
                     break;
                 case R.id.amb_temp_seekbar:
                     int currentProgressAm = seekBar.getProgress();
                     float fiputAm = currentProgressAm - 10.0f;
-                    InfiCam.setTempAir(fiputAm);
+                    infiCam.setTempAir(fiputAm);
                     break;
                 case R.id.humidity_seekbar:
                     int currentProgressHu = seekBar.getProgress();
                     float fiputHu = currentProgressHu / 100.0f;
-                    InfiCam.setHumidity(fiputHu);
+                    infiCam.setHumidity(fiputHu);
                     break;
                 case R.id.distance_seekbar:
                     int currentProgressDi = seekBar.getProgress();
                     float fltDi = currentProgressDi;
-                    InfiCam.setDistance(fltDi);
+                    infiCam.setDistance(fltDi);
                     break;
 
             }
@@ -1138,7 +1139,8 @@ public final class MainActivity extends BaseActivity {
 
                     break;
                 case R.id.save_button:
-                    InfiCam.storeParams();
+                    InfiCam infiCam = mCameraHandler.infiCam;
+                    infiCam.storeParams();
                     Toast.makeText(getApplicationContext(), "保存成功", Toast.LENGTH_SHORT).show();
                     break;
                 case R.id.button_camera:
@@ -1304,7 +1306,8 @@ public final class MainActivity extends BaseActivity {
                                 public void run() {
                                     //whenShutRefresh();
                                     //setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8021);//400。C
-                                    InfiCam.setRange(400);
+                                    InfiCam infiCam = mCameraHandler.infiCam;
+                                    infiCam.setRange(400);
                                 }
                             }, 100);
                             Handler handler4 = new Handler();
@@ -1326,7 +1329,8 @@ public final class MainActivity extends BaseActivity {
                                 public void run() {
                                     //whenShutRefresh();
                                     //setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8020);//120。C
-                                    InfiCam.setRange(120);
+                                    InfiCam infiCam = mCameraHandler.infiCam;
+                                    infiCam.setRange(120);
                                 }
                             }, 100);
                             Handler handler4 = new Handler();
