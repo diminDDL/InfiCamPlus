@@ -80,4 +80,4 @@ CTRL_ZOOM_ABS is used with the following commands:
 	- 0x8020 to set -20 to 120C range (followed by shutter)
 	- 0x8021 to set 120 to 400C range (followed by shutter)
 	- 0x80FF (as before) to store user area in non-volatile storage
-	- 0xEC.., 0xEE.. Set user point x, y to low bytes? "用户盲元表"
+	- 0xEC.., 0xEE.. Mark dead pixel with x, y to low bytes? "用户盲元表" (MainActivity suggests as much)
