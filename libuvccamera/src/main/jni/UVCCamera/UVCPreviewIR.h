@@ -54,7 +54,6 @@ private:
     void do_temperature_callback(JNIEnv *env, uint8_t *frameData);
 
 	//ir temp para
-    bool isNeedWriteTable;
 	//测温相关参数，详见thermometry.h
     int rangeMode;
     int cameraLens;

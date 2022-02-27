@@ -35,7 +35,6 @@
 
 #define	LOCAL_DEBUG 0
 #define PREVIEW_PIXEL_BYTES 4	// RGBA/RGBX
-#define OUTPUTMODE 4
 
 #include <stdlib.h>
 #include <linux/time.h>
@@ -70,17 +69,18 @@ extern "C" {
 
 UVCPreviewIR::UVCPreviewIR() :	mPreviewWindow(NULL),
 								  mIsRunning(false),
-								  isNeedWriteTable(true),
 								  mTemperatureCallbackObj(NULL) {
 
 	// TODO (netman) This is temporary generating a palette thing, dunno what the plan is yet, but it doesn't belong here.
-	for (int i = 0; i + 4 <= sizeof(cam.infi.palette); i += 4) {
-		double x = (double) i / (double) sizeof(cam.infi.palette);
-		((uint8_t *) cam.infi.palette)[i + 0] = round(255 * sqrt(x));
-		((uint8_t *) cam.infi.palette)[i + 1] = round(255 * pow(x, 3));
-		((uint8_t *) cam.infi.palette)[i + 2] = round(255 * fmax(0, sin(2 * M_PI * x)));
-		((uint8_t *) cam.infi.palette)[i + 3] = 255;
+	uint32_t palette[InfiCam::palette_len];
+	for (int i = 0; i + 4 <= sizeof(palette); i += 4) {
+		double x = (double) i / (double) sizeof(palette);
+		((uint8_t *) palette)[i + 0] = round(255 * sqrt(x));
+		((uint8_t *) palette)[i + 1] = round(255 * pow(x, 3));
+		((uint8_t *) palette)[i + 2] = round(255 * fmax(0, sin(2 * M_PI * x)));
+		((uint8_t *) palette)[i + 3] = 255;
 	}
+	cam.set_palette(palette);
 
 	// TODO (netman) This is temporary generating a palette thing, dunno what the plan is yet, but it doesn't belong here.
 	// TODO add partial (0-270 degrees) rainbow, where cold is blue and red is hot
@@ -109,7 +109,6 @@ UVCPreviewIR::UVCPreviewIR() :	mPreviewWindow(NULL),
 	cameraLens=130;//130;//镜头大小:目前支持两种，68：使用6.8mm镜头，130：使用13mm镜头,默认130。
 	memset(UserPalette,0,3*256*sizeof(unsigned char));
 	pthread_mutex_init(&preview_mutex, NULL);
-
 }
 
 UVCPreviewIR::~UVCPreviewIR() {
@@ -135,7 +134,7 @@ int UVCPreviewIR::setPreviewDisplay(ANativeWindow *preview_window) {
 			mPreviewWindow = preview_window;
 			if (LIKELY(mPreviewWindow)) {
 				ANativeWindow_setBuffersGeometry(mPreviewWindow,
-												 cam.infi.width, cam.infi.height, WINDOW_FORMAT_RGBX_8888);
+												 cam.width, cam.height, WINDOW_FORMAT_RGBX_8888);
 			}
 		}
 	}
@@ -188,7 +187,7 @@ int UVCPreviewIR::startPreview() {
 
 	pthread_mutex_lock(&preview_mutex);
 	if (LIKELY(mPreviewWindow)) {
-		ANativeWindow_setBuffersGeometry(mPreviewWindow, cam.infi.width, cam.infi.height, WINDOW_FORMAT_RGBX_8888);//ir软件384*292中，实质384*288图像数据，4行其他数据
+		ANativeWindow_setBuffersGeometry(mPreviewWindow, cam.width, cam.height, WINDOW_FORMAT_RGBX_8888);//ir软件384*292中，实质384*288图像数据，4行其他数据
 		////LOGE("ANativeWindow_setBuffersGeometry:(%d,%d)", frameWidth, frameHeight);
 	}
 	pthread_mutex_unlock(&preview_mutex);
@@ -219,14 +218,6 @@ void UVCPreviewIR::uvc_preview_frame_callback(uint32_t *rgb, float *temp, uint16
     UVCPreviewIR *p = reinterpret_cast<UVCPreviewIR *>(user_ptr);
 	pthread_mutex_lock(&p->preview_mutex);
 	{
-		// Update table.
-		if(p->isNeedWriteTable) {
-			p->cam.infi.read_params((uint16_t *) raw);
-			p->cam.infi.update_table((uint16_t *) raw); // TODO remember the temperature thing also needs this.
-			p->isNeedWriteTable=false;
-			//LOGE("myinfo %d %d %f %f %d %d", width, height, ic.temp(ic.temp_max), ic.temp(ic.temp_min), ic.temp_max, ic.temp_min);
-		}
-
 		if (p->mPreviewWindow)
 			p->copyToSurface((uint8_t *) rgb, p->mPreviewWindow);
 
@@ -252,13 +243,13 @@ int UVCPreviewIR::copyToSurface(uint8_t *frameData, ANativeWindow *window) {
 		if (LIKELY(ANativeWindow_lock(window, &buffer, NULL) == 0)) {
 			// source = frame data, destination = Surface(ANativeWindow)
 			const uint8_t *src = frameData;
-			const int src_w = cam.infi.width * PREVIEW_PIXEL_BYTES;
+			const int src_w = cam.width * PREVIEW_PIXEL_BYTES;
 			const int dst_w = buffer.width * PREVIEW_PIXEL_BYTES;
 			const int dst_step = buffer.stride * PREVIEW_PIXEL_BYTES;
 
 			// set w and h to be the smallest of the two rectangles
 			const int w = src_w < dst_w ? src_w : dst_w;
-			const int h = cam.infi.height < buffer.height ? cam.infi.height : buffer.height;
+			const int h = cam.height < buffer.height ? cam.height : buffer.height;
 
 			// transfer from frame data to the Surface
 			uint8_t *dst = (uint8_t *) buffer.bits;
@@ -302,7 +293,8 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 	ENTER();
 
 	float *temperatureData = mCbTemper;
-	cam.infi.temp((uint16_t *) frameData, temperatureData + 10);
+	// TODO
+	/*cam.infi.temp((uint16_t *) frameData, temperatureData + 10);
 	temperatureData[0] = cam.infi.temp(cam.infi.temp_center);
 	temperatureData[1] = cam.infi.temp_max_x;
 	temperatureData[2] = cam.infi.temp_max_y;
@@ -312,10 +304,10 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 	temperatureData[6] = cam.infi.temp(cam.infi.temp_min);
 	temperatureData[7] = cam.infi.temp(cam.infi.temp_user[0]);
 	temperatureData[8] = cam.infi.temp(cam.infi.temp_user[1]);
-	temperatureData[9] = cam.infi.temp(cam.infi.temp_user[2]);
+	temperatureData[9] = cam.infi.temp(cam.infi.temp_user[2]);*/
 
-	jfloatArray mNCbTemper = env->NewFloatArray(cam.infi.width*cam.infi.height+10);
-	env->SetFloatArrayRegion(mNCbTemper, 0, 10+cam.infi.width*cam.infi.height, mCbTemper);
+	jfloatArray mNCbTemper = env->NewFloatArray(cam.width*cam.height+10);
+	env->SetFloatArrayRegion(mNCbTemper, 0, 10+cam.width*cam.height, mCbTemper);
 	if (mTemperatureCallbackObj != NULL) {
 		env->CallVoidMethod(mTemperatureCallbackObj, iTemperatureCallback.onReceiveTemperature, mNCbTemper);
 		env->ExceptionClear();
@@ -326,11 +318,7 @@ void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
 
 //打快门更新表
 void UVCPreviewIR::whenShutRefresh() {
-    pthread_mutex_lock(&preview_mutex);
-    {
-        isNeedWriteTable=true;
-    }
-    pthread_mutex_unlock(&preview_mutex); // TODO the other ones don't need a mutex?
+	cam.calibrate();
 }
 
 void UVCPreviewIR::setUserPalette(uint8_t *palette, int typeOfPalette) {
@@ -366,7 +354,7 @@ void UVCPreviewIR::setCameraLens(int mCameraLens) {
 char *UVCPreviewIR::getSupportedSize() {
 	// TODO make something sensible to just return default or supported sizes instead
 	char buf[256] = { 0 };
-	snprintf(buf, sizeof(buf), "%dx%d", cam.dev.width, cam.dev.height);
+	snprintf(buf, sizeof(buf), "%dx%d", cam.width, cam.height + 4); // TODO
 	buf[sizeof(buf)-1] = '\0';
 	RETURN(strdup(buf), char *);
 }
