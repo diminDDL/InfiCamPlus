@@ -23,7 +23,7 @@ public:
 
     ~UVCDevice();
 
-    int connect(int fd);
+    int connect(int fd); /* Closes the FD on disconnect. */
     void disconnect();
 
     int stream_start(uvc_frame_callback_t *cb, void *user_ptr);

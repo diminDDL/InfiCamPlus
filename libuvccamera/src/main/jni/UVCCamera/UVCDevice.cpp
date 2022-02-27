@@ -84,9 +84,9 @@ void UVCDevice::disconnect() {
 int UVCDevice::stream_start(uvc_frame_callback_t *cb, void *user_ptr) {
     uvc_stream_ctrl_t ctrl;
     /* 0 FPS means any. */
-    if (uvc_get_stream_ctrl_format_size(uvc_devh, &ctrl, format, width, height, 0) != 0)
+    if (uvc_get_stream_ctrl_format_size(uvc_devh, &ctrl, format, width, height, 0))
         return 4;
-    if (uvc_start_streaming(uvc_devh, &ctrl, cb, user_ptr, 0) != 0)
+    if (uvc_start_streaming(uvc_devh, &ctrl, cb, user_ptr, 0))
         return 5;
     return 0;
 }

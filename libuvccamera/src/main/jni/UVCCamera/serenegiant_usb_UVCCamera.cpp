@@ -38,7 +38,7 @@
 #include "libusb.h"
 #include "libuvc.h"
 #include "utilbase.h"
-#include "UVCCamera.h"
+#include "UVCPreviewIR.h"
 
 extern "C" {
 
@@ -123,7 +123,7 @@ jint setField_int(JNIEnv *env, jobject java_obj, const char *field_name, jint va
 
 JNIEXPORT ID_TYPE Java_com_serenegiant_UVCCamera_nativeCreate(JNIEnv *env, jobject thiz) {
 	ENTER();
-	UVCCamera *camera = new UVCCamera();
+	UVCPreviewIR *camera = new UVCPreviewIR();
 	setField_long(env, thiz, "mNativePtr", reinterpret_cast<ID_TYPE>(camera));
 	RETURN(reinterpret_cast<ID_TYPE>(camera), ID_TYPE);
 }
@@ -132,7 +132,7 @@ JNIEXPORT ID_TYPE Java_com_serenegiant_UVCCamera_nativeCreate(JNIEnv *env, jobje
 JNIEXPORT void Java_com_serenegiant_UVCCamera_nativeDestroy(JNIEnv *env, jobject thiz, ID_TYPE id_camera) {
 	ENTER();
 	setField_long(env, thiz, "mNativePtr", 0);
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
+	UVCPreviewIR *camera = reinterpret_cast<UVCPreviewIR *>(id_camera);
 	if (LIKELY(camera)) {
 		SAFE_DELETE(camera);
 	}
@@ -145,11 +145,12 @@ JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeConnect(JNIEnv *env, jobject
                           jint fd, jint busNum, jint devAddr, jstring usbfs_str) {
 	ENTER();
 	int result = JNI_ERR;
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
+	UVCPreviewIR *camera = reinterpret_cast<UVCPreviewIR *>(id_camera);
 	const char *c_usbfs = env->GetStringUTFChars(usbfs_str, JNI_FALSE);
 	if (LIKELY(camera && (fd > 0))) {
 //		libusb_set_debug(NULL, LIBUSB_LOG_LEVEL_DEBUG);
-		result =  camera->connect(vid, pid, fd, busNum, devAddr, c_usbfs);
+		result =  camera->connect(fd);
+		camera->connect2();
 	}
 	env->ReleaseStringUTFChars(usbfs_str, c_usbfs);
 	RETURN(result, jint);
@@ -158,10 +159,10 @@ JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeConnect(JNIEnv *env, jobject
 // カメラとの接続を解除
 JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeRelease(JNIEnv *env, jclass thiz, ID_TYPE id_camera) {
 	ENTER();
-	int result = JNI_ERR;
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
+	int result = JNI_OK;
+	UVCPreviewIR *camera = reinterpret_cast<UVCPreviewIR *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->release();
+		camera->disconnect();
 	}
 	RETURN(result, jint);
 }
@@ -169,7 +170,7 @@ JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeRelease(JNIEnv *env, jclass 
 JNIEXPORT jstring Java_com_serenegiant_UVCCamera_nativeGetSupportedSize(JNIEnv *env, jclass thiz, ID_TYPE id_camera) {
 	ENTER();
 	jstring result = NULL;
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
+	UVCPreviewIR *camera = reinterpret_cast<UVCPreviewIR *>(id_camera);
 	if (LIKELY(camera)) {
 		char *c_str = camera->getSupportedSize();
 		if (LIKELY(c_str)) {
@@ -183,7 +184,7 @@ JNIEXPORT jstring Java_com_serenegiant_UVCCamera_nativeGetSupportedSize(JNIEnv *
 JNIEXPORT jbyteArray Java_com_serenegiant_UVCCamera_nativeGetByteArrayTemperaturePara(JNIEnv *env, jclass thiz, ID_TYPE id_camera,
                                                     int len) {
 	ENTER();
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
+	UVCPreviewIR *camera = reinterpret_cast<UVCPreviewIR *>(id_camera);
 	jbyteArray array=(env)->NewByteArray(len);
 	uint8_t *para=(uint8_t *)malloc(len*sizeof(uint8_t));
 	int status=0;
@@ -201,9 +202,9 @@ JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeSetUserPalette(JNIEnv *env, 
 	ENTER();
 	int status=0;
         jbyte *  arr =env-> GetByteArrayElements(palette,0);
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
+	UVCPreviewIR *camera = reinterpret_cast<UVCPreviewIR *>(id_camera);
 	if (LIKELY(camera)) {
-        camera->SetUserPalette((uint8_t*)arr,typeOfPalette);
+        camera->setUserPalette((uint8_t *) arr, typeOfPalette);
 	}
 	env->ReleaseByteArrayElements(palette,arr,0);
 	RETURN(status,jint);
@@ -215,7 +216,7 @@ JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeSetPreviewSize(JNIEnv *env, 
                                  jint height, jint min_fps, jint max_fps, jint mode,
                                  jfloat bandwidth) {
 	ENTER();
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
+	UVCPreviewIR *camera = reinterpret_cast<UVCPreviewIR *>(id_camera);
 	if (LIKELY(camera)) {
 		return camera->setPreviewSize(width, height, min_fps, max_fps, mode, bandwidth);
 	}
@@ -224,7 +225,7 @@ JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeSetPreviewSize(JNIEnv *env, 
 
 JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeStartPreview(JNIEnv *env, jclass thiz, ID_TYPE id_camera) {
 	ENTER();
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
+	UVCPreviewIR *camera = reinterpret_cast<UVCPreviewIR *>(id_camera);
 	if (LIKELY(camera)) {
 		return camera->startPreview();
 	}
@@ -235,7 +236,7 @@ JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeStartPreview(JNIEnv *env, jc
 JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeStopPreview(JNIEnv *env, jclass thiz, ID_TYPE id_camera) {
 	jint result = JNI_ERR;
 	ENTER();
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
+	UVCPreviewIR *camera = reinterpret_cast<UVCPreviewIR *>(id_camera);
 	if (LIKELY(camera)) {
 		result = camera->stopPreview();
 	}
@@ -246,7 +247,7 @@ JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeSetPreviewDisplay(JNIEnv *en
                                     jobject jSurface) {
 	jint result = JNI_ERR;
 	ENTER();
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
+	UVCPreviewIR *camera = reinterpret_cast<UVCPreviewIR *>(id_camera);
 	if (LIKELY(camera)) {
 		ANativeWindow *preview_window = jSurface ? ANativeWindow_fromSurface(env, jSurface) : NULL;
 		result = camera->setPreviewDisplay(preview_window);
@@ -259,7 +260,7 @@ JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeSetTemperatureCallback(JNIEn
 //LOGE("nativeSetTemperatureCallback1");
 	jint result = JNI_ERR;
 	ENTER();
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
+	UVCPreviewIR *camera = reinterpret_cast<UVCPreviewIR *>(id_camera);
 	if (LIKELY(camera)) {
 	LOGE("nativeSetTemperatureCallback2");
 		jobject temperature_callback_obj = env->NewGlobalRef(jITemperatureCallback);
@@ -271,7 +272,7 @@ JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeSetTemperatureCallback(JNIEn
 JNIEXPORT void Java_com_serenegiant_UVCCamera_nativeWhenShutRefresh(JNIEnv *env, jclass thiz,ID_TYPE id_camera) {
 //LOGE("nativeWhenShutRefresh");
 	ENTER();
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
+	UVCPreviewIR *camera = reinterpret_cast<UVCPreviewIR *>(id_camera);
 	if (LIKELY(camera)) {
 		camera->whenShutRefresh();
 	}
@@ -280,7 +281,7 @@ JNIEXPORT void Java_com_serenegiant_UVCCamera_nativeWhenShutRefresh(JNIEnv *env,
 
 JNIEXPORT void Java_com_serenegiant_UVCCamera_nativeChangePalette(JNIEnv *env, jclass thiz, ID_TYPE id_camera, jint typeOfPalette) {
 	ENTER();
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
+	UVCPreviewIR *camera = reinterpret_cast<UVCPreviewIR *>(id_camera);
 	if (LIKELY(camera)) {
 	 camera->changePalette(typeOfPalette);
 	}
@@ -289,7 +290,7 @@ JNIEXPORT void Java_com_serenegiant_UVCCamera_nativeChangePalette(JNIEnv *env, j
 
 JNIEXPORT void Java_com_serenegiant_UVCCamera_nativeSetTempRange(JNIEnv *env, jclass thiz, ID_TYPE id_camera, jint range) {
 	ENTER();
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
+	UVCPreviewIR *camera = reinterpret_cast<UVCPreviewIR *>(id_camera);
 	if (LIKELY(camera)) {
 	 camera->setTempRange(range);
 	}
@@ -298,7 +299,7 @@ JNIEXPORT void Java_com_serenegiant_UVCCamera_nativeSetTempRange(JNIEnv *env, jc
 
 JNIEXPORT void Java_com_serenegiant_UVCCamera_nativeSetShutterFix(JNIEnv *env, jclass thiz, ID_TYPE id_camera, jfloat mShutterFix) {
 	ENTER();
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
+	UVCPreviewIR *camera = reinterpret_cast<UVCPreviewIR *>(id_camera);
 	if (LIKELY(camera)) {
 	 camera->setShutterFix(mShutterFix);
 	}
@@ -307,7 +308,7 @@ JNIEXPORT void Java_com_serenegiant_UVCCamera_nativeSetShutterFix(JNIEnv *env, j
 
 JNIEXPORT void Java_com_serenegiant_UVCCamera_nativeSetCameraLens(JNIEnv *env, jclass thiz, ID_TYPE id_camera, jint mCameraLens) {
 	ENTER();
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
+	UVCPreviewIR *camera = reinterpret_cast<UVCPreviewIR *>(id_camera);
 	if (LIKELY(camera)) {
 	 camera->setCameraLens(mCameraLens);
 	}
@@ -317,9 +318,9 @@ JNIEXPORT void Java_com_serenegiant_UVCCamera_nativeSetCameraLens(JNIEnv *env, j
 JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeSetZoom(JNIEnv *env, jclass thiz, ID_TYPE id_camera, jint zoom) {
 	jint result = JNI_ERR;
 	ENTER();
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
+	UVCPreviewIR *camera = reinterpret_cast<UVCPreviewIR *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setZoom(zoom);
+		result = camera->set_zoom_abs(zoom);
 	}
 	RETURN(result, jint);
 }

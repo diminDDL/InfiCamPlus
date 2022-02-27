@@ -29,7 +29,7 @@
 #include "libusb.h"
 #include "libuvc.h"
 #include "utilbase.h"
-#include "UVCPreviewIR.h"
+#include "UVCDevice.h"
 #include <pthread.h>
 #include <android/native_window.h>
 #include "InfiFrame.h"
@@ -52,7 +52,7 @@ typedef struct {
 	jmethodID onReceiveTemperature;
 } Fields_iTemperatureCallback;
 
-class UVCPreviewIR {
+class UVCPreviewIR : public UVCDevice {
 private:
 	inline const bool isRunning() const;
 	inline const bool isComputed() const;
@@ -60,17 +60,11 @@ private:
 	uvc_device_handle_t *mDeviceHandle;
 	ANativeWindow *mPreviewWindow;
 	volatile bool mIsRunning;
-	int requestWidth, requestHeight, requestMode;
-	int requestMinFps, requestMaxFps;
-	float requestBandwidth;
-	int frameWidth, frameHeight;
 	unsigned char *OutBuffer; // 使用完的buffer
 	unsigned char *HoldBuffer; // 充满新数据的buffer
 	unsigned char *RgbaOutBuffer;
 	unsigned char *RgbaHoldBuffer;
-	pthread_t preview_thread;
 	pthread_mutex_t preview_mutex;
-	pthread_cond_t preview_sync;
 	int previewFormat;
 
     volatile bool mIsComputed;
@@ -100,14 +94,14 @@ private:
 
 	void clearDisplay();
 	static void uvc_preview_frame_callback(struct uvc_frame *frame, void *vptr_args);
-	static void *preview_thread_func(void *vptr_args);
-	int prepare_preview(uvc_stream_ctrl_t *ctrl);
-	void do_preview(uvc_stream_ctrl_t *ctrl);
+	void do_preview();
 
 public:
 	UVCPreviewIR();
 	UVCPreviewIR(uvc_device_handle_t *devh);
 	~UVCPreviewIR();
+
+	void connect2();
     void whenShutRefresh();
 	int setPreviewSize(int width, int height, int min_fps, int max_fps, int mode, float bandwidth);
 	int setPreviewDisplay(ANativeWindow *preview_window);
@@ -120,6 +114,8 @@ public:
 	void setCameraLens(int mCameraLens);
 	int getByteArrayTemperaturePara(uint8_t* para);
 	void setUserPalette(uint8_t* palette,int typeOfPalette);
+
+	char *getSupportedSize();
 };
 
 #endif /* UVCPREVIEW_IR_H_ */

@@ -53,7 +53,6 @@ LOCAL_SHARED_LIBRARIES += usb1.0 uvc
 #LOCAL_ARM_MODE := arm
 #LOCAL_ALLOW_UNDEFINED_SYMBOLS := true
 LOCAL_SRC_FILES := \
-		UVCCamera.cpp \
 		UVCPreviewIR.cpp \
 		UVCDevice.cpp \
 		InfiFrame.cpp \
