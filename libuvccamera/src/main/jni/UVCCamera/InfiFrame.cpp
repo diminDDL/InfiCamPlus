@@ -121,7 +121,7 @@ void InfiFrame::update(uint16_t *frame) {
 
     int cal_00_corr = 0;
     if (range == 120)
-        roundf(cal_00_offset - tfpa * cal_00_fpamul);
+        cal_00_corr = roundf(cal_00_offset - tfpa * cal_00_fpamul);
     table_offset = cal_00 - ((cal_00_corr > 0) ? cal_00_corr : 0);
 }
 

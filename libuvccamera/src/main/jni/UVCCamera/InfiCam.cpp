@@ -8,8 +8,8 @@ void InfiCam::uvc_callback(uvc_frame_t *frame, void *user_ptr) {
         return;
     pthread_mutex_lock(&p->frame_callback_mutex);
 
+    p->infi.read_params((uint16_t *) frame->data);
     if (p->table_invalid) {
-        p->infi.read_params((uint16_t *) frame->data);
         p->infi.update_table((uint16_t *) frame->data);
         p->table_invalid = 0;
     } else p->infi.update((uint16_t *) frame->data);
@@ -43,7 +43,7 @@ int InfiCam::connect(int fd) {
         return 3;
     dev.set_zoom_abs(CMD_MODE_TEMP);
     connected = 1;
-    set_range(range);
+    set_range(infi.range);
     return 0;
 }
 
@@ -83,21 +83,20 @@ void InfiCam::stream_stop() {
 }
 
 void InfiCam::set_range(int range) {
-    this->range = range;
     if (connected) {
         pthread_mutex_lock(&frame_callback_mutex);
         infi.range = range;
         dev.set_zoom_abs((range == 400) ? CMD_RANGE_400 : CMD_RANGE_120);
         pthread_mutex_unlock(&frame_callback_mutex);
-    }
+    } else infi.range = range;
 }
 
 void InfiCam::set_distance_multiplier(float dm) {
-    if (connected)
+    if (connected) {
         pthread_mutex_lock(&frame_callback_mutex);
-    infi.distance_multiplier = dm;
-    if (connected)
+        infi.distance_multiplier = dm;
         pthread_mutex_unlock(&frame_callback_mutex);
+    } else infi.distance_multiplier = dm;
 }
 
 void InfiCam::set_correction(float corr) {
@@ -181,4 +180,3 @@ void InfiCam::calibrate() {
 void InfiCam::set_palette(uint32_t *palette) {
     memcpy(infi.palette, palette, palette_len * sizeof(uint32_t));
 }
-
