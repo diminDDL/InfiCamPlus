@@ -9,6 +9,7 @@
 typedef void (inficam_frame_callback_t)(uint32_t *rgb, float *temp, uint16_t *raw, void *user_ptr);
 
 class InfiCam {
+    UVCDevice dev;
     InfiFrame infi;
     inficam_frame_callback_t *frame_callback;
     void *frame_callback_arg;
@@ -20,11 +21,13 @@ class InfiCam {
     static const int CMD_SHUTTER = 0x8000;
     static const int CMD_MODE_TEMP = 0x8004;
     static const int CMD_MODE_YUV = 0x8005;
+    static const int CMD_RANGE_120 = 0x8020;
+    static const int CMD_RANGE_400 = 0x8021;
+    static const int CMD_STORE = 0x80FF;
 
     static void uvc_callback(uvc_frame_t *frame, void *user_ptr);
 
 public:
-    UVCDevice dev; // TODO these should probably be private
     int width = 0, height = 0;
     static const int palette_len = InfiFrame::palette_len;
 

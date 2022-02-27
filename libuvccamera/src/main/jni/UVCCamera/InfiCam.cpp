@@ -9,12 +9,12 @@ void InfiCam::uvc_callback(uvc_frame_t *frame, void *user_ptr) {
     pthread_mutex_lock(&p->frame_callback_mutex);
 
     if (p->update_table) {
-        p->infi.read_params((uint16_t *) frame->data); // TODO temporary
+        p->infi.read_params((uint16_t *) frame->data); // TODO temporary?
         p->infi.update_table((uint16_t *) frame->data);
         p->update_table = 0;
     } else p->infi.update((uint16_t *) frame->data);
-    p->infi.palette_appy((uint16_t *) frame->data, p->frame_rgb); // TODO palette_apply that goes from temp()
     p->infi.temp((uint16_t *) frame->data, p->frame_temp);
+    p->infi.palette_appy(p->frame_temp, p->frame_rgb);
     p->frame_callback(p->frame_rgb, p->frame_temp, (uint16_t *) frame->data, p->frame_callback_arg);
 
     pthread_mutex_unlock(&p->frame_callback_mutex);

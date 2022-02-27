@@ -96,7 +96,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
 	private static final int MSG_ON_RECEIVE_TEMPERATURE=12;
 	private static final int MSG_CHANGE_PALETTE=13;
 	private static final int MSG_SET_TEMPRANGE=14;
-	private static final int MSG_SET_SHUTTERFIX=28;
 	private static final int MSG_OPEN_SYS_CAMERA=16;
 	private static final int MSG_CLOSE_SYS_CAMERA=17;
 	private static final int MSG_RELAYOUT=26;
@@ -250,13 +249,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		sendMessage(message);
 	}
 
-	public void setShutterFix(float mShutterFix){
-		Message message = Message.obtain();
-		message.what = MSG_SET_SHUTTERFIX;
-		message.obj = mShutterFix;
-		sendMessage(message);
-	}
-
 	public void relayout(int rotate){
 		Message message = Message.obtain();
 		message.what = MSG_RELAYOUT;
@@ -378,10 +370,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			case MSG_SET_TEMPRANGE:
 				int range=msg.arg1;
 				thread.handleSetTempRange(range);
-				break;
-			case MSG_SET_SHUTTERFIX:
-				float mShutterFix= (float) msg.obj;
-				thread.handleSetShutterFix(mShutterFix);
 				break;
             case MSG_RELAYOUT:
                 int rotate=msg.arg1;
@@ -1115,12 +1103,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
 				return;
 			}
 			mUVCCamera.setTempRange(range);
-		}
-		public void handleSetShutterFix(float mShutterFix) {
-			if ((mUVCCamera == null) ){
-				return;
-			}
-			mUVCCamera.setShutterFix(mShutterFix);
 		}
 	}
 }

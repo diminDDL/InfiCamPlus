@@ -223,7 +223,29 @@ void UVCPreviewIR::uvc_preview_frame_callback(uint32_t *rgb, float *temp, uint16
 
 		JNIEnv *env;
 		savedVm->AttachCurrentThread(&env, NULL);
-		p->do_temperature_callback(env, (uint8_t *) raw);
+
+		float *temperatureData = p->mCbTemper;
+		// TODO
+		memcpy(temperatureData + 10, temp, p->cam.width * p->cam.height * sizeof(float));
+		/*temperatureData[0] = cam.infi.temp(cam.infi.temp_center);
+        temperatureData[1] = cam.infi.temp_max_x;
+        temperatureData[2] = cam.infi.temp_max_y;
+        temperatureData[3] = cam.infi.temp(cam.infi.temp_max);
+        temperatureData[4] = cam.infi.temp_min_x;
+        temperatureData[5] = cam.infi.temp_min_y;
+        temperatureData[6] = cam.infi.temp(cam.infi.temp_min);
+        temperatureData[7] = cam.infi.temp(cam.infi.temp_user[0]);
+        temperatureData[8] = cam.infi.temp(cam.infi.temp_user[1]);
+        temperatureData[9] = cam.infi.temp(cam.infi.temp_user[2]);*/
+
+		jfloatArray mNCbTemper = env->NewFloatArray(p->cam.width*p->cam.height+10);
+		env->SetFloatArrayRegion(mNCbTemper, 0, 10+p->cam.width*p->cam.height, p->mCbTemper);
+		if (p->mTemperatureCallbackObj != NULL) {
+			env->CallVoidMethod(p->mTemperatureCallbackObj, p->iTemperatureCallback.onReceiveTemperature, mNCbTemper);
+			env->ExceptionClear();
+		}
+		env->DeleteLocalRef(mNCbTemper);
+
 		savedVm->DetachCurrentThread();
 	}
 	pthread_mutex_unlock(&p->preview_mutex);
@@ -289,33 +311,6 @@ int UVCPreviewIR:: getByteArrayTemperaturePara(uint8_t* para) {
 	return true;
 }
 
-void UVCPreviewIR::do_temperature_callback(JNIEnv *env, uint8_t *frameData) {
-	ENTER();
-
-	float *temperatureData = mCbTemper;
-	// TODO
-	/*cam.infi.temp((uint16_t *) frameData, temperatureData + 10);
-	temperatureData[0] = cam.infi.temp(cam.infi.temp_center);
-	temperatureData[1] = cam.infi.temp_max_x;
-	temperatureData[2] = cam.infi.temp_max_y;
-	temperatureData[3] = cam.infi.temp(cam.infi.temp_max);
-	temperatureData[4] = cam.infi.temp_min_x;
-	temperatureData[5] = cam.infi.temp_min_y;
-	temperatureData[6] = cam.infi.temp(cam.infi.temp_min);
-	temperatureData[7] = cam.infi.temp(cam.infi.temp_user[0]);
-	temperatureData[8] = cam.infi.temp(cam.infi.temp_user[1]);
-	temperatureData[9] = cam.infi.temp(cam.infi.temp_user[2]);*/
-
-	jfloatArray mNCbTemper = env->NewFloatArray(cam.width*cam.height+10);
-	env->SetFloatArrayRegion(mNCbTemper, 0, 10+cam.width*cam.height, mCbTemper);
-	if (mTemperatureCallbackObj != NULL) {
-		env->CallVoidMethod(mTemperatureCallbackObj, iTemperatureCallback.onReceiveTemperature, mNCbTemper);
-		env->ExceptionClear();
-	}
-	env->DeleteLocalRef(mNCbTemper);
-	EXIT();
-}
-
 //打快门更新表
 void UVCPreviewIR::whenShutRefresh() {
 	cam.calibrate();
@@ -335,12 +330,6 @@ void UVCPreviewIR::changePalette(int typeOfPalette) {
 void UVCPreviewIR::setTempRange(int range) {
     ENTER();
     rangeMode = range; // TODO (netman) Shouldn't this also trigger isNeedWriteTable?
-    EXIT();
-}
-
-void UVCPreviewIR::setShutterFix(float mShutterFix) {
-    ENTER();
-    shutterFix = mShutterFix; // TODO (netman) Shouldn't this also trigger isNeedWriteTable?
     EXIT();
 }
 

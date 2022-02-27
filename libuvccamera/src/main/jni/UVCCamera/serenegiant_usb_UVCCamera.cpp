@@ -283,15 +283,6 @@ JNIEXPORT void Java_com_serenegiant_UVCCamera_nativeSetTempRange(JNIEnv *env, jc
 	EXIT();
 }
 
-JNIEXPORT void Java_com_serenegiant_UVCCamera_nativeSetShutterFix(JNIEnv *env, jclass thiz, ID_TYPE id_camera, jfloat mShutterFix) {
-	ENTER();
-	UVCPreviewIR *camera = reinterpret_cast<UVCPreviewIR *>(id_camera);
-	if (LIKELY(camera)) {
-	 camera->setShutterFix(mShutterFix);
-	}
-	EXIT();
-}
-
 JNIEXPORT void Java_com_serenegiant_UVCCamera_nativeSetCameraLens(JNIEnv *env, jclass thiz, ID_TYPE id_camera, jint mCameraLens) {
 	ENTER();
 	UVCPreviewIR *camera = reinterpret_cast<UVCPreviewIR *>(id_camera);
@@ -306,7 +297,8 @@ JNIEXPORT jint Java_com_serenegiant_UVCCamera_nativeSetZoom(JNIEnv *env, jclass 
 	ENTER();
 	UVCPreviewIR *camera = reinterpret_cast<UVCPreviewIR *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->cam.dev.set_zoom_abs(zoom);
+		//result = camera->cam.dev.set_zoom_abs(zoom);
+		// TODO find usages and replace
 	}
 	RETURN(result, jint);
 }

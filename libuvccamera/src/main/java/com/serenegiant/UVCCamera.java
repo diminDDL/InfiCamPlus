@@ -273,7 +273,6 @@ public class UVCCamera {
 	private static final native void nativeWhenShutRefresh(final long mNativePtr);
 	private static final native void nativeChangePalette(final long id_camera, int typeOfPalette);
 	private static final native void nativeSetTempRange(final long id_camera, int range);
-	private static final native void nativeSetShutterFix(final long id_camera, float mShutterFix);
 	private static final native void nativeSetCameraLens(final long id_camera, int mCameraLens);
 
 	private static final native int nativeSetZoom(final long id_camera, final int zoom);
@@ -299,13 +298,6 @@ public class UVCCamera {
 	public void setTempRange(int range) {
 		if (mCtrlBlock != null) {
 			nativeSetTempRange(mNativePtr, range);
-		}
-	}
-
-	public void setShutterFix(float mShutterFix) {
-		if (mCtrlBlock != null) {
-			Log.e(TAG, "");
-			nativeSetShutterFix(mNativePtr, mShutterFix);
 		}
 	}
 

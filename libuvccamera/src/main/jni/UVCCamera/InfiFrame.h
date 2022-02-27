@@ -86,6 +86,12 @@ public:
     void palette_appy(uint16_t *input, uint32_t *output, float min, float max);
     void palette_appy(uint16_t *input, uint32_t *output, size_t len, float min, float max);
 
+    /* The same functions for precalculated temperature, faster if you have the data already. */
+    void palette_appy(float *input, uint32_t *output);
+    void palette_appy(float *input, uint32_t *output, size_t len);
+    void palette_appy(float *input, uint32_t *output, float min, float max);
+    void palette_appy(float *input, uint32_t *output, size_t len, float min, float max);
+
     /* Read correction, temp_reflected, temp_air, humidity, emissivity and distance from stored
      *   values on the camera. They are written with ABS_ZOOM command.
      */

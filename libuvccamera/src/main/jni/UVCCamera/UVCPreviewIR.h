@@ -51,7 +51,6 @@ private:
 	jobject mTemperatureCallbackObj;
 
 	int copyToSurface(uint8_t *frameData, ANativeWindow *window);
-    void do_temperature_callback(JNIEnv *env, uint8_t *frameData);
 
 	//ir temp para
 	//测温相关参数，详见thermometry.h
@@ -78,7 +77,6 @@ public:
 	int stopPreview();
 	void changePalette(int typeOfPalette);
 	void setTempRange(int range);
-	void setShutterFix(float mShutterFix);
 	void setCameraLens(int mCameraLens);
 	int getByteArrayTemperaturePara(uint8_t* para);
 	void setUserPalette(uint8_t* palette,int typeOfPalette);
