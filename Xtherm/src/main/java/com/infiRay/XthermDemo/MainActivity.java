@@ -1069,9 +1069,9 @@ public final class MainActivity extends BaseActivity {
                     break;
                 case R.id.button_shut:
                     //if (isTemperaturing) {
-                        whenShutRefresh();
+                        calibrate();
                     //}
-                    setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8000);
+                    //setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8000);
                     break;
                 case R.id.button_set:
                     if (settingsIsShow == false) {
@@ -1194,18 +1194,9 @@ public final class MainActivity extends BaseActivity {
                                 handler0.postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
-                                        whenShutRefresh();
+                                        calibrate();
                                     }
                                 }, 300);
-
-                                Handler handler1 = new Handler();
-                                handler1.postDelayed(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        //whenShutRefresh();
-                                        setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8000);
-                                    }
-                                }, 400);
 
                                 pointModeButton.setImageDrawable(getResources().getDrawable(R.mipmap.point1));
                                 temperatureAnalysisWindow.dismiss();
@@ -1244,18 +1235,9 @@ public final class MainActivity extends BaseActivity {
                                 handler0.postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
-                                        whenShutRefresh();
+                                        calibrate();
                                     }
                                 }, 300);
-
-                                Handler handler1 = new Handler();
-                                handler1.postDelayed(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        //whenShutRefresh();
-                                        setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8000);
-                                    }
-                                }, 400);
 
                                 pointModeButton.setImageDrawable(getResources().getDrawable(R.mipmap.point));
                                 lineModeButton.setImageDrawable(getResources().getDrawable(R.mipmap.line1));
@@ -1297,18 +1279,9 @@ public final class MainActivity extends BaseActivity {
                                 handler0.postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
-                                        whenShutRefresh();
+                                        calibrate();
                                     }
                                 }, 300);
-
-                                Handler handler1 = new Handler();
-                                handler1.postDelayed(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        //whenShutRefresh();
-                                        setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8000);
-                                    }
-                                }, 400);
 
                                 pointModeButton.setImageDrawable(getResources().getDrawable(R.mipmap.point));
                                 lineModeButton.setImageDrawable(getResources().getDrawable(R.mipmap.line));
@@ -1350,19 +1323,11 @@ public final class MainActivity extends BaseActivity {
                                     setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8021);//400。C
                                 }
                             }, 100);
-                            Handler handler2 = new Handler();
-                            handler2.postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    //whenShutRefresh();
-                                    setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8000);
-                                }
-                            }, 600);
                             Handler handler4 = new Handler();
                             handler4.postDelayed(new Runnable() {
                                 @Override
                                 public void run() {
-                                    whenShutRefresh();
+                                    calibrate();
                                     //    mCameraHandler.whenChangeTempPara();
                                 }
                             }, 1500);
@@ -1379,19 +1344,11 @@ public final class MainActivity extends BaseActivity {
                                     setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8020);//120。C
                                 }
                             }, 100);
-                            Handler handler2 = new Handler();
-                            handler2.postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    //whenShutRefresh();
-                                    setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8000);
-                                }
-                            }, 600);
                             Handler handler4 = new Handler();
                             handler4.postDelayed(new Runnable() {
                                 @Override
                                 public void run() {
-                                    whenShutRefresh();
+                                    calibrate();
                                     //    mCameraHandler.whenChangeTempPara();
                                 }
                             }, 1500);
@@ -1702,9 +1659,9 @@ public final class MainActivity extends BaseActivity {
                     @Override
                     public void run() {
                         if (isPreviewing) {
-                            setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8000);//每隔三分钟打一次快门
+                            //setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8000);//每隔三分钟打一次快门
                             //if (isTemperaturing) {
-                                whenShutRefresh();
+                                calibrate();
                             //}
                             Log.e(TAG, "每隔3分钟执行一次操作");
                         }
@@ -1774,7 +1731,7 @@ public final class MainActivity extends BaseActivity {
         return mCameraHandler != null ? mCameraHandler.setValue(flag, value) : 0;
     }
 
-    private void whenShutRefresh() {
+    private void calibrate() {
         if (mCameraHandler != null) {
             mCameraHandler.whenShutRefresh();
         }

@@ -99,7 +99,8 @@ void InfiCam::set_palette(uint32_t *palette) {
 void InfiCam::calibrate() {
     if (!streaming)
         return;
+    dev.set_zoom_abs(CMD_SHUTTER);
     pthread_mutex_lock(&frame_callback_mutex);
-    update_table = 1;
+    update_table = 1; /* Xtherm (sometimes) does this 100ms before CMD_SHUTTER, but why? */
     pthread_mutex_unlock(&frame_callback_mutex);
 }
