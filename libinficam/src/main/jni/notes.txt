@@ -22,6 +22,9 @@ Short description of the C++ classes in jni dir:
     - InfiCam       connecting to the camera, feeding the frames to InifFrame class, etc
     - InfiCamJNI    whatever garbage is needed to glue InfiCam class to the Java end
 
+classes.jar was replaced with a whole bunch of separate files from saki4510t/libcommon,
+    some from the latest git version, but most from tag 5.7.0
+
 TODO
     - 400 celcius range works quite badly because the float math falls apart below a certain temperature
     - the license headers have notes about other files that are no longer relevant
