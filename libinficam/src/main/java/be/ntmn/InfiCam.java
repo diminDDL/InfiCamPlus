@@ -31,17 +31,27 @@ public class InfiCam {
     }
 
     /* The actual class starts here. */
-    public static final int paletteLen = 0x4000;
+    public interface TemperatureCallback {
+        void onReceiveTemperature(FrameInfo fi, float[] temp);
+    }
 
     public static class FrameInfo {
         float min, max, avg, center;
         int min_x, min_y, max_x, max_y;
     }
 
+    public static final int paletteLen = 0x4000;
+    TemperatureCallback tcb = new TemperatureCallback() {
+        @Override
+        public void onReceiveTemperature(FrameInfo fi, float[] temp) {
+            Log.w("FRAMECB", "ct: " + fi.center + " " + fi.min + " " + fi.max);
+        }
+    };
+
     /* Called by the C++ code, do not rename. */
-    static void frameCallback(FrameInfo fi, float[] temp) {
-        // TODO
-        Log.w("FRAMECB", "ct: " + fi.center + " " + fi.min + " " + fi.max);
+    void frameCallback(FrameInfo fi, float[] temp) {
+        if (tcb != null)
+            tcb.onReceiveTemperature(fi, temp);
     }
 
     native int nativeConnect(int fd);
