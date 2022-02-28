@@ -27,5 +27,4 @@ TODO
     - the license headers have notes about other files that are no longer relevant
     - do I go with apache license for new files too? (almost everything in libinficam is new files already...)
     - apache license says i should put prominent notices that i changed stuff, i should
-    - the resources dir has stuff that is no longer used by libinficam, rather main activity part uses it
     - figure out where i want to go with the UI part
