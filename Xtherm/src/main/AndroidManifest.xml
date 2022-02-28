@@ -35,7 +35,7 @@
 
 	<application
 		android:allowBackup="true"
-		android:name="com.serenegiant.MyApp"
+		android:name="com.ntmn.MyApp"
 		android:icon="@mipmap/ic_launcher"
 		android:label="@string/app_name"
 		android:supportsRtl="true"

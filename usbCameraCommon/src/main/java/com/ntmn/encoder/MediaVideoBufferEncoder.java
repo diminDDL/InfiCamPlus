@@ -21,12 +21,11 @@
  *  may have a different license, see the respective files.
  */
 
-package com.serenegiant.encoder;
+package com.ntmn.encoder;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import android.annotation.TargetApi;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;

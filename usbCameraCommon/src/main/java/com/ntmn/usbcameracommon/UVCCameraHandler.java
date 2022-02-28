@@ -21,12 +21,12 @@
  *  may have a different license, see the respective files.
  */
 
-package com.serenegiant.usbcameracommon;
+package com.ntmn.usbcameracommon;
 
 import android.app.Activity;
 
-import com.serenegiant.ITemperatureCallback;
-import com.serenegiant.widget.UVCCameraTextureView;
+import com.ntmn.ITemperatureCallback;
+import com.ntmn.widget.UVCCameraTextureView;
 
 public class UVCCameraHandler extends AbstractUVCCameraHandler {
 	private static UVCCameraHandler mUVCCameraHandler;
@@ -42,8 +42,8 @@ public class UVCCameraHandler extends AbstractUVCCameraHandler {
 	 * @return
 	 */
 	public static final UVCCameraHandler createHandler(
-			final Activity parent, final UVCCameraTextureView cameraView,
-			final int encoderType, final int width, final int height, final int format,ITemperatureCallback temperatureCallback) {
+            final Activity parent, final UVCCameraTextureView cameraView,
+            final int encoderType, final int width, final int height, final int format, ITemperatureCallback temperatureCallback) {
 
 		return createHandler(parent, cameraView, encoderType, width, height, format, 1.0f, temperatureCallback);
 	}

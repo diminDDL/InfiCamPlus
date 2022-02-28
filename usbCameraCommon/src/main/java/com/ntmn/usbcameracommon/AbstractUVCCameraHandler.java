@@ -21,7 +21,7 @@
  *  may have a different license, see the respective files.
  */
 
-package com.serenegiant.usbcameracommon;
+package com.ntmn.usbcameracommon;
 
 import android.app.Activity;
 import android.content.Context;
@@ -41,17 +41,18 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 
 
-import com.serenegiant.InfiCam;
-import com.serenegiant.MyApp;
-import com.serenegiant.encoder.MediaAudioEncoder;
-import com.serenegiant.encoder.MediaEncoder;
-import com.serenegiant.encoder.MediaMuxerWrapper;
-import com.serenegiant.encoder.MediaSurfaceEncoder;
-import com.serenegiant.encoder.MediaVideoBufferEncoder;
-import com.serenegiant.encoder.MediaVideoEncoder;
-import com.serenegiant.ITemperatureCallback;
-import com.serenegiant.USBMonitor;
-import com.serenegiant.widget.UVCCameraTextureView;
+import com.ntmn.ITemperatureCallback;
+import com.ntmn.InfiCam;
+import com.ntmn.MyApp;
+import com.ntmn.USBMonitor;
+import com.ntmn.encoder.MediaEncoder;
+import com.ntmn.encoder.MediaVideoBufferEncoder;
+import com.ntmn.encoder.MediaVideoEncoder;
+import com.ntmn.widget.UVCCameraTextureView;
+import com.ntmn.encoder.MediaAudioEncoder;
+import com.ntmn.encoder.MediaMuxerWrapper;
+import com.ntmn.encoder.MediaSurfaceEncoder;
+import com.serenegiant.usbcameracommon.R;
 
 
 import java.io.BufferedOutputStream;
@@ -385,7 +386,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		private boolean mIsPreviewing;
 		private boolean mIsTemperaturing;
 		private boolean mIsRecording;
-		public  ITemperatureCallback CameraThreadTemperatureCallback;
+		public ITemperatureCallback CameraThreadTemperatureCallback;
 
 
 		/**

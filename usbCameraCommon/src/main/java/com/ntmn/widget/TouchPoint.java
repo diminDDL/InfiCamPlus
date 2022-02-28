@@ -1,4 +1,4 @@
-package com.serenegiant.widget;
+package com.ntmn.widget;
 
 /**
  * Created by Administrator on 2018/4/2 0002.

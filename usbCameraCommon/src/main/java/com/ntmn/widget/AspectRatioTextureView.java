@@ -21,11 +21,13 @@
  *  may have a different license, see the respective files.
  */
 
-package com.serenegiant.widget;
+package com.ntmn.widget;
 
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.TextureView;
+
+import com.serenegiant.widget.IAspectRatioView;
 
 /**
  * change the view size with keeping the specified aspect ratio.

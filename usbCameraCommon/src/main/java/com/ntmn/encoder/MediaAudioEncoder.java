@@ -21,7 +21,7 @@
  *  may have a different license, see the respective files.
  */
 
-package com.serenegiant.encoder;
+package com.ntmn.encoder;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

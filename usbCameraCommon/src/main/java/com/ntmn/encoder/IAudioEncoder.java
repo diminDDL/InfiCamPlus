@@ -21,8 +21,7 @@
  *  may have a different license, see the respective files.
  */
 
-package com.serenegiant.encoder;
+package com.ntmn.encoder;
 
-public interface IVideoEncoder {
-	public boolean frameAvailableSoon();
+public interface IAudioEncoder {
 }

@@ -1,4 +1,4 @@
-package com.serenegiant.widget;
+package com.ntmn.widget;
 /*
  * libcommon
  * utility/helper classes for myself
@@ -31,12 +31,11 @@ import android.opengl.GLUtils;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.serenegiant.glutils.ShaderConst;
 import com.serenegiant.utils.AssetsHelper;
 import com.serenegiant.utils.BuildCheck;
 
 import java.io.IOException;
-import static com.serenegiant.glutils.ShaderConst.*;
+
 /**
  * OpenGL|ES2/3用のヘルパークラス
  */

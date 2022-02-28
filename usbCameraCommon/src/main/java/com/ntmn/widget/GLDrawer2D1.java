@@ -1,4 +1,4 @@
-package com.serenegiant.widget;
+package com.ntmn.widget;
 
 
 /*
@@ -30,7 +30,6 @@ import android.opengl.GLUtils;
 import android.opengl.Matrix;
 
 //import com.serenegiant.glutils.GLHelper;
-import com.serenegiant.MyApp;
 import com.serenegiant.glutils.IDrawer2D;
 import com.serenegiant.glutils.ITexture;
 import com.serenegiant.glutils.TextureOffscreen;

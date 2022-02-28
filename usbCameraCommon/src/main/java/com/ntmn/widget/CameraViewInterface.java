@@ -21,14 +21,15 @@
  *  may have a different license, see the respective files.
  */
 
-package com.serenegiant.widget;
+package com.ntmn.widget;
 
 import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.view.Surface;
 
-import com.serenegiant.encoder.IVideoEncoder;
-import com.serenegiant.ITemperatureCallback;
+import com.ntmn.ITemperatureCallback;
+import com.ntmn.encoder.IVideoEncoder;
+import com.serenegiant.widget.IAspectRatioView;
 
 public interface CameraViewInterface extends IAspectRatioView {
 	public interface Callback {

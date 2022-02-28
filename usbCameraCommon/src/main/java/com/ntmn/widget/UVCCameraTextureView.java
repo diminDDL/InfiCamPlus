@@ -21,7 +21,7 @@
  *  may have a different license, see the respective files.
  */
 
-package com.serenegiant.widget;
+package com.ntmn.widget;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -41,12 +41,12 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
 
-import com.serenegiant.MyApp;
-import com.serenegiant.encoder.IVideoEncoder;
-import com.serenegiant.encoder.MediaEncoder;
-import com.serenegiant.encoder.MediaVideoEncoder;
+import com.ntmn.ITemperatureCallback;
+import com.ntmn.MyApp;
+import com.ntmn.encoder.IVideoEncoder;
+import com.ntmn.encoder.MediaEncoder;
+import com.ntmn.encoder.MediaVideoEncoder;
 import com.serenegiant.glutils.EGLBase;
-import com.serenegiant.ITemperatureCallback;
 import com.serenegiant.utils.FpsCounter;
 
 import java.text.DecimalFormat;

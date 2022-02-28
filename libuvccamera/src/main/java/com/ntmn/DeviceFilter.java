@@ -21,7 +21,7 @@
  *  may have a different license, see the respective files.
  */
 
-package com.serenegiant;
+package com.ntmn;
 
 import android.hardware.usb.UsbDevice;
 

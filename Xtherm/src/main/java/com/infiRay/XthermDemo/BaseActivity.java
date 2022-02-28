@@ -34,7 +34,6 @@ import android.support.annotation.StringRes;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
-import com.serenegiant.uvccamera.R;
 
 import com.serenegiant.dialog.MessageDialogFragment;
 import com.serenegiant.utils.BuildCheck;

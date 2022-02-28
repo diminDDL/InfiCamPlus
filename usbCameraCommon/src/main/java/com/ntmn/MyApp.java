@@ -1,4 +1,4 @@
-package com.serenegiant;
+package com.ntmn;
 
 import android.app.Application;
 

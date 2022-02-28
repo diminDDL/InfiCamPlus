@@ -85,7 +85,7 @@
 
     </LinearLayout>
 
-    <com.serenegiant.widget.UVCCameraTextureView
+    <com.ntmn.widget.UVCCameraTextureView
         android:id="@+id/camera_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -93,7 +93,7 @@
         android:layout_centerVertical="true"
         android:layout_toRightOf="@id/menu_layout" />
 
-    <com.serenegiant.widget.AutoFitTextureView
+    <com.ntmn.widget.AutoFitTextureView
         android:id="@+id/textureView"
         android:layout_width="480px"
         android:visibility="invisible"

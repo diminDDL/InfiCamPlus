@@ -21,11 +21,10 @@
  *  may have a different license, see the respective files.
  */
 
-package com.serenegiant.encoder;
+package com.ntmn.encoder;
 
 import java.io.IOException;
 
-import android.graphics.Bitmap;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
@@ -33,54 +32,30 @@ import android.media.MediaFormat;
 import android.util.Log;
 import android.view.Surface;
 
-import com.serenegiant.glutils.EGLBase;
-import com.serenegiant.glutils.RenderHandler;
-
-/**
- * Encode texture images as H.264 video
- * using MediaCodec.
- * This class render texture images into recording surface
- * camera from MediaCodec encoder using Open GL|ES
- */
-public class MediaVideoEncoder extends MediaEncoder implements IVideoEncoder {
+public class MediaSurfaceEncoder extends MediaEncoder implements IVideoEncoder {
 	private static final boolean DEBUG = true;	// TODO set false on release
-	private static final String TAG = "MediaVideoEncoder";
+	private static final String TAG = "MediaSurfaceEncoder";
 
 	private static final String MIME_TYPE = "video/avc";
 	// parameters for recording
 	private final int mWidth, mHeight;
     private static final int FRAME_RATE = 24;
-    private static final float BPP = 0.25f;
+    private static final float BPP = 0.50f;
 
-    private RenderHandler1 mRenderHandler;
     private Surface mSurface;
 
-	public MediaVideoEncoder(final MediaMuxerWrapper muxer, final int width, final int height, final MediaEncoderListener listener) {
+	public MediaSurfaceEncoder(final MediaMuxerWrapper muxer, final int width, final int height, final MediaEncoderListener listener) {
 		super(muxer, listener);
 		if (DEBUG) Log.i(TAG, "MediaVideoEncoder: ");
-		mRenderHandler = RenderHandler1.createHandler(TAG);
 		mWidth = width;
 		mHeight = height;
 	}
 
-	public boolean frameAvailableSoon(final float[] tex_matrix, final Bitmap bitmap) {
-		boolean result;
-		if (result = super.frameAvailableSoon())
-			mRenderHandler. draw(tex_matrix,bitmap);
-		return result;
-	}
-
 	/**
-	 * This method does not work correctly on this class,
-	 * use #frameAvailableSoon(final float[]) instead
-	 * @return
-	 */
-	@Override
-	public boolean frameAvailableSoon() {
-		boolean result;
-		if (result = super.frameAvailableSoon())
-			mRenderHandler.draw();
-		return result;
+	* Returns the encoder's input surface.
+	*/
+	public Surface getInputSurface() {
+		return mSurface;
 	}
 
 	@Override
@@ -96,20 +71,10 @@ public class MediaVideoEncoder extends MediaEncoder implements IVideoEncoder {
         }
 		if (DEBUG) Log.i(TAG, "selected codec: " + videoCodecInfo.getName());
 
-		int formatWidth = mWidth;
-		int formatHeight = mHeight;
-		if ((formatWidth & 1) == 1) {
-			formatWidth--;
-		}
-		if ((formatHeight & 1) == 1) {
-			formatHeight--;
-		}
-
-        final MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, formatWidth, formatHeight);
+        final MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, mWidth, mHeight);
         format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);	// API >= 18
         format.setInteger(MediaFormat.KEY_BIT_RATE, calcBitRate());
         format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);
-		//format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 0);//设置全关键帧
         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
 		if (DEBUG) Log.i(TAG, "format: " + format);
 
@@ -129,20 +94,12 @@ public class MediaVideoEncoder extends MediaEncoder implements IVideoEncoder {
         }
 	}
 
-	public void setEglContext(final EGLBase.IContext sharedContext, final int[] tex_id) {
-		mRenderHandler.setEglContext(sharedContext, tex_id, mSurface, true);
-	}
-
 	@Override
     protected void release() {
 		if (DEBUG) Log.i(TAG, "release:");
 		if (mSurface != null) {
 			mSurface.release();
 			mSurface = null;
-		}
-		if (mRenderHandler != null) {
-			mRenderHandler.release();
-			mRenderHandler = null;
 		}
 		super.release();
 	}

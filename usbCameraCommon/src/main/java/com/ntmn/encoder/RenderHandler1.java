@@ -1,4 +1,4 @@
-package com.serenegiant.encoder;
+package com.ntmn.encoder;
 
 import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
@@ -11,8 +11,7 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 
 import com.serenegiant.glutils.EGLBase;
-import com.serenegiant.glutils.GLDrawer2D;
-import com.serenegiant.widget.GLDrawer2D1;
+import com.ntmn.widget.GLDrawer2D1;
 
 /**
  * Draw shared texture on specific whole Surface using OpenGL|ES
