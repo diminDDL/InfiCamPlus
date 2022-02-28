@@ -12,7 +12,7 @@ public class InfiCam {
         if (!isLoaded) {
             System.loadLibrary("usb1.0");
             System.loadLibrary("uvc");
-            System.loadLibrary("UVCCamera");
+            System.loadLibrary("InfiCam");
             isLoaded = true;
         }
     }

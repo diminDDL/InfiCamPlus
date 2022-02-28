@@ -85,7 +85,6 @@ import com.hjq.permissions.OnPermission;
 import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
 
-import be.ntmn.DeviceFilter;
 import be.ntmn.InfiCam;
 import be.ntmn.MyApp;
 import be.ntmn.encoder.MediaMuxerWrapper;
@@ -416,7 +415,7 @@ public final class MainActivity extends BaseActivity {
                             mCameraHandler = UVCCameraHandler.createHandler(MainActivity.this, mUVCCameraView,
                                     USE_SURFACE_ENCODER ? 0 : 1, PREVIEW_WIDTH, PREVIEW_HEIGHT, PREVIEW_MODE, null);
                             mUSBMonitor = new USBMonitor(MainActivity.this, mOnDeviceConnectListener);
-                            mUSBMonitor.addDeviceFilter(new DeviceFilter() {
+                            mUSBMonitor.addDeviceFilter(new USBMonitor.DeviceFilter() {
                                 @Override
                                 public boolean matches(final UsbDevice device) {
                                     String pn = device.getProductName();

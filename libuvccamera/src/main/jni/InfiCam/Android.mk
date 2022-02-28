@@ -56,5 +56,5 @@ LOCAL_SRC_FILES := \
 		InfiCam.cpp \
 		InfiCamJNI.cpp
 
-LOCAL_MODULE    := UVCCamera
+LOCAL_MODULE    := InfiCam
 include $(BUILD_SHARED_LIBRARY)

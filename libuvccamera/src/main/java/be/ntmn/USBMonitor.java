@@ -52,6 +52,9 @@ import com.serenegiant.utils.BuildCheck;
 import com.serenegiant.utils.HandlerThreadHandler;
 
 public final class USBMonitor {
+	public abstract static class DeviceFilter {
+		public abstract boolean matches(final UsbDevice device);
+	}
 
 	private static final boolean DEBUG = false;	// TODO set false on production
 	private static final String TAG = "USBMonitor";

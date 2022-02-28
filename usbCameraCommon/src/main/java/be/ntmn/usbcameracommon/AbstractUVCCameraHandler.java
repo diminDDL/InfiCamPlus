@@ -498,8 +498,8 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			} catch (final Exception e) {
 				callOnError(e);
 			}
-			mWidth = infiCam.width;
-			mHeight = infiCam.height;
+			mWidth = infiCam.getWidth();
+			mHeight = infiCam.getHeight();
 			if (DEBUG) Log.i(TAG, "supportedSize: " + mWidth + "x" + mHeight);
 		}
 
