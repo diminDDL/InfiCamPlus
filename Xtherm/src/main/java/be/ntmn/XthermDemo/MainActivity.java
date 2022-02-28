@@ -1581,18 +1581,8 @@ public final class MainActivity extends BaseActivity {
         // TODO (netman) following line is original, next is how i patched in other Surface
         //mCameraHandler.startPreview(new Surface(st));
         final InfiCamView sv = findViewById(R.id.infiCamView);
-        //mCameraHandler.startPreview(sv.getHolder().getSurface());
-        sv.init();
+        Log.e("TEXTOOR", "this: " + sv.getSurf());
         mCameraHandler.startPreview(sv.getSurf());
-        // TODO maybe wait first
-        sv.startRecord();
-        /*new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                sv.startRecord();
-            }
-        }, 100);*/
-
 
 //        Log.e(TAG, "startPreview: getSurfaceTexture2");
         //mCameraHandler.startPreview(null);
