@@ -7,17 +7,15 @@
 JavaVM *javaVM = NULL;
 
 jclass cls, acls;
-jmethodID methodID;
 
-extern "C" jint JNI_OnLoad(JavaVM *vm, void *reserved) {
+extern "C" JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     javaVM = vm;
     JNIEnv *env;
     vm->GetEnv((void **)&env, JNI_VERSION_1_6);
     cls = env->FindClass("com/serenegiant/InfiCam");
     acls = env->FindClass("com/serenegiant/InfiCam$FrameInfo");
-    methodID = env->GetStaticMethodID(cls, "frameCallback", "(Lcom/serenegiant/InfiCam$FrameInfo;[F)V");
-    env->NewGlobalRef(cls);
-    env->NewGlobalRef(acls);
+    cls = (jclass) env->NewGlobalRef(cls);
+    acls = (jclass) env->NewGlobalRef(acls);
     return JNI_VERSION_1_6;
 }
 
@@ -104,6 +102,7 @@ void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, voi
     // TODO meh @ hardcoded package name
     //
 
+    jmethodID methodID = cenv->GetStaticMethodID(cls, "frameCallback", "(Lcom/serenegiant/InfiCam$FrameInfo;[F)V");
     if (!methodID)
         cenv->FatalError("GetMethodID failed");
 
@@ -112,7 +111,7 @@ void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, voi
     if (!acls)
         cenv->FatalError("FindClass failed");
     jobject fi = cenv->AllocObject(acls);
-    /*if (!fi)
+    if (!fi)
         cenv->FatalError("AllocObject failed");
     setFloatVar(cenv, fi, "max", icj->infi.temp(icj->infi.temp_max));
     setIntVar(cenv, fi, "max_x", icj->infi.temp_max_x);
@@ -121,15 +120,15 @@ void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, voi
     setIntVar(cenv, fi, "min_x", icj->infi.temp_min_x);
     setIntVar(cenv, fi, "min_y", icj->infi.temp_min_y);
     setFloatVar(cenv, fi, "center", icj->infi.temp(icj->infi.temp_center));
-    setFloatVar(cenv, fi, "avg", icj->infi.temp(icj->infi.temp_avg));*/
+    setFloatVar(cenv, fi, "avg", icj->infi.temp(icj->infi.temp_avg));
 
-    /*size_t temp_len = icj->infi.width * icj->infi.height;
+    size_t temp_len = icj->infi.width * icj->infi.height;
     jfloatArray jtemp = cenv->NewFloatArray(temp_len);
     if (!jtemp)
         cenv->FatalError("AllocObject failed");
-    cenv->SetFloatArrayRegion(jtemp, 0, temp_len, temp);*/
+    cenv->SetFloatArrayRegion(jtemp, 0, temp_len, temp);
 
-    //cenv->CallStaticVoidMethod(icj->cls, methodID, fi, jtemp);
+    cenv->CallStaticVoidMethod(cls, methodID, fi, jtemp);
     // TODO do delete local refs
     javaVM->DetachCurrentThread();
 }

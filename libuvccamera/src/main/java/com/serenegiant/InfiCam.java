@@ -1,5 +1,6 @@
 package com.serenegiant;
 
+import android.util.Log;
 import android.view.Surface;
 
 public class InfiCam {
@@ -40,7 +41,7 @@ public class InfiCam {
 
     /* Called by the C++ code, do not rename. */
     static void frameCallback(FrameInfo fi, float[] temp) {
-
+        Log.w("FRAMECB", "ct: " + fi.center);
     }
 
     native int nativeConnect(int fd);
