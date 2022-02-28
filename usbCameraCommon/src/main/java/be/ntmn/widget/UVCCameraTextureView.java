@@ -41,7 +41,7 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
 
-import be.ntmn.ITemperatureCallback;
+import be.ntmn.InfiCam;
 import be.ntmn.MyApp;
 import be.ntmn.encoder.IVideoEncoder;
 import be.ntmn.encoder.MediaEncoder;
@@ -256,7 +256,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
     }
 
     @Override
-    public ITemperatureCallback getTemperatureCallback() {
+    public InfiCam.FrameCallback getTemperatureCallback() {
         return mRenderHandler != null ? mRenderHandler.getTemperatureCallback() : null;
     }
 
@@ -449,7 +449,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
             }
         }
 
-        public ITemperatureCallback getTemperatureCallback() {
+        public InfiCam.FrameCallback getTemperatureCallback() {
             return mThread != null ? mThread.getTemperatureCallback() : null;
         }
 
@@ -720,14 +720,21 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                 this.UnitTemperature = mode;
             }
 
-            public final ITemperatureCallback ahITemperatureCallback = new ITemperatureCallback() {
+            public final InfiCam.FrameCallback ahITemperatureCallback = new InfiCam.FrameCallback() {
                 @Override
-                public void onReceiveTemperature(float[] temperature) {
+                public void onFrame(InfiCam.FrameInfo fi, float[] temp) {
 //                    System.out.println("temperature1:"+temperature.length);
                     //Log.e(TAG, "ITemperatureCallback center");
                     // Log.e(TAG, "ITemperatureCallback center"+temperature[0]);
                     if (UnitTemperature == 0) {
-                        System.arraycopy(temperature, 0, temperature1, 0, (mSuportHeight - 4) * mSuportWidth + 10);
+                        temperature1[0] = fi.max;//中心温度
+                        temperature1[1] = fi.max_x;//MAXX1，最高温点X坐标
+                        temperature1[2] = fi.max_y;//MAXY1，最高温点Y坐标
+                        temperature1[3] = fi.min;//最高温
+                        temperature1[4] = fi.min_x;//MINX1，最低温点X坐标
+                        temperature1[5] = fi.min_y;//MIXY1，最低温点Y坐标
+                        // TODO (netman) verify this is correct if it doesn't get replaced
+                        System.arraycopy(temp, 0, temperature1, 10, (mSuportHeight - 4) * mSuportWidth);
 //                        byte[] ab=float2byte(temperature[7]);
 //                        System.out.println("temperature7:"+ab[0]+","+ab[1]+","+ab[2]+","+ab[3]);
 //                        byte[] bb=float2byte(temperature[8]);
@@ -737,20 +744,20 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
 
 
                     } else {
-                        temperature1[0] = temperature[0] * 1.8f + 32;//中心温度
-                        temperature1[1] = temperature[1];//MAXX1，最高温点X坐标
-                        temperature1[2] = temperature[2];//MAXY1，最高温点Y坐标
-                        temperature1[3] = temperature[3] * 1.8f + 32;//最高温
-                        temperature1[4] = temperature[4];//MINX1，最低温点X坐标
-                        temperature1[5] = temperature[5];//MIXY1，最低温点Y坐标
-                        for (int i = 6; i < ((mSuportHeight - 4) * mSuportWidth + 10); i++) {
-                            temperature1[i] = temperature[i] * 1.8f + 32;//temperature1[6]最低温，7，8和9为备用参数
+                        temperature1[0] = fi.max * 1.8f + 32;//中心温度
+                        temperature1[1] = fi.max_x;//MAXX1，最高温点X坐标
+                        temperature1[2] = fi.max_y;//MAXY1，最高温点Y坐标
+                        temperature1[3] = fi.min * 1.8f + 32;//最高温
+                        temperature1[4] = fi.min_x;//MINX1，最低温点X坐标
+                        temperature1[5] = fi.min_y;//MIXY1，最低温点Y坐标
+                        for (int i = 0; i < ((mSuportHeight - 4) * mSuportWidth); i++) {
+                            temperature1[i + 10] = temp[i] * 1.8f + 32;//temperature1[6]最低温，7，8和9为备用参数
                         }
                     }
                 }
             };
 
-            public ITemperatureCallback getTemperatureCallback() {
+            public InfiCam.FrameCallback getTemperatureCallback() {
                 return ahITemperatureCallback;
             }
 

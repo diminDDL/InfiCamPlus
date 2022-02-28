@@ -27,7 +27,7 @@ import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.view.Surface;
 
-import be.ntmn.ITemperatureCallback;
+import be.ntmn.InfiCam;
 import be.ntmn.encoder.IVideoEncoder;
 import com.serenegiant.widget.IAspectRatioView;
 
@@ -37,7 +37,7 @@ public interface CameraViewInterface extends IAspectRatioView {
 		public void onSurfaceChanged(CameraViewInterface view, Surface surface, int width, int height);
 		public void onSurfaceDestroy(CameraViewInterface view, Surface surface);
 	}
-	public ITemperatureCallback getTemperatureCallback();
+	public InfiCam.FrameCallback getTemperatureCallback();
 	public void onPause();
 	public void onResume();
 	public void setCallback(Callback callback);

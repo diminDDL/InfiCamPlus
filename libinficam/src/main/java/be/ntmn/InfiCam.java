@@ -38,8 +38,8 @@ public class InfiCam {
      *   at the C++ side.
      */
     public static class FrameInfo {
-        float min, max, avg, center;
-        int min_x, min_y, max_x, max_y;
+        public float min, max, avg, center;
+        public int min_x, min_y, max_x, max_y;
     }
 
     public static final int paletteLen = 0x4000;

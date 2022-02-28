@@ -40,8 +40,6 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
-
-import be.ntmn.ITemperatureCallback;
 import be.ntmn.InfiCam;
 import be.ntmn.MyApp;
 import be.ntmn.USBMonitor;
@@ -52,7 +50,6 @@ import be.ntmn.widget.UVCCameraTextureView;
 import be.ntmn.encoder.MediaAudioEncoder;
 import be.ntmn.encoder.MediaMuxerWrapper;
 import be.ntmn.encoder.MediaSurfaceEncoder;
-
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -385,8 +382,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		private boolean mIsPreviewing;
 		private boolean mIsTemperaturing;
 		private boolean mIsRecording;
-		public ITemperatureCallback CameraThreadTemperatureCallback;
-
+		public InfiCam.FrameCallback CameraThreadTemperatureCallback;
 
 		/**
 		 * shutter sound
@@ -415,7 +411,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		CameraThread(final Class<? extends AbstractUVCCameraHandler> clazz,
 					 final Activity parent, final UVCCameraTextureView cameraView,
 					 final int encoderType, final int width, final int height, final int format,
-					 final float bandwidthFactor,ITemperatureCallback temperatureCallback) {
+					 final float bandwidthFactor,InfiCam.FrameCallback temperatureCallback) {
 
 			super("CameraThread");
 			mHandlerClass = clazz;
@@ -567,7 +563,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			 *set this setTemperatureCallback(...) function
 			 *==========================================================================*/
 			mWeakCameraView.get().setSuportWH(mWidth,mHeight);
-			ITemperatureCallback mTempCb= mWeakCameraView.get().getTemperatureCallback();
+			InfiCam.FrameCallback mTempCb= mWeakCameraView.get().getTemperatureCallback();
 			//mUVCCamera.setTemperatureCallback(mTempCb); // TODO (netman)
 			mWeakCameraView.get().setTemperatureCbing(false);
 			if (MyApp.isT3) {

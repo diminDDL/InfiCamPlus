@@ -25,7 +25,7 @@ package be.ntmn.usbcameracommon;
 
 import android.app.Activity;
 
-import be.ntmn.ITemperatureCallback;
+import be.ntmn.InfiCam;
 import be.ntmn.widget.UVCCameraTextureView;
 
 public class UVCCameraHandler extends AbstractUVCCameraHandler {
@@ -43,7 +43,7 @@ public class UVCCameraHandler extends AbstractUVCCameraHandler {
 	 */
 	public static final UVCCameraHandler createHandler(
             final Activity parent, final UVCCameraTextureView cameraView,
-            final int encoderType, final int width, final int height, final int format, ITemperatureCallback temperatureCallback) {
+            final int encoderType, final int width, final int height, final int format, InfiCam.FrameCallback temperatureCallback) {
 
 		return createHandler(parent, cameraView, encoderType, width, height, format, 1.0f, temperatureCallback);
 	}
@@ -62,7 +62,7 @@ public class UVCCameraHandler extends AbstractUVCCameraHandler {
 	public static final UVCCameraHandler
 	createHandler(
 			final Activity parent, final UVCCameraTextureView cameraView,
-			final int encoderType, final int width, final int height, final int format, final float bandwidthFactor,ITemperatureCallback temperatureCallback) {
+			final int encoderType, final int width, final int height, final int format, final float bandwidthFactor, InfiCam.FrameCallback temperatureCallback) {
 
 		final CameraThread thread = new CameraThread(UVCCameraHandler.class, parent, cameraView, encoderType, width, height, format, bandwidthFactor,temperatureCallback);
 		thread.start();
