@@ -119,16 +119,18 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		return thread != null && thread.isCameraOpened();
 	}
 
-	public byte [] getTemperaturePara(int len) {
-		final CameraThread thread = mWeakThread.get();
-		// TODO (netman) fix the temperature number stuff
+	public static InfiCam.FrameInfo fi = new InfiCam.FrameInfo(); // TODO lol @ this
+
+	public InfiCam.FrameInfo getTemperaturePara(int len) {
+		//final CameraThread thread = mWeakThread.get();
+		return fi;
 		/*if((thread != null)&&(thread.mUVCCamera)!=null) {
 			return thread.mUVCCamera.getByteArrayTemperaturePara(len);
 		}
-		else*/{
+		else{
 			byte[] para=new byte[len];
 			return para;
-		}
+		}*/
 	}
 
 	public boolean isPreviewing() {

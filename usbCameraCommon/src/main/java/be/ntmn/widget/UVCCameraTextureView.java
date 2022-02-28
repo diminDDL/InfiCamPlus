@@ -46,6 +46,8 @@ import be.ntmn.MyApp;
 import be.ntmn.encoder.IVideoEncoder;
 import be.ntmn.encoder.MediaEncoder;
 import be.ntmn.encoder.MediaVideoEncoder;
+import be.ntmn.usbcameracommon.UVCCameraHandler;
+
 import com.serenegiant.glutils.EGLBase;
 import com.serenegiant.utils.FpsCounter;
 
@@ -726,6 +728,11 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
 //                    System.out.println("temperature1:"+temperature.length);
                     //Log.e(TAG, "ITemperatureCallback center");
                     // Log.e(TAG, "ITemperatureCallback center"+temperature[0]);
+
+                    synchronized (UVCCameraHandler.fi) {
+                        UVCCameraHandler.fi = fi;
+                    }
+
                     if (UnitTemperature == 0) {
                         temperature1[0] = fi.center;//中心温度
                         temperature1[1] = fi.max_x;//MAXX1，最高温点X坐标

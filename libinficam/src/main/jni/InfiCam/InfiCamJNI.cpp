@@ -93,12 +93,12 @@ void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, voi
         setFloatVar(cenv, fi, "center", icj->infi.temp(icj->infi.temp_center));
         setFloatVar(cenv, fi, "avg", icj->infi.temp(icj->infi.temp_avg));
 
-        setFloatVar(cenv, fi, "correction", icj->infi.temp(icj->infi.correction));
-        setFloatVar(cenv, fi, "temp_reflected", icj->infi.temp(icj->infi.temp_reflected));
-        setFloatVar(cenv, fi, "temp_air", icj->infi.temp(icj->infi.temp_air));
-        setFloatVar(cenv, fi, "humidity", icj->infi.temp(icj->infi.humidity));
-        setFloatVar(cenv, fi, "emissivity", icj->infi.temp(icj->infi.emissivity));
-        setFloatVar(cenv, fi, "distance", icj->infi.temp(icj->infi.distance));
+        setFloatVar(cenv, fi, "correction", icj->infi.correction);
+        setFloatVar(cenv, fi, "temp_reflected", icj->infi.temp_reflected);
+        setFloatVar(cenv, fi, "temp_air", icj->infi.temp_air);
+        setFloatVar(cenv, fi, "humidity", icj->infi.humidity);
+        setFloatVar(cenv, fi, "emissivity", icj->infi.emissivity);
+        setFloatVar(cenv, fi, "distance", icj->infi.distance);
 
         /* Make a Java array from the temperature array. */
         size_t temp_len = icj->infi.width * icj->infi.height;

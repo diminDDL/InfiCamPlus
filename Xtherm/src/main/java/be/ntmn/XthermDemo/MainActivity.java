@@ -673,23 +673,24 @@ public final class MainActivity extends BaseActivity {
     }
 
     private void getTempPara() {
-        byte[] tempPara;
+        InfiCam.FrameInfo tempPara;
         tempPara = mCameraHandler.getTemperaturePara(128);
-        Log.e(TAG, "getByteArrayTemperaturePara:" + tempPara[16] + "," + tempPara[17] + "," + tempPara[18] + "," + tempPara[19] + "," + tempPara[20] + "," + tempPara[21]);
+        //Log.e(TAG, "getByteArrayTemperaturePara:" + tempPara[16] + "," + tempPara[17] + "," + tempPara[18] + "," + tempPara[19] + "," + tempPara[20] + "," + tempPara[21]);
 
-        Fix = ByteUtil.getFloat(tempPara, 0);
-        Refltmp = ByteUtil.getFloat(tempPara, 4);
-        Airtmp = ByteUtil.getFloat(tempPara, 8);
-        humi = ByteUtil.getFloat(tempPara, 12);
-        emiss = ByteUtil.getFloat(tempPara, 16);
-        distance = (short) ByteUtil.getFloat(tempPara, 20);
+        Fix = tempPara.correction;
+        Refltmp = tempPara.temp_reflected;
+        Airtmp = tempPara.temp_air;
+        humi = tempPara.humidity;
+        emiss = tempPara.emissivity;
+        distance = (short) tempPara.distance; // TODO is not short anymore
         stFix = String.valueOf(Fix);
         stRefltmp = String.valueOf(Refltmp);
         stAirtmp = String.valueOf(Airtmp);
         stHumi = String.valueOf(humi);
         stEmiss = String.valueOf(emiss);
         stDistance = String.valueOf(distance);
-        stProductSoftVersion = new String(tempPara, 128 - 16, 16);
+        // TODO (netman) get version etc
+        //stProductSoftVersion = new String(tempPara, 128 - 16, 16);
     }
 
     SeekBar.OnSeekBarChangeListener mOnEmissivitySeekBarChangeListener = new SeekBar.OnSeekBarChangeListener() {
