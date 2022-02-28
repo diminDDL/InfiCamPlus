@@ -15,3 +15,10 @@ The following have now been deleted:
         had to comment a line in Android.mk to make it build
     rapidjson           - commit ebaf03a18b577852bd6dc2bd57cedef5a8eef59f of saki4510t/UVCCamera (copied in by netman)
     UVCCamera           - modified a lot from anything upstream
+
+TODO
+    - 400 celcius range works quite badly because the float math falls apart below a certain temperature
+    - the license headers have notes about other files that are no longer relevant
+    - do I go with apache license for new files too? (almost everything in libinficam is new files already...)
+    - apache license says i should put prominent notices that i changed stuff, i should
+    - figure out where i want to go with the UI part
