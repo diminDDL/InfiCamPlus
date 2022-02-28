@@ -63,5 +63,8 @@
     <string name="Tip_to_connect_cancel">取消</string>
     <string name="Tip_to_connect_wait">已插入设备</string>
 
-
+	<string name="per_title">权限申请</string>
+	<string name="per_storage">拍照、录像、查看照片需要读写存储器权限。</string>
+	<string name="per_audio">录像时录音需要使用麦克风权限。</string>
+	<string name="per_camera">系统相机需要使用相机权限。</string>
 </resources>
