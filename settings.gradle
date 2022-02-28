@@ -21,6 +21,6 @@
  *  may have a different license, see the respective files.
  */
 
-include ':libuvccamera'
+include ':libinficam'
 include ':usbCameraCommon'
 include ':Xtherm'

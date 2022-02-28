@@ -4,7 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mat-xtherm.iml" filepath="$PROJECT_DIR$/.idea/modules/mat-xtherm.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/Xtherm/mat-xtherm.Xtherm.iml" filepath="$PROJECT_DIR$/.idea/modules/Xtherm/mat-xtherm.Xtherm.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/libuvccamera/mat-xtherm.libuvccamera.iml" filepath="$PROJECT_DIR$/.idea/modules/libuvccamera/mat-xtherm.libuvccamera.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/libuvccamera/mat-xtherm.libinficam.iml" filepath="$PROJECT_DIR$/.idea/modules/libuvccamera/mat-xtherm.libinficam.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/usbCameraCommon/mat-xtherm.usbCameraCommon.iml" filepath="$PROJECT_DIR$/.idea/modules/usbCameraCommon/mat-xtherm.usbCameraCommon.iml" />
     </modules>
   </component>

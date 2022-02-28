@@ -22,7 +22,7 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="be.ntmn.uvccamera"
+    package="be.ntmn.inficam"
     android:versionCode="4"
     android:versionName="4.01.190104" >
 

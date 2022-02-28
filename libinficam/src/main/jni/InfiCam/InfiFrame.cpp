@@ -199,6 +199,8 @@ void InfiFrame::palette_appy(float *input, uint32_t *output, float min, float ma
 }
 
 void InfiFrame::palette_appy(float *input, uint32_t *output, size_t len, float min, float max) {
+    if (isnanf(min) || min < -20.0)
+        min = -20.0;
     for (size_t i = 0; i < len; ++i) {
         float frac = (fminf(fmaxf(input[i], min), max) - min) / (max - min);
         output[i] = palette[((int) roundf(frac * (float) palette_mask)) & palette_mask];

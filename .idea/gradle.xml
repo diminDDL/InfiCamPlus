@@ -12,7 +12,7 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/Xtherm" />
-            <option value="$PROJECT_DIR$/libuvccamera" />
+            <option value="$PROJECT_DIR$/libinficam" />
             <option value="$PROJECT_DIR$/usbCameraCommon" />
           </set>
         </option>

@@ -41,7 +41,7 @@ public class InfiCam {
     /* Called by the C++ code, do not rename. */
     static void frameCallback(FrameInfo fi, float[] temp) {
         // TODO
-        Log.w("FRAMECB", "ct: " + fi.center);
+        Log.w("FRAMECB", "ct: " + fi.center + " " + fi.min + " " + fi.max);
     }
 
     native int nativeConnect(int fd);
