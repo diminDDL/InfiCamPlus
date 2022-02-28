@@ -1028,11 +1028,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			mUVCCamera.changePalette(typeOfPalette);*/
 		}
 		public void handleSetTempRange(int range) {
-			// TODO (netman)
-			/*if ((mUVCCamera == null) ){
-				return;
-			}
-			mUVCCamera.setTempRange(range);*/
+			infiCam.setRange(range);
 		}
 	}
 }
