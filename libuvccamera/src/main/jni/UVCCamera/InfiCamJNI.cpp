@@ -41,33 +41,21 @@ public:
 /* Get the InfiCamJNI class from jobject. */
 static InfiCamJNI *getObject(JNIEnv *env, jobject obj) {
     jclass cls = env->GetObjectClass(obj);
-    if (!cls)
-        env->FatalError("GetObjectClass failed");
     jfieldID nativeObjectPointerID = env->GetFieldID(cls, "instance", "J");
-    if (!nativeObjectPointerID)
-        env->FatalError("GetFieldID failed");
     return (InfiCamJNI *) env->GetLongField(obj, nativeObjectPointerID);
 }
 
 /* Set an integer variable in the a Java class. */
 static void setIntVar(JNIEnv *env, jobject obj, char *name, jint value) {
     jclass cls = env->GetObjectClass(obj);
-    if (!cls)
-        env->FatalError("GetObjectClass failed");
     jfieldID nativeObjectPointerID = env->GetFieldID(cls, name, "I");
-    if (!nativeObjectPointerID)
-        env->FatalError("GetFieldID failed");
     env->SetIntField(obj, nativeObjectPointerID, value);
 }
 
 /* Set an integer variable in the a Java class. */
 static void setFloatVar(JNIEnv *env, jobject obj, char *name, jfloat value) {
     jclass cls = env->GetObjectClass(obj);
-    if (!cls)
-        env->FatalError("GetObjectClass failed");
     jfieldID nativeObjectPointerID = env->GetFieldID(cls, name, "F");
-    if (!nativeObjectPointerID)
-        env->FatalError("GetFieldID failed");
     env->SetFloatField(obj, nativeObjectPointerID, value);
 }
 
@@ -102,11 +90,7 @@ void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, voi
     JNIEnv *cenv;
     javaVM->AttachCurrentThread(&cenv, NULL);
     jmethodID methodID = cenv->GetStaticMethodID(cls_InfiCam, "frameCallback", "(L" FRAMEINFO_TYPE ";[F)V");
-    if (!methodID)
-        cenv->FatalError("GetMethodID failed");
     jobject fi = cenv->AllocObject(cls_FrameInfo);
-    if (!fi)
-        cenv->FatalError("AllocObject failed");
     setFloatVar(cenv, fi, "max", icj->infi.temp(icj->infi.temp_max));
     setIntVar(cenv, fi, "max_x", icj->infi.temp_max_x);
     setIntVar(cenv, fi, "max_y", icj->infi.temp_max_y);
@@ -118,10 +102,7 @@ void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, voi
 
     size_t temp_len = icj->infi.width * icj->infi.height;
     jfloatArray jtemp = cenv->NewFloatArray(temp_len);
-    if (!jtemp)
-        cenv->FatalError("AllocObject failed");
     cenv->SetFloatArrayRegion(jtemp, 0, temp_len, temp);
-
     cenv->CallStaticVoidMethod(cls_InfiCam, methodID, fi, jtemp);
     // TODO do delete local refs
     javaVM->DetachCurrentThread();
