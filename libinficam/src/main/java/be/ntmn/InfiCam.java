@@ -101,7 +101,7 @@ public class InfiCam {
             throw new IllegalArgumentException();
     }
 
-    public void setUserFrameCallback(FrameCallback fcb) {
+    public void setFrameCallback(FrameCallback fcb) {
         userFrameCallback = fcb;
     }
 }

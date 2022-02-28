@@ -469,7 +469,8 @@ abstract class AbstractUVCCameraHandler extends Handler {
 
 		public boolean isTemperaturing() {
 			synchronized (mSync) {
-				return true; // TODO (netman)
+				//return true; // TODO (netman)
+				return false;
 			}
 		}
 
@@ -564,7 +565,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			 *==========================================================================*/
 			mWeakCameraView.get().setSuportWH(mWidth,mHeight);
 			InfiCam.FrameCallback mTempCb= mWeakCameraView.get().getTemperatureCallback();
-			//mUVCCamera.setTemperatureCallback(mTempCb); // TODO (netman)
+			infiCam.setFrameCallback(mTempCb);
 			mWeakCameraView.get().setTemperatureCbing(false);
 			if (MyApp.isT3) {
 				mWeakCameraView.get().setRotation(180);

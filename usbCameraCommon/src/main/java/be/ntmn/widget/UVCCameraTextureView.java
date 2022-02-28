@@ -727,12 +727,14 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                     //Log.e(TAG, "ITemperatureCallback center");
                     // Log.e(TAG, "ITemperatureCallback center"+temperature[0]);
                     if (UnitTemperature == 0) {
-                        temperature1[0] = fi.max;//中心温度
+                        temperature1[0] = fi.center;//中心温度
                         temperature1[1] = fi.max_x;//MAXX1，最高温点X坐标
                         temperature1[2] = fi.max_y;//MAXY1，最高温点Y坐标
-                        temperature1[3] = fi.min;//最高温
+                        temperature1[3] = fi.max;//最高温
                         temperature1[4] = fi.min_x;//MINX1，最低温点X坐标
                         temperature1[5] = fi.min_y;//MIXY1，最低温点Y坐标
+                        temperature1[6] = fi.min;
+                        temperature1[9] = fi.avg;
                         // TODO (netman) verify this is correct if it doesn't get replaced
                         System.arraycopy(temp, 0, temperature1, 10, (mSuportHeight - 4) * mSuportWidth);
 //                        byte[] ab=float2byte(temperature[7]);
@@ -744,12 +746,14 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
 
 
                     } else {
-                        temperature1[0] = fi.max * 1.8f + 32;//中心温度
+                        temperature1[0] = fi.center * 1.8f + 32;//中心温度
                         temperature1[1] = fi.max_x;//MAXX1，最高温点X坐标
                         temperature1[2] = fi.max_y;//MAXY1，最高温点Y坐标
-                        temperature1[3] = fi.min * 1.8f + 32;//最高温
+                        temperature1[3] = fi.max * 1.8f + 32;//最高温
                         temperature1[4] = fi.min_x;//MINX1，最低温点X坐标
                         temperature1[5] = fi.min_y;//MIXY1，最低温点Y坐标
+                        temperature1[6] = fi.min * 1.8f + 32;
+                        temperature1[9] = fi.avg * 1.8f + 32;
                         for (int i = 0; i < ((mSuportHeight - 4) * mSuportWidth); i++) {
                             temperature1[i + 10] = temp[i] * 1.8f + 32;//temperature1[6]最低温，7，8和9为备用参数
                         }
