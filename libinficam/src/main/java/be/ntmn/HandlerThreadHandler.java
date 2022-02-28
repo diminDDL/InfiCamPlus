@@ -1,4 +1,4 @@
-package be.ntmn.utils;
+package be.ntmn;
 /*
  * libcommon
  * utility/helper classes for myself

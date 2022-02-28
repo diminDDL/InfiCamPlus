@@ -49,8 +49,6 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
 
-import be.ntmn.utils.HandlerThreadHandler;
-
 public final class USBMonitor {
 	public abstract static class DeviceFilter {
 		public abstract boolean matches(final UsbDevice device);

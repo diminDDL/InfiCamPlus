@@ -35,10 +35,9 @@ import android.support.annotation.StringRes;
 import android.util.Log;
 import android.widget.Toast;
 
-import be.ntmn.XthermDemo.R;
 import be.ntmn.MessageDialogFragment;
 import be.ntmn.BuildCheck;
-import be.ntmn.utils.HandlerThreadHandler;
+import be.ntmn.HandlerThreadHandler;
 import be.ntmn.PermissionCheck;
 
 /**
