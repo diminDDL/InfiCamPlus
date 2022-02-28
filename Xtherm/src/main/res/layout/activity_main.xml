@@ -29,7 +29,7 @@
     android:background="#ff000000"
     android:gravity="center_horizontal"
     android:orientation="vertical"
-    tools:context="com.infiRay.XthermDemo.MainActivity"
+    tools:context="be.ntmn.XthermDemo.MainActivity"
     tools:ignore="MergeRootFrame">
 
     <LinearLayout
@@ -85,7 +85,7 @@
 
     </LinearLayout>
 
-    <com.ntmn.widget.UVCCameraTextureView
+    <be.ntmn.widget.UVCCameraTextureView
         android:id="@+id/camera_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -93,7 +93,7 @@
         android:layout_centerVertical="true"
         android:layout_toRightOf="@id/menu_layout" />
 
-    <com.ntmn.widget.AutoFitTextureView
+    <be.ntmn.widget.AutoFitTextureView
         android:id="@+id/textureView"
         android:layout_width="480px"
         android:visibility="invisible"

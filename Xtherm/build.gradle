@@ -37,7 +37,7 @@ android {
 
 	defaultConfig {
 		multiDexEnabled true
-		applicationId "com.infiRay.XthermDemo"
+		applicationId "be.ntmn.XthermDemo"
 		minSdkVersion versionMin
 		targetSdkVersion versionTarget
 		versionCode 6
