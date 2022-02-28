@@ -1584,6 +1584,7 @@ public final class MainActivity extends BaseActivity {
         Log.e("TEXTOOR", "this: " + sv.getSurf());
         mCameraHandler.startPreview(sv.getSurf());
 
+
 //        Log.e(TAG, "startPreview: getSurfaceTexture2");
         //mCameraHandler.startPreview(null);
         runOnUiThread(new Runnable() {

@@ -23,6 +23,7 @@ redrawing the screen is a waste of time. If you are developing a reactive applic
  call GLSurfaceView.setRenderMode(RENDERMODE_WHEN_DIRTY), which turns off the continuous animation.
  Then you call GLSurfaceView.requestRender() whenever you want to re-render.
  */
+// LOT of info from here https://www.maninara.com/2012/09/render-camera-preview-using-opengl-es.html
 
 public class InfiCamView extends GLSurfaceView {
     public InfiCamView(Context context) {
@@ -41,7 +42,7 @@ public class InfiCamView extends GLSurfaceView {
         rend = new InfiRenderer(this);
         setEGLContextClientVersion ( 2 );
         setRenderer(rend);
-        //setRenderMode ( GLSurfaceView.RENDERMODE_WHEN_DIRTY );
+        setRenderMode ( GLSurfaceView.RENDERMODE_WHEN_DIRTY );
     }
 
     public Surface getSurf() {
@@ -116,7 +117,7 @@ class InfiRenderer implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvai
         } catch ( IOException ioe ) {
         }*/
 
-        GLES20.glClearColor ( 1.0f, 1.0f, 0.0f, 1.0f );
+        //GLES20.glClearColor ( 0.0f, 0.0f, 0.0f, 1.0f );
 
         hProgram = loadShader ( vss, fss );
     }
@@ -155,23 +156,8 @@ class InfiRenderer implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvai
     }
 
     public void onSurfaceChanged ( GL10 unused, int width, int height ) {
+        //GLES20.glViewport( 0, 0, 256 * 5, 192 * 5 );
         GLES20.glViewport( 0, 0, width, height );
-        //Camera.Parameters param = mCamera.getParameters();
-        /*List psize = param.getSupportedPreviewSizes();
-        if ( psize.size() > 0 ) {
-            int i;
-            for ( i = 0; i < psize.size(); i++ ) {
-                if ( psize.get(i).width < width || psize.get(i).height < height )
-                    break;
-            }
-            if ( i > 0 )
-                i--;
-            param.setPreviewSize(psize.get(i).width, psize.get(i).height);
-            //Log.i("mr","ssize: "+psize.get(i).width+", "+psize.get(i).height);
-        }
-        param.set("orientation", "landscape");
-        mCamera.setParameters ( param );
-        mCamera.startPreview();*/
     }
 
     private void initTex() {
@@ -181,7 +167,7 @@ class InfiRenderer implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvai
         GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
         GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
         GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST); // TODO let user optionally use GL_LINEAR
     }
 
     private void deleteTex() {
