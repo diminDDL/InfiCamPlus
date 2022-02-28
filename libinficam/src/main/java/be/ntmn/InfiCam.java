@@ -1,6 +1,5 @@
 package be.ntmn;
 
-import android.util.Log;
 import android.view.Surface;
 
 public class InfiCam {
@@ -31,27 +30,25 @@ public class InfiCam {
     }
 
     /* The actual class starts here. */
-    public interface TemperatureCallback {
-        void onReceiveTemperature(FrameInfo fi, float[] temp);
+    public interface FrameCallback {
+        void onFrame(FrameInfo fi, float[] temp);
     }
 
+    /* C++ fills this one and passes it to callback, do not rename or modify without also looking
+     *   at the C++ side.
+     */
     public static class FrameInfo {
         float min, max, avg, center;
         int min_x, min_y, max_x, max_y;
     }
 
     public static final int paletteLen = 0x4000;
-    TemperatureCallback tcb = new TemperatureCallback() {
-        @Override
-        public void onReceiveTemperature(FrameInfo fi, float[] temp) {
-            Log.w("FRAMECB", "ct: " + fi.center + " " + fi.min + " " + fi.max);
-        }
-    };
+    FrameCallback userFrameCallback = null;
 
     /* Called by the C++ code, do not rename. */
     void frameCallback(FrameInfo fi, float[] temp) {
-        if (tcb != null)
-            tcb.onReceiveTemperature(fi, temp);
+        if (userFrameCallback != null)
+            userFrameCallback.onFrame(fi, temp);
     }
 
     native int nativeConnect(int fd);
@@ -102,5 +99,9 @@ public class InfiCam {
     public void setPalette(int[] palette) {
         if (nativeSetPalette(palette) != 0)
             throw new IllegalArgumentException();
+    }
+
+    public void setUserFrameCallback(FrameCallback fcb) {
+        userFrameCallback = fcb;
     }
 }
