@@ -59,9 +59,11 @@ static void setFloatVar(JNIEnv *env, jobject obj, char *name, jfloat value) {
     env->SetFloatField(obj, nativeObjectPointerID, value);
 }
 
-/* Frame callback to draws to Android Surface. */
+/* Frame callback to draw to Android Surface and call a Java callback. */
 void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, void *user_ptr) {
     InfiCamJNI *icj = (InfiCamJNI *) cam;
+
+    /* Update the surface if we have one. */
     if (icj->window != NULL) {
         ANativeWindow_Buffer buffer;
         if (ANativeWindow_lock(icj->window, &buffer, NULL) == 0) {
@@ -87,9 +89,11 @@ void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, voi
         }
     }
 
+    /* Attach to Java thread. */
     JNIEnv *cenv;
     javaVM->AttachCurrentThread(&cenv, NULL);
-    jmethodID methodID = cenv->GetStaticMethodID(cls_InfiCam, "frameCallback", "(L" FRAMEINFO_TYPE ";[F)V");
+
+    /* Fill the FrameInfo struct. */
     jobject fi = cenv->AllocObject(cls_FrameInfo);
     setFloatVar(cenv, fi, "max", icj->infi.temp(icj->infi.temp_max));
     setIntVar(cenv, fi, "max_x", icj->infi.temp_max_x);
@@ -100,11 +104,19 @@ void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, voi
     setFloatVar(cenv, fi, "center", icj->infi.temp(icj->infi.temp_center));
     setFloatVar(cenv, fi, "avg", icj->infi.temp(icj->infi.temp_avg));
 
+    /* Make a Java array from the temperature array. */
     size_t temp_len = icj->infi.width * icj->infi.height;
     jfloatArray jtemp = cenv->NewFloatArray(temp_len);
     cenv->SetFloatArrayRegion(jtemp, 0, temp_len, temp);
+
+    /* Call the callback. */
+    jmethodID methodID = cenv->GetStaticMethodID(cls_InfiCam, "frameCallback",
+                                                 "(L" FRAMEINFO_TYPE ";[F)V");
     cenv->CallStaticVoidMethod(cls_InfiCam, methodID, fi, jtemp);
-    // TODO do delete local refs
+
+    /* Clean up and detach. */
+    cenv->DeleteLocalRef(jtemp);
+    cenv->DeleteLocalRef(fi);
     javaVM->DetachCurrentThread();
 }
 
@@ -121,8 +133,6 @@ JNIEXPORT void Java_be_ntmn_InfiCam_nativeDelete(JNIEnv *env, jclass cls, jlong 
 JNIEXPORT jint Java_be_ntmn_InfiCam_nativeConnect(JNIEnv *env, jobject self, jint fd) {
     InfiCamJNI *icj = getObject(env, self);
     int ret = icj->connect(fd);
-    setIntVar(env, self, "width", icj->infi.width);
-    setIntVar(env, self, "height", icj->infi.height);
     return ret;
 }
 
@@ -172,6 +182,16 @@ JNIEXPORT void Java_be_ntmn_InfiCam_stopStream(JNIEnv *env, jobject self) {
 JNIEXPORT void Java_be_ntmn_InfiCam_setRange(JNIEnv *env, jobject self, jint range) {
     InfiCamJNI *icj = getObject(env, self);
     icj->set_range(range);
+}
+
+JNIEXPORT jint Java_be_ntmn_InfiCam_getWidth(JNIEnv *env, jobject self) {
+    InfiCamJNI *icj = getObject(env, self);
+    return icj->infi.width;
+}
+
+JNIEXPORT jint Java_be_ntmn_InfiCam_getHeight(JNIEnv *env, jobject self) {
+    InfiCamJNI *icj = getObject(env, self);
+    return icj->infi.height;
 }
 
 JNIEXPORT void Java_be_ntmn_InfiCam_setDistanceMultiplier(JNIEnv *env, jobject self, jfloat dm) {

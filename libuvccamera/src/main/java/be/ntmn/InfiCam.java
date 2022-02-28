@@ -32,7 +32,6 @@ public class InfiCam {
 
     /* The actual class starts here. */
     public static final int paletteLen = 0x4000;
-    public int width = 0, height = 0; /* Set by connect(), do not rename. */
 
     public static class FrameInfo {
         float min, max, avg, center;
@@ -41,6 +40,7 @@ public class InfiCam {
 
     /* Called by the C++ code, do not rename. */
     static void frameCallback(FrameInfo fi, float[] temp) {
+        // TODO
         Log.w("FRAMECB", "ct: " + fi.center);
     }
 
@@ -50,6 +50,9 @@ public class InfiCam {
             throw new Exception("Failed to connect to camera.");
     }
     public native void disconnect();
+
+    public native int getWidth();
+    public native int getHeight();
 
     public native int nativeStartStream(Surface surface);
     public void startStream(Surface surface) throws Exception {
