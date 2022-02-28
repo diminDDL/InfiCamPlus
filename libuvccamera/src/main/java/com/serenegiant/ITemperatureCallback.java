@@ -1,5 +1,5 @@
 package com.serenegiant;
 
-public interface  ITemperatureCallback {
+public interface ITemperatureCallback {
     void onReceiveTemperature(float[] temperature);
 }

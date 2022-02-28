@@ -33,6 +33,16 @@ public class InfiCam {
     public static final int paletteLen = 0x4000;
     public int width = 0, height = 0; /* Set by connect(), do not rename. */
 
+    public static class FrameInfo {
+        float min, max, avg, center;
+        int min_x, min_y, max_x, max_y;
+    }
+
+    /* Called by the C++ code, do not rename. */
+    static void frameCallback(FrameInfo fi, float[] temp) {
+
+    }
+
     native int nativeConnect(int fd);
     public void connect(int fd) throws Exception {
         if (nativeConnect(fd) != 0)

@@ -4,43 +4,37 @@
 #include <android/native_window_jni.h>
 #include <cstdlib> /* NULL */
 
+JavaVM *javaVM = NULL;
+
+jclass cls, acls;
+jmethodID methodID;
+
+extern "C" jint JNI_OnLoad(JavaVM *vm, void *reserved) {
+    javaVM = vm;
+    JNIEnv *env;
+    vm->GetEnv((void **)&env, JNI_VERSION_1_6);
+    cls = env->FindClass("com/serenegiant/InfiCam");
+    acls = env->FindClass("com/serenegiant/InfiCam$FrameInfo");
+    methodID = env->GetStaticMethodID(cls, "frameCallback", "(Lcom/serenegiant/InfiCam$FrameInfo;[F)V");
+    env->NewGlobalRef(cls);
+    env->NewGlobalRef(acls);
+    return JNI_VERSION_1_6;
+}
+
 class InfiCamJNI : public InfiCam {
 public:
     ANativeWindow *window = NULL;
+    jclass cls;
+
+    InfiCamJNI(jclass c) {
+        cls = c;
+    }
 
     ~InfiCamJNI() {
         if (window != NULL)
             ANativeWindow_release(window);
     }
 };
-
-void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, void *user_ptr) {
-    InfiCamJNI *icj = (InfiCamJNI *) cam;
-    if (icj->window == NULL)
-        return;
-    ANativeWindow_Buffer buffer;
-    if (ANativeWindow_lock(icj->window, &buffer, NULL) == 0) {
-        // source = frame data, destination = Surface(ANativeWindow)
-        const uint8_t *src = (uint8_t *) rgb;
-        const int src_w = cam->infi.width * 4;
-        const int dst_w = buffer.width * 4;
-        const int dst_step = buffer.stride * 4;
-
-        // set w and h to be the smallest of the two rectangles
-        const int w = src_w < dst_w ? src_w : dst_w;
-        const int h = cam->infi.height < buffer.height ? cam->infi.height : buffer.height;
-
-        // transfer from frame data to the Surface
-        uint8_t *dst = (uint8_t *) buffer.bits;
-        for (int i = 0; i < h; ++i) {
-            memcpy(dst, src, w);
-            dst += dst_step;
-            src += src_w;
-        }
-
-        ANativeWindow_unlockAndPost(icj->window);
-    }
-}
 
 /* Get the InfiCamJNI class from jobject. */
 static InfiCamJNI *getObject(JNIEnv *env, jobject obj) {
@@ -50,11 +44,10 @@ static InfiCamJNI *getObject(JNIEnv *env, jobject obj) {
     jfieldID nativeObjectPointerID = env->GetFieldID(cls, "instance", "J");
     if (!nativeObjectPointerID)
         env->FatalError("GetFieldID failed");
-    jlong nativeObjectPointer = env->GetLongField(obj, nativeObjectPointerID);
-    return (InfiCamJNI *) nativeObjectPointer;
+    return (InfiCamJNI *) env->GetLongField(obj, nativeObjectPointerID);
 }
 
-/* Set an integer variable in the Java InfiCam class. */
+/* Set an integer variable in the a Java class. */
 static void setIntVar(JNIEnv *env, jobject obj, char *name, jint value) {
     jclass cls = env->GetObjectClass(obj);
     if (!cls)
@@ -65,13 +58,89 @@ static void setIntVar(JNIEnv *env, jobject obj, char *name, jint value) {
     env->SetIntField(obj, nativeObjectPointerID, value);
 }
 
-extern "C" {
-
-JNIEXPORT jlong Java_com_serenegiant_InfiCam_nativeNew(JNIEnv *env, jclass self) {
-    return (jlong) new InfiCamJNI();
+/* Set an integer variable in the a Java class. */
+static void setFloatVar(JNIEnv *env, jobject obj, char *name, jfloat value) {
+    jclass cls = env->GetObjectClass(obj);
+    if (!cls)
+        env->FatalError("GetObjectClass failed");
+    jfieldID nativeObjectPointerID = env->GetFieldID(cls, name, "F");
+    if (!nativeObjectPointerID)
+        env->FatalError("GetFieldID failed");
+    env->SetFloatField(obj, nativeObjectPointerID, value);
 }
 
-JNIEXPORT void Java_com_serenegiant_InfiCam_nativeDelete(JNIEnv *env, jclass self, jlong ptr) {
+/* Frame callback to draws to Android Surface. */
+void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, void *user_ptr) {
+    InfiCamJNI *icj = (InfiCamJNI *) cam;
+    if (icj->window != NULL) {
+        ANativeWindow_Buffer buffer;
+        if (ANativeWindow_lock(icj->window, &buffer, NULL) == 0) {
+            // source = frame data, destination = Surface(ANativeWindow)
+            const uint8_t *src = (uint8_t *) rgb;
+            const int src_w = cam->infi.width * 4;
+            const int dst_w = buffer.width * 4;
+            const int dst_step = buffer.stride * 4;
+
+            // set w and h to be the smallest of the two rectangles
+            const int w = src_w < dst_w ? src_w : dst_w;
+            const int h = cam->infi.height < buffer.height ? cam->infi.height : buffer.height;
+
+            // transfer from frame data to the Surface
+            uint8_t *dst = (uint8_t *) buffer.bits;
+            for (int i = 0; i < h; ++i) {
+                memcpy(dst, src, w);
+                dst += dst_step;
+                src += src_w;
+            }
+
+            ANativeWindow_unlockAndPost(icj->window);
+        }
+    }
+
+    JNIEnv *cenv;
+    javaVM->AttachCurrentThread(&cenv, NULL);
+    if (!cls)
+        cenv->FatalError("GetObjectClass failed");
+    // TODO meh @ hardcoded package name
+    //
+
+    if (!methodID)
+        cenv->FatalError("GetMethodID failed");
+
+    // TODO meh @ hardcoded package name
+
+    if (!acls)
+        cenv->FatalError("FindClass failed");
+    jobject fi = cenv->AllocObject(acls);
+    /*if (!fi)
+        cenv->FatalError("AllocObject failed");
+    setFloatVar(cenv, fi, "max", icj->infi.temp(icj->infi.temp_max));
+    setIntVar(cenv, fi, "max_x", icj->infi.temp_max_x);
+    setIntVar(cenv, fi, "max_y", icj->infi.temp_max_y);
+    setFloatVar(cenv, fi, "min", icj->infi.temp(icj->infi.temp_min));
+    setIntVar(cenv, fi, "min_x", icj->infi.temp_min_x);
+    setIntVar(cenv, fi, "min_y", icj->infi.temp_min_y);
+    setFloatVar(cenv, fi, "center", icj->infi.temp(icj->infi.temp_center));
+    setFloatVar(cenv, fi, "avg", icj->infi.temp(icj->infi.temp_avg));*/
+
+    /*size_t temp_len = icj->infi.width * icj->infi.height;
+    jfloatArray jtemp = cenv->NewFloatArray(temp_len);
+    if (!jtemp)
+        cenv->FatalError("AllocObject failed");
+    cenv->SetFloatArrayRegion(jtemp, 0, temp_len, temp);*/
+
+    //cenv->CallStaticVoidMethod(icj->cls, methodID, fi, jtemp);
+    // TODO do delete local refs
+    javaVM->DetachCurrentThread();
+}
+
+extern "C" {
+
+JNIEXPORT jlong Java_com_serenegiant_InfiCam_nativeNew(JNIEnv *env, jclass cls) {
+    return (jlong) new InfiCamJNI(cls);
+}
+
+JNIEXPORT void Java_com_serenegiant_InfiCam_nativeDelete(JNIEnv *env, jclass cls, jlong ptr) {
     delete (InfiCamJNI *) ptr;
 }
 
@@ -102,36 +171,18 @@ JNIEXPORT jint Java_com_serenegiant_InfiCam_nativeStartStream(JNIEnv *env, jobje
     }
     icj->set_palette(palette);
 
-    /* TODO note to self the callback thing went as follows:
-
-        savedVm->AttachCurrentThread(&env, NULL);
-
-		float *temperatureData = p->mCbTemper;
-		....
-
-		jfloatArray mNCbTemper = env->NewFloatArray(p->icj->infi.width*p->icj->infi.height+10);
-		env->SetFloatArrayRegion(mNCbTemper, 0, 10+p->icj->infi.width*p->icj->infi.height, p->mCbTemper);
-		if (p->mTemperatureCallbackObj != NULL) {
-			env->CallVoidMethod(p->mTemperatureCallbackObj, p->iTemperatureCallback.onReceiveTemperature, mNCbTemper);
-			env->ExceptionClear();
-		}
-		env->DeleteLocalRef(mNCbTemper);
-
-		savedVm->DetachCurrentThread();
-     */
-
-    if (surface == NULL)
-        return 1;
-    if (icj->window != NULL)
-        ANativeWindow_release(icj->window);
-    icj->window = ANativeWindow_fromSurface(env, surface);
-    if (icj->window == NULL)
-        return 2;
-    // TODO we must release the window too, when, how? maybe we should have the functions not necessarily be static also
-    ANativeWindow_setBuffersGeometry(icj->window, icj->infi.width, icj->infi.height, WINDOW_FORMAT_RGBX_8888);
-    if (icj->stream_start(frame_callback, NULL)) {
-        ANativeWindow_release(icj->window);
-        return 3;
+    if (surface != NULL) {
+        if (icj->window != NULL)
+            ANativeWindow_release(icj->window);
+        icj->window = ANativeWindow_fromSurface(env, surface);
+        if (icj->window == NULL)
+            return 2;
+        ANativeWindow_setBuffersGeometry(icj->window, icj->infi.width, icj->infi.height,
+                                         WINDOW_FORMAT_RGBX_8888);
+        if (icj->stream_start(frame_callback, NULL)) {
+            ANativeWindow_release(icj->window);
+            return 3;
+        }
     }
     return 0;
 }
