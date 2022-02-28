@@ -1578,7 +1578,12 @@ public final class MainActivity extends BaseActivity {
 
 //        Log.e(TAG, "startPreview: getSurfaceTexture");
         final SurfaceTexture st = mUVCCameraView.getSurfaceTexture();
-        mCameraHandler.startPreview(new Surface(st));
+        // TODO (netman) following line is original, next is how i patched in other Surface
+        //mCameraHandler.startPreview(new Surface(st));
+        SurfaceView sv = findViewById(R.id.infiCamView);
+        mCameraHandler.startPreview(sv.getHolder().getSurface());
+
+        
 //        Log.e(TAG, "startPreview: getSurfaceTexture2");
         //mCameraHandler.startPreview(null);
         runOnUiThread(new Runnable() {
