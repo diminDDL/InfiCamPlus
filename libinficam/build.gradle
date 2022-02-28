@@ -96,7 +96,6 @@ android {
 	}*/
 
 	dependencies {
-		api files('src/main/libs/classes.jar')
 		api fileTree(dir: new File(buildDir, 'libs'), include: '*.jar')
 		api "com.android.support:support-annotations:${supportLibVersion}"
 		implementation "com.android.support:appcompat-v7:${supportLibVersion}"

@@ -5,8 +5,9 @@ package be.ntmn.widget;
  */
 import android.graphics.Bitmap;
 
-import com.serenegiant.glutils.IDrawer2D;
-public interface IDrawer2dES21 extends IDrawer2D{
+import be.ntmn.IDrawer2D;
+
+public interface IDrawer2dES21 extends IDrawer2D {
     int glGetAttribLocation(String var1);
 
     int glGetUniformLocation(String var1);

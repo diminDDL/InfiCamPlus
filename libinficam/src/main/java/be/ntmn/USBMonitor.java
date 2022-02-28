@@ -49,7 +49,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
 
-import com.serenegiant.utils.HandlerThreadHandler;
+import be.ntmn.utils.HandlerThreadHandler;
 
 public final class USBMonitor {
 	public abstract static class DeviceFilter {

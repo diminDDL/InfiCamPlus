@@ -31,8 +31,8 @@ import android.opengl.GLUtils;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.serenegiant.utils.AssetsHelper;
-import com.serenegiant.utils.BuildCheck;
+import be.ntmn.AssetsHelper;
+import be.ntmn.BuildCheck;
 
 import java.io.IOException;
 

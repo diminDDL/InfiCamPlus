@@ -36,10 +36,10 @@ import android.util.Log;
 import android.widget.Toast;
 
 import be.ntmn.XthermDemo.R;
-import com.serenegiant.dialog.MessageDialogFragment;
-import com.serenegiant.utils.BuildCheck;
-import com.serenegiant.utils.HandlerThreadHandler;
-import com.serenegiant.utils.PermissionCheck;
+import be.ntmn.MessageDialogFragment;
+import be.ntmn.BuildCheck;
+import be.ntmn.utils.HandlerThreadHandler;
+import be.ntmn.PermissionCheck;
 
 /**
  * Created by saki on 2016/11/19.

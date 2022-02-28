@@ -33,7 +33,7 @@ import android.media.MediaFormat;
 import android.util.Log;
 import android.view.Surface;
 
-import com.serenegiant.glutils.EGLBase;
+import be.ntmn.EGLBase;
 
 /**
  * Encode texture images as H.264 video

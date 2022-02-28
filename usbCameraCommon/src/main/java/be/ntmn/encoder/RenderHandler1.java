@@ -10,7 +10,7 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
-import com.serenegiant.glutils.EGLBase;
+import be.ntmn.EGLBase;
 import be.ntmn.widget.GLDrawer2D1;
 
 /**

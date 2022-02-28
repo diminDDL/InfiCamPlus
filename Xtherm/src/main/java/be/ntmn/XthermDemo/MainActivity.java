@@ -90,7 +90,7 @@ import be.ntmn.MyApp;
 import be.ntmn.encoder.MediaMuxerWrapper;
 import be.ntmn.USBMonitor;
 import be.ntmn.usbcameracommon.UVCCameraHandler;
-import com.serenegiant.utils.PermissionCheck;
+import be.ntmn.PermissionCheck;
 import be.ntmn.widget.AutoFitTextureView;
 import be.ntmn.widget.Camera2Helper;
 import be.ntmn.widget.TouchPoint;

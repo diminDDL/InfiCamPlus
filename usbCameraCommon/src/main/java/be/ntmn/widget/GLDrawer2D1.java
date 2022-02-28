@@ -29,12 +29,11 @@ import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
 
-//import com.serenegiant.glutils.GLHelper;
-import com.serenegiant.glutils.IDrawer2D;
-import com.serenegiant.glutils.ITexture;
-import com.serenegiant.glutils.TextureOffscreen;
+import be.ntmn.IDrawer2D;
+import be.ntmn.ITexture;
+import be.ntmn.TextureOffscreen;
 
-import static com.serenegiant.glutils.ShaderConst.*;
+import static be.ntmn.ShaderConst.*;
 
 /**
  * 描画領域全面にテクスチャを2D描画するためのヘルパークラス

@@ -41,6 +41,8 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
 
+import be.ntmn.EGLBase;
+import be.ntmn.FpsCounter;
 import be.ntmn.InfiCam;
 import be.ntmn.MyApp;
 import be.ntmn.encoder.IVideoEncoder;
@@ -48,14 +50,11 @@ import be.ntmn.encoder.MediaEncoder;
 import be.ntmn.encoder.MediaVideoEncoder;
 import be.ntmn.usbcameracommon.UVCCameraHandler;
 
-import com.serenegiant.glutils.EGLBase;
-import com.serenegiant.utils.FpsCounter;
-
 import java.text.DecimalFormat;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static com.serenegiant.glutils.ShaderConst.GL_TEXTURE_2D;
-import static com.serenegiant.glutils.ShaderConst.GL_TEXTURE_EXTERNAL_OES;
+import static be.ntmn.ShaderConst.GL_TEXTURE_2D;
+import static be.ntmn.ShaderConst.GL_TEXTURE_EXTERNAL_OES;
 
 //import com.serenegiant.glutils.GLDrawer2D;
 
