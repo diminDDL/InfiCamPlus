@@ -9,16 +9,17 @@
 
 JavaVM *javaVM = NULL;
 
-jclass cls, acls;
+jclass cls_InfiCam, cls_FrameInfo;
 
 extern "C" JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     javaVM = vm;
     JNIEnv *env;
-    vm->GetEnv((void **)&env, JNI_VERSION_1_6);
-    cls = env->FindClass(INFICAM_TYPE);
-    acls = env->FindClass(FRAMEINFO_TYPE);
-    cls = (jclass) env->NewGlobalRef(cls);
-    acls = (jclass) env->NewGlobalRef(acls);
+    if (vm->GetEnv((void **) &env, JNI_VERSION_1_6))
+        return JNI_ERR;
+    cls_InfiCam = env->FindClass(INFICAM_TYPE);
+    cls_FrameInfo = env->FindClass(FRAMEINFO_TYPE);
+    cls_InfiCam = (jclass) env->NewGlobalRef(cls_InfiCam);
+    cls_FrameInfo = (jclass) env->NewGlobalRef(cls_FrameInfo);
     return JNI_VERSION_1_6;
 }
 
@@ -100,20 +101,10 @@ void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, voi
 
     JNIEnv *cenv;
     javaVM->AttachCurrentThread(&cenv, NULL);
-    if (!cls)
-        cenv->FatalError("GetObjectClass failed");
-    // TODO meh @ hardcoded package name
-    //
-
-    jmethodID methodID = cenv->GetStaticMethodID(cls, "frameCallback", "(L" FRAMEINFO_TYPE ";[F)V");
+    jmethodID methodID = cenv->GetStaticMethodID(cls_InfiCam, "frameCallback", "(L" FRAMEINFO_TYPE ";[F)V");
     if (!methodID)
         cenv->FatalError("GetMethodID failed");
-
-    // TODO meh @ hardcoded package name
-
-    if (!acls)
-        cenv->FatalError("FindClass failed");
-    jobject fi = cenv->AllocObject(acls);
+    jobject fi = cenv->AllocObject(cls_FrameInfo);
     if (!fi)
         cenv->FatalError("AllocObject failed");
     setFloatVar(cenv, fi, "max", icj->infi.temp(icj->infi.temp_max));
@@ -131,7 +122,7 @@ void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, voi
         cenv->FatalError("AllocObject failed");
     cenv->SetFloatArrayRegion(jtemp, 0, temp_len, temp);
 
-    cenv->CallStaticVoidMethod(cls, methodID, fi, jtemp);
+    cenv->CallStaticVoidMethod(cls_InfiCam, methodID, fi, jtemp);
     // TODO do delete local refs
     javaVM->DetachCurrentThread();
 }
