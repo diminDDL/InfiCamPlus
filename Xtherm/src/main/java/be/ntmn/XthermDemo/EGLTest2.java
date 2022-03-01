@@ -32,6 +32,8 @@ import android.opengl.GLES20;
 import android.os.Environment;
 import android.util.Log;
 import android.view.Surface;
+import android.view.SurfaceView;
+import android.view.View;
 
 import java.io.File;
 import java.io.IOException;
@@ -81,17 +83,20 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
     // allocate one of these up front so we don't need to do it every time
     private MediaCodec.BufferInfo mBufferInfo;
 
+    SurfaceView vee;
+
     /**
      * Tests encoding of AVC video from a Surface.  The output is saved as an MP4 file.
      */
-    public void testEncodeVideoToMp4() throws IOException {
+    public void testEncodeVideoToMp4(Surface msp, SurfaceView v) throws IOException {
         // QVGA at 2Mbps
         mWidth = 640;
         mHeight = 480;
         mBitRate = 2000000;
+        vee = v;
 
-        try {
-            prepareEncoder();
+        //try {
+            prepareEncoder(msp);
 
             mInputSurface.makeCurrent();
             init();
@@ -116,10 +121,10 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
 
             // send end-of-stream to encoder, and drain remaining output
             //drainEncoder(true);
-        } finally {
+        //} finally {
             // release encoder, muxer, and input Surface
             //releaseEncoder();
-        }
+        //}
 
         // To test the result, open the file with MediaExtractor, and get the format.  Pass
         // that into the MediaCodec decoder configuration, along with a SurfaceTexture surface,
@@ -129,7 +134,7 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
     /**
      * Configures encoder and muxer state, and prepares the input Surface.
      */
-    private void prepareEncoder() throws IOException {
+    private void prepareEncoder(Surface msp) throws IOException {
         mBufferInfo = new MediaCodec.BufferInfo();
 
         MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, mWidth, mHeight);
@@ -152,7 +157,7 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
         // take eglGetCurrentContext() as the share_context argument.
         mEncoder = MediaCodec.createEncoderByType(MIME_TYPE);
         mEncoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
-        mInputSurface = new CodecInputSurface(mEncoder.createInputSurface());
+        mInputSurface = new CodecInputSurface(mEncoder.createInputSurface(), msp);
         mEncoder.start();
 
         // Output filename.  Ideally this would use Context.getFilesDir() rather than a
@@ -317,8 +322,8 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
         GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
         GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST); // TODO let user optionally use GL_LINEAR
 
-        mSTexture = new SurfaceTexture (hTex[0]);
-        GLES20.glClearColor ( 1.0f, 0.0f, 0.0f, 1.0f );
+        mSTexture = new SurfaceTexture(hTex[0]);
+        GLES20.glClearColor (1.0f, 0.0f, 0.0f, 1.0f);
         hProgram = loadShader(vss, fss);
         mSTexture.setOnFrameAvailableListener(this);
     }
@@ -404,7 +409,7 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
         Log.e("FRAME", "frammme");
 
         mInputSurface.makeCurrent();
-        GLES20.glViewport(0, 0, 320, 240); // TODO is this needed?
+        GLES20.glViewport(0, 0, 640, 480); // TODO is this needed? maybe in onsurfacechanged
 
             drainEncoder(false);
 
@@ -451,6 +456,25 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
             drainEncoder(true);
             releaseEncoder();
         }
+
+        mInputSurface.makeCurrentPreview();
+        GLES20.glViewport(0, 0, 1024, 768);
+
+        GLES20.glUseProgram(hProgram);
+
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, hTex[0]);
+        GLES20.glUniform1i(th, 0);
+
+        GLES20.glVertexAttribPointer(ph, 2, GLES20.GL_FLOAT, false, 4 * 2, pVertex);
+        GLES20.glVertexAttribPointer(tch, 2, GLES20.GL_FLOAT, false, 4 * 2, pTexCoord);
+        GLES20.glEnableVertexAttribArray(ph);
+        GLES20.glEnableVertexAttribArray(tch);
+
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+        GLES20.glFlush();
+
+        EGL14.eglSwapBuffers(mInputSurface.mEGLDisplay, mInputSurface.mEGLSPreview);
     }
 
 
@@ -466,20 +490,22 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
     private static class CodecInputSurface {
         private static final int EGL_RECORDABLE_ANDROID = 0x3142;
 
-        private EGLDisplay mEGLDisplay = EGL14.EGL_NO_DISPLAY;
-        private EGLContext mEGLContext = EGL14.EGL_NO_CONTEXT;
-        private EGLSurface mEGLSurface = EGL14.EGL_NO_SURFACE;
+        public EGLDisplay mEGLDisplay = EGL14.EGL_NO_DISPLAY;
+        public EGLContext mEGLContext = EGL14.EGL_NO_CONTEXT;
+        public EGLSurface mEGLSurface = EGL14.EGL_NO_SURFACE;
+        public EGLSurface mEGLSPreview = EGL14.EGL_NO_SURFACE;
 
-        private Surface mSurface;
+        public Surface mSurface, mSPreview;
 
         /**
          * Creates a CodecInputSurface from a Surface.
          */
-        public CodecInputSurface(Surface surface) {
+        public CodecInputSurface(Surface surface, Surface pvs) {
             if (surface == null) {
                 throw new NullPointerException();
             }
             mSurface = surface;
+            mSPreview = pvs;
 
             eglSetup();
         }
@@ -529,6 +555,9 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
             mEGLSurface = EGL14.eglCreateWindowSurface(mEGLDisplay, configs[0], mSurface,
                     surfaceAttribs, 0);
             checkEglError("eglCreateWindowSurface");
+            mEGLSPreview = EGL14.eglCreateWindowSurface(mEGLDisplay, configs[0], mSPreview,
+                    surfaceAttribs, 0);
+            checkEglError("eglCreateWindowSurface");
         }
 
         /**
@@ -559,6 +588,11 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
          */
         public void makeCurrent() {
             EGL14.eglMakeCurrent(mEGLDisplay, mEGLSurface, mEGLSurface, mEGLContext);
+            checkEglError("eglMakeCurrent");
+        }
+
+        public void makeCurrentPreview() {
+            EGL14.eglMakeCurrent(mEGLDisplay, mEGLSPreview, mEGLSPreview, mEGLContext);
             checkEglError("eglMakeCurrent");
         }
 

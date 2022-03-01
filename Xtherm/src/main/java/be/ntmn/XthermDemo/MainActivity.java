@@ -1584,7 +1584,7 @@ public final class MainActivity extends BaseActivity {
         //final SurfaceTexture st = mUVCCameraView.getSurfaceTexture();
         // TODO (netman) following line is original, next is how i patched in other Surface
         //mCameraHandler.startPreview(new Surface(st));
-        //final InfiCamView sv = findViewById(R.id.infiCamView);
+        final SurfaceView sv = findViewById(R.id.infiCamView);
         //Log.e("TEXTOOR", "this: " + sv.getSurf());
 
         //SurfaceTexture surf = sv.getSurf();
@@ -1594,7 +1594,7 @@ public final class MainActivity extends BaseActivity {
             public void run() {
                 try {
                     et2 = new EGLTest2();
-                    et2.testEncodeVideoToMp4();
+                    et2.testEncodeVideoToMp4(sv.getHolder().getSurface(), sv);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -1627,7 +1627,6 @@ public final class MainActivity extends BaseActivity {
                 mCaptureButton.setVisibility(VISIBLE);
                 mZoomButton.setVisibility(VISIBLE);
                 mTempbutton.setVisibility(VISIBLE);
-
             }
         });
 
