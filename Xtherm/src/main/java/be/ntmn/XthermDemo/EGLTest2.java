@@ -27,11 +27,9 @@ import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
 import android.opengl.EGLExt;
 import android.opengl.EGLSurface;
-import android.opengl.GLES10;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.os.Environment;
-import android.test.AndroidTestCase;
 import android.util.Log;
 import android.view.Surface;
 
@@ -67,14 +65,6 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
     private static final int IFRAME_INTERVAL = 10;          // 10 seconds between I-frames
     private static final int NUM_FRAMES = 30;               // two seconds of video
 
-    // RGB color values for generated frames
-    private static final int TEST_R0 = 0;
-    private static final int TEST_G0 = 136;
-    private static final int TEST_B0 = 0;
-    private static final int TEST_R1 = 236;
-    private static final int TEST_G1 = 50;
-    private static final int TEST_B1 = 186;
-
     // size of a frame, in pixels
     private int mWidth = -1;
     private int mHeight = -1;
@@ -90,7 +80,6 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
 
     // allocate one of these up front so we don't need to do it every time
     private MediaCodec.BufferInfo mBufferInfo;
-
 
     /**
      * Tests encoding of AVC video from a Surface.  The output is saved as an MP4 file.
@@ -319,7 +308,15 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
         //Log.i("mr", "Gl extensions: " + extensions);
         //Assert.assertTrue(extensions.contains("OES_EGL_image_external"));
 
-        initTex();
+        // initTex()
+        hTex = new int[1];
+        GLES20.glGenTextures (1, hTex, 0);
+        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, hTex[0]);
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST); // TODO let user optionally use GL_LINEAR
+
         mSTexture = new SurfaceTexture (hTex[0]);
         GLES20.glClearColor ( 1.0f, 0.0f, 0.0f, 1.0f );
         hProgram = loadShader(vss, fss);
@@ -372,16 +369,6 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
         GLES20.glLinkProgram(program);
 
         return program;
-    }
-
-    private void initTex() {
-        hTex = new int[1];
-        GLES20.glGenTextures (1, hTex, 0);
-        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, hTex[0]);
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST); // TODO let user optionally use GL_LINEAR
     }
 
     private final String vss =
@@ -460,7 +447,7 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
         //if (VERBOSE) Log.d(TAG, "sending frame " + i + " to encoder");
         mInputSurface.swapBuffers();
 
-        if (ctr++ == 500) {
+        if (ctr++ == 500) { // TODO stop properly
             drainEncoder(true);
             releaseEncoder();
         }
