@@ -27,6 +27,7 @@ import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
 import android.opengl.EGLExt;
 import android.opengl.EGLSurface;
+import android.opengl.GLES10;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.os.Environment;
@@ -40,6 +41,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
+import javax.microedition.khronos.egl.EGL;
 import javax.microedition.khronos.opengles.GL10;
 
 //20131106: removed hard-coded "/sdcard"
@@ -315,15 +317,15 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
         pTexCoord = ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         pTexCoord.put(ttmp);
         pTexCoord.position(0);
-        //String extensions = GLES20.glGetString(GLES20.GL_EXTENSIONS);
+        String extensions = GLES20.glGetString(GLES10.GL_EXTENSIONS);
         //Log.i("mr", "Gl extensions: " + extensions);
         //Assert.assertTrue(extensions.contains("OES_EGL_image_external"));
 
         initTex();
-        mSTexture = new SurfaceTexture ( hTex[0] );
-        mSTexture.setOnFrameAvailableListener(this);
+        mSTexture = new SurfaceTexture (hTex[0]);
         GLES20.glClearColor ( 1.0f, 0.0f, 0.0f, 1.0f );
-        hProgram = loadShader ( vss, fss );
+        hProgram = loadShader(vss, fss);
+        mSTexture.setOnFrameAvailableListener(this);
     }
 
     public void close() // TODO finalizer?
@@ -337,7 +339,7 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
     }
 
     private void deleteTex() {
-        GLES20.glDeleteTextures ( 1, hTex, 0 );
+        GLES20.glDeleteTextures (1, hTex, 0);
     }
 
     private static int loadShader(String vss, String fss) {
@@ -350,7 +352,8 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
             Log.e("Shader", "Could not compile vshader");
             Log.v("Shader", "Could not compile vshader:" + GLES20.glGetShaderInfoLog(vshader));
             GLES20.glDeleteShader(vshader);
-            vshader = 0;
+            throw new RuntimeException("Could not compile program: "
+                    + GLES20.glGetShaderInfoLog(vshader) + " | " + vss);
         }
 
         int fshader = GLES20.glCreateShader(GLES20.GL_FRAGMENT_SHADER);
@@ -361,7 +364,8 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
             Log.e("Shader", "Could not compile fshader");
             Log.v("Shader", "Could not compile fshader:" + GLES20.glGetShaderInfoLog(fshader));
             GLES20.glDeleteShader(fshader);
-            fshader = 0;
+            throw new RuntimeException("Could not compile program: "
+                    + GLES20.glGetShaderInfoLog(fshader) + " | " + fss);
         }
 
         int program = GLES20.glCreateProgram();
@@ -374,7 +378,7 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
 
     private void initTex() {
         hTex = new int[1];
-        GLES20.glGenTextures ( 1, hTex, 0 );
+        GLES20.glGenTextures (1, hTex, 0);
         GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, hTex[0]);
         GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
         GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
@@ -461,7 +465,7 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
 
             drainEncoder(false);
 
-        GLES20.glClear( GLES20.GL_COLOR_BUFFER_BIT );
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
         synchronized(this) {
             if ( mUpdateST ) {
@@ -470,7 +474,7 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
             }
         }
 
-        GLES20.glClearColor ( 1.0f, 0.0f, 0.0f, 1.0f ); // TODO
+        GLES20.glClearColor ( 1.0f, 0.0f, 1.0f, 1.0f ); // TODO
 
         GLES20.glUseProgram(hProgram);
 
@@ -483,7 +487,7 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
         GLES20.glUniform1i(th, 0);
 
         GLES20.glVertexAttribPointer(ph, 2, GLES20.GL_FLOAT, false, 4 * 2, pVertex);
-        GLES20.glVertexAttribPointer(tch, 2, GLES20.GL_FLOAT, false, 4 * 2, pTexCoord );
+        GLES20.glVertexAttribPointer(tch, 2, GLES20.GL_FLOAT, false, 4 * 2, pTexCoord);
         GLES20.glEnableVertexAttribArray(ph);
         GLES20.glEnableVertexAttribArray(tch);
 
@@ -557,7 +561,7 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
                     EGL14.EGL_BLUE_SIZE, 8,
                     EGL14.EGL_ALPHA_SIZE, 8,
                     EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
-                    EGL_RECORDABLE_ANDROID, 1,
+                    EGL_RECORDABLE_ANDROID, EGL14.EGL_TRUE,
                     EGL14.EGL_NONE
             };
             EGLConfig[] configs = new EGLConfig[1];

@@ -31,3 +31,4 @@ TODO
     - do I go with apache license for new files too? (almost everything in libinficam is new files already...)
     - apache license says i should put prominent notices that i changed stuff, i should
     - figure out where i want to go with the UI part
+    - move the palette stuff into the java code
