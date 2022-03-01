@@ -97,8 +97,8 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
      */
     public void testEncodeVideoToMp4() throws IOException {
         // QVGA at 2Mbps
-        mWidth = 320;
-        mHeight = 240;
+        mWidth = 640;
+        mHeight = 480;
         mBitRate = 2000000;
 
         try {
@@ -407,49 +407,7 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
     private FloatBuffer pTexCoord;
     private int hProgram;
 
-    /**
-     * Generates a frame of data using GL commands.  We have an 8-frame animation
-     * sequence that wraps around.  It looks like this:
-     * <pre>
-     *   0 1 2 3
-     *   7 6 5 4
-     * </pre>
-     * We draw one of the eight rectangles and leave the rest set to the clear color.
-     */
-    private void generateSurfaceFrame(int frameIndex) {
-        frameIndex %= 8;
-
-        int startX, startY;
-        if (frameIndex < 4) {
-            // (0,0) is bottom-left in GL
-            startX = frameIndex * (mWidth / 4);
-            startY = mHeight / 2;
-        } else {
-            startX = (7 - frameIndex) * (mWidth / 4);
-            startY = 0;
-        }
-
-        GLES20.glClearColor(TEST_R0 / 255.0f, TEST_G0 / 255.0f, TEST_B0 / 255.0f, 1.0f);
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-
-        GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
-        GLES20.glScissor(startX, startY, mWidth / 4, mHeight / 2);
-        GLES20.glClearColor(TEST_R1 / 255.0f, TEST_G1 / 255.0f, TEST_B1 / 255.0f, 1.0f);
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-        GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
-    }
-
-    /**
-     * Generates the presentation time for frame N, in nanoseconds.
-     */
-    private static long computePresentationTimeNsec(int frameIndex) {
-        final long ONE_BILLION = 1000000000;
-        return frameIndex * ONE_BILLION / FRAME_RATE;
-    }
-
-
     public SurfaceTexture getSurf() {
-        //rec.start();
         return mSTexture;
     }
 
@@ -472,7 +430,7 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
             }
         }
 
-        GLES20.glClearColor ( 1.0f, 0.0f, 1.0f, 1.0f ); // TODO
+        //GLES20.glClearColor ( 1.0f, 0.0f, 1.0f, 1.0f ); // TODO
 
         GLES20.glUseProgram(hProgram);
 
@@ -502,7 +460,7 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
         //if (VERBOSE) Log.d(TAG, "sending frame " + i + " to encoder");
         mInputSurface.swapBuffers();
 
-        if (ctr++ == 1000) {
+        if (ctr++ == 500) {
             drainEncoder(true);
             releaseEncoder();
         }
