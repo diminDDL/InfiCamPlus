@@ -16,6 +16,7 @@
 
 package be.ntmn.XthermDemo;
 
+import android.graphics.SurfaceTexture;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
@@ -26,6 +27,7 @@ import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
 import android.opengl.EGLExt;
 import android.opengl.EGLSurface;
+import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.os.Environment;
 import android.test.AndroidTestCase;
@@ -35,6 +37,10 @@ import android.view.Surface;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+
+import javax.microedition.khronos.opengles.GL10;
 
 //20131106: removed hard-coded "/sdcard"
 //20131205: added alpha to EGLConfig
@@ -49,7 +55,7 @@ import java.nio.ByteBuffer;
  * (This was derived from bits and pieces of CTS tests, and is packaged as such, but is not
  * currently part of CTS.)
  */
-public class EGLTest2 extends AndroidTestCase {
+public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
     private static final String TAG = "EncodeAndMuxTest";
     private static final boolean VERBOSE = false;           // lots of logging
 
@@ -58,7 +64,7 @@ public class EGLTest2 extends AndroidTestCase {
 
     // parameters for the encoder
     private static final String MIME_TYPE = "video/avc";    // H.264 Advanced Video Coding
-    private static final int FRAME_RATE = 15;               // 15fps
+    private static final int FRAME_RATE = 25;               // 15fps
     private static final int IFRAME_INTERVAL = 10;          // 10 seconds between I-frames
     private static final int NUM_FRAMES = 30;               // two seconds of video
 
@@ -98,7 +104,9 @@ public class EGLTest2 extends AndroidTestCase {
 
         try {
             prepareEncoder();
-            mInputSurface.makeCurrent();
+
+            init();
+            /*mInputSurface.makeCurrent();
 
             for (int i = 0; i < NUM_FRAMES; i++) {
                 // Feed any pending encoder output into the muxer.
@@ -115,13 +123,13 @@ public class EGLTest2 extends AndroidTestCase {
                 // can supply another frame without blocking.
                 if (VERBOSE) Log.d(TAG, "sending frame " + i + " to encoder");
                 mInputSurface.swapBuffers();
-            }
+            }*/
 
             // send end-of-stream to encoder, and drain remaining output
-            drainEncoder(true);
+            //drainEncoder(true);
         } finally {
             // release encoder, muxer, and input Surface
-            releaseEncoder();
+            //releaseEncoder();
         }
 
         // To test the result, open the file with MediaExtractor, and get the format.  Pass
@@ -288,6 +296,115 @@ public class EGLTest2 extends AndroidTestCase {
         }
     }
 
+    private SurfaceTexture mSTexture = null;
+
+    private boolean mUpdateST = false;
+
+    public synchronized void onFrameAvailable(SurfaceTexture st) {
+        mUpdateST = true;
+        //mView.requestRender(); // TODO
+        onDrawFrame(null);
+    }
+
+    public void init() {
+        float[] vtmp = { 1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f };
+        float[] ttmp = { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f };
+        pVertex = ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+        pVertex.put(vtmp);
+        pVertex.position(0);
+        pTexCoord = ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+        pTexCoord.put(ttmp);
+        pTexCoord.position(0);
+        //String extensions = GLES20.glGetString(GLES20.GL_EXTENSIONS);
+        //Log.i("mr", "Gl extensions: " + extensions);
+        //Assert.assertTrue(extensions.contains("OES_EGL_image_external"));
+
+        initTex();
+        mSTexture = new SurfaceTexture ( hTex[0] );
+        mSTexture.setOnFrameAvailableListener(this);
+        GLES20.glClearColor ( 1.0f, 0.0f, 0.0f, 1.0f );
+        hProgram = loadShader ( vss, fss );
+    }
+
+    public void close() // TODO finalizer?
+    {
+        mUpdateST = false;
+        mSTexture.release();
+        /*mCamera.stopPreview();
+        mCamera.release();
+        mCamera = null;*/
+        deleteTex();
+    }
+
+    private void deleteTex() {
+        GLES20.glDeleteTextures ( 1, hTex, 0 );
+    }
+
+    private static int loadShader(String vss, String fss) {
+        int vshader = GLES20.glCreateShader(GLES20.GL_VERTEX_SHADER);
+        GLES20.glShaderSource(vshader, vss);
+        GLES20.glCompileShader(vshader);
+        int[] compiled = new int[1];
+        GLES20.glGetShaderiv(vshader, GLES20.GL_COMPILE_STATUS, compiled, 0);
+        if (compiled[0] == 0) {
+            Log.e("Shader", "Could not compile vshader");
+            Log.v("Shader", "Could not compile vshader:" + GLES20.glGetShaderInfoLog(vshader));
+            GLES20.glDeleteShader(vshader);
+            vshader = 0;
+        }
+
+        int fshader = GLES20.glCreateShader(GLES20.GL_FRAGMENT_SHADER);
+        GLES20.glShaderSource(fshader, fss);
+        GLES20.glCompileShader(fshader);
+        GLES20.glGetShaderiv(fshader, GLES20.GL_COMPILE_STATUS, compiled, 0);
+        if (compiled[0] == 0) {
+            Log.e("Shader", "Could not compile fshader");
+            Log.v("Shader", "Could not compile fshader:" + GLES20.glGetShaderInfoLog(fshader));
+            GLES20.glDeleteShader(fshader);
+            fshader = 0;
+        }
+
+        int program = GLES20.glCreateProgram();
+        GLES20.glAttachShader(program, vshader);
+        GLES20.glAttachShader(program, fshader);
+        GLES20.glLinkProgram(program);
+
+        return program;
+    }
+
+    private void initTex() {
+        hTex = new int[1];
+        GLES20.glGenTextures ( 1, hTex, 0 );
+        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, hTex[0]);
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST); // TODO let user optionally use GL_LINEAR
+    }
+
+    private final String vss =
+            "attribute vec2 vPosition;\n" +
+                    "attribute vec2 vTexCoord;\n" +
+                    "varying vec2 texCoord;\n" +
+                    "void main() {\n" +
+                    "  texCoord = vTexCoord;\n" +
+                    "  gl_Position = vec4 ( vPosition.x, vPosition.y, 0.0, 1.0 );\n" +
+                    "}";
+
+    private final String fss =
+            "#extension GL_OES_EGL_image_external : require\n" +
+                    "precision mediump float;\n" +
+                    "uniform samplerExternalOES sTexture;\n" +
+                    "varying vec2 texCoord;\n" +
+                    "void main() {\n" +
+                    "  gl_FragColor = texture2D(sTexture,texCoord);\n" +
+                    "}";
+
+    private int[] hTex;
+    private FloatBuffer pVertex;
+    private FloatBuffer pTexCoord;
+    private int hProgram;
+
     /**
      * Generates a frame of data using GL commands.  We have an 8-frame animation
      * sequence that wraps around.  It looks like this:
@@ -326,6 +443,67 @@ public class EGLTest2 extends AndroidTestCase {
     private static long computePresentationTimeNsec(int frameIndex) {
         final long ONE_BILLION = 1000000000;
         return frameIndex * ONE_BILLION / FRAME_RATE;
+    }
+
+
+    public SurfaceTexture getSurf() {
+        //rec.start();
+        return mSTexture;
+    }
+
+    int ctr = 0;
+
+    public void onDrawFrame(GL10 unused) {
+        Log.e("FRAME", "frammme");
+
+        mInputSurface.makeCurrent();
+        GLES20.glViewport(0, 0, 320, 240); // TODO is this needed?
+
+            drainEncoder(false);
+
+        GLES20.glClear( GLES20.GL_COLOR_BUFFER_BIT );
+
+        synchronized(this) {
+            if ( mUpdateST ) {
+                mSTexture.updateTexImage();
+                mUpdateST = false;
+            }
+        }
+
+        GLES20.glClearColor ( 1.0f, 0.0f, 0.0f, 1.0f ); // TODO
+
+        GLES20.glUseProgram(hProgram);
+
+        int ph = GLES20.glGetAttribLocation(hProgram, "vPosition");
+        int tch = GLES20.glGetAttribLocation(hProgram, "vTexCoord");
+        int th = GLES20.glGetUniformLocation(hProgram, "sTexture");
+
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, hTex[0]);
+        GLES20.glUniform1i(th, 0);
+
+        GLES20.glVertexAttribPointer(ph, 2, GLES20.GL_FLOAT, false, 4 * 2, pVertex);
+        GLES20.glVertexAttribPointer(tch, 2, GLES20.GL_FLOAT, false, 4 * 2, pTexCoord );
+        GLES20.glEnableVertexAttribArray(ph);
+        GLES20.glEnableVertexAttribArray(tch);
+
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+        GLES20.glFlush();
+
+        mInputSurface.setPresentationTime(mSTexture.getTimestamp());
+
+        // Submit it to the encoder.  The eglSwapBuffers call will block if the input
+        // is full, which would be bad if it stayed full until we dequeued an output
+        // buffer (which we can't do, since we're stuck here).  So long as we fully drain
+        // the encoder before supplying additional input, the system guarantees that we
+        // can supply another frame without blocking.
+        //if (VERBOSE) Log.d(TAG, "sending frame " + i + " to encoder");
+        mInputSurface.swapBuffers();
+
+        if (ctr++ == 100) {
+            drainEncoder(true);
+            releaseEncoder();
+        }
     }
 
 

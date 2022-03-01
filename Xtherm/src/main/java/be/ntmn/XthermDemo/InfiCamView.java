@@ -171,8 +171,8 @@ class InfiRenderer implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvai
         GLES20.glUseProgram(hProgram);
 
         int ph = GLES20.glGetAttribLocation(hProgram, "vPosition");
-        int tch = GLES20.glGetAttribLocation ( hProgram, "vTexCoord" );
-        int th = GLES20.glGetUniformLocation ( hProgram, "sTexture" );
+        int tch = GLES20.glGetAttribLocation(hProgram, "vTexCoord");
+        int th = GLES20.glGetUniformLocation(hProgram, "sTexture");
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, hTex[0]);

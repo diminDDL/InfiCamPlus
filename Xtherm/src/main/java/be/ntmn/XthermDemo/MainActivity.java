@@ -1588,13 +1588,15 @@ public final class MainActivity extends BaseActivity {
         //Log.e("TEXTOOR", "this: " + sv.getSurf());
 
         SurfaceTexture surf = sv.getSurf();
-        mCameraHandler.startPreview(new Surface(surf));
+        //mCameraHandler.startPreview(new Surface(surf));
         try {
             et2 = new EGLTest2();
             et2.testEncodeVideoToMp4();
         } catch (IOException e) {
             e.printStackTrace();
         }
+        mCameraHandler.startPreview(new Surface(et2.getSurf()));
+
 
         /*final CameraRenderer cr = new CameraRenderer(this, surf, 640, 480);
         //cr.initGL();
