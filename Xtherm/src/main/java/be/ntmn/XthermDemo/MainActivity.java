@@ -27,6 +27,7 @@ import static android.view.View.VISIBLE;
 import static java.lang.Math.abs;
 import static java.lang.Thread.sleep;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -1581,9 +1582,25 @@ public final class MainActivity extends BaseActivity {
         // TODO (netman) following line is original, next is how i patched in other Surface
         //mCameraHandler.startPreview(new Surface(st));
         final InfiCamView sv = findViewById(R.id.infiCamView);
-        Log.e("TEXTOOR", "this: " + sv.getSurf());
-        mCameraHandler.startPreview(sv.getSurf());
+        //Log.e("TEXTOOR", "this: " + sv.getSurf());
 
+        SurfaceTexture surf = new SurfaceTexture(false);
+        mCameraHandler.startPreview(surf);
+
+        final CameraRenderer cr = new CameraRenderer(this, surf, 640, 480);
+        //cr.initGL();
+        cr.setOnRendererReadyListener(new CameraRenderer.OnRendererReadyListener() {
+            @Override
+            public void onRendererReady() {
+                cr.startRecording("/sdcard/videocapture_example/test.mp4");
+            }
+
+            @Override
+            public void onRendererFinished() {
+
+            }
+        });
+        cr.start();
 
 //        Log.e(TAG, "startPreview: getSurfaceTexture2");
         //mCameraHandler.startPreview(null);

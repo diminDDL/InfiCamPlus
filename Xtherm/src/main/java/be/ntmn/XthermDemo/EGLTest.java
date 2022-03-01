@@ -26,7 +26,7 @@ public class EGLTest {
             mEGLDisplay = null;
             throw new RuntimeException("unable to initialize EGL14");
         }
-        EGLConfig config = getConfig(true);
+        EGLConfig config = getConfig();
         if (config == null)
             throw new RuntimeException("Unable to find a suitable EGLConfig");
         int[] attrib2_list = {
@@ -39,7 +39,7 @@ public class EGLTest {
         mEGLContext = context;
     }
 
-    private EGLConfig getConfig(boolean recordable) {
+    private EGLConfig getConfig() {
         int renderableType = EGL14.EGL_OPENGL_ES2_BIT;
 
         // The actual surface is generally RGBA or RGBX, so situationally omitting alpha
@@ -56,10 +56,8 @@ public class EGLTest {
                 EGL14.EGL_NONE, 0,      // placeholder for recordable [@-3]
                 EGL14.EGL_NONE
         };
-        if (recordable) {
-            attribList[attribList.length - 3] = EGL_RECORDABLE_ANDROID;
-            attribList[attribList.length - 2] = 1; // TODO ???
-        }
+        attribList[attribList.length - 3] = EGL_RECORDABLE_ANDROID;
+        attribList[attribList.length - 2] = 1; // TODO ???
         EGLConfig[] configs = new EGLConfig[1];
         int[] numConfigs = new int[1];
         if (!EGL14.eglChooseConfig(mEGLDisplay, attribList, 0, configs, 0, configs.length,

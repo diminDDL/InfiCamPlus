@@ -1,23 +1,35 @@
 package be.ntmn.XthermDemo;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.SurfaceTexture;
 import android.media.MediaRecorder;
 import android.opengl.EGL14;
+import android.opengl.EGLSurface;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
+import android.opengl.GLUtils;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.SparseIntArray;
 import android.view.Surface;
+import android.view.SurfaceView;
 
+import java.io.File;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.nio.ShortBuffer;
+import java.util.ArrayList;
 
 import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.egl.EGLSurface;
 import javax.microedition.khronos.opengles.GL10;
 /* TODO
 Most 3D applications, such as games or simulations, are continuously animated. But some 3D
@@ -31,13 +43,32 @@ redrawing the screen is a waste of time. If you are developing a reactive applic
 // this also looks interesting https://github.com/googlecreativelab/shadercam/blob/master/shadercam/src/main/java/com/androidexperiments/shadercam/gl/CameraRenderer.java
 //   also https://github.com/googlecreativelab/shadercam/blob/master/shadercam/src/main/java/com/androidexperiments/shadercam/gl/WindowSurface.java
 
-public class InfiCamView extends GLSurfaceView {
+public class InfiCamView extends SurfaceView {
+
     public InfiCamView(Context context) {
+        super(context);
+    }
+
+    public InfiCamView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+    }
+
+    public InfiCamView(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+    }
+
+    public InfiCamView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+        super(context, attrs, defStyleAttr, defStyleRes);
+    }
+}
+
+class InfiCamViewold extends GLSurfaceView {
+    public InfiCamViewold(Context context) {
         super(context);
         init();
     }
 
-    public InfiCamView(Context context, AttributeSet attrs) {
+    public InfiCamViewold(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }
@@ -45,10 +76,11 @@ public class InfiCamView extends GLSurfaceView {
     InfiRenderer rend;
 
     void init() {
-        rend = new InfiRenderer(this);
+        //TODO rend = new InfiRenderer(this);
         setEGLContextClientVersion ( 2 );
         setRenderer(rend);
         setRenderMode ( GLSurfaceView.RENDERMODE_WHEN_DIRTY );
+
     }
 
     public Surface getSurf() {
@@ -189,7 +221,7 @@ class InfiRenderer implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvai
     }
 
     public Surface getSurf() {
-        rec.start();
+        //rec.start();
 
         return new Surface(mSTexture);
     }
@@ -244,7 +276,7 @@ class InfiRenderer implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvai
 
     public synchronized void onFrameAvailable(SurfaceTexture st) {
         mUpdateST = true;
-        mView.requestRender();
+        //TODO mView.requestRender();
     }
 
     private static int loadShader(String vss, String fss) {
@@ -279,3 +311,4 @@ class InfiRenderer implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvai
         return program;
     }
 }
+
