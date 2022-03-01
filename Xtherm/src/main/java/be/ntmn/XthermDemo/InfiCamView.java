@@ -117,74 +117,6 @@ class InfiRenderer implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvai
 
     private InfiCamView mView;
 
-    MediaRecorder getRecorder() {
-        MediaRecorder ret = new MediaRecorder();
-
-        //set the sources
-        /**
-         * {@link MediaRecorder.AudioSource.CAMCORDER} is nice because on some fancier
-         * phones microphones will be aligned towards whatever camera is being used, giving us better
-         * directional audio. And if it doesn't have that, it will fallback to the default Microphone.
-         */
-        ret.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
-
-        /**
-         * Using {@link MediaRecorder.VideoSource.SURFACE} creates a {@link Surface}
-         * for us to use behind the scenes. We then pass this service to our {@link ExampleRenderer}
-         * later on for creation of our EGL contexts to render to.
-         *
-         * {@link MediaRecorder.VideoSource.SURFACE} is also the default for rendering
-         * out Camera2 api data without any shader manipulation at all.
-         */
-        ret.setVideoSource(MediaRecorder.VideoSource.SURFACE);
-
-        //set output
-        ret.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-
-        /**
-         * This would eventually be worth making a parameter at each call to {@link #setupMediaRecorder()}
-         * so that you can pass in a timestamp or unique file name each time to setup up.
-         */
-        ret.setOutputFile("/sdcard/videocapture_example/test.mp4");
-
-        /**
-         * Media Recorder can be finicky with certain video sizes, so lets make sure we pass it
-         * something 'normal' - ie 720p or 1080p. this will create a surface of the same size,
-         * which will be used by our renderer for drawing once recording is enabled
-         */
-        ret.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-        ret.setVideoEncodingBitRate(10000000);
-        ret.setVideoSize(640, 480);
-        ret.setVideoFrameRate(30);
-
-        //setup audio
-        ret.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-        ret.setAudioEncodingBitRate(44800);
-
-        /**
-         * we can determine the rotation and orientation of our screen here for dynamic usage
-         * but since we know our app will be portrait only, setting the media recorder to
-         * 720x1280 rather than 1280x720 and letting orientation be 0 will keep everything looking normal
-         */
-        /*int rotation = ((Activity)mContext).getWindowManager().getDefaultDisplay().getRotation();
-        int orientation = ORIENTATIONS.get(rotation); Log.d(TAG, "orientation: " + orientation);
-        ret.setOrientationHint(0);*/
-
-        try {
-            /**
-             * There are what seems like an infinite number of ways to fuck up the previous steps,
-             * so prepare() will throw an exception if you fail, and hope that stackoverflow can help.
-             */
-            ret.prepare();
-        } catch (IOException e) {
-            //Toast.makeText(mContext, "MediaRecorder failed on prepare()", Toast.LENGTH_LONG).show();
-            Log.e("ERRORERROR", "MediaRecorder failed on prepare() " + e.getMessage());
-        }
-        return ret;
-    }
-
-    MediaRecorder rec = getRecorder();
-
     InfiRenderer(InfiCamView view) {
         mView = view;
         float[] vtmp = { 1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f };
@@ -195,7 +127,7 @@ class InfiRenderer implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvai
         pTexCoord = ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         pTexCoord.put(ttmp);
         pTexCoord.position(0);
-        rec.setInputSurface(new Surface(mSTexture));
+        //rec.setInputSurface(new Surface(mSTexture));
     }
 
     public void close()
@@ -226,7 +158,7 @@ class InfiRenderer implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvai
         return mSTexture;
     }
 
-    public void onDrawFrame ( GL10 unused ) {
+    public void onDrawFrame(GL10 unused) {
         GLES20.glClear( GLES20.GL_COLOR_BUFFER_BIT );
 
         synchronized(this) {

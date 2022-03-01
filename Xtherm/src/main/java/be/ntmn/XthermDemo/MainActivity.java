@@ -97,6 +97,7 @@ import be.ntmn.widget.Camera2Helper;
 import be.ntmn.widget.TouchPoint;
 import be.ntmn.widget.UVCCameraTextureView;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
@@ -1554,6 +1555,8 @@ public final class MainActivity extends BaseActivity {
 
     };
 
+    EGLTest2 et2;
+
     private void startPreview() {
         mLeft = mImageView.getLeft();
         mTop = mImageView.getTop();
@@ -1586,6 +1589,12 @@ public final class MainActivity extends BaseActivity {
 
         SurfaceTexture surf = sv.getSurf();
         mCameraHandler.startPreview(new Surface(surf));
+        try {
+            et2 = new EGLTest2();
+            et2.testEncodeVideoToMp4();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         /*final CameraRenderer cr = new CameraRenderer(this, surf, 640, 480);
         //cr.initGL();
