@@ -45,6 +45,7 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
 import android.os.Build;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
@@ -79,6 +80,13 @@ public final class USBMonitor {
 	 */
 	private final Handler mAsyncHandler;
 	private volatile boolean destroyed;
+
+	public static final Handler createHandler(final String name) {
+		final HandlerThread thread = new HandlerThread(name);
+		thread.start();
+		return new Handler(thread.getLooper());
+	}
+
 	/**
 	 * USB機器の状態変更時のコールバックリスナー
 	 */
@@ -120,7 +128,7 @@ public final class USBMonitor {
 		mWeakContext = new WeakReference<Context>(context);
 		mUsbManager = (UsbManager)context.getSystemService(Context.USB_SERVICE);
 		mOnDeviceConnectListener = listener;
-		mAsyncHandler = HandlerThreadHandler.createHandler(TAG);
+		mAsyncHandler = createHandler(TAG);
 		destroyed = false;
 		if (DEBUG) Log.v(TAG, "USBMonitor:mUsbManager=" + mUsbManager);
 	}

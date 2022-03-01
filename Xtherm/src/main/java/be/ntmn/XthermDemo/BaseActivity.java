@@ -28,6 +28,7 @@ import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
@@ -37,7 +38,6 @@ import android.widget.Toast;
 
 import be.ntmn.MessageDialogFragment;
 import be.ntmn.BuildCheck;
-import be.ntmn.HandlerThreadHandler;
 import be.ntmn.PermissionCheck;
 
 /**
@@ -57,12 +57,18 @@ public class BaseActivity extends AppCompatActivity
 	private Handler mWorkerHandler;
 	private long mWorkerThreadID = -1;
 
+	public static final Handler createHandler(final String name) {
+		final HandlerThread thread = new HandlerThread(name);
+		thread.start();
+		return new Handler(thread.getLooper());
+	}
+
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		// ワーカースレッドを生成
 		if (mWorkerHandler == null) {
-			mWorkerHandler = HandlerThreadHandler.createHandler(TAG);
+			mWorkerHandler = createHandler(TAG);
 			mWorkerThreadID = mWorkerHandler.getLooper().getThread().getId();
 		}
 	}
