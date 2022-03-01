@@ -25,8 +25,12 @@ public class InfiCam {
     }
 
     @Override
-    protected void finalize() {
-        nativeDelete(instance);
+    protected void finalize() throws Throwable {
+        try {
+            nativeDelete(instance);
+        } finally {
+            super.finalize();
+        }
     }
 
     /* The actual class starts here. */
