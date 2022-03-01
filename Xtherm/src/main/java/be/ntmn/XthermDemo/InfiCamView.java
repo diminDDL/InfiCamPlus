@@ -158,10 +158,10 @@ class InfiRenderer implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvai
         mView = view;
         float[] vtmp = { 1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f };
         float[] ttmp = { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f };
-        pVertex = ByteBuffer.allocateDirect(8*4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+        pVertex = ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         pVertex.put(vtmp);
         pVertex.position(0);
-        pTexCoord = ByteBuffer.allocateDirect(8*4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+        pTexCoord = ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         pTexCoord.put(ttmp);
         pTexCoord.position(0);
     }
@@ -196,7 +196,6 @@ class InfiRenderer implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvai
 
     public void onDrawFrame ( GL10 unused ) {
         GLES20.glClear( GLES20.GL_COLOR_BUFFER_BIT );
-
 
         synchronized(this) {
             if ( mUpdateST ) {

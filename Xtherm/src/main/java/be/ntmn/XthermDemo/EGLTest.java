@@ -1,10 +1,14 @@
 package be.ntmn.XthermDemo;
 
+import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
 import android.opengl.EGLConfig;
 import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
+import android.opengl.EGLExt;
+import android.opengl.EGLSurface;
 import android.util.Log;
+import android.view.Surface;
 
 public class EGLTest {
     private EGLDisplay mEGLDisplay = EGL14.EGL_NO_DISPLAY;
@@ -77,8 +81,6 @@ public class EGLTest {
         }
     }
 
-
-
     /**
      * Discards all resources held by this class, notably the EGL context.  This must be
      * called from the thread where the context was created.
@@ -115,5 +117,98 @@ public class EGLTest {
         } finally {
             super.finalize();
         }
+    }
+
+    /**
+     * Creates an EGL surface associated with a Surface.
+     * <p>
+     * If this is destined for MediaCodec, the EGLConfig should have the "recordable" attribute.
+     */
+    public EGLSurface createWindowSurface(Object surface) {
+        if (!(surface instanceof Surface) && !(surface instanceof SurfaceTexture)) {
+            throw new RuntimeException("invalid surface: " + surface);
+        }
+
+        // Create a window surface, and attach it to the Surface we received.
+        int[] surfaceAttribs = {
+                EGL14.EGL_NONE
+        };
+        EGLSurface eglSurface = EGL14.eglCreateWindowSurface(mEGLDisplay, mEGLConfig, surface,
+                surfaceAttribs, 0);
+        checkEglError("eglCreateWindowSurface");
+        if (eglSurface == null) {
+            throw new RuntimeException("surface was null");
+        }
+        return eglSurface;
+    }
+
+    /**
+     * Creates an EGL surface associated with an offscreen buffer.
+     */
+    public EGLSurface createOffscreenSurface(int width, int height) {
+        int[] surfaceAttribs = {
+                EGL14.EGL_WIDTH, width,
+                EGL14.EGL_HEIGHT, height,
+                EGL14.EGL_NONE
+        };
+        EGLSurface eglSurface = EGL14.eglCreatePbufferSurface(mEGLDisplay, mEGLConfig,
+                surfaceAttribs, 0);
+        checkEglError("eglCreatePbufferSurface");
+        if (eglSurface == null) {
+            throw new RuntimeException("surface was null");
+        }
+        return eglSurface;
+    }
+
+    /**
+     * Makes our EGL context current, using the supplied surface for both "draw" and "read".
+     */
+    public void makeCurrent(EGLSurface eglSurface) {
+        if (mEGLDisplay == EGL14.EGL_NO_DISPLAY) {
+            // called makeCurrent() before create?
+            Log.d("LALALA", "NOTE: makeCurrent w/o display");
+        }
+        if (!EGL14.eglMakeCurrent(mEGLDisplay, eglSurface, eglSurface, mEGLContext)) {
+            throw new RuntimeException("eglMakeCurrent failed");
+        }
+    }
+
+    /**
+     * Makes our EGL context current, using the supplied "draw" and "read" surfaces.
+     */
+    public void makeCurrent(EGLSurface drawSurface, EGLSurface readSurface) {
+        if (mEGLDisplay == EGL14.EGL_NO_DISPLAY) {
+            // called makeCurrent() before create?
+            Log.d("LALALA", "NOTE: makeCurrent w/o display");
+        }
+        if (!EGL14.eglMakeCurrent(mEGLDisplay, drawSurface, readSurface, mEGLContext)) {
+            throw new RuntimeException("eglMakeCurrent(draw,read) failed");
+        }
+    }
+
+    /**
+     * Makes no context current.
+     */
+    public void makeNothingCurrent() {
+        if (!EGL14.eglMakeCurrent(mEGLDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE,
+                EGL14.EGL_NO_CONTEXT)) {
+            throw new RuntimeException("eglMakeCurrent failed");
+        }
+    }
+
+    /**
+     * Calls eglSwapBuffers.  Use this to "publish" the current frame.
+     *
+     * @return false on failure
+     */
+    public boolean swapBuffers(EGLSurface eglSurface) {
+        return EGL14.eglSwapBuffers(mEGLDisplay, eglSurface);
+    }
+
+    /**
+     * Sends the presentation time stamp to EGL.  Time is expressed in nanoseconds.
+     */
+    public void setPresentationTime(EGLSurface eglSurface, long nsecs) {
+        EGLExt.eglPresentationTimeANDROID(mEGLDisplay, eglSurface, nsecs);
     }
 }
