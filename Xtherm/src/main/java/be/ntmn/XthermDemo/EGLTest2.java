@@ -41,9 +41,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
-import javax.microedition.khronos.egl.EGL;
-import javax.microedition.khronos.opengles.GL10;
-
 //20131106: removed hard-coded "/sdcard"
 //20131205: added alpha to EGLConfig
 
@@ -107,6 +104,7 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
         try {
             prepareEncoder();
 
+            mInputSurface.makeCurrent();
             init();
             /*mInputSurface.makeCurrent();
 
@@ -305,7 +303,7 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
     public synchronized void onFrameAvailable(SurfaceTexture st) {
         mUpdateST = true;
         //mView.requestRender(); // TODO
-        onDrawFrame(null);
+        onDrawFrame();
     }
 
     public void init() {
@@ -317,7 +315,7 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
         pTexCoord = ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         pTexCoord.put(ttmp);
         pTexCoord.position(0);
-        String extensions = GLES20.glGetString(GLES10.GL_EXTENSIONS);
+        //String extensions = GLES20.glGetString(GLES10.GL_EXTENSIONS);
         //Log.i("mr", "Gl extensions: " + extensions);
         //Assert.assertTrue(extensions.contains("OES_EGL_image_external"));
 
@@ -457,7 +455,7 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
 
     int ctr = 0;
 
-    public void onDrawFrame(GL10 unused) {
+    public void onDrawFrame() {
         Log.e("FRAME", "frammme");
 
         mInputSurface.makeCurrent();
@@ -504,7 +502,7 @@ public class EGLTest2 implements SurfaceTexture.OnFrameAvailableListener {
         //if (VERBOSE) Log.d(TAG, "sending frame " + i + " to encoder");
         mInputSurface.swapBuffers();
 
-        if (ctr++ == 100) {
+        if (ctr++ == 1000) {
             drainEncoder(true);
             releaseEncoder();
         }

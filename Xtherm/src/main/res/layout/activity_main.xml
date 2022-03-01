@@ -118,10 +118,10 @@
         android:layout_alignRight="@+id/camera_view"
         android:layout_alignTop="@+id/camera_view" />
 
-    <be.ntmn.XthermDemo.InfiCamView
+    <!--<be.ntmn.XthermDemo.InfiCamView
         android:id="@+id/infiCamView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"></be.ntmn.XthermDemo.InfiCamView>
+        android:layout_height="match_parent"></be.ntmn.XthermDemo.InfiCamView>-->
 
     <LinearLayout
         android:id="@+id/menu_palette_layout"

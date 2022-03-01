@@ -1581,22 +1581,26 @@ public final class MainActivity extends BaseActivity {
         //dstLowTemp.set(40,100,40+mCursor.getWidth(),100+mCursor.getHeight());//int left, int top, int right, int bottom
 
 //        Log.e(TAG, "startPreview: getSurfaceTexture");
-        final SurfaceTexture st = mUVCCameraView.getSurfaceTexture();
+        //final SurfaceTexture st = mUVCCameraView.getSurfaceTexture();
         // TODO (netman) following line is original, next is how i patched in other Surface
         //mCameraHandler.startPreview(new Surface(st));
-        final InfiCamView sv = findViewById(R.id.infiCamView);
+        //final InfiCamView sv = findViewById(R.id.infiCamView);
         //Log.e("TEXTOOR", "this: " + sv.getSurf());
 
-        SurfaceTexture surf = sv.getSurf();
+        //SurfaceTexture surf = sv.getSurf();
         //mCameraHandler.startPreview(new Surface(surf));
-        try {
-            et2 = new EGLTest2();
-            et2.testEncodeVideoToMp4();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        mCameraHandler.startPreview(new Surface(et2.getSurf()));
-
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    et2 = new EGLTest2();
+                    et2.testEncodeVideoToMp4();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                mCameraHandler.startPreview(new Surface(et2.getSurf()));
+            }
+        });
 
         /*final CameraRenderer cr = new CameraRenderer(this, surf, 640, 480);
         //cr.initGL();
