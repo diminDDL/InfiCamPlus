@@ -43,7 +43,7 @@ redrawing the screen is a waste of time. If you are developing a reactive applic
 // this also looks interesting https://github.com/googlecreativelab/shadercam/blob/master/shadercam/src/main/java/com/androidexperiments/shadercam/gl/CameraRenderer.java
 //   also https://github.com/googlecreativelab/shadercam/blob/master/shadercam/src/main/java/com/androidexperiments/shadercam/gl/WindowSurface.java
 
-public class InfiCamView extends SurfaceView {
+/*public class InfiCamView extends SurfaceView {
 
     public InfiCamView(Context context) {
         super(context);
@@ -60,15 +60,15 @@ public class InfiCamView extends SurfaceView {
     public InfiCamView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
     }
-}
+}*/
 
-class InfiCamViewold extends GLSurfaceView {
-    public InfiCamViewold(Context context) {
+public class InfiCamView extends GLSurfaceView {
+    public InfiCamView(Context context) {
         super(context);
         init();
     }
 
-    public InfiCamViewold(Context context, AttributeSet attrs) {
+    public InfiCamView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }
@@ -76,14 +76,13 @@ class InfiCamViewold extends GLSurfaceView {
     InfiRenderer rend;
 
     void init() {
-        //TODO rend = new InfiRenderer(this);
-        setEGLContextClientVersion ( 2 );
+        rend = new InfiRenderer(this);
+        setEGLContextClientVersion(2);
         setRenderer(rend);
-        setRenderMode ( GLSurfaceView.RENDERMODE_WHEN_DIRTY );
-
+        setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
     }
 
-    public Surface getSurf() {
+    public SurfaceTexture getSurf() {
         return rend.getSurf();
     }
 }
@@ -196,6 +195,7 @@ class InfiRenderer implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvai
         pTexCoord = ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         pTexCoord.put(ttmp);
         pTexCoord.position(0);
+        rec.setInputSurface(new Surface(mSTexture));
     }
 
     public void close()
@@ -220,10 +220,10 @@ class InfiRenderer implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvai
         hProgram = loadShader ( vss, fss );
     }
 
-    public Surface getSurf() {
+    public SurfaceTexture getSurf() {
         //rec.start();
 
-        return new Surface(mSTexture);
+        return mSTexture;
     }
 
     public void onDrawFrame ( GL10 unused ) {
@@ -276,7 +276,7 @@ class InfiRenderer implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvai
 
     public synchronized void onFrameAvailable(SurfaceTexture st) {
         mUpdateST = true;
-        //TODO mView.requestRender();
+        mView.requestRender();
     }
 
     private static int loadShader(String vss, String fss) {

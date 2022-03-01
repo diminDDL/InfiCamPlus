@@ -1584,10 +1584,10 @@ public final class MainActivity extends BaseActivity {
         final InfiCamView sv = findViewById(R.id.infiCamView);
         //Log.e("TEXTOOR", "this: " + sv.getSurf());
 
-        SurfaceTexture surf = new SurfaceTexture(false);
-        mCameraHandler.startPreview(surf);
+        SurfaceTexture surf = sv.getSurf();
+        mCameraHandler.startPreview(new Surface(surf));
 
-        final CameraRenderer cr = new CameraRenderer(this, surf, 640, 480);
+        /*final CameraRenderer cr = new CameraRenderer(this, surf, 640, 480);
         //cr.initGL();
         cr.setOnRendererReadyListener(new CameraRenderer.OnRendererReadyListener() {
             @Override
@@ -1600,7 +1600,7 @@ public final class MainActivity extends BaseActivity {
 
             }
         });
-        cr.start();
+        cr.start();*/
 
 //        Log.e(TAG, "startPreview: getSurfaceTexture2");
         //mCameraHandler.startPreview(null);
