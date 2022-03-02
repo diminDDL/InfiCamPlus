@@ -49,6 +49,10 @@ public class SurfaceRecorder {
         muxerStarted = false;
     }
 
+    public Surface getInputSurface() {
+        return inputSurface;
+    }
+
     void release() {
         if (videoEncoder != null) {
             videoEncoder.stop();
@@ -77,11 +81,11 @@ public class SurfaceRecorder {
 
 	TODO note getPTSUs is presentation time there
  */
-        while (true) {
+        //while (true) {
             int encoderStatus = videoEncoder.dequeueOutputBuffer(bufferInfo, TIMEOUT_USEC);
             if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
-                if (!endOfStream)
-                    break;
+                /*if (!endOfStream)
+                    break;*/
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                 /* Should happen exactly once, before output buffer given. */
                 if (muxerStarted)
@@ -101,6 +105,6 @@ public class SurfaceRecorder {
                 }
                 videoEncoder.releaseOutputBuffer(encoderStatus, false);
             }
-        }
+        //}
     }
 }

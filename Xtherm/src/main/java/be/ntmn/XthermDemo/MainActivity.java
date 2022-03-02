@@ -96,6 +96,7 @@ import be.ntmn.widget.Camera2Helper;
 import be.ntmn.widget.TouchPoint;
 import be.ntmn.widget.UVCCameraTextureView;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
@@ -1554,6 +1555,26 @@ public final class MainActivity extends BaseActivity {
     };
 
     SurfaceMuxer et2;
+    class RunThread extends Thread {
+        SurfaceRecorder sr;
+
+        public RunThread(SurfaceRecorder sr) {
+            this.sr = sr;
+        }
+
+        @Override
+        public void run() {
+            Log.e("DONE", "VIDEOSTART");
+            for (int i = 0; i < 1000; ++i) {
+                sr.drainEncoder(false);
+                Log.e("DONE", "DRAINNEXT");
+            }
+            sr.drainEncoder(true);
+            sr.release();
+            Log.e("DONE", "VIDEODONE");
+        }
+    }
+    RunThread rt;
 
     private void startPreview() {
         mLeft = mImageView.getLeft();
@@ -1598,7 +1619,7 @@ public final class MainActivity extends BaseActivity {
                     e.printStackTrace();
                 }
                 SurfaceTexture ist = et2.createInputSurfaceTexture();
-                mCameraHandler.startPreview(new Surface(ist));
+                //mCameraHandler.startPreview(new Surface(ist));
                 ist.setOnFrameAvailableListener(et2);
 
                 Bitmap bmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
@@ -1618,6 +1639,19 @@ public final class MainActivity extends BaseActivity {
                 //cvs.drawBitmap(bmp, 0, 0, null);
                 cvs.drawLine(0, 0, 640, 480, p2);
                 s.unlockCanvasAndPost(cvs);
+
+                try {
+                    final SurfaceRecorder sr = new SurfaceRecorder(640, 480);
+                    Surface rec = sr.getInputSurface();
+                    et2.addOutputSurface(rec);
+                    rt = new RunThread(sr);
+                    rt.start();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                mCameraHandler.startPreview(new Surface(ist));
+
             }
         });
 
