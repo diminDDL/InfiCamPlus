@@ -1555,7 +1555,7 @@ public final class MainActivity extends BaseActivity {
 
     };
 
-    EGLTest2 et2;
+    SurfaceMuxer et2;
 
     private void startPreview() {
         mLeft = mImageView.getLeft();
@@ -1593,12 +1593,13 @@ public final class MainActivity extends BaseActivity {
             @Override
             public void run() {
                 try {
-                    et2 = new EGLTest2();
-                    et2.testEncodeVideoToMp4(sv.getHolder().getSurface(), sv);
+                    et2 = new SurfaceMuxer();
+                    //et2.testEncodeVideoToMp4(sv.getHolder().getSurface(), sv);
+                    et2.addOutputSurface(sv.getHolder().getSurface());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                mCameraHandler.startPreview(new Surface(et2.getSurf()));
+                mCameraHandler.startPreview(et2.getInputSurface());
             }
         });
 

@@ -94,6 +94,14 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
         initEgl();
     }
 
+    public Surface getInputSurface() {
+        return new Surface(surfaceTexture);
+    }
+
+    public void addOutputSurface(Surface s) {
+        targetSurfaces.add(new TargetSurface(s));
+    }
+
     @Override
     public void onFrameAvailable(SurfaceTexture surfaceTexture) {
         for (TargetSurface ts : targetSurfaces) {
