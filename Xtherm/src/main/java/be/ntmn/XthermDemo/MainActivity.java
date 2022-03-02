@@ -1615,7 +1615,8 @@ public final class MainActivity extends BaseActivity {
                 //st.setOnFrameAvailableListener(et2);
                 Surface s = new Surface(st);
                 Canvas cvs = s.lockCanvas(null);
-                cvs.drawBitmap(bmp, 0, 0, null);
+                //cvs.drawBitmap(bmp, 0, 0, null);
+                cvs.drawLine(0, 0, 640, 480, p2);
                 s.unlockCanvasAndPost(cvs);
             }
         });
