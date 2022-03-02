@@ -139,7 +139,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 
     @Override
     public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-        for (InputSurface is : inputSurfaces)
+        for (InputSurface is : inputSurfaces) // TODO should we do it for all of them?
             is.getSurfaceTexture().updateTexImage(); // TODO check whether we should indeed run this every time
         for (OutputSurface ts : outputSurfaces) {
             ts.makeCurrent();

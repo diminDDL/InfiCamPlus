@@ -1604,7 +1604,7 @@ public final class MainActivity extends BaseActivity {
                 Bitmap bmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
                 Canvas c = new Canvas(bmp);
                 Paint p = new Paint();
-                p.setColor(Color.BLACK);
+                p.setColor(Color.TRANSPARENT);
                 c.drawRect(new Rect(0, 0, 640, 480), p);
                 Paint p2 = new Paint();
                 p2.setColor(Color.RED);
