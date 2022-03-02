@@ -1597,7 +1597,7 @@ public final class MainActivity extends BaseActivity {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                SurfaceTexture ist = et2.getInputSurfaceTexture();
+                SurfaceTexture ist = et2.createInputSurfaceTexture();
                 mCameraHandler.startPreview(new Surface(ist));
                 ist.setOnFrameAvailableListener(et2);
 
@@ -1610,7 +1610,7 @@ public final class MainActivity extends BaseActivity {
                 p2.setColor(Color.RED);
                 c.drawLine(0, 0, 640, 480, p2);
 
-                SurfaceTexture st = et2.getInputSurfaceTexture();
+                SurfaceTexture st = et2.createInputSurfaceTexture();
                 st.setDefaultBufferSize(640, 480);
                 //st.setOnFrameAvailableListener(et2);
                 Surface s = new Surface(st);

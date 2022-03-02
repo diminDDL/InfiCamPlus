@@ -19,14 +19,15 @@ import java.util.ArrayList;
 /* SurfaceMuxer
  *
  * Our native code can't write directly to the Surface that we can get from a MediaCodec or
- *   MediaRecorder for whatever reason (I think the color format and such aren't as flexible as the
- *   surface we can get from a SurfaceView). To solve this we use this, a class that'll take an
- *   input surface draw it to one or more output surfaces.
+ *   MediaRecorder for whatever reason (the documentation states: "The Surface must be rendered
+ *   with a hardware-accelerated API, such as OpenGL ES. Surface.lockCanvas(android.graphics.Rect)
+ *   may fail or produce unexpected results."). To solve this we use this class that'll take one or
+ *   more input surfaces and draw them to one or more output surfaces using EGL.
  *
  * Be aware this uses an EGL context and everything is bound to the thread it's created on.
  */
 public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
-    private static final int EGL_RECORDABLE_ANDROID = 0x3142;
+    static final int EGL_RECORDABLE_ANDROID = 0x3142;
     EGLDisplay eglDisplay = EGL14.EGL_NO_DISPLAY;
     EGLContext eglContext = EGL14.EGL_NO_CONTEXT;
     EGLConfig eglConfig;
@@ -36,23 +37,21 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
     ArrayList<InputSurface> inputSurfaces = new ArrayList<>();
     ArrayList<OutputSurface> outputSurfaces = new ArrayList<>();
 
-    private final String vss =
-                    "attribute vec2 vPosition;\n" +
-                    "attribute vec2 vTexCoord;\n" +
-                    "varying vec2 texCoord;\n" +
-                    "void main() {\n" +
-                    "  texCoord = vTexCoord;\n" +
-                    "  gl_Position = vec4 ( vPosition.x, vPosition.y, 0.0, 1.0 );\n" +
-                    "}";
+    final String vss = "attribute vec2 vPosition;\n" +
+                        "attribute vec2 vTexCoord;\n" +
+                        "varying vec2 texCoord;\n" +
+                        "void main() {\n" +
+                        "  texCoord = vTexCoord;\n" +
+                        "  gl_Position = vec4 ( vPosition.x, vPosition.y, 0.0, 1.0 );\n" +
+                        "}";
 
-    private final String fss =
-                    "#extension GL_OES_EGL_image_external : require\n" +
-                    "precision mediump float;\n" +
-                    "uniform samplerExternalOES sTexture;\n" +
-                    "varying vec2 texCoord;\n" +
-                    "void main() {\n" +
-                    "  gl_FragColor = texture2D(sTexture,texCoord);\n" +
-                    "}";
+    final String fss = "#extension GL_OES_EGL_image_external : require\n" +
+                        "precision mediump float;\n" +
+                        "uniform samplerExternalOES sTexture;\n" +
+                        "varying vec2 texCoord;\n" +
+                        "void main() {\n" +
+                        "  gl_FragColor = texture2D(sTexture,texCoord);\n" +
+                        "}";
 
     class InputSurface {
         SurfaceTexture surfaceTexture;
@@ -127,7 +126,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
         init();
     }
 
-    public SurfaceTexture getInputSurfaceTexture() {
+    public SurfaceTexture createInputSurfaceTexture() {
         InputSurface is = new InputSurface();
         inputSurfaces.add(is);
         return is.getSurfaceTexture();
@@ -184,13 +183,13 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
         }
     }
 
-    private void checkEglError(String msg) {
+    void checkEglError(String msg) {
         int error;
         if ((error = EGL14.eglGetError()) != EGL14.EGL_SUCCESS)
             throw new RuntimeException(msg + ": EGL error: 0x" + Integer.toHexString(error));
     }
 
-    private void init() { /* Initialize EGL context. */
+    void init() { /* Initialize EGL context. */
         eglDisplay = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
         if (eglDisplay == EGL14.EGL_NO_DISPLAY)
             throw new RuntimeException("unable to get EGL14 display");
