@@ -1599,7 +1599,20 @@ public final class MainActivity extends BaseActivity {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                mCameraHandler.startPreview(et2.getInputSurface());
+                //mCameraHandler.startPreview(et2.getInputSurface());
+                Bitmap bmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
+                Canvas c = new Canvas(bmp);
+                Paint p = new Paint();
+                p.setColor(Color.BLACK);
+                c.drawRect(new Rect(0, 0, 640, 480), p);
+                Paint p2 = new Paint();
+                p2.setColor(Color.RED);
+                c.drawLine(0, 0, 640, 480, p2);
+
+                Surface s = et2.getInputSurface();
+                Canvas cvs = s.lockCanvas(null);
+                cvs.drawBitmap(bmp, 0, 0, null);
+                s.unlockCanvasAndPost(cvs);
             }
         });
 

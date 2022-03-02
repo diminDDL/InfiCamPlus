@@ -56,7 +56,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
                     "}";
 
     class TargetSurface {
-        Surface surface;
+        public Surface surface;
         EGLSurface eglSurface;
 
         public TargetSurface(Surface surf) {
@@ -91,10 +91,11 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
     }
 
     public SurfaceMuxer() {
-        initEgl();
+        init();
     }
 
     public Surface getInputSurface() {
+        surfaceTexture.setDefaultBufferSize(640, 480); // TODO
         return new Surface(surfaceTexture);
     }
 
@@ -104,14 +105,13 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 
     @Override
     public void onFrameAvailable(SurfaceTexture surfaceTexture) {
+        surfaceTexture.updateTexImage(); // TODO check whether we should indeed run this every time
         for (TargetSurface ts : targetSurfaces) {
             ts.makeCurrent();
             GLES20.glViewport(0, 0, 640, 480); // TODO maybe move to onsurfacechanged? or maybe we store size info there and then... idfk
             //drainEncoder(false);
 
             GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-            surfaceTexture.updateTexImage(); // TODO check whether we should indeed run this every time
-
             GLES20.glUseProgram(hProgram);
 
             int ph = GLES20.glGetAttribLocation(hProgram, "vPosition");
@@ -154,7 +154,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
             throw new RuntimeException(msg + ": EGL error: 0x" + Integer.toHexString(error));
     }
 
-    public void initEgl() { /* Initialize EGL context. */
+    private void init() { /* Initialize EGL context. */
         eglDisplay = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
         if (eglDisplay == EGL14.EGL_NO_DISPLAY)
             throw new RuntimeException("unable to get EGL14 display");
@@ -238,7 +238,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
         surfaceTexture.setOnFrameAvailableListener(this);
     }
 
-    public void releaseEgl() { // TODO don't forget to call
+    public void release() { // TODO don't forget to call
         /* Destroying the context will also release the EGL surfaces, but not Android's Surfaces. */
         for (TargetSurface ts : targetSurfaces)
             ts.release();
