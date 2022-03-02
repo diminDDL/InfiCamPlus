@@ -145,6 +145,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
             GLES20.glViewport(0, 0, 640, 480); // TODO maybe move to onsurfacechanged? or maybe we store size info there and then... idfk
             //drainEncoder(false);
 
+            GLES20.glClearColor(0, 0, 0, 1);
             GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
             GLES20.glUseProgram(hProgram);
 
@@ -156,11 +157,11 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
             GLES20.glVertexAttribPointer(tch, 2, GLES20.GL_FLOAT, false, 4 * 2, pTexCoord);
             GLES20.glEnableVertexAttribArray(ph);
             GLES20.glEnableVertexAttribArray(tch);
+            GLES20.glUniform1i(th, 0);
 
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
             for (InputSurface is : inputSurfaces) {
                 GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, is.getTexture());
-                GLES20.glUniform1i(th, 0);
                 GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
             }
             GLES20.glFlush();
