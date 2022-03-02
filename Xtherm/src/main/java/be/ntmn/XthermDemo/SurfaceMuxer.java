@@ -32,10 +32,9 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
     EGLConfig eglConfig;
     FloatBuffer pVertex;
     FloatBuffer pTexCoord;
-    int[] hTex;
     int hProgram;
-    SurfaceTexture surfaceTexture;
-    ArrayList<TargetSurface> targetSurfaces = new ArrayList<>();
+    ArrayList<InputSurface> inputSurfaces = new ArrayList<>();
+    ArrayList<OutputSurface> outputSurfaces = new ArrayList<>();
 
     private final String vss =
                     "attribute vec2 vPosition;\n" +
@@ -55,11 +54,45 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
                     "  gl_FragColor = texture2D(sTexture,texCoord);\n" +
                     "}";
 
-    class TargetSurface {
-        public Surface surface;
+    class InputSurface {
+        SurfaceTexture surfaceTexture;
+        int[] textures = new int[1];
+
+        InputSurface() {
+            EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, eglContext);
+            GLES20.glGenTextures(1, textures, 0);
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+            GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textures[0]);
+            GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+            GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
+            GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
+            GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST); // TODO let user optionally use GL_LINEAR
+            surfaceTexture = new SurfaceTexture(textures[0]);
+            //surfaceTexture.setOnFrameAvailableListener(this); TODO
+        }
+
+        public int getTexture() {
+            return textures[0];
+        }
+
+        public SurfaceTexture getSurfaceTexture() {
+            return surfaceTexture;
+        }
+
+        public void release() {
+            surfaceTexture.release();
+            if (eglDisplay != EGL14.EGL_NO_DISPLAY) {
+                EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, eglContext);
+                GLES20.glDeleteTextures(1, textures, 0);
+            }
+        }
+    }
+
+    class OutputSurface {
+        Surface surface;
         EGLSurface eglSurface;
 
-        public TargetSurface(Surface surf) {
+        public OutputSurface(Surface surf) {
             int[] attr = { EGL14.EGL_NONE };
             surface = surf;
             eglSurface = EGL14.eglCreateWindowSurface(eglDisplay, eglConfig, surf, attr, 0);
@@ -94,19 +127,21 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
         init();
     }
 
-    public Surface getInputSurface() {
-        surfaceTexture.setDefaultBufferSize(640, 480); // TODO
-        return new Surface(surfaceTexture);
+    public SurfaceTexture getInputSurfaceTexture() {
+        InputSurface is = new InputSurface();
+        inputSurfaces.add(is);
+        return is.getSurfaceTexture();
     }
 
     public void addOutputSurface(Surface s) {
-        targetSurfaces.add(new TargetSurface(s));
+        outputSurfaces.add(new OutputSurface(s));
     }
 
     @Override
     public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-        surfaceTexture.updateTexImage(); // TODO check whether we should indeed run this every time
-        for (TargetSurface ts : targetSurfaces) {
+        for (InputSurface is : inputSurfaces)
+            is.getSurfaceTexture().updateTexImage(); // TODO check whether we should indeed run this every time
+        for (OutputSurface ts : outputSurfaces) {
             ts.makeCurrent();
             GLES20.glViewport(0, 0, 640, 480); // TODO maybe move to onsurfacechanged? or maybe we store size info there and then... idfk
             //drainEncoder(false);
@@ -118,16 +153,17 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
             int tch = GLES20.glGetAttribLocation(hProgram, "vTexCoord");
             int th = GLES20.glGetUniformLocation(hProgram, "sTexture");
 
-            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-            GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, hTex[0]);
-            GLES20.glUniform1i(th, 0);
-
             GLES20.glVertexAttribPointer(ph, 2, GLES20.GL_FLOAT, false, 4 * 2, pVertex);
             GLES20.glVertexAttribPointer(tch, 2, GLES20.GL_FLOAT, false, 4 * 2, pTexCoord);
             GLES20.glEnableVertexAttribArray(ph);
             GLES20.glEnableVertexAttribArray(tch);
 
-            GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+            for (InputSurface is : inputSurfaces) {
+                GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, is.getTexture());
+                GLES20.glUniform1i(th, 0);
+                GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+            }
             GLES20.glFlush();
 
             ts.setPresentationTime(surfaceTexture.getTimestamp());
@@ -200,14 +236,6 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
         pTexCoord.put(ttmp);
         pTexCoord.position(0);
 
-        hTex = new int[1];
-        GLES20.glGenTextures (1, hTex, 0);
-        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, hTex[0]);
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST); // TODO let user optionally use GL_LINEAR
-
         /* Create the shaders. */
         int vshader = GLES20.glCreateShader(GLES20.GL_VERTEX_SHADER);
         GLES20.glShaderSource(vshader, vss);
@@ -231,18 +259,14 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
         GLES20.glLinkProgram(hProgram);
         GLES20.glDeleteShader(vshader); /* They will still live until the program dies. */
         GLES20.glDeleteShader(fshader);
-
-        /* Create our SurfaceTexture. */
-        surfaceTexture = new SurfaceTexture(hTex[0]);
-        GLES20.glClearColor (0.0f, 0.0f, 0.0f, 1.0f);
-        surfaceTexture.setOnFrameAvailableListener(this);
     }
 
     public void release() { // TODO don't forget to call
         /* Destroying the context will also release the EGL surfaces, but not Android's Surfaces. */
-        for (TargetSurface ts : targetSurfaces)
+        for (OutputSurface ts : outputSurfaces)
             ts.release();
-        surfaceTexture.release();
+        for (InputSurface is : inputSurfaces)
+            is.release();
 
         if (eglDisplay != EGL14.EGL_NO_DISPLAY) {
             EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);

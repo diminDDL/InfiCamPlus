@@ -27,7 +27,6 @@ import static android.view.View.VISIBLE;
 import static java.lang.Math.abs;
 import static java.lang.Thread.sleep;
 
-import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -97,7 +96,6 @@ import be.ntmn.widget.Camera2Helper;
 import be.ntmn.widget.TouchPoint;
 import be.ntmn.widget.UVCCameraTextureView;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
@@ -1599,7 +1597,10 @@ public final class MainActivity extends BaseActivity {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                //mCameraHandler.startPreview(et2.getInputSurface());
+                SurfaceTexture ist = et2.getInputSurfaceTexture();
+                mCameraHandler.startPreview(new Surface(ist));
+                ist.setOnFrameAvailableListener(et2);
+
                 Bitmap bmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
                 Canvas c = new Canvas(bmp);
                 Paint p = new Paint();
@@ -1609,7 +1610,10 @@ public final class MainActivity extends BaseActivity {
                 p2.setColor(Color.RED);
                 c.drawLine(0, 0, 640, 480, p2);
 
-                Surface s = et2.getInputSurface();
+                SurfaceTexture st = et2.getInputSurfaceTexture();
+                st.setDefaultBufferSize(640, 480);
+                //st.setOnFrameAvailableListener(et2);
+                Surface s = new Surface(st);
                 Canvas cvs = s.lockCanvas(null);
                 cvs.drawBitmap(bmp, 0, 0, null);
                 s.unlockCanvasAndPost(cvs);
