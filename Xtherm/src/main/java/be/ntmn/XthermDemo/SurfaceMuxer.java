@@ -24,6 +24,9 @@ import java.util.ArrayList;
  *   may fail or produce unexpected results."). To solve this we use this class that'll take one or
  *   more input surfaces and draw them to one or more output surfaces using EGL.
  *
+ * Note that to tell the thing when frames are available you need to tell the SurfaceTexture you
+ *   want to synchronize to setOnFrameAvailableListener(surfaceMuxer).
+ *
  * Be aware this uses an EGL context and everything is bound to the thread it's created on.
  */
 public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
@@ -67,7 +70,6 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
             GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
             GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST); // TODO let user optionally use GL_LINEAR
             surfaceTexture = new SurfaceTexture(textures[0]);
-            //surfaceTexture.setOnFrameAvailableListener(this); TODO
         }
 
         public int getTexture() {

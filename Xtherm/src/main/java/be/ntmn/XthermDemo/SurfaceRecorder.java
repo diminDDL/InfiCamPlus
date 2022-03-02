@@ -66,6 +66,7 @@ public class SurfaceRecorder {
         }
     }
 
+    // TODO remember to run this in separate thread
     void drainEncoder(boolean endOfStream) {
         final int TIMEOUT_USEC = 10000;
         if (endOfStream)
