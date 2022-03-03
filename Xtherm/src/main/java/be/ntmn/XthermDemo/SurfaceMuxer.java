@@ -162,11 +162,13 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
             GLES20.glUniform1i(th, 0);
 
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-            GLES20.glBlendColor(1, 1, 1, 0.1f);
+            //GLES20.glBlendColor(1, 1, 1, 0.1f);
             for (InputSurface is : inputSurfaces) {
                 GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+                /*if (inputSurfaces.indexOf(is) == 1)
+                    GLES20.glBlendFunc(GLES20.GL_CONSTANT_ALPHA, GLES20.GL_ONE_MINUS_CONSTANT_ALPHA);*/
                 if (inputSurfaces.indexOf(is) == 1)
-                    GLES20.glBlendFunc(GLES20.GL_CONSTANT_ALPHA, GLES20.GL_ONE_MINUS_CONSTANT_ALPHA);
+                    GLES20.glViewport(0, 0, 640, 480);
 
                 GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, is.getTexture());
                 GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
