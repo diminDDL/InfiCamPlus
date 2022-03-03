@@ -1,7 +1,6 @@
 package be.ntmn.inficam;
 
 import android.Manifest;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -12,12 +11,14 @@ import android.os.Bundle;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 
 public class MainActivity extends FullscreenActivity {
-    static final int CAMERA_REQUEST_CODE = 100;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,11 +43,16 @@ public class MainActivity extends FullscreenActivity {
                 // TODO
             }
         });
-        ist = sm.createInputSurfaceTexture();
-        ist.setDefaultBufferSize(640, 480);
-        if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
-            requestPermissions(new String[] { Manifest.permission.CAMERA }, CAMERA_REQUEST_CODE);
-        // TODO onrequestpermissionresults
+        SurfaceTexture ist = sm.createInputSurfaceTexture();
+        ist.setDefaultBufferSize(1280, 960);
+        askPermission(Manifest.permission.CAMERA, isGranted -> {
+            if (isGranted) {
+                CameraTest ct = new CameraTest();
+                ct.initCamera2(this, new Surface(ist));
+            } else {
+                Toast.makeText(this, "Camera permission denied.", Toast.LENGTH_LONG).show();
+            }
+        });
         ist.setOnFrameAvailableListener(sm); // TODO set the right one
 /*
         Bitmap bmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
@@ -68,12 +74,9 @@ public class MainActivity extends FullscreenActivity {
         s.unlockCanvasAndPost(cvs);*/
     }
 
-    SurfaceTexture ist;
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        CameraTest ct = new CameraTest();
-        ct.initCamera2(this, new Surface(ist));
+    void askPermission(String perm, ActivityResultCallback<Boolean> result) {
+        ActivityResultLauncher<String> launcher =
+                registerForActivityResult(new ActivityResultContracts.RequestPermission(), result);
+        launcher.launch(perm);
     }
 }
