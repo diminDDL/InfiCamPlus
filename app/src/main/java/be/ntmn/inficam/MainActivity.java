@@ -52,7 +52,7 @@ public class MainActivity extends FullscreenActivity {
                 ct.initCamera2(this, new Surface(ist));
                 usbConnector.tryConnect(); /* Connecting to a UVC device needs camera permission. */
             } else {
-                Toast.makeText(this, "Camera permission denied.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, R.string.permdenied_cam, Toast.LENGTH_LONG).show();
             }
         });
         //ist.setOnFrameAvailableListener(surfaceMuxer); // TODO set the right one
@@ -98,8 +98,12 @@ public class MainActivity extends FullscreenActivity {
                     e.printStackTrace();
                 }
             }
+
+            @Override
+            public void onPermissionDenied(UsbDevice dev) {
+                Toast.makeText(ctx, R.string.permdenied_usb, Toast.LENGTH_LONG).show();
+            }
         };
-        Log.e("TEST", "receiver registered");
     }
 
     @Override

@@ -1,5 +1,6 @@
 package be.ntmn.inficam;
 
+import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -8,7 +9,6 @@ import android.content.IntentFilter;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
-import android.widget.Toast;
 
 import java.util.HashMap;
 
@@ -34,6 +34,7 @@ public abstract class USBConnector extends BroadcastReceiver {
             if (!deviceFilter(dev))
                 continue;
             Intent intent = new Intent(ACTION_USB_PERMISSION);
+            @SuppressLint("UnspecifiedImmutableFlag")
             PendingIntent pending = PendingIntent.getBroadcast(ctx, 0, intent, 0);
             manager.requestPermission(dev, pending);
         }
@@ -51,7 +52,7 @@ public abstract class USBConnector extends BroadcastReceiver {
                     UsbDeviceConnection conn = manager.openDevice(dev);
                     onConnect(dev, conn);
                 } else {
-                    Toast.makeText(ctx, "USB permission denied.", Toast.LENGTH_LONG).show();
+                    onPermissionDenied(dev);
                 }
                 break;
         }
@@ -59,4 +60,5 @@ public abstract class USBConnector extends BroadcastReceiver {
 
     public abstract boolean deviceFilter(UsbDevice dev);
     public abstract void onConnect(UsbDevice dev, UsbDeviceConnection conn);
+    public abstract void onPermissionDenied(UsbDevice dev);
 }
