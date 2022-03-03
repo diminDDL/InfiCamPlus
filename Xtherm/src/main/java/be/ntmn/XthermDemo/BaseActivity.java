@@ -228,10 +228,8 @@ public class BaseActivity extends AppCompatActivity
         Log.e(TAG, "onMessageDialogResult" );
 		if (result) {
 			// メッセージダイアログでOKを押された時はパーミッション要求する
-			if (BuildCheck.isMarshmallow()) {
-				requestPermissions(permissions, requestCode);
-				return;
-			}
+			requestPermissions(permissions, requestCode);
+			return;
 		}
 		// メッセージダイアログでキャンセルされた時とAndroid6でない時は自前でチェックして#checkPermissionResultを呼び出す
 		for (final String permission: permissions) {

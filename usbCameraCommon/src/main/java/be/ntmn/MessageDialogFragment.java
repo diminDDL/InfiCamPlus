@@ -90,11 +90,9 @@ public class MessageDialogFragment extends DialogFragment {
 			}
 		}
 		if (mDialogListener == null) {
-			if (BuildCheck.isAndroid4_2()) {
-				final Fragment target = getParentFragment();
-				if (target instanceof MessageDialogListener) {
-					mDialogListener = (MessageDialogListener)target;
-				}
+			final Fragment target = getParentFragment();
+			if (target instanceof MessageDialogListener) {
+				mDialogListener = (MessageDialogListener)target;
 			}
 		}
 		if (mDialogListener == null) {
