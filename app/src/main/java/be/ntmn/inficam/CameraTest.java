@@ -29,10 +29,6 @@ public class CameraTest {
         mCameraID = "" + CameraCharacteristics.LENS_FACING_FRONT;//rear camera
         mCameraManager = (CameraManager) ctx.getSystemService(Context.CAMERA_SERVICE);
         try {
-            // TODO do we check permission here?
-            if (ActivityCompat.checkSelfPermission(ctx, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                return;
-            }
             mCameraManager.openCamera(mCameraID, new CameraDevice.StateCallback() {
                 @Override
                 public void onOpened(@NonNull CameraDevice camera) {

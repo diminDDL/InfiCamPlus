@@ -1,13 +1,11 @@
 package be.ntmn.inficam;
 
 import android.Manifest;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbDeviceConnection;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -19,18 +17,20 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 
 public class MainActivity extends FullscreenActivity {
+    SurfaceMuxer surfaceMuxer = new SurfaceMuxer();
+    USBConnector usbConnector;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        SurfaceMuxer sm = new SurfaceMuxer();
         SurfaceView sv = findViewById(R.id.cameraView);
         SurfaceHolder sh = sv.getHolder();
         sh.addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
-                sm.addOutputSurface(surfaceHolder.getSurface());
+                surfaceMuxer.addOutputSurface(surfaceHolder.getSurface());
             }
 
             @Override
@@ -43,17 +43,19 @@ public class MainActivity extends FullscreenActivity {
                 // TODO
             }
         });
-        SurfaceTexture ist = sm.createInputSurfaceTexture();
+        SurfaceTexture ist2 = surfaceMuxer.createInputSurfaceTexture();
+        SurfaceTexture ist = surfaceMuxer.createInputSurfaceTexture();
         ist.setDefaultBufferSize(1280, 960);
         askPermission(Manifest.permission.CAMERA, isGranted -> {
             if (isGranted) {
                 CameraTest ct = new CameraTest();
                 ct.initCamera2(this, new Surface(ist));
+                usbConnector.tryConnect(); /* Connecting to a UVC device needs camera permission. */
             } else {
                 Toast.makeText(this, "Camera permission denied.", Toast.LENGTH_LONG).show();
             }
         });
-        ist.setOnFrameAvailableListener(sm); // TODO set the right one
+        //ist.setOnFrameAvailableListener(surfaceMuxer); // TODO set the right one
 /*
         Bitmap bmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
         Canvas c = new Canvas(bmp);
@@ -72,6 +74,38 @@ public class MainActivity extends FullscreenActivity {
         //cvs.drawBitmap(bmp, 0, 0, null);
         cvs.drawLine(0, 0, 640, 480, p2);
         s.unlockCanvasAndPost(cvs);*/
+
+        usbConnector = new USBConnector(this) {
+            @Override
+            public boolean deviceFilter(UsbDevice dev) {
+                return true;
+            }
+
+            @Override
+            public void onConnect(UsbDevice dev, UsbDeviceConnection conn) {
+                InfiCam cam = new InfiCam();
+                try {
+                    cam.connect(conn.getFileDescriptor());
+                    cam.startStream(new Surface(ist2));
+                    ist2.setOnFrameAvailableListener(surfaceMuxer);
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            cam.calibrate();
+                        }
+                    }, 500);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        Log.e("TEST", "receiver registered");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
     }
 
     void askPermission(String perm, ActivityResultCallback<Boolean> result) {
