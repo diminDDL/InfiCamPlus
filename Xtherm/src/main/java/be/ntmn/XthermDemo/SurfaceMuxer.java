@@ -40,7 +40,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
     ArrayList<InputSurface> inputSurfaces = new ArrayList<>();
     ArrayList<OutputSurface> outputSurfaces = new ArrayList<>();
 
-    final String vss = "attribute vec2 vPosition;\n" +
+    final String vss =  "attribute vec2 vPosition;\n" +
                         "attribute vec2 vTexCoord;\n" +
                         "varying vec2 texCoord;\n" +
                         "void main() {\n" +
@@ -48,7 +48,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
                         "  gl_Position = vec4 ( vPosition.x, vPosition.y, 0.0, 1.0 );\n" +
                         "}";
 
-    final String fss = "#extension GL_OES_EGL_image_external : require\n" +
+    final String fss =  "#extension GL_OES_EGL_image_external : require\n" +
                         "precision mediump float;\n" +
                         "uniform samplerExternalOES sTexture;\n" +
                         "varying vec2 texCoord;\n" +
@@ -159,7 +159,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
             GLES20.glVertexAttribPointer(tch, 2, GLES20.GL_FLOAT, false, 4 * 2, pTexCoord);
             GLES20.glEnableVertexAttribArray(ph);
             GLES20.glEnableVertexAttribArray(tch);
-            GLES20.glUniform1i(th, 0);
+            GLES20.glUniform1i(th, 0); /* Tells the shader what texture to use. */
 
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
             //GLES20.glBlendColor(1, 1, 1, 0.1f);
@@ -167,7 +167,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
                 GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
                 /*if (inputSurfaces.indexOf(is) == 1)
                     GLES20.glBlendFunc(GLES20.GL_CONSTANT_ALPHA, GLES20.GL_ONE_MINUS_CONSTANT_ALPHA);*/
-                if (inputSurfaces.indexOf(is) == 1)
+                if (inputSurfaces.indexOf(is) == 1) // TODO this is lame
                     GLES20.glViewport(0, 0, 640, 480);
 
                 GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, is.getTexture());
