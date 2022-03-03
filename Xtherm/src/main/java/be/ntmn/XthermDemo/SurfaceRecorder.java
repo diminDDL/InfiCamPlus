@@ -80,6 +80,9 @@ public class SurfaceRecorder extends Thread {
 
     @Override
     public void run() {
+        /* This has to be a separate thread because if the encoder runs out of buffers then
+         *   swapBuffers() on the surface will block.
+         */
         final int TIMEOUT_USEC = 10000;
 /*        if (endOfStream)
             videoEncoder.signalEndOfInputStream();*/

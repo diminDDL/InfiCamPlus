@@ -145,7 +145,6 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
         for (OutputSurface ts : outputSurfaces) {
             ts.makeCurrent();
             GLES20.glViewport(0, 0, 1280, 960); // TODO maybe move to onsurfacechanged? or maybe we store size info there and then... idfk
-            //drainEncoder(false);
 
             GLES20.glClearColor(0, 0, 0, 1);
             GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
@@ -176,20 +175,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
             GLES20.glFlush();
 
             ts.setPresentationTime(surfaceTexture.getTimestamp());
-
-            // Submit it to the encoder.  The eglSwapBuffers call will block if the input
-            // is full, which would be bad if it stayed full until we dequeued an output
-            // buffer (which we can't do, since we're stuck here).  So long as we fully drain
-            // the encoder before supplying additional input, the system guarantees that we
-            // can supply another frame without blocking.
-            //if (VERBOSE) Log.d(TAG, "sending frame " + i + " to encoder");
-            // TODO We should run the encoder in a different thread.
             ts.swapBuffers();
-
-            /*if (ctr++ == 500) { // TODO stop properly
-                drainEncoder(true);
-                releaseEncoder();
-            }*/
         }
     }
 
