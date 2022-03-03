@@ -87,21 +87,13 @@ import com.hjq.permissions.XXPermissions;
 
 import be.ntmn.InfiCam;
 import be.ntmn.MyApp;
-import be.ntmn.encoder.MediaMuxerWrapper;
 import be.ntmn.USBMonitor;
-import be.ntmn.usbcameracommon.UVCCameraHandler;
-import be.ntmn.PermissionCheck;
-import be.ntmn.widget.AutoFitTextureView;
-import be.ntmn.widget.Camera2Helper;
-import be.ntmn.widget.TouchPoint;
-import be.ntmn.widget.UVCCameraTextureView;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public final class MainActivity extends BaseActivity {
     private static final boolean DEBUG = false;    // TODO set false on release
@@ -140,11 +132,11 @@ public final class MainActivity extends BaseActivity {
     /**
      * Handler to execute camera related methods sequentially on private thread
      */
-    private UVCCameraHandler mCameraHandler;
+    private InfiCam infiCam;
     /**
      * for camera preview display
      */
-    private UVCCameraTextureView mUVCCameraView;
+    private SurfaceView surfaceView;
 
     /*
      * for open&start / stop&close camera preview
@@ -176,7 +168,6 @@ public final class MainActivity extends BaseActivity {
     private int mLeft, mRight, mTop, mBottom;
     private int mRightSurfaceLeft, mRightSurfaceRight, mRightSurfaceTop, mRightSurfaceBottom;
     private int indexOfPoint = 0;
-    private CopyOnWriteArrayList<TouchPoint> mTouchPoint;
     private int temperatureAnalysisMode;
     private boolean isTemperaturing, isSettingBadPixel;
     private Bitmap mCursorBlue, mCursorRed, mCursorYellow, mCursorGreen, mWatermarkLogo;
@@ -195,7 +186,6 @@ public final class MainActivity extends BaseActivity {
     private boolean IsAlreadyOnCreate = false;
     private AlertDialog ConnectOurDeviceAlert;
     private Timer timerEveryTime;
-    private Camera2Helper mCamera2Helper;
     private DisplayMetrics metrics;
     private Configuration configuration;
     private int language, isWatermark;
@@ -205,7 +195,6 @@ public final class MainActivity extends BaseActivity {
     private Sensor mSensorMagnetic, mAccelerometer;
     int oldRotation = 0;
     UsbDevice mUsbDevice;
-    private AutoFitTextureView mTextureView;
     private boolean isFirstRun;
     LinearLayout rl_tip, rl_tip_kaka, rl_tip_setting, menu_palette_layout, rl_tip_setting1;
     RelativeLayout ll_tip_temp, ll_tip_temp1;
@@ -268,7 +257,7 @@ public final class MainActivity extends BaseActivity {
             if (DEBUG) Log.v(TAG, "onCreate:");
             setContentView(R.layout.activity_main);
 
-            mTextureView = findViewById(R.id.textureView);
+            surfaceView = findViewById(R.id.infiCamView);
             rightmenu = findViewById(R.id.rightmenu_list);
             rightmenu.setVisibility(INVISIBLE);
             mCaptureButton = findViewById(R.id.button_video);
@@ -373,9 +362,6 @@ public final class MainActivity extends BaseActivity {
             mPhotographButton.setOnClickListener(mOnClickListener);
             mPhotographButton.setVisibility(VISIBLE);
             mImageView = findViewById(R.id.frame_image);
-            final UVCCameraTextureView view = findViewById(R.id.camera_view);
-            mUVCCameraView = view;
-            mUVCCameraView.setAspectRatio(PREVIEW_WIDTH / (float) PREVIEW_HEIGHT);
             mZoomButton = findViewById(R.id.button_shut);
             mZoomButton.setOnTouchListener(mChangPicListener);
             mZoomButton.setOnClickListener(mOnClickListener);
@@ -389,7 +375,6 @@ public final class MainActivity extends BaseActivity {
             mSfv.setZOrderOnTop(true);
             mSfh.setFormat(PixelFormat.TRANSLUCENT);
             mSfv.setOnTouchListener(listener);
-            mTouchPoint = new CopyOnWriteArrayList<>();
             mRightSfv = this.findViewById(R.id.surfaceView_right);
             mRightSfh = mRightSfv.getHolder();
             mRightSfv.setZOrderOnTop(true);
@@ -413,8 +398,7 @@ public final class MainActivity extends BaseActivity {
 
                         @Override
                         public void hasPermission(List<String> granted, boolean isAll) {
-                            mCameraHandler = UVCCameraHandler.createHandler(MainActivity.this, mUVCCameraView,
-                                    USE_SURFACE_ENCODER ? 0 : 1, PREVIEW_WIDTH, PREVIEW_HEIGHT, PREVIEW_MODE, null);
+                            infiCam = new InfiCam();
                             mUSBMonitor = new USBMonitor(MainActivity.this, mOnDeviceConnectListener);
                             mUSBMonitor.addDeviceFilter(new USBMonitor.DeviceFilter() {
                                 @Override
@@ -511,12 +495,12 @@ public final class MainActivity extends BaseActivity {
     @Override
     protected void onStop() {
         Log.e(TAG, "onStop:");
-        if (mCamera2Helper != null) {
+        /*if (mCamera2Helper != null) {
             if (mCamera2Helper.getState()) {
                 mCameraHandler.closeSystemCamera();
 //                mSysCameraSwitch.setChecked(false);
             }
-        }
+        }*/
         if (mUSBMonitor != null) {
             if (mUSBMonitor.isRegistered()) {
                 mUSBMonitor.unregister();
@@ -528,32 +512,32 @@ public final class MainActivity extends BaseActivity {
         mSensorManager.unregisterListener(mSensorListener, mSensorMagnetic);
         mSensorManager.unregisterListener(mSensorListener, mAccelerometer);
         //System.exit(0);
-        if (mUVCCameraView != null)
-            mUVCCameraView.onPause();
+        /*if (mUVCCameraView != null)
+            mUVCCameraView.onPause();*/
         isTemperaturing = false;
         //whenCloseClearCanvas();
         if (isOnRecord) {
             isOnRecord = false;
             mCaptureButton.setImageDrawable(getResources().getDrawable(R.mipmap.video1));
-            mCameraHandler.stopRecording();
+            //mCameraHandler.stopRecording();
         }
         //setCameraButton(false);
-        if (mCameraHandler != null) {
+        /*if (mCameraHandler != null) {
             mCameraHandler.close();
-        }
+        }*/
         super.onStop();
     }
 
     @Override
     protected void onPause() {
-        if (mCamera2Helper != null) {
+        /*if (mCamera2Helper != null) {
             if (mCamera2Helper.getState()) {
                 mCameraHandler.closeSystemCamera();
                 mSysCameraSwitch.setChecked(false);
             }
-        }
+        }*/
         if (isTemperaturing) {
-            mCameraHandler.stopTemperaturing();
+            //mCameraHandler.stopTemperaturing();
             isTemperaturing = false;
             pointModeButton.setImageDrawable(getResources().getDrawable(R.mipmap.point));
             lineModeButton.setImageDrawable(getResources().getDrawable(R.mipmap.line));
@@ -567,10 +551,10 @@ public final class MainActivity extends BaseActivity {
     @Override
     protected void onRestart() {
         Log.e(TAG, "onRestart:");
-        if (mUVCCameraView != null)
-            mThumbnailButton.setVisibility(VISIBLE);
+        /*if (mUVCCameraView != null)
+            mThumbnailButton.setVisibility(VISIBLE);*/
         currentSecond = 0;
-        mUVCCameraView.onResume();
+        //mUVCCameraView.onResume();
         isOpened = 0;
         super.onRestart();
     }
@@ -584,7 +568,7 @@ public final class MainActivity extends BaseActivity {
             }
 //            showAgreeMent();
 
-            mTouchPoint.clear();//点测温清屏
+            //mTouchPoint.clear();//点测温清屏
             mSensorManager.registerListener(mSensorListener, mSensorMagnetic, SensorManager.SENSOR_DELAY_NORMAL);
             mSensorManager.registerListener(mSensorListener, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
             List<UsbDevice> mUsbDeviceList = mUSBMonitor.getDeviceList();
@@ -653,15 +637,15 @@ public final class MainActivity extends BaseActivity {
     public void onDestroy() {
 //        sharedPreferences.edit().putBoolean("cameraPreview", false).commit();
         Log.e(TAG, "onDestroy:");
-        if (mCameraHandler != null) {
+        /*if (mCameraHandler != null) {
             mCameraHandler.release();
             mCameraHandler = null;
-        }
+        }*/
         if (mUSBMonitor != null) {
             mUSBMonitor.destroy();
             mUSBMonitor = null;
         }
-        mUVCCameraView = null;
+        //mUVCCameraView = null;
         //mCameraButton = null;
         mCaptureButton = null;
         mSetButton = null;
@@ -675,7 +659,7 @@ public final class MainActivity extends BaseActivity {
 
     private void getTempPara() {
         InfiCam.FrameInfo tempPara;
-        tempPara = mCameraHandler.getTemperaturePara(128);
+        /*tempPara = mCameraHandler.getTemperaturePara(128);
         //Log.e(TAG, "getByteArrayTemperaturePara:" + tempPara[16] + "," + tempPara[17] + "," + tempPara[18] + "," + tempPara[19] + "," + tempPara[20] + "," + tempPara[21]);
 
         Fix = tempPara.correction;
@@ -689,7 +673,7 @@ public final class MainActivity extends BaseActivity {
         stAirtmp = String.valueOf(Airtmp);
         stHumi = String.valueOf(humi);
         stEmiss = String.valueOf(emiss);
-        stDistance = String.valueOf(distance);
+        stDistance = String.valueOf(distance);*/
         // TODO (netman) get version etc
         //stProductSoftVersion = new String(tempPara, 128 - 16, 16);
     }
@@ -734,7 +718,6 @@ public final class MainActivity extends BaseActivity {
         @Override
         public void onStopTrackingTouch(SeekBar seekBar) {
             int id = seekBar.getId();
-            InfiCam infiCam = mCameraHandler.infiCam;
             switch (id) {
                 case R.id.emissivity_seekbar:
                     int currentProgressEm = seekBar.getProgress();
@@ -791,7 +774,7 @@ public final class MainActivity extends BaseActivity {
     private final CompoundButton.OnCheckedChangeListener mSwitchListener = new CompoundButton.OnCheckedChangeListener() {
         @Override
         public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-            switch (compoundButton.getId()) {
+            /*switch (compoundButton.getId()) {
                 case R.id.sys_camera_swtich:
                     if (!Check.isFastClick()) {
                         return;
@@ -799,7 +782,7 @@ public final class MainActivity extends BaseActivity {
                     if (b) {
                         if (mCameraHandler.isOpened()) {
                             if (PermissionCheck.hasCamera(context)) {
-                                /*旋转mTextureView*/
+                                //旋转mTextureView
                                 mTextureView.setPivotX(0);
                                 mTextureView.setPivotY(0);
                                 mTextureView.setRotation(-90);
@@ -841,7 +824,7 @@ public final class MainActivity extends BaseActivity {
                     mCameraHandler.watermarkOnOff(isWatermark);
                     sharedPreferences.edit().putInt("Watermark", isWatermark).apply();
                     break;
-            }
+            }*/
         }
     };
 
@@ -871,11 +854,11 @@ public final class MainActivity extends BaseActivity {
         if (x > -2.5 && x <= 2.5 && y > 7.5 && y <= 10 && oldRotation != 270) {
             drawable = ResourcesCompat.getDrawable(getResources(), R.mipmap.camera1left, null);
             mPhotographButton.setImageDrawable(drawable);
-            if (mCameraHandler.isRecording()) {
+            /*if (mCameraHandler.isRecording()) {
                 drawable = ResourcesCompat.getDrawable(getResources(), R.mipmap.video2up, null);
             } else {
                 drawable = ResourcesCompat.getDrawable(getResources(), R.mipmap.video1left, null);
-            }
+            }*/
             mCaptureButton.setImageDrawable(drawable);
             drawable = ResourcesCompat.getDrawable(getResources(), R.mipmap.fileleft, null);
             mThumbnailButton.setImageDrawable(drawable);
@@ -888,11 +871,11 @@ public final class MainActivity extends BaseActivity {
         } else if (x > 7.5 && x <= 10 && y > -2.5 && y <= 2.5 && oldRotation != 0) {
             drawable = ResourcesCompat.getDrawable(getResources(), R.mipmap.camera1, null);
             mPhotographButton.setImageDrawable(drawable);
-            if (mCameraHandler.isRecording()) {
+            /*if (mCameraHandler.isRecording()) {
                 drawable = ResourcesCompat.getDrawable(getResources(), R.mipmap.video2, null);
             } else {
                 drawable = ResourcesCompat.getDrawable(getResources(), R.mipmap.video1, null);
-            }
+            }*/
             mCaptureButton.setImageDrawable(drawable);
             drawable = ResourcesCompat.getDrawable(getResources(), R.mipmap.file, null);
             mThumbnailButton.setImageDrawable(drawable);
@@ -905,11 +888,11 @@ public final class MainActivity extends BaseActivity {
         } else if (x > -2.5 && x <= 2.5 && y > -10 && y <= -7.5 && oldRotation != 90) {
             drawable = ResourcesCompat.getDrawable(getResources(), R.mipmap.camera1right, null);
             mPhotographButton.setImageDrawable(drawable);
-            if (mCameraHandler.isRecording()) {
+            /*if (mCameraHandler.isRecording()) {
                 drawable = ResourcesCompat.getDrawable(getResources(), R.mipmap.video2down, null);
             } else {
                 drawable = ResourcesCompat.getDrawable(getResources(), R.mipmap.video1right, null);
-            }
+            }*/
             mCaptureButton.setImageDrawable(drawable);
             drawable = ResourcesCompat.getDrawable(getResources(), R.mipmap.fileright, null);
             mThumbnailButton.setImageDrawable(drawable);
@@ -922,11 +905,11 @@ public final class MainActivity extends BaseActivity {
         } else if (x > -10 && x <= -7.5 && y > -2.5 && y < 2.5 && oldRotation != 180) {
             drawable = ResourcesCompat.getDrawable(getResources(), R.mipmap.camera1down, null);
             mPhotographButton.setImageDrawable(drawable);
-            if (mCameraHandler.isRecording()) {
+            /*if (mCameraHandler.isRecording()) {
                 drawable = ResourcesCompat.getDrawable(getResources(), R.mipmap.video2left, null);
             } else {
                 drawable = ResourcesCompat.getDrawable(getResources(), R.mipmap.video1down, null);
-            }
+            }*/
             mCaptureButton.setImageDrawable(drawable);
             drawable = ResourcesCompat.getDrawable(getResources(), R.mipmap.filedown, null);
             mThumbnailButton.setImageDrawable(drawable);
@@ -940,7 +923,7 @@ public final class MainActivity extends BaseActivity {
             return;
         }
         Log.e(TAG, "oldRotation:" + oldRotation);
-        mCameraHandler.relayout(oldRotation);
+        //mCameraHandler.relayout(oldRotation);
     }
 
     private final RadioGroup.OnCheckedChangeListener mOnCheckedChangeListener = new RadioGroup.OnCheckedChangeListener() {
@@ -948,40 +931,40 @@ public final class MainActivity extends BaseActivity {
         public void onCheckedChanged(RadioGroup group, int checkedId) {
             switch (checkedId) {
                 case R.id.whitehot_radio_button:
-                    mCameraHandler.changePalette(0);
+                    //mCameraHandler.changePalette(0);
                     sharedPreferences.edit().putInt("palette", 0).apply();
                     break;
                 case R.id.blackhot_radio_button:
-                    mCameraHandler.changePalette(1);
+                    //mCameraHandler.changePalette(1);
                     sharedPreferences.edit().putInt("palette", 1).apply();
                     break;
                 case R.id.iron_rainbow_radio_button:
-                    mCameraHandler.changePalette(2);
+                    //mCameraHandler.changePalette(2);
                     sharedPreferences.edit().putInt("palette", 2).apply();
                     break;
                 case R.id.rainbow_radio_button:
-                    mCameraHandler.changePalette(3);
+                    //mCameraHandler.changePalette(3);
                     sharedPreferences.edit().putInt("palette", 3).apply();
                     break;
                 case R.id.three_primary_radio_button:
-                    mCameraHandler.changePalette(4);
+                    //mCameraHandler.changePalette(4);
                     sharedPreferences.edit().putInt("palette", 4).apply();
                     break;
                 case R.id.iron_gray_radio_button:
-                    mCameraHandler.changePalette(5);
+                    //mCameraHandler.changePalette(5);
                     sharedPreferences.edit().putInt("palette", 5).apply();
                     break;
                 case R.id.temperature_units_c_radio_button:
-                    if (mUVCCameraView != null) {
+                    /*if (mUVCCameraView != null) {
                         mUVCCameraView.setUnitTemperature(0);
                         sharedPreferences.edit().putInt("UnitTemperature", 0).apply();
-                    }
+                    }*/
                     break;
                 case R.id.temperature_units_f_radio_button:
-                    if (mUVCCameraView != null) {
+                    /*if (mUVCCameraView != null) {
                         mUVCCameraView.setUnitTemperature(1);
                         sharedPreferences.edit().putInt("UnitTemperature", 1).apply();
-                    }
+                    }*/
                     break;
                 case R.id.chinese_radio_button:
                     language = sharedPreferences.getInt("Language", -1);
@@ -1012,7 +995,7 @@ public final class MainActivity extends BaseActivity {
                     if (!Check.isFastClick()) {
                         return;
                     }
-                    if (mCameraHandler.isOpened()) {
+                    /*if (mCameraHandler.isOpened()) {
                         if (checkPermissionWriteExternalStorage() && checkPermissionAudio()) {
                             Thread thread = new Thread(timeRunable);
                             if (!mCameraHandler.isRecording()) {
@@ -1029,7 +1012,7 @@ public final class MainActivity extends BaseActivity {
                                 mCameraHandler.stopRecording();
                             }
                         }
-                    }
+                    }*/
                     break;
                 case R.id.button_temp:
                     createTemperaturePopupWindow();
@@ -1139,7 +1122,6 @@ public final class MainActivity extends BaseActivity {
 
                     break;
                 case R.id.save_button:
-                    InfiCam infiCam = mCameraHandler.infiCam;
                     infiCam.storeParams();
                     Toast.makeText(getApplicationContext(), "保存成功", Toast.LENGTH_SHORT).show();
                     break;
@@ -1147,29 +1129,29 @@ public final class MainActivity extends BaseActivity {
                     if (!Check.isFastClick()) {
                         return;
                     }
-                    if (mCameraHandler != null) {
+                    /*if (mCameraHandler != null) {
                         if (mCameraHandler.isOpened()) {
                             if (checkPermissionWriteExternalStorage()) {
                                 mCameraHandler.captureStill(MediaMuxerWrapper.getCaptureFile(Environment.DIRECTORY_DCIM, ".png").toString());
                             }
                         }
-                    }
+                    }*/
                     break;
                 case R.id.make_report_button:
-                    if (mCameraHandler.isOpened() && isTemperaturing) {
+                    /*if (mCameraHandler.isOpened() && isTemperaturing) {
                         if (checkPermissionWriteExternalStorage()) {
                             //String path=
                             temperatureAnalysisWindow.dismiss();
                             Toast.makeText(getApplication(), "报告生成成功，请去相册目录查看", Toast.LENGTH_SHORT).show();
                         }
-                    }
+                    }*/
                     break;
 
                 case R.id.point_mode_button:
                     if (!isTemperaturing) {
                         //mUVCCameraView.setVertices(2);
                         //mUVCCameraView.setBitmap(mCursorRed,mCursorGreen,mCursorBlue,mCursorYellow);
-                        if (mCameraHandler.isOpened()) {
+                        /*if (mCameraHandler.isOpened()) {
                             if (!mCameraHandler.isTemperaturing()) {
                                 temperatureAnalysisMode = 0;
                                 mUVCCameraView.setTemperatureAnalysisMode(0);
@@ -1186,9 +1168,9 @@ public final class MainActivity extends BaseActivity {
                                 pointModeButton.setImageDrawable(getResources().getDrawable(R.mipmap.point1));
                                 temperatureAnalysisWindow.dismiss();
                             }
-                        }
+                        }*/
                     } else if (temperatureAnalysisMode != 0) {
-                        mTouchPoint.clear();
+                        /*mTouchPoint.clear();
                         mUVCCameraView.setTouchPoint(mTouchPoint);
                         temperatureAnalysisMode = 0;
                         isTemperaturing = true;
@@ -1196,12 +1178,12 @@ public final class MainActivity extends BaseActivity {
                         pointModeButton.setImageDrawable(getResources().getDrawable(R.mipmap.point1));
                         lineModeButton.setImageDrawable(getResources().getDrawable(R.mipmap.line));
                         rectangleModeButton.setImageDrawable(getResources().getDrawable(R.mipmap.rectangle));
-                        temperatureAnalysisWindow.dismiss();
+                        temperatureAnalysisWindow.dismiss();*/
                     } else {
                         isTemperaturing = false;
-                        mCameraHandler.stopTemperaturing();
+                        /*mCameraHandler.stopTemperaturing();
                         mTouchPoint.clear();
-                        mUVCCameraView.setTouchPoint(mTouchPoint);
+                        mUVCCameraView.setTouchPoint(mTouchPoint);*/
                         pointModeButton.setImageDrawable(getResources().getDrawable(R.mipmap.point));
                         temperatureAnalysisWindow.dismiss();
                     }
@@ -1210,7 +1192,7 @@ public final class MainActivity extends BaseActivity {
                     if (!isTemperaturing) {
                         //mUVCCameraView.setVertices(2);
                         //mUVCCameraView.setBitmap(mCursorRed,mCursorGreen,mCursorBlue,mCursorYellow);
-                        if (mCameraHandler.isOpened()) {
+                        /*if (mCameraHandler.isOpened()) {
                             if (!mCameraHandler.isTemperaturing()) {
                                 temperatureAnalysisMode = 1;
                                 mUVCCameraView.setTemperatureAnalysisMode(1);
@@ -1229,21 +1211,21 @@ public final class MainActivity extends BaseActivity {
                                 rectangleModeButton.setImageDrawable(getResources().getDrawable(R.mipmap.rectangle));
                                 temperatureAnalysisWindow.dismiss();
                             }
-                        }
+                        }*/
                     } else if (temperatureAnalysisMode != 1) {
-                        mTouchPoint.clear();
+                        /*mTouchPoint.clear();
                         mUVCCameraView.setTouchPoint(mTouchPoint);
                         temperatureAnalysisMode = 1;
-                        mUVCCameraView.setTemperatureAnalysisMode(1);
+                        mUVCCameraView.setTemperatureAnalysisMode(1);*/
                         pointModeButton.setImageDrawable(getResources().getDrawable(R.mipmap.point));
                         lineModeButton.setImageDrawable(getResources().getDrawable(R.mipmap.line1));
                         rectangleModeButton.setImageDrawable(getResources().getDrawable(R.mipmap.rectangle));
                         temperatureAnalysisWindow.dismiss();
                     } else {
                         isTemperaturing = false;
-                        mCameraHandler.stopTemperaturing();
+                        /*mCameraHandler.stopTemperaturing();
                         mTouchPoint.clear();
-                        mUVCCameraView.setTouchPoint(mTouchPoint);
+                        mUVCCameraView.setTouchPoint(mTouchPoint);*/
                         lineModeButton.setImageDrawable(getResources().getDrawable(R.mipmap.line));
                         temperatureAnalysisWindow.dismiss();
                     }
@@ -1254,7 +1236,7 @@ public final class MainActivity extends BaseActivity {
                     if (!isTemperaturing) {
                         //mUVCCameraView.setVertices(2);
                         //mUVCCameraView.setBitmap(mCursorRed,mCursorGreen,mCursorBlue,mCursorYellow);
-                        if (mCameraHandler.isOpened()) {
+                        /*if (mCameraHandler.isOpened()) {
                             if (!mCameraHandler.isTemperaturing()) {
                                 temperatureAnalysisMode = 2;
                                 mUVCCameraView.setTemperatureAnalysisMode(2);
@@ -1273,21 +1255,21 @@ public final class MainActivity extends BaseActivity {
                                 rectangleModeButton.setImageDrawable(getResources().getDrawable(R.mipmap.rectangle1));
                                 temperatureAnalysisWindow.dismiss();
                             }
-                        }
+                        }*/
                     } else if (temperatureAnalysisMode != 2) {
-                        mTouchPoint.clear();
+                        /*mTouchPoint.clear();
                         mUVCCameraView.setTouchPoint(mTouchPoint);
                         temperatureAnalysisMode = 2;
                         mUVCCameraView.setTemperatureAnalysisMode(2);
                         pointModeButton.setImageDrawable(getResources().getDrawable(R.mipmap.point));
                         lineModeButton.setImageDrawable(getResources().getDrawable(R.mipmap.line));
                         rectangleModeButton.setImageDrawable(getResources().getDrawable(R.mipmap.rectangle1));
-                        temperatureAnalysisWindow.dismiss();
+                        temperatureAnalysisWindow.dismiss();*/
                     } else {
                         isTemperaturing = false;
-                        mCameraHandler.stopTemperaturing();
+                        /*mCameraHandler.stopTemperaturing();
                         mTouchPoint.clear();
-                        mUVCCameraView.setTouchPoint(mTouchPoint);
+                        mUVCCameraView.setTouchPoint(mTouchPoint);*/
                         rectangleModeButton.setImageDrawable(getResources().getDrawable(R.mipmap.rectangle));
                         temperatureAnalysisWindow.dismiss();
                     }
@@ -1295,10 +1277,9 @@ public final class MainActivity extends BaseActivity {
                     break;
                 case R.id.change_range_button:
 
-                    if (mCameraHandler.isOpened()) {
+                    //if (mCameraHandler.isOpened()) {
                         if (TemperatureRange != 400) {
                             TemperatureRange = 400;
-                            mCameraHandler.setTempRange(400);
                             isTemperaturing = true;
                             Handler handler1 = new Handler();
                             handler1.postDelayed(new Runnable() {
@@ -1306,7 +1287,6 @@ public final class MainActivity extends BaseActivity {
                                 public void run() {
                                     //whenShutRefresh();
                                     //setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8021);//400。C
-                                    InfiCam infiCam = mCameraHandler.infiCam;
                                     infiCam.setRange(400);
                                 }
                             }, 100);
@@ -1321,7 +1301,6 @@ public final class MainActivity extends BaseActivity {
                             ChangeRangeButton.setImageDrawable(getResources().getDrawable(R.mipmap.range_120));
                         } else {
                             TemperatureRange = 120;
-                            mCameraHandler.setTempRange(120);
                             isTemperaturing = true;
                             Handler handler1 = new Handler();
                             handler1.postDelayed(new Runnable() {
@@ -1329,7 +1308,6 @@ public final class MainActivity extends BaseActivity {
                                 public void run() {
                                     //whenShutRefresh();
                                     //setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8020);//120。C
-                                    InfiCam infiCam = mCameraHandler.infiCam;
                                     infiCam.setRange(120);
                                 }
                             }, 100);
@@ -1344,7 +1322,7 @@ public final class MainActivity extends BaseActivity {
                             ChangeRangeButton.setImageDrawable(getResources().getDrawable(R.mipmap.range_400));
                         }
                         temperatureAnalysisWindow.dismiss();
-                    }
+                    //}
                     break;
                 case R.id.imageview_thumbnail:
                     /*if (PermissionCheck.hasReadExternalStorage(context) && PermissionCheck.hasWriteExternalStorage(context)) {
@@ -1449,7 +1427,7 @@ public final class MainActivity extends BaseActivity {
                 //mScaleGestureDetector.onTouchEvent(event);
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
-                        TouchPoint currentPoint = new TouchPoint();
+                        /*TouchPoint currentPoint = new TouchPoint();
                         currentPoint.x = event.getX();
                         currentPoint.y = event.getY();
 //                        Log.e(TAG, "OnTouchListener" + currentPoint.x + ",," + currentPoint.y);
@@ -1504,10 +1482,10 @@ public final class MainActivity extends BaseActivity {
                                     //setValue(UVCCamera.CTRL_ZOOM_ABS, posy);
                                 }
                             }, 40);
-                        }
+                        }*/
                         break;
                     case MotionEvent.ACTION_MOVE:
-                        TouchPoint currentPoint2 = new TouchPoint();
+                        /*TouchPoint currentPoint2 = new TouchPoint();
                         currentPoint2.x = event.getX();
                         currentPoint2.y = event.getY();
 //                        Log.e(TAG, "OnTouchListener" + currentPoint2.x + ",," + currentPoint2.y);
@@ -1538,7 +1516,7 @@ public final class MainActivity extends BaseActivity {
                                 mTouchPoint.add(currentPoint2);
                             }
                             mUVCCameraView.setTouchPoint(mTouchPoint);
-                        }
+                        }*/
                         break;
                     case MotionEvent.ACTION_UP:
                         break;
@@ -1566,7 +1544,7 @@ public final class MainActivity extends BaseActivity {
         mRightSurfaceRight = mRightSfv.getRight();
         mRightSurfaceTop = mRightSfv.getTop();
         mRightSurfaceBottom = mRightSfv.getBottom();
-        mUVCCameraView.iniTempBitmap(mRight - mLeft, mBottom - mTop);
+        //mUVCCameraView.iniTempBitmap(mRight - mLeft, mBottom - mTop);
         icon = Bitmap.createBitmap(mRight - mLeft, mBottom - mTop, Bitmap.Config.ARGB_8888); //建立一个空的图画板
         int iconPaletteWidth = abs(mRightSurfaceRight - mRightSurfaceLeft);
         int iconPaletteHeight = abs(mRightSurfaceBottom - mRightSurfaceTop);
@@ -1623,19 +1601,23 @@ public final class MainActivity extends BaseActivity {
                 try {
                     final SurfaceRecorder sr = new SurfaceRecorder(640, 480);
                     Surface rec = sr.getInputSurface();
-                    et2.addOutputSurface(rec);
+                    /*et2.addOutputSurface(rec);
                     sr.startRecording();
                     new Handler().postDelayed(new Runnable() {
                         @Override
                         public void run() {
                             sr.stopRecording();
                         }
-                    }, 10000);
+                    }, 10000);*/
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
 
-                mCameraHandler.startPreview(new Surface(ist));
+                try {
+                    infiCam.startStream(new Surface(ist));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
             }
         });
@@ -1692,7 +1674,11 @@ public final class MainActivity extends BaseActivity {
             Log.e(TAG, "onConnect:");
             if (isOpened == 0) {
                 // Toast.makeText(MainActivity.this, "XthermDemo onConnect", Toast.LENGTH_SHORT).show();
-                mCameraHandler.open(ctrlBlock);
+                try {
+                    infiCam.connect(ctrlBlock.getFileDescriptor());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 if (!XthermAlreadyConnected) {
                     ConnectOurDeviceAlert.dismiss();
                 }
@@ -1701,7 +1687,7 @@ public final class MainActivity extends BaseActivity {
                 isPreviewing = true;
                 palette = sharedPreferences.getInt("palette", 0);
                 UnitTemperature = sharedPreferences.getInt("UnitTemperature", 0);
-                mUVCCameraView.setUnitTemperature(UnitTemperature);
+                //mUVCCameraView.setUnitTemperature(UnitTemperature);
                 Handler handler = new Handler();
                 /*handler.postDelayed(new Runnable() {
                     @Override
@@ -1710,11 +1696,11 @@ public final class MainActivity extends BaseActivity {
                         //setValue(UVCCamera.CTRL_ZOOM_ABS, 0x8005);//切换数据输出8004原始8005yuv,80ff保存
                     }
                 }, 300);*/
-                mUVCCameraView.setBitmap(mCursorRed, mCursorGreen, mCursorBlue, mCursorYellow, mWatermarkLogo);
+                //mUVCCameraView.setBitmap(mCursorRed, mCursorGreen, mCursorBlue, mCursorYellow, mWatermarkLogo);
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        mCameraHandler.changePalette(palette);
+                        //mCameraHandler.changePalette(palette);
                     }
                 }, 200);
                 timerEveryTime = new Timer();
@@ -1733,7 +1719,7 @@ public final class MainActivity extends BaseActivity {
 
                 isWatermark = sharedPreferences.getInt("Watermark", 1);
                 sharedPreferences.edit().putInt("Watermark", isWatermark).apply();
-                mCameraHandler.watermarkOnOff(isWatermark);
+                //mCameraHandler.watermarkOnOff(isWatermark);
                 mUsbDevice = device;
                 isOpened = 1;
             }
@@ -1743,7 +1729,7 @@ public final class MainActivity extends BaseActivity {
         public void onDisconnect(final UsbDevice device, final USBMonitor.UsbControlBlock ctrlBlock) {
             Log.e(TAG, "onDisconnect:");
             //System.exit(0);
-            if (mCameraHandler != null) {
+            /*if (mCameraHandler != null) {
                 if (isTemperaturing) {
                     mCameraHandler.stopTemperaturing();
                     isTemperaturing = false;
@@ -1757,7 +1743,8 @@ public final class MainActivity extends BaseActivity {
                     }
                 }, 0);
                 //setCameraButton(false);
-            }
+            }*/
+            infiCam.disconnect();
             timerEveryTime.cancel();
             icon.recycle();
             iconPalette.recycle();
@@ -1791,9 +1778,7 @@ public final class MainActivity extends BaseActivity {
     //================================================================================
 
     private void calibrate() {
-        if (mCameraHandler != null) {
-            mCameraHandler.whenShutRefresh();
-        }
+        infiCam.calibrate();
     }
 
     /*****************计时器*******************/
@@ -1836,23 +1821,24 @@ public final class MainActivity extends BaseActivity {
 
             currentSecond = currentSecond + 1000;
             if (currentSecond % 180000 == 0) {
-                mCameraHandler.stopRecording();
+                //mCameraHandler.stopRecording(); // TODO
                 try {
                     sleep(200);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                mCameraHandler.startRecording();
+                //mCameraHandler.startRecording(); // TODO
             }
 //            }
             if (isOnRecord) {
                 //递归调用本runable对象，实现每隔一秒一次执行任务
                 Timehandle.postDelayed(this, 1000);
             } else {
-                if (mCameraHandler != null) {
+                // TODO
+                /*if (mCameraHandler != null) {
                     mCameraHandler.stopRecording();
                     currentSecond = 0;
-                }
+                }*/
             }
         }
     };
