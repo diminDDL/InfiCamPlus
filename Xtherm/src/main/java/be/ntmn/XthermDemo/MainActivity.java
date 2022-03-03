@@ -1555,26 +1555,6 @@ public final class MainActivity extends BaseActivity {
     };
 
     SurfaceMuxer et2;
-    class RunThread extends Thread {
-        SurfaceRecorder sr;
-
-        public RunThread(SurfaceRecorder sr) {
-            this.sr = sr;
-        }
-
-        @Override
-        public void run() {
-            Log.e("DONE", "VIDEOSTART");
-            for (int i = 0; i < 1000; ++i) {
-                sr.drainEncoder(false);
-                Log.e("DONE", "DRAINNEXT");
-            }
-            sr.drainEncoder(true);
-            sr.release();
-            Log.e("DONE", "VIDEODONE");
-        }
-    }
-    RunThread rt;
 
     private void startPreview() {
         mLeft = mImageView.getLeft();
@@ -1644,8 +1624,13 @@ public final class MainActivity extends BaseActivity {
                     final SurfaceRecorder sr = new SurfaceRecorder(640, 480);
                     Surface rec = sr.getInputSurface();
                     et2.addOutputSurface(rec);
-                    rt = new RunThread(sr);
-                    rt.start();
+                    sr.startRecording();
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            sr.stopRecording();
+                        }
+                    }, 10000);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

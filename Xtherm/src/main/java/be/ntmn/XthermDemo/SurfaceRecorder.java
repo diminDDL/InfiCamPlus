@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 // TODO remember to try MediaRecorder.AudioSource.CAMCORDER first, then default/mic, it's allegedly better
-public class SurfaceRecorder {
+public class SurfaceRecorder extends Thread {
     static final File OUTPUT_DIR = Environment.getExternalStorageDirectory();
     static final String MIME_TYPE = "video/avc"; /* H.264 */
     static final int FRAME_RATE = 25;
@@ -25,8 +25,10 @@ public class SurfaceRecorder {
     int videoTrack;
     boolean muxerStarted;
     MediaCodec.BufferInfo bufferInfo;
+    boolean endOfStream = false;
 
     public SurfaceRecorder(int width, int height) throws IOException {
+        super();
         bufferInfo = new MediaCodec.BufferInfo();
 
         MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, width, height);
@@ -38,7 +40,6 @@ public class SurfaceRecorder {
         videoEncoder = MediaCodec.createEncoderByType(MIME_TYPE);
         videoEncoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         inputSurface = videoEncoder.createInputSurface();
-        videoEncoder.start();
 
         String outputPath = new File(OUTPUT_DIR, "test.mp4").toString(); // TODO
 
@@ -66,11 +67,22 @@ public class SurfaceRecorder {
         }
     }
 
-    // TODO remember to run this in separate thread
-    void drainEncoder(boolean endOfStream) {
+    public void startRecording() {
+        videoEncoder.start(); // TODO maybe make this only happen on stream start
+        start();
+    }
+
+    public void stopRecording() {
+        synchronized (this) {
+            endOfStream = true;
+        }
+    }
+
+    @Override
+    public void run() {
         final int TIMEOUT_USEC = 10000;
-        if (endOfStream)
-            videoEncoder.signalEndOfInputStream();
+/*        if (endOfStream)
+            videoEncoder.signalEndOfInputStream();*/
 /*
     protected void signalEndOfInputStream() {
 		if (DEBUG) Log.d(TAG, "sending EOS to encoder");
@@ -82,10 +94,19 @@ public class SurfaceRecorder {
 
 	TODO note getPTSUs is presentation time there
  */
-        //while (true) {
+
+        while (true) {
+            boolean eos;
+            synchronized (this) {
+                eos = endOfStream;
+            }
+
+            if (eos)
+                videoEncoder.signalEndOfInputStream();
+
             int encoderStatus = videoEncoder.dequeueOutputBuffer(bufferInfo, TIMEOUT_USEC);
             if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
-                /*if (!endOfStream)
+                /*if (eos)
                     break;*/
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                 /* Should happen exactly once, before output buffer given. */
@@ -106,6 +127,9 @@ public class SurfaceRecorder {
                 }
                 videoEncoder.releaseOutputBuffer(encoderStatus, false);
             }
-        //}
+
+            if (eos)
+                break;
+        }
     }
 }
