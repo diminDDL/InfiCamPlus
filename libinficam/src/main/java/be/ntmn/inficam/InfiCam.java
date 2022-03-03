@@ -1,4 +1,4 @@
-package be.ntmn;
+package be.ntmn.inficam;
 
 import android.view.Surface;
 

@@ -84,7 +84,7 @@ import com.hjq.permissions.OnPermission;
 import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
 
-import be.ntmn.InfiCam;
+import be.ntmn.inficam.InfiCam;
 
 import java.io.IOException;
 import java.util.List;

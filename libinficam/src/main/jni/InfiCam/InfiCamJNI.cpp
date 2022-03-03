@@ -4,7 +4,7 @@
 #include <android/native_window_jni.h>
 #include <cstdlib> /* NULL */
 
-#define FRAMEINFO_TYPE "be/ntmn/InfiCam$FrameInfo"
+#define FRAMEINFO_TYPE "be/ntmn/inficam/InfiCam$FrameInfo"
 
 JavaVM *javaVM = NULL;
 
@@ -119,11 +119,11 @@ void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, voi
 
 extern "C" {
 
-JNIEXPORT jlong Java_be_ntmn_InfiCam_nativeNew(JNIEnv *env, jclass cls) {
+JNIEXPORT jlong Java_be_ntmn_inficam_InfiCam_nativeNew(JNIEnv *env, jclass cls) {
     return (jlong) new InfiCamJNI();
 }
 
-JNIEXPORT void Java_be_ntmn_InfiCam_nativeDelete(JNIEnv *env, jclass cls, jlong ptr) {
+JNIEXPORT void Java_be_ntmn_inficam_InfiCam_nativeDelete(JNIEnv *env, jclass cls, jlong ptr) {
     InfiCamJNI *icj = (InfiCamJNI *) ptr;
     if (icj->obj != 0)
         env->DeleteGlobalRef(icj->obj);
@@ -132,18 +132,18 @@ JNIEXPORT void Java_be_ntmn_InfiCam_nativeDelete(JNIEnv *env, jclass cls, jlong 
     delete icj;
 }
 
-JNIEXPORT jint Java_be_ntmn_InfiCam_nativeConnect(JNIEnv *env, jobject self, jint fd) {
+JNIEXPORT jint Java_be_ntmn_inficam_InfiCam_nativeConnect(JNIEnv *env, jobject self, jint fd) {
     InfiCamJNI *icj = getObject(env, self);
     int ret = icj->connect(fd);
     return ret;
 }
 
-JNIEXPORT void Java_be_ntmn_InfiCam_disconnect(JNIEnv *env, jobject self) {
+JNIEXPORT void Java_be_ntmn_inficam_InfiCam_disconnect(JNIEnv *env, jobject self) {
     InfiCamJNI *icj = getObject(env, self);
     icj->disconnect();
 }
 
-JNIEXPORT jint Java_be_ntmn_InfiCam_nativeStartStream(JNIEnv *env, jobject self, jobject surface) {
+JNIEXPORT jint Java_be_ntmn_inficam_InfiCam_nativeStartStream(JNIEnv *env, jobject self, jobject surface) {
     InfiCamJNI *icj = getObject(env, self);
 
     // TODO!!
@@ -187,7 +187,7 @@ JNIEXPORT jint Java_be_ntmn_InfiCam_nativeStartStream(JNIEnv *env, jobject self,
     return 0;
 }
 
-JNIEXPORT void Java_be_ntmn_InfiCam_stopStream(JNIEnv *env, jobject self) {
+JNIEXPORT void Java_be_ntmn_inficam_InfiCam_stopStream(JNIEnv *env, jobject self) {
     InfiCamJNI *icj = getObject(env, self);
     if (icj->window != NULL)
         ANativeWindow_release(icj->window);
@@ -198,79 +198,79 @@ JNIEXPORT void Java_be_ntmn_InfiCam_stopStream(JNIEnv *env, jobject self) {
     icj->stream_stop();
 }
 
-JNIEXPORT void Java_be_ntmn_InfiCam_setRange(JNIEnv *env, jobject self, jint range) {
+JNIEXPORT void Java_be_ntmn_inficam_InfiCam_setRange(JNIEnv *env, jobject self, jint range) {
     InfiCamJNI *icj = getObject(env, self);
     icj->set_range(range);
 }
 
-JNIEXPORT jint Java_be_ntmn_InfiCam_getWidth(JNIEnv *env, jobject self) {
+JNIEXPORT jint Java_be_ntmn_inficam_InfiCam_getWidth(JNIEnv *env, jobject self) {
     InfiCamJNI *icj = getObject(env, self);
     return icj->infi.width;
 }
 
-JNIEXPORT jint Java_be_ntmn_InfiCam_getHeight(JNIEnv *env, jobject self) {
+JNIEXPORT jint Java_be_ntmn_inficam_InfiCam_getHeight(JNIEnv *env, jobject self) {
     InfiCamJNI *icj = getObject(env, self);
     return icj->infi.height;
 }
 
-JNIEXPORT void Java_be_ntmn_InfiCam_setDistanceMultiplier(JNIEnv *env, jobject self, jfloat dm) {
+JNIEXPORT void Java_be_ntmn_inficam_InfiCam_setDistanceMultiplier(JNIEnv *env, jobject self, jfloat dm) {
     InfiCamJNI *icj = getObject(env, self);
     icj->set_distance_multiplier(dm);
 }
 
-JNIEXPORT void Java_be_ntmn_InfiCam_setCorrection(JNIEnv *env, jobject self, jfloat val) {
+JNIEXPORT void Java_be_ntmn_inficam_InfiCam_setCorrection(JNIEnv *env, jobject self, jfloat val) {
     InfiCamJNI *icj = getObject(env, self);
     icj->set_correction(val);
 }
 
-JNIEXPORT void Java_be_ntmn_InfiCam_setTempReflected(JNIEnv *env, jobject self, jfloat val) {
+JNIEXPORT void Java_be_ntmn_inficam_InfiCam_setTempReflected(JNIEnv *env, jobject self, jfloat val) {
     InfiCamJNI *icj = getObject(env, self);
     icj->set_temp_reflected(val);
 }
 
-JNIEXPORT void Java_be_ntmn_InfiCam_setTempAir(JNIEnv *env, jobject self, jfloat val) {
+JNIEXPORT void Java_be_ntmn_inficam_InfiCam_setTempAir(JNIEnv *env, jobject self, jfloat val) {
     InfiCamJNI *icj = getObject(env, self);
     icj->set_temp_air(val);
 }
 
-JNIEXPORT void Java_be_ntmn_InfiCam_setHumidity(JNIEnv *env, jobject self, jfloat val) {
+JNIEXPORT void Java_be_ntmn_inficam_InfiCam_setHumidity(JNIEnv *env, jobject self, jfloat val) {
     InfiCamJNI *icj = getObject(env, self);
     icj->set_humidity(val);
 }
 
-JNIEXPORT void Java_be_ntmn_InfiCam_setEmissivity(JNIEnv *env, jobject self, jfloat val) {
+JNIEXPORT void Java_be_ntmn_inficam_InfiCam_setEmissivity(JNIEnv *env, jobject self, jfloat val) {
     InfiCamJNI *icj = getObject(env, self);
     icj->set_emissivity(val);
 }
 
-JNIEXPORT void Java_be_ntmn_InfiCam_setDistance(JNIEnv *env, jobject self, jfloat val) {
+JNIEXPORT void Java_be_ntmn_inficam_InfiCam_setDistance(JNIEnv *env, jobject self, jfloat val) {
     InfiCamJNI *icj = getObject(env, self);
     icj->set_distance(val);
 }
 
-JNIEXPORT void Java_be_ntmn_InfiCam_setParams(JNIEnv *env, jobject self, jfloat corr,
+JNIEXPORT void Java_be_ntmn_inficam_InfiCam_setParams(JNIEnv *env, jobject self, jfloat corr,
                                                       jfloat t_ref, jfloat t_air, jfloat humi,
                                                       jfloat emi, jfloat dist) {
     InfiCamJNI *icj = getObject(env, self);
     icj->set_params(corr, t_ref, t_air, humi, emi, dist);
 }
 
-JNIEXPORT void Java_be_ntmn_InfiCam_storeParams(JNIEnv *env, jobject self) {
+JNIEXPORT void Java_be_ntmn_inficam_InfiCam_storeParams(JNIEnv *env, jobject self) {
     InfiCamJNI *icj = getObject(env, self);
     icj->store_params();
 }
 
-JNIEXPORT void Java_be_ntmn_InfiCam_updateTable(JNIEnv *env, jobject self) {
+JNIEXPORT void Java_be_ntmn_inficam_InfiCam_updateTable(JNIEnv *env, jobject self) {
     InfiCamJNI *icj = getObject(env, self);
     icj->update_table();
 }
 
-JNIEXPORT void Java_be_ntmn_InfiCam_calibrate(JNIEnv *env, jobject self) {
+JNIEXPORT void Java_be_ntmn_inficam_InfiCam_calibrate(JNIEnv *env, jobject self) {
     InfiCamJNI *icj = getObject(env, self);
     icj->calibrate();
 }
 
-JNIEXPORT jint Java_be_ntmn_InfiCam_nativeSetPalette(JNIEnv *env, jobject self, jintArray palette) {
+JNIEXPORT jint Java_be_ntmn_inficam_InfiCam_nativeSetPalette(JNIEnv *env, jobject self, jintArray palette) {
     InfiCamJNI *icj = getObject(env, self);
     if (env->GetArrayLength(palette) < icj->palette_len)
         return 1;
