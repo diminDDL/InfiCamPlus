@@ -1,4 +1,4 @@
-package be.ntmn.XthermDemo;
+package be.ntmn.inficam;
 
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;

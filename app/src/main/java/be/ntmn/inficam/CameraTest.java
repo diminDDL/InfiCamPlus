@@ -1,4 +1,4 @@
-package be.ntmn.XthermDemo;
+package be.ntmn.inficam;
 
 import android.Manifest;
 import android.content.Context;
@@ -9,10 +9,11 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.Surface;
+
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
 
 import java.util.Collections;
 
