@@ -1556,7 +1556,9 @@ public final class MainActivity extends BaseActivity {
                 ist.setOnFrameAvailableListener(et2);
 
                 CameraTest ct = new CameraTest();
-                ct.initCamera2(context, new Surface(et2.createInputSurfaceTexture()));
+                SurfaceTexture cist = et2.createInputSurfaceTexture();
+                cist.setDefaultBufferSize(1280, 960);
+                ct.initCamera2(context, new Surface(cist));
 
                 Bitmap bmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
                 Canvas c = new Canvas(bmp);
