@@ -37,6 +37,7 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Camera;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -98,32 +99,6 @@ import java.util.TimerTask;
 public final class MainActivity extends BaseActivity {
     private static final boolean DEBUG = false;    // TODO set false on release
     private static final String TAG = "MainActivity";
-    private static final int REQUEST_CODE_CHOOSE = 23;
-
-    /**
-     * set true if you want to record movie using MediaSurfaceEncoder
-     * (writing frame data into Surface camera from MediaCodec
-     * by almost same way as USBCameratest2)
-     * set false if you want to record movie using MediaVideoEncoder
-     */
-    private static final boolean USE_SURFACE_ENCODER = false;
-
-    /**
-     * preview resolution(width)
-     * if your camera does not support specific resolution and mode,
-     */
-    private static final int PREVIEW_WIDTH = 384;
-    /**
-     * preview resolution(height)
-     * if your camera does not support specific resolution and mode,
-     */
-    private static final int PREVIEW_HEIGHT = 292;
-    /**
-     * preview mode
-     * if your camera does not support specific resolution and mode,
-     * 0:YUYV, other:MJPEG
-     */
-    private static final int PREVIEW_MODE = 0;
 
     /**
      * for accessing USB
@@ -1579,6 +1554,9 @@ public final class MainActivity extends BaseActivity {
                 SurfaceTexture ist = et2.createInputSurfaceTexture();
                 //mCameraHandler.startPreview(new Surface(ist));
                 ist.setOnFrameAvailableListener(et2);
+
+                CameraTest ct = new CameraTest();
+                ct.initCamera2(context, new Surface(et2.createInputSurfaceTexture()));
 
                 Bitmap bmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
                 Canvas c = new Canvas(bmp);
