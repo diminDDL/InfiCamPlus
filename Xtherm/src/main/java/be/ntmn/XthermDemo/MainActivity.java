@@ -37,7 +37,6 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Camera;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -53,7 +52,6 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.v4.content.res.ResourcesCompat;
@@ -87,7 +85,6 @@ import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
 
 import be.ntmn.InfiCam;
-import be.ntmn.MyApp;
 import be.ntmn.USBMonitor;
 
 import java.io.IOException;
@@ -112,6 +109,8 @@ public final class MainActivity extends BaseActivity {
      * for camera preview display
      */
     private SurfaceView surfaceView;
+
+    boolean isT3 = false;
 
     /*
      * for open&start / stop&close camera preview
@@ -551,7 +550,7 @@ public final class MainActivity extends BaseActivity {
 //            System.out.println(udv.toString());
                 XthermAlreadyConnected = true;
                 String deviceName = udv.getProductName();
-                MyApp.isT3 = deviceName.contains("DL") || deviceName.contains("DV") || deviceName.contains("DP");
+                isT3 = deviceName.contains("DL") || deviceName.contains("DV") || deviceName.contains("DP");
                 isFirstRun = sharedPreferences.getBoolean("isFirstRun", true);
                 if (isFirstRun) {
                     if (isZh(this)) {
@@ -1355,7 +1354,7 @@ public final class MainActivity extends BaseActivity {
             temperatureAnalysisWindow = new PopupWindow(contentView, (int) (mMenuRight.getHeight() / 5.806f),
                     mMenuRight.getHeight());
 
-//            if (MyApp.isT3) {
+//            if (isT3) {
 //                contentView.setRotation(oldRotation);
 //                Log.e(TAG,"oldRotation1"+oldRotation);
 //            }
@@ -1786,7 +1785,7 @@ public final class MainActivity extends BaseActivity {
                 Rect bounds = new Rect();
                 photoPaint.getTextBounds(RecordTime, 0, RecordTime.length(), bounds);
 
-                if (MyApp.isT3) {
+                if (isT3) {
                     canvas.rotate(180, bounds.height() * 7, bounds.height());
                     canvas.drawText(RecordTime, bounds.height() * 7, bounds.height(), photoPaint);
                 } else {
