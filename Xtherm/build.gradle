@@ -16,9 +16,6 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  *
- *  All files in the folder are under this Apache License, Version 2.0.
- *  Files in the libjpeg-turbo, libusb, libuvc, rapidjson folder
- *  may have a different license, see the respective files.
  */
 
 apply plugin: 'com.android.application'

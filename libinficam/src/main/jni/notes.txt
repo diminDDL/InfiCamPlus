@@ -27,7 +27,8 @@ classes.jar was replaced with a whole bunch of separate files from saki4510t/lib
 
 TODO
     - 400 celcius range works quite badly because the float math falls apart below a certain temperature
-    - the license headers have notes about other files that are no longer relevant
+    - the license headers have notes about other files that are no longer relevant (USBMonitor, some of the gradle stuff)
+    - don't forget to reference/put saki license for libuvc_build and other if i put a licence/copying file in root
     - do I go with apache license for new files too? (almost everything in libinficam is new files already...)
     - apache license says i should put prominent notices that i changed stuff, i should
     - figure out where i want to go with the UI part

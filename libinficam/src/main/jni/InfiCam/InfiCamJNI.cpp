@@ -34,14 +34,14 @@ static InfiCamJNI *getObject(JNIEnv *env, jobject obj) {
 }
 
 /* Set an integer variable in the a Java class. */
-static void setIntVar(JNIEnv *env, jobject obj, char *name, jint value) {
+static void setIntVar(JNIEnv *env, jobject obj, const char *name, jint value) {
     jclass cls = env->GetObjectClass(obj);
     jfieldID nativeObjectPointerID = env->GetFieldID(cls, name, "I");
     env->SetIntField(obj, nativeObjectPointerID, value);
 }
 
 /* Set an integer variable in the a Java class. */
-static void setFloatVar(JNIEnv *env, jobject obj, char *name, jfloat value) {
+static void setFloatVar(JNIEnv *env, jobject obj, const char *name, jfloat value) {
     jclass cls = env->GetObjectClass(obj);
     jfieldID nativeObjectPointerID = env->GetFieldID(cls, name, "F");
     env->SetFloatField(obj, nativeObjectPointerID, value);
