@@ -29,26 +29,26 @@ public class CameraTest {
         mCameraID = "" + CameraCharacteristics.LENS_FACING_FRONT;//rear camera
         mCameraManager = (CameraManager) ctx.getSystemService(Context.CAMERA_SERVICE);
         try {
+            // TODO do we check permission here?
             if (ActivityCompat.checkSelfPermission(ctx, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                 return;
             }
             mCameraManager.openCamera(mCameraID, new CameraDevice.StateCallback() {
                 @Override
-                public void onOpened(@NonNull CameraDevice camera) {//Open the camera
+                public void onOpened(@NonNull CameraDevice camera) {
                     mCameraDevice = camera;
                     takePreview();
                 }
 
                 @Override
-                public void onDisconnected(@NonNull CameraDevice camera) {//Close the camera
+                public void onDisconnected(@NonNull CameraDevice camera) {
                     mCameraDevice.close();
                     mCameraDevice = null;
                 }
 
                 @Override
-                public void onError(@NonNull CameraDevice camera, int error) {//An error occurred
-                    //Toast.makeText(MainActivity.this, "Camera opening failed", Toast.LENGTH_SHORT).show();
-                    Log.e("FAIL", "camera error");
+                public void onError(@NonNull CameraDevice camera, int error) {
+                    Log.e("FAIL", "camera error " + error);
                     // TODO
                 }
             }, null);
@@ -57,10 +57,8 @@ public class CameraTest {
         }
     }
 
-    /**
-     * Start preview
-     */
     private void takePreview() {
+        Log.e("HERE", "TAKEPREVIEW");
         try {
             final CaptureRequest.Builder captureRequest = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             captureRequest.addTarget(surface);
@@ -76,6 +74,7 @@ public class CameraTest {
                     } catch (CameraAccessException e) {
                         e.printStackTrace();
                     }
+                    Log.e("HERE", "capturing?");
                 }
 
                 @Override
