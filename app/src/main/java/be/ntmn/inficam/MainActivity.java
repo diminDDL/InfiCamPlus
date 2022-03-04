@@ -5,10 +5,10 @@ import android.graphics.SurfaceTexture;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -17,11 +17,11 @@ public class MainActivity extends BaseActivity {
     SurfaceMuxer surfaceMuxer = new SurfaceMuxer();
     SurfaceView cameraView;
     InfiCam infiCam = new InfiCam();
-    boolean isRunning = false; /* Whether the activity is running, as in onResume()/onPause(). */
     boolean isConnected = false; /* Whether a device is connected. */
     UsbDevice device = null;
-    SurfaceTexture inputSurfaceTexture;
-    Surface inputSurface;
+    SurfaceMuxer.InputSurface inputSurface; /* InfiCam class writes to this. */
+    SurfaceMuxer.InputSurface overlaySurface; /* This is where we will draw annotations. */
+    SurfaceMuxer.InputSurface videoSurface; /* To draw video from the normal camera if enabled. */
 
     USBConnector usbConnector = new USBConnector(this) {
         @Override
@@ -38,13 +38,10 @@ public class MainActivity extends BaseActivity {
         public void onConnect(UsbDevice dev, UsbDeviceConnection conn) {
             infiCam = new InfiCam();
             try {
-                if (isRunning && !isConnected) {
-                    infiCam.connect(conn.getFileDescriptor());
-                    infiCam.startStream(inputSurface);
-                    inputSurfaceTexture.setOnFrameAvailableListener(surfaceMuxer);
-                    handler.postDelayed(() -> infiCam.calibrate(), 1000);
-                    isConnected = true;
-                }
+                infiCam.connect(conn.getFileDescriptor());
+                infiCam.startStream(inputSurface.getSurface());
+                handler.postDelayed(() -> infiCam.calibrate(), 1000);
+                isConnected = true;
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -61,8 +58,9 @@ public class MainActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         cameraView = findViewById(R.id.cameraView);
-        inputSurfaceTexture = surfaceMuxer.createInputSurfaceTexture();
-        inputSurface = new Surface(inputSurfaceTexture);
+        inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
+        surfaceMuxer.inputSurfaces.add(inputSurface);
+        inputSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer);
         SurfaceHolder sh = cameraView.getHolder();
         sh.addCallback(new SurfaceHolder.Callback() {
             @Override
@@ -78,6 +76,13 @@ public class MainActivity extends BaseActivity {
             @Override
             public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
                 surfaceMuxer.removeOutputSurface(surfaceHolder.getSurface());
+            }
+        });
+
+        cameraView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                inputSurface.setSmooth(false);
             }
         });
 
@@ -105,8 +110,6 @@ public class MainActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
 
-        isRunning = true;
-
         /*askPermission(Manifest.permission.CAMERA, granted -> {
             if (granted) {
                 SurfaceTexture ist = surfaceMuxer.createInputSurfaceTexture();
@@ -130,7 +133,6 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        isRunning = false;
         isConnected = false;
         infiCam.stopStream();
         infiCam.disconnect();
