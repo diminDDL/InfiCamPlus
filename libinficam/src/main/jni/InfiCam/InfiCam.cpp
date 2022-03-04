@@ -41,6 +41,7 @@ int InfiCam::connect(int fd) {
         return 2;
     }
     if (infi.init(dev.width, dev.height)) {
+        dev.disconnect();
         pthread_mutex_destroy(&frame_callback_mutex);
         return 3;
     }

@@ -189,13 +189,13 @@ JNIEXPORT jint Java_be_ntmn_inficam_InfiCam_nativeStartStream(JNIEnv *env, jobje
 
 JNIEXPORT void Java_be_ntmn_inficam_InfiCam_stopStream(JNIEnv *env, jobject self) {
     InfiCamJNI *icj = getObject(env, self);
+    icj->stream_stop();
     if (icj->window != NULL)
         ANativeWindow_release(icj->window);
     icj->window = NULL;
     if (icj->obj != 0)
         env->DeleteGlobalRef(icj->obj);
     icj->obj = 0;
-    icj->stream_stop();
 }
 
 JNIEXPORT void Java_be_ntmn_inficam_InfiCam_setRange(JNIEnv *env, jobject self, jint range) {

@@ -24,10 +24,14 @@ public class InfiCam {
             throw new OutOfMemoryError();
     }
 
+    public void release() {
+        nativeDelete(instance);
+    }
+
     @Override
     protected void finalize() throws Throwable {
         try {
-            nativeDelete(instance);
+            release();
         } finally {
             super.finalize();
         }

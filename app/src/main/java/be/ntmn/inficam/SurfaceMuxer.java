@@ -282,10 +282,14 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 
     public void release() { // TODO don't forget to call
         /* Destroying the context will also release the EGL surfaces, but not Android's Surfaces. */
-        for (OutputSurface ts : outputSurfaces)
+        for (OutputSurface ts : outputSurfaces) {
             ts.release();
-        for (InputSurface is : inputSurfaces)
+            outputSurfaces.remove(ts);
+        }
+        for (InputSurface is : inputSurfaces) {
             is.release();
+            inputSurfaces.remove(is);
+        }
 
         if (eglDisplay != EGL14.EGL_NO_DISPLAY) {
             EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
