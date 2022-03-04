@@ -36,10 +36,14 @@ InfiCam::~InfiCam() {
 int InfiCam::connect(int fd) {
     if (pthread_mutex_init(&frame_callback_mutex, NULL))
         return 1;
-    if (dev.connect(fd))
+    if (dev.connect(fd)) {
+        pthread_mutex_destroy(&frame_callback_mutex);
         return 2;
-    if (infi.init(dev.width, dev.height))
+    }
+    if (infi.init(dev.width, dev.height)) {
+        pthread_mutex_destroy(&frame_callback_mutex);
         return 3;
+    }
     dev.set_zoom_abs(CMD_MODE_TEMP);
     connected = 1;
     set_range(infi.range);
@@ -47,10 +51,12 @@ int InfiCam::connect(int fd) {
 }
 
 void InfiCam::disconnect() {
-    connected = 0;
-    stream_stop();
-    dev.disconnect();
-    pthread_mutex_destroy(&frame_callback_mutex);
+    if (connected) {
+        stream_stop();
+        dev.disconnect();
+        pthread_mutex_destroy(&frame_callback_mutex);
+        connected = 0;
+    }
 }
 
 int InfiCam::stream_start(frame_callback_t *cb, void *user_ptr) {

@@ -79,10 +79,11 @@ public class MainActivity extends BaseActivity {
             }
         });
 
+        // TODO very temporary
         cameraView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                inputSurface.setSmooth(false);
+                infiCam.calibrate();
             }
         });
 
