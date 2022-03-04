@@ -1,11 +1,9 @@
 package be.ntmn.inficam;
 
 import android.Manifest;
-import android.graphics.SurfaceTexture;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.Bundle;
-import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -18,7 +16,8 @@ public class MainActivity extends BaseActivity {
     SurfaceView cameraView;
     InfiCam infiCam = new InfiCam();
     boolean isConnected = false; /* Whether a device is connected. */
-    UsbDevice device = null;
+    boolean haveDevice = false;
+    UsbDeviceConnection usbConnection = null;
     SurfaceMuxer.InputSurface inputSurface; /* InfiCam class writes to this. */
     SurfaceMuxer.InputSurface overlaySurface; /* This is where we will draw annotations. */
     SurfaceMuxer.InputSurface videoSurface; /* To draw video from the normal camera if enabled. */
@@ -26,9 +25,8 @@ public class MainActivity extends BaseActivity {
     USBConnector usbConnector = new USBConnector(this) {
         @Override
         public boolean deviceFilter(UsbDevice dev) {
-            /* Because onpause gets called on dialogs, we may arrive here more than expected. */
-            if (device == null) {
-                device = dev;
+            if (!haveDevice) {
+                haveDevice = true;
                 return true;
             }
             return false;
@@ -36,14 +34,15 @@ public class MainActivity extends BaseActivity {
 
         @Override
         public void onConnect(UsbDevice dev, UsbDeviceConnection conn) {
-            infiCam = new InfiCam();
             try {
                 infiCam.connect(conn.getFileDescriptor());
                 infiCam.startStream(inputSurface.getSurface());
                 handler.postDelayed(() -> infiCam.calibrate(), 1000);
                 isConnected = true;
+                usbConnection = conn;
             } catch (Exception e) {
                 e.printStackTrace();
+                Toast.makeText(ctx, e.getMessage(), Toast.LENGTH_LONG).show();
             }
         }
 
@@ -87,7 +86,7 @@ public class MainActivity extends BaseActivity {
             }
         });
 
-/*
+ /*
         Bitmap bmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
         Canvas c = new Canvas(bmp);
         Paint p = new Paint();
@@ -135,8 +134,12 @@ public class MainActivity extends BaseActivity {
     protected void onPause() {
         super.onPause();
         isConnected = false;
+        haveDevice = false;
         infiCam.stopStream();
         infiCam.disconnect();
-        device = null;
+        if (usbConnection != null) {
+            usbConnection.close();
+            usbConnection = null;
+        }
     }
 }
