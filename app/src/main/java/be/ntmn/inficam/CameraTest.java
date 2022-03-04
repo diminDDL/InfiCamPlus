@@ -1,6 +1,7 @@
 package be.ntmn.inficam;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.camera2.CameraAccessException;
@@ -24,6 +25,7 @@ public class CameraTest {
     private CameraDevice mCameraDevice;
     private Surface surface;
 
+    @SuppressLint("MissingPermission")
     public void initCamera2(Context ctx, Surface surf) {
         surface = surf;
         mCameraID = "" + CameraCharacteristics.LENS_FACING_FRONT;//rear camera

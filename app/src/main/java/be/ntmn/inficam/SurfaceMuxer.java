@@ -138,6 +138,15 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
         outputSurfaces.add(new OutputSurface(s));
     }
 
+    public void removeOutputSurface(Surface s) {
+        for (OutputSurface os : outputSurfaces) {
+            if (os.surface == s) {
+                outputSurfaces.remove(os);
+                break;
+            }
+        }
+    }
+
     @Override
     public void onFrameAvailable(SurfaceTexture surfaceTexture) {
         for (InputSurface is : inputSurfaces) // TODO should we do it for all of them?

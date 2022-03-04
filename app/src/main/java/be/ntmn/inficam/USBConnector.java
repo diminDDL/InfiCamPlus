@@ -16,19 +16,25 @@ public abstract class USBConnector extends BroadcastReceiver {
     static final String ACTION_USB_PERMISSION = "be.ntmn.inficam.USB_PERMISSION";
 
     Context ctx;
-    UsbManager manager;
+    UsbManager manager = null;
 
     public USBConnector(Context context) {
         super();
         ctx = context;
-        manager = (UsbManager) ctx.getSystemService(Context.USB_SERVICE);
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
-        filter.addAction(ACTION_USB_PERMISSION);
-        ctx.registerReceiver(this, filter);
     }
 
-    public void tryConnect() { /* To connect with devices already connected on start, call this. */
+    public void start() {
+        if (manager == null) {
+            manager = (UsbManager) ctx.getSystemService(Context.USB_SERVICE);
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
+            filter.addAction(ACTION_USB_PERMISSION);
+            ctx.registerReceiver(this, filter);
+        }
+        tryConnect();
+    }
+
+    void tryConnect() { /* To connect with devices already connected on start, call this. */
         HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
         for (UsbDevice dev : deviceList.values()) {
             if (!deviceFilter(dev))
