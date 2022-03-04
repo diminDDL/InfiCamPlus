@@ -9,6 +9,7 @@ import android.opengl.EGLExt;
 import android.opengl.EGLSurface;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
+import android.util.Log;
 import android.view.Surface;
 
 import java.nio.ByteBuffer;
@@ -136,7 +137,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
             if (eglDisplay != EGL14.EGL_NO_DISPLAY)
                 EGL14.eglDestroySurface(eglDisplay, eglSurface);
             eglSurface = EGL14.EGL_NO_SURFACE;
-            surface.release(); // TODO remember this releases the surface too, but should it?
+            //surface.release(); // TODO remember this releases the surface too, but should it?
             surface = null;
         }
     }

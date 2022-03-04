@@ -105,15 +105,7 @@ public class MainActivity extends BaseActivity {
         //cvs.drawBitmap(bmp, 0, 0, null);
         cvs.drawLine(0, 0, 640, 480, p2);
         s.unlockCanvasAndPost(cvs);*/
-    }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        surfaceMuxer = new SurfaceMuxer();
-        inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
-        surfaceMuxer.inputSurfaces.add(inputSurface);
-        inputSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer);
         cameraView = findViewById(R.id.cameraView);
         SurfaceHolder sh = cameraView.getHolder();
         sh.addCallback(new SurfaceHolder.Callback() {
@@ -129,9 +121,20 @@ public class MainActivity extends BaseActivity {
 
             @Override
             public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
-                surfaceMuxer.removeOutputSurface(surfaceHolder.getSurface());
+                if (surfaceMuxer != null)
+                    surfaceMuxer.removeOutputSurface(surfaceHolder.getSurface());
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        surfaceMuxer = new SurfaceMuxer();
+        inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
+        surfaceMuxer.inputSurfaces.add(inputSurface);
+        inputSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer);
+
         /*askPermission(Manifest.permission.CAMERA, granted -> {
             if (granted) {
                 SurfaceTexture ist = surfaceMuxer.createInputSurfaceTexture();
