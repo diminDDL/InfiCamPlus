@@ -5,6 +5,9 @@
 #include <cstddef> /* size_t */
 #include <string>
 
+/* A class to help analyze frames coming from an InfiRay thermal camera, this is all the passive
+ *   stuff, no talking to the camera.
+ */
 class InfiFrame {
     /* Set by init(). */
     int fpa_off, s1_offset, s2_offset;

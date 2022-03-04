@@ -6,6 +6,8 @@
 #include <cstdint>
 #include <pthread.h>
 
+/* This one is for actually interacting with the thermal camera, wraps UVCDevice and InfiFrame.
+ */
 class InfiCam {
     typedef void (frame_callback_t)(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw,
                                     void *user_ptr);

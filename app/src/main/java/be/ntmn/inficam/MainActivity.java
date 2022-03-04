@@ -4,6 +4,7 @@ import android.Manifest;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -37,10 +38,11 @@ public class MainActivity extends BaseActivity {
             try {
                 if (surfaceMuxer != null) {
                     infiCam.connect(conn.getFileDescriptor());
+                    usbConnection = conn;
+                    isConnected = true;
                     infiCam.startStream(inputSurface.getSurface());
                     handler.postDelayed(() -> infiCam.calibrate(), 1000);
-                    isConnected = true;
-                    usbConnection = conn;
+                    Log.e("CONNECT", "CONNECT " + Thread.currentThread());
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -111,7 +113,8 @@ public class MainActivity extends BaseActivity {
         sh.addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
-                surfaceMuxer.addOutputSurface(surfaceHolder.getSurface());
+                if (surfaceMuxer != null) // TODO what if too early?
+                    surfaceMuxer.addOutputSurface(surfaceHolder.getSurface());
             }
 
             @Override
@@ -130,6 +133,7 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        Log.e("RESUME", "resume");
         surfaceMuxer = new SurfaceMuxer();
         inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
         surfaceMuxer.inputSurfaces.add(inputSurface);
@@ -159,6 +163,7 @@ public class MainActivity extends BaseActivity {
     protected void onPause() {
         isConnected = false;
         haveDevice = false;
+        Log.e("DISCONNECT", "DISCONNECT");
         infiCam.stopStream();
         infiCam.disconnect();
         if (usbConnection != null) {

@@ -6,6 +6,9 @@
 #include <pthread.h>
 #include <cstdlib> /* NULL */
 
+/* A wrapper for libuvc and libusb because connecting to an uvc device on Android gets rather
+ *   involved since we need to provide our own thread for handling libusb events, etc.
+ */
 class UVCDevice {
     int usb_fd = -1;
     libusb_context *usb_ctx = NULL;

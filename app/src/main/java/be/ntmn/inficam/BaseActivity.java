@@ -58,7 +58,11 @@ public class BaseActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        PermissionCallback cb = permissionCallbacks.remove(requestCode - 1);
-        cb.onPermission(grantResults[0] == PackageManager.PERMISSION_GRANTED);
+        try {
+            PermissionCallback cb = permissionCallbacks.remove(requestCode - 1);
+            cb.onPermission(grantResults[0] == PackageManager.PERMISSION_GRANTED);
+        } catch (Exception e) {
+            e.printStackTrace(); /* Sometimes we get two calls, idk why... */
+        }
     }
 }
