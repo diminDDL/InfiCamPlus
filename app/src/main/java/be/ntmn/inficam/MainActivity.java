@@ -3,6 +3,7 @@ package be.ntmn.inficam;
 import android.Manifest;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
+import android.hardware.usb.UsbManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -35,15 +36,30 @@ public class MainActivity extends BaseActivity {
 
         @Override
         public void onConnect(UsbDevice dev, UsbDeviceConnection conn) {
+            // TODO this is bad, we don't want to ignore and leave behind open connections
             try {
                 if (surfaceMuxer != null) {
+                    /*while (true) {
+                        infiCam.connect(conn.getFileDescriptor());
+                        usbConnection = conn;
+                        isConnected = true;
+                        infiCam.startStream(inputSurface.getSurface());
+                        Thread.sleep(100);
+                        infiCam.stopStream();
+                        infiCam.disconnect();
+                        conn.close();
+                        UsbManager um = (UsbManager) getSystemService(USB_SERVICE);
+                        conn = um.openDevice(dev);
+                        if (false)
+                            break;
+                    }*/
                     infiCam.connect(conn.getFileDescriptor());
                     usbConnection = conn;
                     isConnected = true;
                     infiCam.startStream(inputSurface.getSurface());
                     handler.postDelayed(() -> infiCam.calibrate(), 1000);
                     Log.e("CONNECT", "CONNECT " + Thread.currentThread());
-                }
+                } else conn.close();
             } catch (Exception e) {
                 e.printStackTrace();
                 Toast.makeText(ctx, e.getMessage(), Toast.LENGTH_LONG).show();
@@ -62,12 +78,14 @@ public class MainActivity extends BaseActivity {
         setContentView(R.layout.activity_main);
         /*inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
         surfaceMuxer.inputSurfaces.add(inputSurface);
-        inputSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer);
+        inputSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer);*/
+        cameraView = findViewById(R.id.cameraView);
         SurfaceHolder sh = cameraView.getHolder();
         sh.addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
-                surfaceMuxer.addOutputSurface(surfaceHolder.getSurface());
+                if (surfaceMuxer != null) // TODO what if too early?
+                    surfaceMuxer.addOutputSurface(surfaceHolder.getSurface());
             }
 
             @Override
@@ -77,9 +95,10 @@ public class MainActivity extends BaseActivity {
 
             @Override
             public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
-                surfaceMuxer.removeOutputSurface(surfaceHolder.getSurface());
+                if (surfaceMuxer != null)
+                    surfaceMuxer.removeOutputSurface(surfaceHolder.getSurface());
             }
-        });*/
+        });
 
         // TODO very temporary
 /*        cameraView.setOnClickListener(new View.OnClickListener() {
@@ -107,27 +126,6 @@ public class MainActivity extends BaseActivity {
         //cvs.drawBitmap(bmp, 0, 0, null);
         cvs.drawLine(0, 0, 640, 480, p2);
         s.unlockCanvasAndPost(cvs);*/
-
-        cameraView = findViewById(R.id.cameraView);
-        SurfaceHolder sh = cameraView.getHolder();
-        sh.addCallback(new SurfaceHolder.Callback() {
-            @Override
-            public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
-                if (surfaceMuxer != null) // TODO what if too early?
-                    surfaceMuxer.addOutputSurface(surfaceHolder.getSurface());
-            }
-
-            @Override
-            public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int i1, int i2) {
-                // TODO
-            }
-
-            @Override
-            public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
-                if (surfaceMuxer != null)
-                    surfaceMuxer.removeOutputSurface(surfaceHolder.getSurface());
-            }
-        });
     }
 
     @Override

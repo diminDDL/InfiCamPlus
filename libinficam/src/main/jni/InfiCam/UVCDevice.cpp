@@ -51,12 +51,12 @@ int UVCDevice::connect(int fd) {
     }
     if (format->bDescriptorSubtype != UVC_VS_FORMAT_UNCOMPRESSED) {
         disconnect();
-        return 2;
+        return 7;
     }
     frame = format->frame_descs;
     if (frame == NULL) {
         disconnect();
-        return 3;
+        return 8;
     }
     width = frame->wWidth;
     height = frame->wHeight;
