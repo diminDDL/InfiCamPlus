@@ -22,8 +22,18 @@ extern "C" JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 
 class InfiCamJNI : public InfiCam {
 public:
+	JNIEnv *env;
+	jobject obj;
 	ANativeWindow *window = NULL;
-	jobject obj = 0;
+
+	InfiCamJNI(JNIEnv *env, jobject obj) {
+		this->env = env;
+		this->obj = env->NewGlobalRef(obj);
+	}
+
+	~InfiCamJNI() {
+		env->DeleteGlobalRef(obj);
+	}
 };
 
 /* Get the InfiCamJNI class from jobject. */
@@ -117,14 +127,12 @@ void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, voi
 
 extern "C" {
 
-JNIEXPORT jlong Java_be_ntmn_libinficam_InfiCam_nativeNew(JNIEnv *env, jclass cls) {
-	return (jlong) new InfiCamJNI();
+JNIEXPORT jlong Java_be_ntmn_libinficam_InfiCam_nativeNew(JNIEnv *env, jclass cls, jobject self) {
+	return (jlong) new InfiCamJNI(env, self);
 }
 
 JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_nativeDelete(JNIEnv *env, jclass cls, jlong ptr) {
 	InfiCamJNI *icj = (InfiCamJNI *) ptr;
-	if (icj->obj != 0)
-		env->DeleteGlobalRef(icj->obj);
 	if (icj->window != NULL)
 		ANativeWindow_release(icj->window);
 	delete icj;
@@ -143,20 +151,10 @@ JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_disconnect(JNIEnv *env, jobject s
 
 JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeStartStream(JNIEnv *env, jobject self) {
 	InfiCamJNI *icj = getObject(env, self);
-
-	if (icj->obj != 0) {
-		env->DeleteGlobalRef(icj->obj);
-		icj->obj = 0;
-	}
-
-	icj->obj = env->NewGlobalRef(self);
 	if (icj->stream_start(frame_callback, NULL)) {
 		if (icj->window != NULL)
 			ANativeWindow_release(icj->window);
 		icj->window = NULL;
-		if (icj->obj != 0)
-			env->DeleteGlobalRef(icj->obj);
-		icj->obj = 0;
 		return 2;
 	}
 	return 0;
@@ -186,12 +184,6 @@ JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeSetSurface(JNIEnv *env, job
 JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_stopStream(JNIEnv *env, jobject self) {
 	InfiCamJNI *icj = getObject(env, self);
 	icj->stream_stop();
-	if (icj->window != NULL)
-		ANativeWindow_release(icj->window);
-	icj->window = NULL;
-	if (icj->obj != 0)
-		env->DeleteGlobalRef(icj->obj);
-	icj->obj = 0;
 }
 
 JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_setRange(JNIEnv *env, jobject self,

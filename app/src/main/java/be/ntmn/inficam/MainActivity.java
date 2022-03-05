@@ -53,8 +53,8 @@ public class MainActivity extends BaseActivity {
 					infiCam.connect(conn.getFileDescriptor());
 					usbConnection = conn;
 					isConnected = true;
-					infiCam.startStream();
 					infiCam.setSurface(inputSurface.getSurface());
+					infiCam.startStream();
 					handler.postDelayed(() -> infiCam.calibrate(), 1000);
 				} else conn.close();
 			} catch (Exception e) {

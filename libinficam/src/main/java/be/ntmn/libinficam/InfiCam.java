@@ -12,11 +12,11 @@ public class InfiCam {
 		System.loadLibrary("InfiCam");
 	}
 
-	native static long nativeNew();
+	native static long nativeNew(InfiCam self);
 	native static void nativeDelete(long ptr);
 
 	public InfiCam() {
-		if ((instance = nativeNew()) == 0)
+		if ((instance = nativeNew(this)) == 0)
 			throw new OutOfMemoryError();
 	}
 
