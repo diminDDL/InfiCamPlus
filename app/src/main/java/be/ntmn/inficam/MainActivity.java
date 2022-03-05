@@ -74,7 +74,7 @@ public class MainActivity extends BaseActivity {
 
 			@Override
 			public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int w, int h) {
-				outputSurface.setSize(w, h);
+				outputSurface.setSize(w, h); // TODO this gets called before surfaceCreated -_-
 			}
 
 			@Override
