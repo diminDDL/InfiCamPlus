@@ -2,4 +2,5 @@
 	<string name="app_name">InfiCam</string>
 	<string name="permdenied_cam">Camera permission denied.</string>
 	<string name="permdenied_usb">USB permission denied.</string>
+	<string name="connect_device_to_start">Connect device to start.</string>
 </resources>

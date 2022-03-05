@@ -15,8 +15,8 @@ class InfiCam {
 	UVCDevice dev;
 	frame_callback_t *frame_callback;
 	void *frame_callback_arg;
-	uint32_t *frame_rgb;
-	float *frame_temp;
+	uint32_t *frame_rgb = NULL;
+	float *frame_temp = NULL;
 	pthread_mutex_t frame_callback_mutex;
 	int connected = 0, streaming = 0, table_invalid;
 	int range = 120;
