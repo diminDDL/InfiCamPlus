@@ -10,32 +10,32 @@
  *   involved since we need to provide our own thread for handling libusb events, etc.
  */
 class UVCDevice {
-    int usb_fd = -1;
-    libusb_context *usb_ctx = NULL;
-    pthread_t usb_thread;
-    int usb_thread_stop = 1;
-    int usb_thread_valid = 0;
+	int usb_fd = -1;
+	libusb_context *usb_ctx = NULL;
+	pthread_t usb_thread;
+	int usb_thread_stop = 1;
+	int usb_thread_valid = 0;
 
-    uvc_context_t *uvc_ctx = NULL;
-    uvc_device_handle_t *uvc_devh = NULL;
+	uvc_context_t *uvc_ctx = NULL;
+	uvc_device_handle_t *uvc_devh = NULL;
 
-    static void *usb_handle_events(void *arg);
+	static void *usb_handle_events(void *arg);
 
-public:
-    uint16_t width, height;
-    uvc_frame_format format = UVC_FRAME_FORMAT_ANY;
+	public:
+	uint16_t width, height;
+	uvc_frame_format format = UVC_FRAME_FORMAT_ANY;
 
-    ~UVCDevice();
+	~UVCDevice();
 
-    // TODO perhaps we should make a mechanism to notify the user if the device disconnects
-    int connect(int fd); /* Closes the FD on disconnect. */
-    void disconnect();
+	// TODO perhaps we should make a mechanism to notify the user if the device disconnects
+	int connect(int fd); /* Closes the FD on disconnect. */
+	void disconnect();
 
-    /* The callback gets called from a dedicated thread (it's ok to block in the callback). */
-    int stream_start(uvc_frame_callback_t *cb, void *user_ptr);
-    void stream_stop();
+	/* The callback gets called from a dedicated thread (it's ok to block in the callback). */
+	int stream_start(uvc_frame_callback_t *cb, void *user_ptr);
+	void stream_stop();
 
-    int set_zoom_abs(uint16_t val);
+	int set_zoom_abs(uint16_t val);
 };
 
 #endif /* __UVCDEVICE_H__ */

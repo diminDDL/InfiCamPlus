@@ -9,75 +9,75 @@
 /* This one is for actually interacting with the thermal camera, wraps UVCDevice and InfiFrame.
  */
 class InfiCam {
-    typedef void (frame_callback_t)(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw,
-                                    void *user_ptr);
+	typedef void (frame_callback_t)(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw,
+									void *user_ptr);
 
-    UVCDevice dev;
-    frame_callback_t *frame_callback;
-    void *frame_callback_arg;
-    uint32_t *frame_rgb;
-    float *frame_temp;
-    pthread_mutex_t frame_callback_mutex;
-    int connected = 0, streaming = 0, table_invalid = 0;
-    int range = 120;
+	UVCDevice dev;
+	frame_callback_t *frame_callback;
+	void *frame_callback_arg;
+	uint32_t *frame_rgb;
+	float *frame_temp;
+	pthread_mutex_t frame_callback_mutex;
+	int connected = 0, streaming = 0, table_invalid = 0;
+	int range = 120;
 
-    static const int CMD_SHUTTER = 0x8000;
-    static const int CMD_MODE_TEMP = 0x8004;
-    static const int CMD_MODE_YUV = 0x8005;
-    static const int CMD_RANGE_120 = 0x8020;
-    static const int CMD_RANGE_400 = 0x8021;
-    static const int CMD_STORE = 0x80FF;
+	static const int CMD_SHUTTER = 0x8000;
+	static const int CMD_MODE_TEMP = 0x8004;
+	static const int CMD_MODE_YUV = 0x8005;
+	static const int CMD_RANGE_120 = 0x8020;
+	static const int CMD_RANGE_400 = 0x8021;
+	static const int CMD_STORE = 0x80FF;
 
-    static const int ADDR_CORRECTION = 0;
-    static const int ADDR_TEMP_REFLECTED = 4;
-    static const int ADDR_TEMP_AIR = 8;
-    static const int ADDR_HUMIDITY = 12;
-    static const int ADDR_EMISSIVITY = 16;
-    static const int ADDR_DISTANCE = 20;
+	static const int ADDR_CORRECTION = 0;
+	static const int ADDR_TEMP_REFLECTED = 4;
+	static const int ADDR_TEMP_AIR = 8;
+	static const int ADDR_HUMIDITY = 12;
+	static const int ADDR_EMISSIVITY = 16;
+	static const int ADDR_DISTANCE = 20;
 
-    static void uvc_callback(uvc_frame_t *frame, void *user_ptr);
-    void set_float(int addr, float val); /* Write to camera user memory, needs lock. */
+	static void uvc_callback(uvc_frame_t *frame, void *user_ptr);
+	void set_float(int addr, float val); /* Write to camera user memory, needs lock. */
 
-public:
-    static const int palette_len = InfiFrame::palette_len;
-    /* InfiFrame class gets updated before each stream CB with info relevant to the frame.
-     * The width and height in there are valid after connect().
-     */
-    InfiFrame infi;
+	public:
+	static const int palette_len = InfiFrame::palette_len;
+	/* InfiFrame class gets updated before each stream CB with info relevant to the frame.
+	 * The width and height in there are valid after connect().
+	 */
+	InfiFrame infi;
 
-    ~InfiCam();
+	~InfiCam();
 
-    int connect(int fd);
-    void disconnect();
-    int stream_start(frame_callback_t *cb, void *user_ptr); /* CB arguments valid until return. */
-    void stream_stop();
+	int connect(int fd);
+	void disconnect();
+	int stream_start(frame_callback_t *cb, void *user_ptr); /* CB arguments valid until return. */
+	void stream_stop();
 
-    /* Set range, valid values are 120 and 400 (see InfiFrame class).
-     * Changes take effect after update/update_table().
-     */
-    void set_range(int range);
+	/* Set range, valid values are 120 and 400 (see InfiFrame class).
+	 * Changes take effect after update/update_table().
+	 */
+	void set_range(int range);
 
-    /* Distance multiplier, 3.0 for 6.8mm lens, 1.0 for 13mm lens.
-     * Changes only take effect after update_table().
-     */
-    void set_distance_multiplier(float dm);
+	/* Distance multiplier, 3.0 for 6.8mm lens, 1.0 for 13mm lens.
+	 * Changes only take effect after update_table().
+	 */
+	void set_distance_multiplier(float dm);
 
-    /* Setting parameters, only works while streaming.
-     * Changes only take effect after update_table().
-     */
-    void set_correction(float corr);
-    void set_temp_reflected(float t_ref);
-    void set_temp_air(float t_air);
-    void set_humidity(float humi);
-    void set_emissivity(float emi);
-    void set_distance(float dist);
-    void set_params(float corr, float t_ref, float t_air, float humi, float emi, float dist);
-    void store_params(); /* Store user memory to camera so values remain when reconnecting. */
+	/* Setting parameters, only works while streaming.
+	 * Changes only take effect after update_table().
+	 */
+	void set_correction(float corr);
+	void set_temp_reflected(float t_ref);
+	void set_temp_air(float t_air);
+	void set_humidity(float humi);
+	void set_emissivity(float emi);
+	void set_distance(float dist);
+	void set_params(float corr, float t_ref, float t_air, float humi, float emi, float dist);
+	void store_params(); /* Store user memory to camera so values remain when reconnecting. */
 
-    void update_table();
-    void calibrate();
+	void update_table();
+	void calibrate();
 
-    void set_palette(uint32_t *palette); /* Length must be palette_len. */
+	void set_palette(uint32_t *palette); /* Length must be palette_len. */
 };
 
 #endif /* __INFICAM_H__ */
