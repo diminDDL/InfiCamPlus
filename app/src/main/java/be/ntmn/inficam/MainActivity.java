@@ -11,6 +11,7 @@ import android.Manifest;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.Toast;
@@ -49,15 +50,21 @@ public class MainActivity extends BaseActivity {
 		public void onConnect(UsbDevice dev, UsbDeviceConnection conn) {
 			// TODO this is bad, we don't want to ignore and leave behind open connections
 			try {
+				Log.e("CONN", "TryConnect " + this + " " + Thread.currentThread().getName());
 				if (surfaceMuxer != null && !isConnected) {
+					Log.e("CONN", "Connect");
 					infiCam.connect(conn.getFileDescriptor());
 					usbConnection = conn;
 					isConnected = true;
 					infiCam.setSurface(inputSurface.getSurface());
 					infiCam.startStream();
 					handler.postDelayed(() -> infiCam.calibrate(), 1000);
-				} else conn.close();
+				} else {
+					Log.e("CONN", "NOConnect " + surfaceMuxer + " " + isConnected);
+					conn.close();
+				}
 			} catch (Exception e) {
+				Log.e("CONN", "ERRConnect");
 				e.printStackTrace();
 				Toast.makeText(ctx, e.getMessage(), Toast.LENGTH_LONG).show();
 			}
@@ -135,15 +142,24 @@ public class MainActivity extends BaseActivity {
 		//cvs.drawBitmap(bmp, 0, 0, null);
 		cvs.drawLine(0, 0, 640, 480, p2);
 		s.unlockCanvasAndPost(cvs);*/
+
+		askPermission(Manifest.permission.CAMERA, granted -> {
+			if (granted) {
+				usbConnector.start(); /* Connecting to a UVC device needs camera permission. */
+			} else {
+				Toast.makeText(this, R.string.permdenied_cam, Toast.LENGTH_LONG).show();
+			}
+		});
 	}
 
 	@Override
 	protected void onResume() {
-		super.onResume();
+		Log.e("ONRESUME", "START");
 		surfaceMuxer = new SurfaceMuxer();
 		inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
 		surfaceMuxer.inputSurfaces.add(inputSurface);
 		inputSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer);
+		super.onResume();
 
 		/*askPermission(Manifest.permission.CAMERA, granted -> {
 			if (granted) {
@@ -156,17 +172,11 @@ public class MainActivity extends BaseActivity {
 				Toast.makeText(this, R.string.permdenied_cam, Toast.LENGTH_LONG).show();
 			}
 		});*/
-		askPermission(Manifest.permission.CAMERA, granted -> {
-			if (granted) {
-				usbConnector.start(); /* Connecting to a UVC device needs camera permission. */
-			} else {
-				Toast.makeText(this, R.string.permdenied_cam, Toast.LENGTH_LONG).show();
-			}
-		});
 	}
 
 	@Override
 	protected void onPause() {
+		Log.e("ONPAUSE", "DISCONNECT");
 		isConnected = false;
 		haveDevice = false;
 		infiCam.stopStream();

@@ -17,10 +17,15 @@
 		android:roundIcon="@mipmap/ic_launcher_round"
 		android:supportsRtl="true"
 		android:theme="@style/Theme.InfiCam">
+		<!-- TODO we need singleTask or singleInstance mode to prevent relaunching the activity
+		       when a USB device connects, but android seems to still give me multiple instances
+		       of the Activity coming for intents if I use the singleInstance launchmode so what do?
+		       directBootAware was also suggested for this but doesn't seem to matter
+		 -->
 		<activity
 			android:name=".MainActivity"
 			android:exported="true"
-			android:launchMode="singleTask"
+			android:launchMode="singleInstance"
 			android:directBootAware="true">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />

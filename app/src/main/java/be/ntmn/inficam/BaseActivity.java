@@ -17,7 +17,7 @@ import java.util.ArrayList;
 public class BaseActivity extends AppCompatActivity {
 	ArrayList<PermissionCallback> permissionCallbacks = new ArrayList<>();
 	final static long hideDelay = 2000;
-	Handler handler = new Handler();
+	public final Handler handler = new Handler();
 
 	interface PermissionCallback {
 		void onPermission(boolean granted);
@@ -32,8 +32,8 @@ public class BaseActivity extends AppCompatActivity {
 				return;
 			handler.postDelayed(this::hideUI, hideDelay);
 		});
-		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		hideUI();
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 	}
 
 	void hideUI() {
