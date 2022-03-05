@@ -17,6 +17,7 @@ public class MainActivity extends BaseActivity {
     boolean isConnected = false; /* Whether a device is connected. */
     boolean haveDevice = false;
     UsbDeviceConnection usbConnection = null;
+    SurfaceMuxer.OutputSurface outputSurface;
     SurfaceMuxer.InputSurface inputSurface; /* InfiCam class writes to this. */
     SurfaceMuxer.InputSurface overlaySurface; /* This is where we will draw annotations. */
     SurfaceMuxer.InputSurface videoSurface; /* To draw video from the normal camera if enabled. */
@@ -66,19 +67,21 @@ public class MainActivity extends BaseActivity {
         sh.addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
-                if (surfaceMuxer != null) // TODO what if too early?
-                    surfaceMuxer.addOutputSurface(surfaceHolder.getSurface());
+                if (surfaceMuxer != null) { // TODO what if too early?
+                    outputSurface = new SurfaceMuxer.OutputSurface(surfaceMuxer, surfaceHolder.getSurface());
+                    surfaceMuxer.outputSurfaces.add(outputSurface);
+                }
             }
 
             @Override
-            public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int i1, int i2) {
-                // TODO
+            public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int w, int h) {
+                outputSurface.setSize(w, h);
             }
 
             @Override
             public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
                 if (surfaceMuxer != null)
-                    surfaceMuxer.removeOutputSurface(surfaceHolder.getSurface());
+                    surfaceMuxer.outputSurfaces.remove(outputSurface);
             }
         });
 

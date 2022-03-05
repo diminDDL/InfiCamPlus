@@ -9,7 +9,6 @@ import android.opengl.EGLExt;
 import android.opengl.EGLSurface;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
-import android.util.Log;
 import android.view.Surface;
 
 import java.nio.ByteBuffer;
@@ -25,10 +24,33 @@ import java.util.ArrayList;
  *   may fail or produce unexpected results."). To solve this we use this class that'll take one or
  *   more input surfaces and draw them to one or more output surfaces using EGL.
  *
- * Note that to tell the thing when frames are available you need to tell the SurfaceTexture you
- *   want to synchronize to setOnFrameAvailableListener(surfaceMuxer).
+ * To use do the following:
+ * - Create an instance of the SurfaceMuxer class.
+ * - To get an input surface create a SurfaceMuxer.InputSurface instance, this is bound to the
+ *     SurfaceMuxer instance you give the constructor.
+ * - Call getSurface() and/or getSurfaceTexture on that to get the actual input Surface and/or
+ *     SurfaceTexture texture to draw to.
+ * - Call setOnFrameAvailableListener(surfaceMuxer) on the SurfaceTexture from the InputSurface(s)
+ *     you want to synchronize the output with.
+ * - Create an instance of SurfaceMuxer.OutputSurface for surfaces you want to output to and call
+ *     setSize() on them to set the dimensions.
+ * - Add the InputSurface and OutputSurface instances to the inputSurfaces and outputSurfaces of
+ *     the SurfaceMuxer instance, and you're of to the races.
  *
- * Be aware this uses an EGL context and everything is bound to the thread it's created on.
+ * The order of operations of the above list isn't of particular importance as long as it's
+ *   actually possible, but only use this class from a single thread since the EGL context is
+ *   bound to a single thread.
+ *
+ * The surface given to the OutputSurface constructor is not released when you call the
+ *   OutputSurface.release() function. You should call the release() for instances of
+ *   InputSurface and OutputSurface when they're no longer used to free the EGL stuff they use
+ *   but if they're in the inputSurfaces/outputSurfaces arrays, that happens automatically
+ *   when calling SurfaceMuxer.release(), which also should be called when the SurfaceMuxer
+ *   instance is no longer in use.
+ *
+ * Between Activity.onPause() and and Activity.onResume() the EGL context gets destroyed on some
+ *   devices that's probably where to create and destroy the SurfaceMuxer instance and anything
+ *   associated.
  */
 public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
     static final int EGL_RECORDABLE_ANDROID = 0x3142;
@@ -65,12 +87,16 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 
         InputSurface(SurfaceMuxer muxer, boolean smooth) {
             surfaceMuxer = muxer;
-            EGL14.eglMakeCurrent(surfaceMuxer.eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, surfaceMuxer.eglContext);
+            EGL14.eglMakeCurrent(surfaceMuxer.eglDisplay, EGL14.EGL_NO_SURFACE,
+                    EGL14.EGL_NO_SURFACE, surfaceMuxer.eglContext);
+            surfaceMuxer.checkEglError("eglMakeCurrent");
             GLES20.glGenTextures(1, textures, 0);
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
             GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textures[0]);
-            GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
-            GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
+            GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S,
+                    GLES20.GL_CLAMP_TO_EDGE);
+            GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T,
+                    GLES20.GL_CLAMP_TO_EDGE);
             setSmooth(smooth);
             surfaceTexture = new SurfaceTexture(textures[0]);
             surface = new Surface(surfaceTexture);
@@ -78,11 +104,15 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 
         void setSmooth(boolean smooth) {
             int filter = smooth ? GLES20.GL_LINEAR : GLES20.GL_NEAREST;
-            EGL14.eglMakeCurrent(surfaceMuxer.eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, surfaceMuxer.eglContext);
+            EGL14.eglMakeCurrent(surfaceMuxer.eglDisplay, EGL14.EGL_NO_SURFACE,
+                    EGL14.EGL_NO_SURFACE, surfaceMuxer.eglContext);
+            surfaceMuxer.checkEglError("eglMakeCurrent");
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
             GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textures[0]);
-            GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, filter);
-            GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, filter);
+            GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER,
+                    filter);
+            GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER,
+                    filter);
         }
 
         public int getTexture() {
@@ -99,45 +129,64 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 
         public void release() {
             surfaceTexture.release();
+            surfaceTexture = null;
             surface.release();
-            if (surfaceMuxer.eglDisplay != EGL14.EGL_NO_DISPLAY) {
-                EGL14.eglMakeCurrent(surfaceMuxer.eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, surfaceMuxer.eglContext);
+            surface = null;
+            if (surfaceMuxer != null && surfaceMuxer.eglDisplay != EGL14.EGL_NO_DISPLAY) {
+                EGL14.eglMakeCurrent(surfaceMuxer.eglDisplay, EGL14.EGL_NO_SURFACE,
+                        EGL14.EGL_NO_SURFACE, surfaceMuxer.eglContext);
+                surfaceMuxer.checkEglError("eglMakeCurrent");
                 GLES20.glDeleteTextures(1, textures, 0);
             }
+            surfaceMuxer = null;
         }
     }
 
-    class OutputSurface {
+    public static class OutputSurface {
+        SurfaceMuxer surfaceMuxer;
         Surface surface;
         EGLSurface eglSurface;
+        int width = 1, height = 1;
 
-        public OutputSurface(Surface surf) {
+        public OutputSurface(SurfaceMuxer muxer, Surface surf) {
+            surfaceMuxer = muxer;
             int[] attr = { EGL14.EGL_NONE };
             surface = surf;
-            eglSurface = EGL14.eglCreateWindowSurface(eglDisplay, eglConfig, surf, attr, 0);
-            checkEglError("eglCreateWindowSurface");
+            eglSurface = EGL14.eglCreateWindowSurface(surfaceMuxer.eglDisplay,
+                    surfaceMuxer.eglConfig, surf, attr, 0);
+            surfaceMuxer.checkEglError("eglCreateWindowSurface");
+        }
+
+        public void setSize(int w, int h) {
+            width = w;
+            height = h;
         }
 
         public void makeCurrent() {
-            EGL14.eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext);
-            checkEglError("eglMakeCurrent");
+            EGL14.eglMakeCurrent(surfaceMuxer.eglDisplay, eglSurface, eglSurface,
+                    surfaceMuxer.eglContext);
+            surfaceMuxer.checkEglError("eglMakeCurrent");
         }
 
         public void swapBuffers() {
-            EGL14.eglSwapBuffers(eglDisplay, eglSurface);
-            checkEglError("eglSwapBuffers");
+            EGL14.eglSwapBuffers(surfaceMuxer.eglDisplay, eglSurface);
+            surfaceMuxer.checkEglError("eglSwapBuffers");
         }
 
         public void setPresentationTime(long nsecs) {
-            EGLExt.eglPresentationTimeANDROID(eglDisplay, eglSurface, nsecs);
-            checkEglError("eglPresentationTimeANDROID");
+            EGLExt.eglPresentationTimeANDROID(surfaceMuxer.eglDisplay, eglSurface, nsecs);
+            surfaceMuxer.checkEglError("eglPresentationTimeANDROID");
         }
 
-        public void release() { // TODO Don't forget to call when done.
-            if (eglDisplay != EGL14.EGL_NO_DISPLAY)
-                EGL14.eglDestroySurface(eglDisplay, eglSurface);
-            eglSurface = EGL14.EGL_NO_SURFACE;
-            //surface.release(); // TODO remember this releases the surface too, but should it?
+        public void release() {
+            if (surfaceMuxer != null && surfaceMuxer.eglDisplay != EGL14.EGL_NO_DISPLAY &&
+                eglSurface != EGL14.EGL_NO_SURFACE) {
+                EGL14.eglMakeCurrent(surfaceMuxer.eglDisplay, EGL14.EGL_NO_SURFACE,
+                        EGL14.EGL_NO_SURFACE, surfaceMuxer.eglContext);
+                EGL14.eglDestroySurface(surfaceMuxer.eglDisplay, eglSurface);
+                eglSurface = EGL14.EGL_NO_SURFACE;
+            }
+            surfaceMuxer = null;
             surface = null;
         }
     }
@@ -146,26 +195,13 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
         init();
     }
 
-    public void addOutputSurface(Surface s) {
-        outputSurfaces.add(new OutputSurface(s));
-    }
-
-    public void removeOutputSurface(Surface s) {
-        for (OutputSurface os : outputSurfaces) {
-            if (os.surface == s) {
-                outputSurfaces.remove(os);
-                break;
-            }
-        }
-    }
-
     @Override
     public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-        for (InputSurface is : inputSurfaces) // TODO should we do it for all of them?
-            is.getSurfaceTexture().updateTexImage(); // TODO check whether we should indeed run this every time
+        for (InputSurface is : inputSurfaces)
+            is.getSurfaceTexture().updateTexImage();
         for (OutputSurface ts : outputSurfaces) {
             ts.makeCurrent();
-            GLES20.glViewport(0, 0, 1280, 960); // TODO maybe move to onsurfacechanged? or maybe we store size info there and then... idfk
+            GLES20.glViewport(0, 0, ts.width, ts.height);
 
             GLES20.glClearColor(0, 0, 0, 1);
             GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
@@ -187,8 +223,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
                 GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
                 /*if (inputSurfaces.indexOf(is) == 1)
                     GLES20.glBlendFunc(GLES20.GL_CONSTANT_ALPHA, GLES20.GL_ONE_MINUS_CONSTANT_ALPHA);*/
-                if (inputSurfaces.indexOf(is) == 1) // TODO this is lame
-                    GLES20.glViewport(0, 0, 640, 480);
+                /*if (inputSurfaces.indexOf(is) == 1) // TODO this is lame
+                    GLES20.glViewport(0, 0, 640, 480);*/
 
                 GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, is.getTexture());
                 GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
@@ -293,8 +329,10 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
         }
 
         if (eglDisplay != EGL14.EGL_NO_DISPLAY) {
-            EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
-            EGL14.eglDestroyContext(eglDisplay, eglContext); /* Will also delete textures, program, etc. */
+            EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE,
+                    EGL14.EGL_NO_CONTEXT);
+            /* Destroying the context will also delete textures, program, etc. */
+            EGL14.eglDestroyContext(eglDisplay, eglContext);
             EGL14.eglReleaseThread();
             EGL14.eglTerminate(eglDisplay);
         }
