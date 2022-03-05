@@ -1,8 +1,8 @@
 #include "InfiFrame.h"
 
 #include <cstdint>
-#include <cstring> /* memcpy() */
 #include <cstdlib> /* NULL */
+#include <cstring> /* memcpy() */
 
 static const float zeroc = 273.15;
 

@@ -1,6 +1,11 @@
 #include "InfiCam.h"
+#include "UVCDevice.h"
+#include "InfiFrame.h"
 
-#include <string.h> /* memcpy() */
+#include <cstdint>
+#include <pthread.h>
+#include <cstdlib> /* NULL */
+#include <cstring> /* memcpy() */
 
 void InfiCam::uvc_callback(uvc_frame_t *frame, void *user_ptr) {
 	InfiCam *p = (InfiCam *) user_ptr;

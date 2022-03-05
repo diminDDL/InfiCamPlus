@@ -4,6 +4,7 @@
 #include <libuvc.h>
 #include <pthread.h>
 #include <unistd.h> /* close() */
+#include <cstdlib> /* NULL */
 
 void *UVCDevice::usb_handle_events(void *arg) {
 	UVCDevice *p = (UVCDevice *) arg;
