@@ -49,7 +49,7 @@ public class MainActivity extends BaseActivity {
 		public void onConnect(UsbDevice dev, UsbDeviceConnection conn) {
 			// TODO this is bad, we don't want to ignore and leave behind open connections
 			try {
-				if (surfaceMuxer != null) {
+				if (surfaceMuxer != null && !isConnected) {
 					infiCam.connect(conn.getFileDescriptor());
 					usbConnection = conn;
 					isConnected = true;
