@@ -58,6 +58,7 @@ public class InfiCam {
 	}
 
 	native int nativeConnect(int fd);
+	/* Make sure surface is either valid, not set or null before calling connect. */
 	public void connect(int fd) throws Exception {
 		if (nativeConnect(fd) != 0)
 			throw new Exception("Failed to connect to camera.");

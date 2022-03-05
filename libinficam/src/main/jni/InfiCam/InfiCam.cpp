@@ -69,16 +69,14 @@ int InfiCam::stream_start(frame_callback_t *cb, void *user_ptr) {
 	frame_rgb = (uint32_t *) calloc(infi.width * infi.height, sizeof(uint32_t));
 	frame_temp = (float *) calloc(infi.width * infi.height, sizeof(float));
 	if (frame_rgb == NULL || frame_temp == NULL) {
-		free(frame_rgb);
-		free(frame_temp);
+		stream_stop();
 		return 1;
 	}
 	frame_callback = cb;
 	frame_callback_arg = user_ptr;
 	table_invalid = 1;
 	if (dev.stream_start(uvc_callback, this)) {
-		free(frame_rgb);
-		free(frame_temp);
+		stream_stop();
 		return 2;
 	}
 	streaming = 1;

@@ -20,8 +20,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
-import org.w3c.dom.Text;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;

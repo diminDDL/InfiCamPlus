@@ -139,14 +139,25 @@ JNIEXPORT jlong Java_be_ntmn_libinficam_InfiCam_nativeNew(JNIEnv *env, jclass cl
 
 JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_nativeDelete(JNIEnv *env, jclass cls, jlong ptr) {
 	InfiCamJNI *icj = (InfiCamJNI *) ptr;
-	if (icj->window != NULL)
-		ANativeWindow_release(icj->window);
-	delete icj;
+	ANativeWindow *window = icj->window;
+	delete icj; /* Delete also disconnects. */
+	if (window != NULL) /* No need to lock, callback isn't called after disconnect. */
+		ANativeWindow_release(window);
 }
 
 JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeConnect(JNIEnv *env, jobject self, jint fd) {
 	InfiCamJNI *icj = getObject(env, self);
 	int ret = icj->connect(fd);
+	pthread_mutex_lock(&icj->window_mutex);
+	if (icj->window != NULL) { /* Connect means the size may have changed. */
+		if (ANativeWindow_setBuffersGeometry(icj->window, icj->infi.width, icj->infi.height,
+											 WINDOW_FORMAT_RGBX_8888)) {
+			ANativeWindow_release(icj->window);
+			icj->window = NULL;
+			return 1;
+		}
+	}
+	pthread_mutex_unlock(&icj->window_mutex);
 	return ret;
 }
 
