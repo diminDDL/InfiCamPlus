@@ -14,9 +14,13 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+
+import org.w3c.dom.Text;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -53,12 +57,14 @@ public class MainActivity extends BaseActivity {
 				Log.e("CONN", "TryConnect " + this + " " + Thread.currentThread().getName());
 				if (surfaceMuxer != null && !isConnected) {
 					Log.e("CONN", "Connect");
+					((TextView) findViewById(R.id.message)).setText("TEST");
 					infiCam.connect(conn.getFileDescriptor());
 					usbConnection = conn;
 					isConnected = true;
 					infiCam.setSurface(inputSurface.getSurface());
 					infiCam.startStream();
 					handler.postDelayed(() -> infiCam.calibrate(), 1000);
+					Log.e("OSURFACES", "n = " + surfaceMuxer.outputSurfaces.size());
 				} else {
 					Log.e("CONN", "NOConnect " + surfaceMuxer + " " + isConnected);
 					conn.close();
@@ -76,32 +82,37 @@ public class MainActivity extends BaseActivity {
 		}
 	};
 
+	SurfaceHolder.Callback shcallback = new SurfaceHolder.Callback() {
+		@Override
+		public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
+			if (surfaceMuxer != null) { // TODO what if too early?
+				outputSurface = new SurfaceMuxer.OutputSurface(surfaceMuxer, surfaceHolder.getSurface());
+				surfaceMuxer.outputSurfaces.add(outputSurface);
+				Log.e("SURFACE", "created");
+			}
+		}
+
+		@Override
+		public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int w, int h) {
+			outputSurface.setSize(w, h); // TODO this gets called before surfaceCreated -_-
+		}
+
+		@Override
+		public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
+			if (surfaceMuxer != null) {
+				surfaceMuxer.outputSurfaces.remove(outputSurface);
+				Log.e("SURFACE", "removed");
+			}
+		}
+	};
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		cameraView = findViewById(R.id.cameraView);
 		SurfaceHolder sh = cameraView.getHolder();
-		sh.addCallback(new SurfaceHolder.Callback() {
-			@Override
-			public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
-				if (surfaceMuxer != null) { // TODO what if too early?
-					outputSurface = new SurfaceMuxer.OutputSurface(surfaceMuxer, surfaceHolder.getSurface());
-					surfaceMuxer.outputSurfaces.add(outputSurface);
-				}
-			}
-
-			@Override
-			public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int w, int h) {
-				outputSurface.setSize(w, h); // TODO this gets called before surfaceCreated -_-
-			}
-
-			@Override
-			public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
-				if (surfaceMuxer != null)
-					surfaceMuxer.outputSurfaces.remove(outputSurface);
-			}
-		});
+		sh.addCallback(shcallback);
 
 		/* Generate ironbow palette. */
 		byte[] palette = new byte[InfiCam.paletteLen * 4];
@@ -118,12 +129,12 @@ public class MainActivity extends BaseActivity {
 		infiCam.setPalette(intPalette);
 
 		// TODO very temporary
-		/*cameraView.setOnClickListener(new View.OnClickListener() {
+		cameraView.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View view) {
 				infiCam.calibrate();
 			}
-		});*/
+		});
 
 		/*Bitmap bmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
 		Canvas c = new Canvas(bmp);
@@ -159,7 +170,23 @@ public class MainActivity extends BaseActivity {
 		inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
 		surfaceMuxer.inputSurfaces.add(inputSurface);
 		inputSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer);
+		try {
+			infiCam.setSurface(inputSurface.getSurface());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 		super.onResume();
+
+		// TODO we recreate the outputsurface here because the callback only runs once but this is silly, we can find a better way
+		if (outputSurface != null) {
+			cameraView = findViewById(R.id.cameraView);
+			SurfaceHolder sh = cameraView.getHolder();
+			outputSurface = new SurfaceMuxer.OutputSurface(surfaceMuxer, sh.getSurface());
+			outputSurface.setSize(1280, 960);
+			surfaceMuxer.outputSurfaces.clear();
+			surfaceMuxer.outputSurfaces.add(outputSurface);
+		}
 
 		/*askPermission(Manifest.permission.CAMERA, granted -> {
 			if (granted) {
@@ -185,6 +212,7 @@ public class MainActivity extends BaseActivity {
 			usbConnection.close();
 			usbConnection = null;
 		}
+		inputSurface.getSurfaceTexture().setOnFrameAvailableListener(null); // TODO this is crap
 		surfaceMuxer.release();
 		surfaceMuxer = null;
 		super.onPause();

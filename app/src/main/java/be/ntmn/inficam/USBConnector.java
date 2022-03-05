@@ -41,7 +41,8 @@ public abstract class USBConnector extends BroadcastReceiver {
 				continue;
 			Intent intent = new Intent(ACTION_USB_PERMISSION);
 			@SuppressLint("UnspecifiedImmutableFlag")
-			PendingIntent pending = PendingIntent.getBroadcast(ctx, 0, intent, 0);
+			PendingIntent pending = PendingIntent.getBroadcast(ctx, 0, intent,
+					PendingIntent.FLAG_MUTABLE);
 			manager.requestPermission(dev, pending);
 		}
 	}
