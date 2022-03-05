@@ -28,7 +28,7 @@
 			android:layout_width="match_parent"
 			android:layout_height="match_parent"
 			android:gravity="center"
-			android:text="@string/connect_device_to_start"
+			android:text="@string/msg_disconnected"
 			android:textAppearance="@style/TextAppearance.AppCompat.Large"
 			android:textColor="@color/white" />
 	</FrameLayout>
