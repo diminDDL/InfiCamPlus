@@ -57,6 +57,7 @@ void InfiCam::disconnect() {
 		dev.disconnect();
 		pthread_mutex_destroy(&frame_callback_mutex);
 		connected = 0;
+		table_invalid = 1;
 	}
 }
 
