@@ -77,44 +77,42 @@ void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, voi
 		}
 	}
 
-	if (icj->obj != 0) {
-		/* Attach to Java thread. */
-		JNIEnv *cenv;
-		javaVM->AttachCurrentThread(&cenv, NULL);
+	/* Attach to Java thread. */
+	JNIEnv *cenv;
+	javaVM->AttachCurrentThread(&cenv, NULL);
 
-		/* Fill the FrameInfo struct. */
-		jobject fi = cenv->AllocObject(cls_FrameInfo);
-		setFloatVar(cenv, fi, "max", icj->infi.temp(icj->infi.temp_max));
-		setIntVar(cenv, fi, "max_x", icj->infi.temp_max_x);
-		setIntVar(cenv, fi, "max_y", icj->infi.temp_max_y);
-		setFloatVar(cenv, fi, "min", icj->infi.temp(icj->infi.temp_min));
-		setIntVar(cenv, fi, "min_x", icj->infi.temp_min_x);
-		setIntVar(cenv, fi, "min_y", icj->infi.temp_min_y);
-		setFloatVar(cenv, fi, "center", icj->infi.temp(icj->infi.temp_center));
-		setFloatVar(cenv, fi, "avg", icj->infi.temp(icj->infi.temp_avg));
+	/* Fill the FrameInfo struct. */
+	jobject fi = cenv->AllocObject(cls_FrameInfo);
+	setFloatVar(cenv, fi, "max", icj->infi.temp(icj->infi.temp_max));
+	setIntVar(cenv, fi, "max_x", icj->infi.temp_max_x);
+	setIntVar(cenv, fi, "max_y", icj->infi.temp_max_y);
+	setFloatVar(cenv, fi, "min", icj->infi.temp(icj->infi.temp_min));
+	setIntVar(cenv, fi, "min_x", icj->infi.temp_min_x);
+	setIntVar(cenv, fi, "min_y", icj->infi.temp_min_y);
+	setFloatVar(cenv, fi, "center", icj->infi.temp(icj->infi.temp_center));
+	setFloatVar(cenv, fi, "avg", icj->infi.temp(icj->infi.temp_avg));
 
-		setFloatVar(cenv, fi, "correction", icj->infi.correction);
-		setFloatVar(cenv, fi, "temp_reflected", icj->infi.temp_reflected);
-		setFloatVar(cenv, fi, "temp_air", icj->infi.temp_air);
-		setFloatVar(cenv, fi, "humidity", icj->infi.humidity);
-		setFloatVar(cenv, fi, "emissivity", icj->infi.emissivity);
-		setFloatVar(cenv, fi, "distance", icj->infi.distance);
+	setFloatVar(cenv, fi, "correction", icj->infi.correction);
+	setFloatVar(cenv, fi, "temp_reflected", icj->infi.temp_reflected);
+	setFloatVar(cenv, fi, "temp_air", icj->infi.temp_air);
+	setFloatVar(cenv, fi, "humidity", icj->infi.humidity);
+	setFloatVar(cenv, fi, "emissivity", icj->infi.emissivity);
+	setFloatVar(cenv, fi, "distance", icj->infi.distance);
 
-		/* Make a Java array from the temperature array. */
-		size_t temp_len = icj->infi.width * icj->infi.height;
-		jfloatArray jtemp = cenv->NewFloatArray(temp_len);
-		cenv->SetFloatArrayRegion(jtemp, 0, temp_len, temp);
+	/* Make a Java array from the temperature array. */
+	size_t temp_len = icj->infi.width * icj->infi.height;
+	jfloatArray jtemp = cenv->NewFloatArray(temp_len);
+	cenv->SetFloatArrayRegion(jtemp, 0, temp_len, temp);
 
-		/* Call the callback. */
-		jclass cls = cenv->GetObjectClass(icj->obj);
-		jmethodID mid = cenv->GetMethodID(cls, "frameCallback", "(L" FRAMEINFO_TYPE ";[F)V");
-		cenv->CallVoidMethod(icj->obj, mid, fi, jtemp);
+	/* Call the callback. */
+	jclass cls = cenv->GetObjectClass(icj->obj);
+	jmethodID mid = cenv->GetMethodID(cls, "frameCallback", "(L" FRAMEINFO_TYPE ";[F)V");
+	cenv->CallVoidMethod(icj->obj, mid, fi, jtemp);
 
-		/* Clean up and detach. */
-		cenv->DeleteLocalRef(jtemp);
-		cenv->DeleteLocalRef(fi);
-		javaVM->DetachCurrentThread();
-	}
+	/* Clean up and detach. */
+	cenv->DeleteLocalRef(jtemp);
+	cenv->DeleteLocalRef(fi);
+	javaVM->DetachCurrentThread();
 }
 
 extern "C" {
@@ -143,26 +141,12 @@ JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_disconnect(JNIEnv *env, jobject s
 	icj->disconnect();
 }
 
-// TODO perhaps more sensible to separately have startStream and setSurface
-JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeStartStream(JNIEnv *env, jobject self,
-																 jobject surface) {
+JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeStartStream(JNIEnv *env, jobject self) {
 	InfiCamJNI *icj = getObject(env, self);
 
-	if (icj->window != NULL) {
-		ANativeWindow_release(icj->window);
-		icj->window = NULL;
-	}
 	if (icj->obj != 0) {
 		env->DeleteGlobalRef(icj->obj);
 		icj->obj = 0;
-	}
-
-	if (surface != NULL) {
-		icj->window = ANativeWindow_fromSurface(env, surface);
-		if (icj->window == NULL)
-			return 2;
-		ANativeWindow_setBuffersGeometry(icj->window, icj->infi.width, icj->infi.height,
-										 WINDOW_FORMAT_RGBX_8888);
 	}
 
 	icj->obj = env->NewGlobalRef(self);
@@ -173,7 +157,28 @@ JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeStartStream(JNIEnv *env, jo
 		if (icj->obj != 0)
 			env->DeleteGlobalRef(icj->obj);
 		icj->obj = 0;
-		return 3;
+		return 2;
+	}
+	return 0;
+}
+
+JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeSetSurface(JNIEnv *env, jobject self,
+																	  jobject surface) {
+	InfiCamJNI *icj = getObject(env, self);
+
+	/* Remove surface if we had one. */
+	if (icj->window != NULL) {
+		ANativeWindow_release(icj->window);
+		icj->window = NULL;
+	}
+
+	/* Set new surface if we have one. */
+	if (surface != NULL) {
+		icj->window = ANativeWindow_fromSurface(env, surface);
+		if (icj->window == NULL)
+			return 2;
+		ANativeWindow_setBuffersGeometry(icj->window, icj->infi.width, icj->infi.height,
+										 WINDOW_FORMAT_RGBX_8888);
 	}
 	return 0;
 }

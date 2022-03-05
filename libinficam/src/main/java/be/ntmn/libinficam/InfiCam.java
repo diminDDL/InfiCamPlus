@@ -67,12 +67,22 @@ public class InfiCam {
 	public native int getWidth();
 	public native int getHeight();
 
-	public native int nativeStartStream(Surface surface);
-	public void startStream(Surface surface) throws Exception {
-		if (nativeStartStream(surface) != 0)
+	native int nativeStartStream();
+	public void startStream() throws Exception {
+		if (nativeStartStream() != 0)
 			throw new Exception("Failed to start stream.");
 	}
 	public native void stopStream();
+
+	native int nativeSetSurface(Surface surface);
+	public void setSurface(Surface surface) throws Exception {
+		if (nativeSetSurface(surface) != 0)
+			throw new Exception("Failed to set surface.");
+	}
+
+	public void setFrameCallback(FrameCallback fcb) {
+		userFrameCallback = fcb;
+	}
 
 	/* Set range, valid values are 120 and 400 (see InfiFrame class).
 	 * Changes take effect after update/update_table().
@@ -105,9 +115,5 @@ public class InfiCam {
 	public void setPalette(int[] palette) {
 		if (nativeSetPalette(palette) != 0)
 			throw new IllegalArgumentException();
-	}
-
-	public void setFrameCallback(FrameCallback fcb) {
-		userFrameCallback = fcb;
 	}
 }
