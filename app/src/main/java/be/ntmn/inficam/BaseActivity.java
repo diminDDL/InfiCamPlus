@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
+import android.view.WindowManager;
 
 import java.util.ArrayList;
 
@@ -31,6 +32,7 @@ public class BaseActivity extends AppCompatActivity {
                 return;
             handler.postDelayed(this::hideUI, hideDelay);
         });
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         hideUI();
     }
 
