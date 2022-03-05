@@ -1,5 +1,12 @@
 package be.ntmn.inficam;
 
+import static java.lang.Math.PI;
+import static java.lang.Math.max;
+import static java.lang.Math.pow;
+import static java.lang.Math.round;
+import static java.lang.Math.sin;
+import static java.lang.Math.sqrt;
+
 import android.Manifest;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
@@ -9,6 +16,10 @@ import android.view.SurfaceView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 
 import be.ntmn.libinficam.InfiCam;
 
@@ -83,6 +94,20 @@ public class MainActivity extends BaseActivity {
 					surfaceMuxer.outputSurfaces.remove(outputSurface);
 			}
 		});
+
+		/* Generate ironbow palette. */
+		byte[] palette = new byte[InfiCam.paletteLen * 4];
+		for (int i = 0; i + 4 <= palette.length; i += 4) {
+			float x = (float) i / (float) palette.length;
+			palette[i + 0] = (byte) round(255.0 * sqrt(x));
+			palette[i + 1] = (byte) round(255.0 * pow(x, 3));
+			palette[i + 2] = (byte) round(255.0 * max(0.0, sin(2.0 * PI * x)));
+			palette[i + 3] = (byte) 255;
+		}
+		IntBuffer ib = ByteBuffer.wrap(palette).order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
+		int[] intPalette = new int[ib.remaining()];
+		ib.get(intPalette);
+		infiCam.setPalette(intPalette);
 
 		// TODO very temporary
 		/*cameraView.setOnClickListener(new View.OnClickListener() {

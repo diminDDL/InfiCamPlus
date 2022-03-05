@@ -4,7 +4,7 @@ import android.view.Surface;
 
 public class InfiCam {
 	/* We start with a bit of fluff to make JNI work. */
-	public final long instance;
+	final long instance;
 
 	static {
 		System.loadLibrary("usb1.0");

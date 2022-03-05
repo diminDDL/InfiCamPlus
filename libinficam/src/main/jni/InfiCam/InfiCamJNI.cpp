@@ -143,20 +143,10 @@ JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_disconnect(JNIEnv *env, jobject s
 	icj->disconnect();
 }
 
+// TODO perhaps more sensible to separately have startStream and setSurface
 JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeStartStream(JNIEnv *env, jobject self,
 																 jobject surface) {
 	InfiCamJNI *icj = getObject(env, self);
-
-	// TODO!!
-	uint32_t palette[InfiCam::palette_len];
-	for (int i = 0; i + 4 <= sizeof(palette); i += 4) {
-		double x = (double) i / (double) sizeof(palette);
-		((uint8_t *) palette)[i + 0] = round(255 * sqrt(x));
-		((uint8_t *) palette)[i + 1] = round(255 * pow(x, 3));
-		((uint8_t *) palette)[i + 2] = round(255 * fmax(0, sin(2 * M_PI * x)));
-		((uint8_t *) palette)[i + 3] = 255;
-	}
-	icj->set_palette(palette);
 
 	if (icj->window != NULL) {
 		ANativeWindow_release(icj->window);
