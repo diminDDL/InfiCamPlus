@@ -4,7 +4,8 @@ And by now everything was rewritten by netman except libuvc_build/libuvc.mk xD
 
 The versions of third party things in jni dir:
 	libusb    - master at 4622bfcf44db373c53502e3fe873bd611e8332f6 (untouched)
-	libuvc    - master at 15925fed1a08462965a2d24a585a0b0c41d6a9ef (untouched)
+	libuvc    - master at 15925fed1a08462965a2d24a585a0b0c41d6a9ef (patched)
+		modified stream.c to prevent a segmentation fault when starting streams
 
 Short description of the C++ classes in jni/InfiCam dir:
 	- UVCDevice     just a wrapper around libuvc, reason for it existing is that using libuvc with android gets pretty involved

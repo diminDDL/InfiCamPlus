@@ -3,12 +3,9 @@ package be.ntmn.inficam;
 import android.Manifest;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
-import android.hardware.usb.UsbManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -39,26 +36,11 @@ public class MainActivity extends BaseActivity {
             // TODO this is bad, we don't want to ignore and leave behind open connections
             try {
                 if (surfaceMuxer != null) {
-                    /*while (true) {
-                        infiCam.connect(conn.getFileDescriptor());
-                        usbConnection = conn;
-                        isConnected = true;
-                        infiCam.startStream(inputSurface.getSurface());
-                        Thread.sleep(100);
-                        infiCam.stopStream();
-                        infiCam.disconnect();
-                        conn.close();
-                        UsbManager um = (UsbManager) getSystemService(USB_SERVICE);
-                        conn = um.openDevice(dev);
-                        if (false)
-                            break;
-                    }*/
                     infiCam.connect(conn.getFileDescriptor());
                     usbConnection = conn;
                     isConnected = true;
                     infiCam.startStream(inputSurface.getSurface());
                     handler.postDelayed(() -> infiCam.calibrate(), 1000);
-                    Log.e("CONNECT", "CONNECT " + Thread.currentThread());
                 } else conn.close();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -131,7 +113,6 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        Log.e("RESUME", "resume");
         surfaceMuxer = new SurfaceMuxer();
         inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
         surfaceMuxer.inputSurfaces.add(inputSurface);
@@ -161,7 +142,6 @@ public class MainActivity extends BaseActivity {
     protected void onPause() {
         isConnected = false;
         haveDevice = false;
-        Log.e("DISCONNECT", "DISCONNECT");
         infiCam.stopStream();
         infiCam.disconnect();
         if (usbConnection != null) {
