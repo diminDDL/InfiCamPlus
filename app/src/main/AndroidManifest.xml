@@ -17,16 +17,15 @@
 		android:roundIcon="@mipmap/ic_launcher_round"
 		android:supportsRtl="true"
 		android:theme="@style/Theme.InfiCam">
-		<!-- TODO we need singleTask or singleInstance mode to prevent relaunching the activity
-		       when a USB device connects, but android seems to still give me multiple instances
-		       of the Activity coming for intents if I use the singleInstance launchmode so what do?
-		       maybe singleTop?
-		       directBootAware was also suggested for this but doesn't seem to matter
-		 -->
+		<!--
+			We set launchMode="singleTask" so that disconnecting and reconnecting the camera does
+			  not restart the activity. The internet also suggested directBootAware for this, I do
+			  not know if this actually makes a difference.
+		-->
 		<activity
 			android:name=".MainActivity"
 			android:exported="true"
-			android:launchMode="singleTop"
+			android:launchMode="singleTask"
 			android:directBootAware="true">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
@@ -35,10 +34,14 @@
 
 			<intent-filter>
 				<action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+				<action android:name="android.hardware.usb.action.USB_DEVICE_DETACHED" />
 			</intent-filter>
 
 			<meta-data
 				android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+				android:resource="@xml/device_filter" />
+			<meta-data
+				android:name="android.hardware.usb.action.USB_DEVICE_DETACHED"
 				android:resource="@xml/device_filter" />
 		</activity>
 	</application>

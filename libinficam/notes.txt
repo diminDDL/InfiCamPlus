@@ -39,7 +39,7 @@ Things i learned about the protocol these thermal cameras talk:
 			case 640:
 				amountPixels=requestWidth*(4-1);
 				break;
-				// TODO there's more info about this in libthermometry.so
+				// NOTE there's more info about this in libthermometry.so
 		}
 
 	uint8_t *param = fourLinePara;

@@ -27,7 +27,6 @@ class UVCDevice {
 
 	~UVCDevice();
 
-	// TODO perhaps we should make a mechanism to notify the user if the device disconnects
 	int connect(int fd); /* Closes the FD on disconnect. */
 	void disconnect();
 

@@ -9,6 +9,7 @@ import android.content.IntentFilter;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
+import android.util.Log;
 
 import java.util.HashMap;
 
@@ -28,6 +29,7 @@ public abstract class USBConnector extends BroadcastReceiver {
 			manager = (UsbManager) ctx.getSystemService(Context.USB_SERVICE);
 			IntentFilter filter = new IntentFilter();
 			filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
+			filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
 			filter.addAction(ACTION_USB_PERMISSION);
 			ctx.registerReceiver(this, filter);
 		}
@@ -49,12 +51,15 @@ public abstract class USBConnector extends BroadcastReceiver {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
+		UsbDevice dev = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
 		switch (intent.getAction()) {
 			case UsbManager.ACTION_USB_DEVICE_ATTACHED:
 				tryConnect();
 				break;
+			case UsbManager.ACTION_USB_DEVICE_DETACHED:
+				Log.e("DETACHED", "device " + dev.getProductName());
+				break;
 			case ACTION_USB_PERMISSION:
-				UsbDevice dev = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
 				if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
 					UsbDeviceConnection conn = manager.openDevice(dev);
 					onConnect(dev, conn);

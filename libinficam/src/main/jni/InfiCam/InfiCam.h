@@ -7,6 +7,9 @@
 #include <pthread.h>
 
 /* This one is for actually interacting with the thermal camera, wraps UVCDevice and InfiFrame.
+ *
+ * Note that because Android does not allow libusb to do device discovery related stuff, there is
+ *   no way to detect when the device has disconnected here, this has to be implemented separately.
  */
 class InfiCam {
 	typedef void (frame_callback_t)(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw,
