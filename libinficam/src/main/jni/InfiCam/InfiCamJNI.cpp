@@ -199,7 +199,8 @@ JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_stopStream(JNIEnv *env, jobject s
 	icj->obj = 0;
 }
 
-JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_setRange(JNIEnv *env, jobject self, jint range) {
+JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_setRange(JNIEnv *env, jobject self,
+														jint range) {
 	InfiCamJNI *icj = getObject(env, self);
 	icj->set_range(range);
 }
@@ -220,13 +221,14 @@ JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_setDistanceMultiplier(JNIEnv *env
 	icj->set_distance_multiplier(dm);
 }
 
-JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_setCorrection(JNIEnv *env, jobject self, jfloat val) {
+JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_setCorrection(JNIEnv *env, jobject self,
+															 jfloat val) {
 	InfiCamJNI *icj = getObject(env, self);
 	icj->set_correction(val);
 }
 
-JNIEXPORT void
-Java_be_ntmn_libinficam_InfiCam_setTempReflected(JNIEnv *env, jobject self, jfloat val) {
+JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_setTempReflected(JNIEnv *env, jobject self,
+																jfloat val) {
 	InfiCamJNI *icj = getObject(env, self);
 	icj->set_temp_reflected(val);
 }
@@ -241,7 +243,8 @@ JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_setHumidity(JNIEnv *env, jobject 
 	icj->set_humidity(val);
 }
 
-JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_setEmissivity(JNIEnv *env, jobject self, jfloat val) {
+JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_setEmissivity(JNIEnv *env, jobject self,
+															 jfloat val) {
 	InfiCamJNI *icj = getObject(env, self);
 	icj->set_emissivity(val);
 }
@@ -273,8 +276,8 @@ JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_calibrate(JNIEnv *env, jobject se
 	icj->calibrate();
 }
 
-JNIEXPORT jint
-Java_be_ntmn_libinficam_InfiCam_nativeSetPalette(JNIEnv *env, jobject self, jintArray palette) {
+JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeSetPalette(JNIEnv *env, jobject self,
+																jintArray palette) {
 	InfiCamJNI *icj = getObject(env, self);
 	if (env->GetArrayLength(palette) < icj->palette_len)
 		return 1;
