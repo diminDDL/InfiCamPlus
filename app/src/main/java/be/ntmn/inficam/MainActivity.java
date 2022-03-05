@@ -10,6 +10,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
+import be.ntmn.libinficam.InfiCam;
+
 public class MainActivity extends BaseActivity {
 	SurfaceMuxer surfaceMuxer;
 	SurfaceView cameraView;

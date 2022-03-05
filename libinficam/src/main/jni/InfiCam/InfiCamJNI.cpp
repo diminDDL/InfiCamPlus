@@ -4,7 +4,7 @@
 #include <android/native_window_jni.h>
 #include <cstdlib> /* NULL */
 
-#define FRAMEINFO_TYPE "be/ntmn/inficam/InfiCam$FrameInfo"
+#define FRAMEINFO_TYPE "be/ntmn/libinficam/InfiCam$FrameInfo"
 
 JavaVM *javaVM = NULL;
 
