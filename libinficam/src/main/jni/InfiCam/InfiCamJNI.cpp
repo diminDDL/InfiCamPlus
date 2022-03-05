@@ -162,8 +162,13 @@ JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeStartStream(JNIEnv *env, jo
 	return 0;
 }
 
+JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_stopStream(JNIEnv *env, jobject self) {
+	InfiCamJNI *icj = getObject(env, self);
+	icj->stream_stop();
+}
+
 JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeSetSurface(JNIEnv *env, jobject self,
-																	  jobject surface) {
+																jobject surface) {
 	InfiCamJNI *icj = getObject(env, self);
 	pthread_mutex_lock(&icj->window_mutex);
 
@@ -179,17 +184,12 @@ JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeSetSurface(JNIEnv *env, job
 		if (icj->window == NULL)
 			return 1;
 		if (ANativeWindow_setBuffersGeometry(icj->window, icj->infi.width, icj->infi.height,
-										 WINDOW_FORMAT_RGBX_8888))
+											 WINDOW_FORMAT_RGBX_8888))
 			return 2;
 	}
 
 	pthread_mutex_unlock(&icj->window_mutex);
 	return 0;
-}
-
-JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_stopStream(JNIEnv *env, jobject self) {
-	InfiCamJNI *icj = getObject(env, self);
-	icj->stream_stop();
 }
 
 JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_setRange(JNIEnv *env, jobject self,
