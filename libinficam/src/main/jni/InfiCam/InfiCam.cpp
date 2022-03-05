@@ -57,7 +57,6 @@ void InfiCam::disconnect() {
 		dev.disconnect();
 		pthread_mutex_destroy(&frame_callback_mutex);
 		connected = 0;
-		table_invalid = 1;
 	}
 }
 
@@ -71,6 +70,7 @@ int InfiCam::stream_start(frame_callback_t *cb, void *user_ptr) {
 	}
 	frame_callback = cb;
 	frame_callback_arg = user_ptr;
+	table_invalid = 1;
 	if (dev.stream_start(uvc_callback, this)) {
 		free(frame_rgb);
 		free(frame_temp);

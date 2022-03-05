@@ -18,7 +18,7 @@ class InfiCam {
 	uint32_t *frame_rgb;
 	float *frame_temp;
 	pthread_mutex_t frame_callback_mutex;
-	int connected = 0, streaming = 0, table_invalid = 1;
+	int connected = 0, streaming = 0, table_invalid;
 	int range = 120;
 
 	static const int CMD_SHUTTER = 0x8000;
