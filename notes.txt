@@ -2,7 +2,7 @@ This code is originally from https://github.com/saki4510t/UVCCamera/
 It was modified by infiray, and later by netman.
 And by now everything was rewritten by netman except libuvc_build/libuvc.mk xD
 
-The versions of third party things in jni dir:
+The versions of third party things in libinficam/src/main/jni dir:
 	libusb    - master at 4622bfcf44db373c53502e3fe873bd611e8332f6 (untouched)
 	libuvc    - master at 15925fed1a08462965a2d24a585a0b0c41d6a9ef (patched)
 		modified stream.c to prevent a segmentation fault when starting streams
