@@ -61,7 +61,7 @@ public class MainActivity extends BaseActivity {
 					infiCam.connect(conn.getFileDescriptor());
 					usbConnection = conn;
 					isConnected = true;
-					infiCam.setSurface(inputSurface.getSurface());
+					//infiCam.setSurface(inputSurface.getSurface());
 					infiCam.startStream();
 					handler.postDelayed(() -> infiCam.calibrate(), 1000);
 					Log.e("OSURFACES", "n = " + surfaceMuxer.outputSurfaces.size());
@@ -165,18 +165,21 @@ public class MainActivity extends BaseActivity {
 
 	@Override
 	protected void onResume() {
+		super.onResume();
 		Log.e("ONRESUME", "START");
 		surfaceMuxer = new SurfaceMuxer();
 		inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
+		surfaceMuxer.inputSurfaces.clear();
 		surfaceMuxer.inputSurfaces.add(inputSurface);
 		inputSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer);
 		try {
+			Log.e("ONRESUME", "Setsurf");
+			//infiCam.stopStream();
 			infiCam.setSurface(inputSurface.getSurface());
+			//infiCam.startStream();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
-		super.onResume();
 
 		// TODO we recreate the outputsurface here because the callback only runs once but this is silly, we can find a better way
 		if (outputSurface != null) {

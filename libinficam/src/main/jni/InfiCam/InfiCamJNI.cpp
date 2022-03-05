@@ -3,6 +3,7 @@
 #include <jni.h>
 #include <android/native_window_jni.h>
 #include <cstdlib> /* NULL */
+#include <pthread.h>
 
 #define FRAMEINFO_TYPE "be/ntmn/libinficam/InfiCam$FrameInfo"
 
@@ -25,13 +26,16 @@ public:
 	JNIEnv *env;
 	jobject obj;
 	ANativeWindow *window = NULL;
+	pthread_mutex_t window_mutex;
 
 	InfiCamJNI(JNIEnv *env, jobject obj) {
 		this->env = env;
 		this->obj = env->NewGlobalRef(obj);
+		pthread_mutex_init(&window_mutex, NULL);
 	}
 
 	~InfiCamJNI() {
+		pthread_mutex_destroy(&window_mutex);
 		env->DeleteGlobalRef(obj);
 	}
 };
@@ -62,6 +66,7 @@ void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, voi
 	InfiCamJNI *icj = (InfiCamJNI *) cam;
 
 	/* Update the surface if we have one. */
+	pthread_mutex_lock(&icj->window_mutex);
 	if (icj->window != NULL) {
 		ANativeWindow_Buffer buffer;
 		if (ANativeWindow_lock(icj->window, &buffer, NULL) == 0) {
@@ -86,6 +91,7 @@ void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, voi
 			ANativeWindow_unlockAndPost(icj->window);
 		}
 	}
+	pthread_mutex_unlock(&icj->window_mutex);
 
 	/* Attach to Java thread. */
 	JNIEnv *cenv;
@@ -151,18 +157,15 @@ JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_disconnect(JNIEnv *env, jobject s
 
 JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeStartStream(JNIEnv *env, jobject self) {
 	InfiCamJNI *icj = getObject(env, self);
-	if (icj->stream_start(frame_callback, NULL)) {
-		if (icj->window != NULL)
-			ANativeWindow_release(icj->window);
-		icj->window = NULL;
-		return 2;
-	}
+	if (icj->stream_start(frame_callback, NULL))
+		return 1;
 	return 0;
 }
 
 JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeSetSurface(JNIEnv *env, jobject self,
 																	  jobject surface) {
 	InfiCamJNI *icj = getObject(env, self);
+	pthread_mutex_lock(&icj->window_mutex);
 
 	/* Remove surface if we had one. */
 	if (icj->window != NULL) {
@@ -174,10 +177,13 @@ JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeSetSurface(JNIEnv *env, job
 	if (surface != NULL) {
 		icj->window = ANativeWindow_fromSurface(env, surface);
 		if (icj->window == NULL)
+			return 1;
+		if (ANativeWindow_setBuffersGeometry(icj->window, icj->infi.width, icj->infi.height,
+										 WINDOW_FORMAT_RGBX_8888))
 			return 2;
-		ANativeWindow_setBuffersGeometry(icj->window, icj->infi.width, icj->infi.height,
-										 WINDOW_FORMAT_RGBX_8888);
 	}
+
+	pthread_mutex_unlock(&icj->window_mutex);
 	return 0;
 }
 
