@@ -59,9 +59,9 @@ public class InfiCam {
 
 	native int nativeConnect(int fd);
 	/* Make sure surface is either valid, not set or null before calling connect. */
-	public void connect(int fd) throws Exception {
+	public void connect(int fd) {
 		if (nativeConnect(fd) != 0)
-			throw new Exception("Failed to connect to camera.");
+			throw new RuntimeException("Failed to connect to camera.");
 	}
 	public native void disconnect();
 
@@ -69,16 +69,16 @@ public class InfiCam {
 	public native int getHeight();
 
 	native int nativeStartStream();
-	public void startStream() throws Exception {
+	public void startStream() {
 		if (nativeStartStream() != 0)
-			throw new Exception("Failed to start stream.");
+			throw new RuntimeException("Failed to start stream.");
 	}
 	public native void stopStream();
 
 	native int nativeSetSurface(Surface surface);
-	public void setSurface(Surface surface) throws Exception {
+	public void setSurface(Surface surface) {
 		if (nativeSetSurface(surface) != 0)
-			throw new Exception("Failed to set surface.");
+			throw new RuntimeException("Failed to set surface.");
 	}
 
 	public void setFrameCallback(FrameCallback fcb) {

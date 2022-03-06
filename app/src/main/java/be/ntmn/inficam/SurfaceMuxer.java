@@ -202,6 +202,10 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		}
 	}
 
+	public SurfaceMuxer () {
+		init();
+	}
+
 	@Override
 	public void onFrameAvailable(SurfaceTexture surfaceTexture) {
 		if (eglContext == EGL14.EGL_NO_CONTEXT)

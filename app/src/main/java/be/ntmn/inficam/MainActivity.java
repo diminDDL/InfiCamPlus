@@ -1,8 +1,5 @@
 package be.ntmn.inficam;
 
-import static java.lang.Math.max;
-import static java.lang.Math.round;
-
 import android.Manifest;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
@@ -22,7 +19,7 @@ public class MainActivity extends BaseActivity {
 	UsbDevice device;
 	UsbDeviceConnection usbConnection;
 	InfiCam infiCam = new InfiCam();
-	SurfaceMuxer surfaceMuxer;
+	SurfaceMuxer surfaceMuxer = new SurfaceMuxer();
 	SurfaceMuxer.OutputSurface outputSurface;
 	SurfaceMuxer.InputSurface inputSurface; /* InfiCam class writes to this. */
 	SurfaceMuxer.InputSurface overlaySurface; /* This is where we will draw annotations. */
@@ -40,7 +37,7 @@ public class MainActivity extends BaseActivity {
 
 		@Override
 		public void onPermissionGranted(UsbDevice dev) {
-			if (surfaceMuxer != null && usbConnection == null) {
+			if (inputSurface != null && usbConnection == null) {
 				try {
 					Log.e("CONN", "TryConnect " + this + " " + usbConnection);
 						UsbDeviceConnection conn = usbMonitor.connect(dev);
@@ -80,28 +77,23 @@ public class MainActivity extends BaseActivity {
 		}
 	};
 
-	SurfaceHolder.Callback shcallback = new SurfaceHolder.Callback() {
+	SurfaceHolder.Callback surfaceHolderCallback = new SurfaceHolder.Callback() {
 		@Override
 		public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
-			if (surfaceMuxer != null) { // TODO what if too early?
-				outputSurface = new SurfaceMuxer.OutputSurface(surfaceMuxer, surfaceHolder.getSurface());
-				surfaceMuxer.outputSurfaces.clear();
-				surfaceMuxer.outputSurfaces.add(outputSurface);
-				Log.e("SURFACE", "created");
-			}
+			outputSurface =
+					new SurfaceMuxer.OutputSurface(surfaceMuxer, surfaceHolder.getSurface());
+			surfaceMuxer.outputSurfaces.add(outputSurface);
 		}
 
 		@Override
 		public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int w, int h) {
-			outputSurface.setSize(w, h); // TODO this gets called before surfaceCreated -_-
+			outputSurface.setSize(w, h);
 		}
 
 		@Override
 		public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
-			if (surfaceMuxer != null) {
-				surfaceMuxer.outputSurfaces.remove(outputSurface);
-				Log.e("SURFACE", "removed");
-			}
+			surfaceMuxer.outputSurfaces.remove(outputSurface);
+			outputSurface.release();
 		}
 	};
 
@@ -111,9 +103,12 @@ public class MainActivity extends BaseActivity {
 		setContentView(R.layout.activity_main);
 		cameraView = findViewById(R.id.cameraView);
 		messageView = findViewById(R.id.message);
-		SurfaceHolder sh = cameraView.getHolder();
-		sh.addCallback(shcallback);
-
+		inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
+		surfaceMuxer.inputSurfaces.add(inputSurface);
+		inputSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer);
+		infiCam.setSurface(inputSurface.getSurface());
+		cameraView.getHolder().addCallback(surfaceHolderCallback);
+		usbMonitor.start(this);
 		infiCam.setPalette(Palette.Ironbow.getData());
 
 		// TODO very temporary
@@ -124,12 +119,6 @@ public class MainActivity extends BaseActivity {
 			}
 		});
 
-		surfaceMuxer = new SurfaceMuxer();
-		surfaceMuxer.init(); // TODO only needed yet to get a valid surfacetexture...
-		inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
-		surfaceMuxer.inputSurfaces.clear();
-		surfaceMuxer.inputSurfaces.add(inputSurface);
-		inputSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer);
 		try {
 			Log.e("ONCREATE", "Setsurf");
 			//infiCam.stopStream();
@@ -150,7 +139,7 @@ public class MainActivity extends BaseActivity {
 			if (granted) {
 				Log.e("USBCONN", "start USBMonitor");
 				// TODO maybe we should do it in onStart(), but try connect to already existing devices in onRresume()
-				usbMonitor.start(this); /* Connecting to a UVC device needs camera permission. */
+				 /* Connecting to a UVC device needs camera permission. */
 				usbMonitor.scan();
 			} else {
 				messageView.showMessage(R.string.permdenied_cam, true);

@@ -16,23 +16,25 @@ public abstract class USBMonitor extends BroadcastReceiver {
 	static final String ACTION_USB_PERMISSION = "be.ntmn.inficam.USB_PERMISSION";
 
 	Context ctx;
+	boolean registered = false;
 	UsbManager manager;
 
-	public void start(Context ctx) {
+	public void start(Context ctx) { /* Recommended use is in onStart(). */
 		this.ctx = ctx;
-		if (manager == null) {
+		if (!registered) {
 			manager = (UsbManager) ctx.getSystemService(Context.USB_SERVICE);
 			IntentFilter filter = new IntentFilter();
 			filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
 			filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
 			filter.addAction(ACTION_USB_PERMISSION);
 			ctx.registerReceiver(this, filter);
+			registered = true;
 		}
 	}
 
-	public void stop() { /* Call this in onPause() or onStop()! */
+	public void stop() { /* Call this in onStop()! */
 		try {
-			manager = null;
+			registered = false;
 			ctx.unregisterReceiver(this); /* Prevent resurrection of dead Activities. */
 		} catch (Exception e) {
 			/* We don't care, probably wasn't registered yet. */
@@ -58,8 +60,6 @@ public abstract class USBMonitor extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		UsbDevice dev = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
-		if (manager == null)
-			return;
 		switch (intent.getAction()) {
 			case UsbManager.ACTION_USB_DEVICE_ATTACHED:
 				scan();
