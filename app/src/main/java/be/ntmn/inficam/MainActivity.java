@@ -74,6 +74,7 @@ public class MainActivity extends BaseActivity {
 	SurfaceHolder.Callback surfaceHolderCallback = new SurfaceHolder.Callback() {
 		@Override
 		public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
+			// TODO this can happen during onPause, not good (also should probably note not to create surfaces between deinit and init)
 			outputSurface =
 					new SurfaceMuxer.OutputSurface(surfaceMuxer, surfaceHolder.getSurface());
 			surfaceMuxer.outputSurfaces.add(outputSurface);
@@ -127,7 +128,7 @@ public class MainActivity extends BaseActivity {
 		surfaceMuxer.init();
 
 		// TODO first check permissions but not ask, i suppose
-		usbMonitor.scan();
+		//usbMonitor.scan(); // TODO usbMonitor.start() sometimes doesn't run on time because the permission thing
 
 		Bitmap bmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
 		Canvas c = new Canvas(bmp);
@@ -135,7 +136,7 @@ public class MainActivity extends BaseActivity {
 		p.setColor(Color.TRANSPARENT);
 		c.drawRect(new Rect(0, 0, 640, 480), p);
 		Paint p2 = new Paint();
-		p2.setColor(Color.WHITE);
+		p2.setColor(Color.RED);
 		c.drawLine(0, 0, 640, 480, p2);
 
 		SurfaceMuxer.InputSurface is = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
