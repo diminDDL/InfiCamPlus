@@ -1,11 +1,7 @@
 package be.ntmn.inficam;
 
-import static java.lang.Math.PI;
 import static java.lang.Math.max;
-import static java.lang.Math.pow;
 import static java.lang.Math.round;
-import static java.lang.Math.sin;
-import static java.lang.Math.sqrt;
 
 import android.Manifest;
 import android.hardware.usb.UsbDevice;
@@ -17,10 +13,6 @@ import android.view.SurfaceView;
 import android.view.View;
 
 import androidx.annotation.NonNull;
-
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.IntBuffer;
 
 import be.ntmn.libinficam.InfiCam;
 
@@ -122,7 +114,7 @@ public class MainActivity extends BaseActivity {
 		SurfaceHolder sh = cameraView.getHolder();
 		sh.addCallback(shcallback);
 
-		infiCam.setPalette(Palette.IronBow.getData());
+		infiCam.setPalette(Palette.Ironbow.getData());
 
 		// TODO very temporary
 		cameraView.setOnClickListener(new View.OnClickListener() {
