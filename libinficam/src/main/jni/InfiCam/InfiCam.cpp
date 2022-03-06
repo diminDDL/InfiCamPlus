@@ -39,6 +39,7 @@ InfiCam::~InfiCam() {
 }
 
 int InfiCam::connect(int fd) {
+	disconnect();
 	/* We initialize the mutex here because we can't use exceptions with JNI and the constructor
 	 *   thus isn't able to fail.
 	 */
@@ -69,18 +70,20 @@ void InfiCam::disconnect() {
 }
 
 int InfiCam::stream_start(frame_callback_t *cb, void *user_ptr) {
+	if (streaming)
+		return 1;
 	frame_rgb = (uint32_t *) calloc(infi.width * infi.height, sizeof(uint32_t));
 	frame_temp = (float *) calloc(infi.width * infi.height, sizeof(float));
 	if (frame_rgb == NULL || frame_temp == NULL) {
 		stream_stop();
-		return 1;
+		return 2;
 	}
 	frame_callback = cb;
 	frame_callback_arg = user_ptr;
 	table_invalid = 1;
 	if (dev.stream_start(uvc_callback, this)) {
 		stream_stop();
-		return 2;
+		return 3;
 	}
 	streaming = 1;
 	return 0;
@@ -191,5 +194,9 @@ void InfiCam::calibrate() {
 }
 
 void InfiCam::set_palette(uint32_t *palette) {
+	if (streaming)
+		pthread_mutex_lock(&frame_callback_mutex);
 	memcpy(infi.palette, palette, palette_len * sizeof(uint32_t));
+	if (streaming)
+		pthread_mutex_unlock(&frame_callback_mutex);
 }

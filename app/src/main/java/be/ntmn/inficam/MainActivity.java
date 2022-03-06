@@ -10,7 +10,9 @@ import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
+import android.hardware.usb.UsbManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -45,12 +47,26 @@ public class MainActivity extends BaseActivity {
 					usbPermissionAquired = true;
 					usbConnection = conn;
 					try {
-						infiCam.connect(usbConnection.getFileDescriptor());
-						infiCam.startStream();
+						int i = 0;
+						//while (true) {
+							infiCam.connect(conn.getFileDescriptor());
+							infiCam.startStream();
+							//infiCam.startStream();
+							//Thread.sleep(100);
+							/*infiCam.stopStream();
+							infiCam.stopStream();
+							infiCam.stopStream();*/
+							/*infiCam.disconnect();
+							Log.e("TESTROT", "n = " + i++);
+							conn.close();
+							conn = ((UsbManager) getSystemService(USB_SERVICE)).openDevice(dev);
+							if (false) break;
+						}*/
 						handler.postDelayed(() -> infiCam.calibrate(), 1000);
 						messageView.showMessage(R.string.msg_connected, false);
 					} catch (Exception e) {
 						usbConnection.close();
+						Log.e("TESTROT", "" + e.getMessage());
 						messageView.showMessage(getString(R.string.msg_connect_failed), true);
 					}
 				}

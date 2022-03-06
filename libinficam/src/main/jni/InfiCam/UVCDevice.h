@@ -15,6 +15,7 @@ class UVCDevice {
 	pthread_t usb_thread;
 	int usb_thread_stop = 1;
 	int usb_thread_valid = 0;
+	int streaming = 0;
 
 	uvc_context_t *uvc_ctx = NULL;
 	uvc_device_handle_t *uvc_devh = NULL;
