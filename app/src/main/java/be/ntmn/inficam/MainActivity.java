@@ -103,12 +103,7 @@ public class MainActivity extends BaseActivity {
 		usbMonitor.start(this);
 
 		// TODO very temporary
-		cameraView.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View view) {
-				infiCam.calibrate();
-			}
-		});
+		cameraView.setOnClickListener(view -> infiCam.calibrate());
 	}
 
 	@Override

@@ -91,7 +91,7 @@ void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, voi
 	}
 	pthread_mutex_unlock(&icj->window_mutex);
 
-	/* Attach to Java thread. */
+	/* Attach thread to the JVM. */
 	JNIEnv *cenv;
 	javaVM->AttachCurrentThread(&cenv, NULL);
 

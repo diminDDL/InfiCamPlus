@@ -53,8 +53,10 @@ public class InfiCam {
 
 	/* Called by the C++ code, do not rename. */
 	void frameCallback(FrameInfo fi, float[] temp) {
-		if (userFrameCallback != null)
-			userFrameCallback.onFrame(fi, temp);
+		synchronized (this) {
+			if (userFrameCallback != null)
+				userFrameCallback.onFrame(fi, temp);
+		}
 	}
 
 	native int nativeConnect(int fd);
@@ -68,6 +70,9 @@ public class InfiCam {
 	public native int getWidth();
 	public native int getHeight();
 
+	/* Be aware that when streaming is started, the output surface has to flip buffers or following
+	 *   calls to setSurface() or
+	 */
 	native int nativeStartStream();
 	public void startStream() {
 		if (nativeStartStream() != 0)
@@ -81,8 +86,11 @@ public class InfiCam {
 			throw new RuntimeException("Failed to set surface.");
 	}
 
+	/* Note that the frame callback is called from a separate thread. */
 	public void setFrameCallback(FrameCallback fcb) {
-		userFrameCallback = fcb;
+		synchronized (this) {
+			userFrameCallback = fcb;
+		}
 	}
 
 	/* Set range, valid values are 120 and 400 (see InfiFrame class).
