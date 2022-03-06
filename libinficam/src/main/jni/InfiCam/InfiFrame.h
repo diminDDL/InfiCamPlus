@@ -18,9 +18,9 @@ class InfiFrame {
 	float cal_01, cal_a, cal_b, cal_c, cal_d;
 	int table_offset;
 
-	public:
+public:
 	/* Dimensions of actual thermographic image, set by init(). */
-	int width, height;
+	int width = 0, height = 0; /* And set here too for predictability. */
 
 	/* User parameters, set manually or read from camera with read_params().
 	 * Changes take effect for temp_single() after the next update(), and temp() after update().

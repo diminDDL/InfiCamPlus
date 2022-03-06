@@ -47,21 +47,8 @@ public class MainActivity extends BaseActivity {
 					usbPermissionAquired = true;
 					usbConnection = conn;
 					try {
-						int i = 0;
-						//while (true) {
-							infiCam.connect(conn.getFileDescriptor());
-							infiCam.startStream();
-							//infiCam.startStream();
-							//Thread.sleep(100);
-							/*infiCam.stopStream();
-							infiCam.stopStream();
-							infiCam.stopStream();*/
-							/*infiCam.disconnect();
-							Log.e("TESTROT", "n = " + i++);
-							conn.close();
-							conn = ((UsbManager) getSystemService(USB_SERVICE)).openDevice(dev);
-							if (false) break;
-						}*/
+						infiCam.connect(conn.getFileDescriptor());
+						infiCam.startStream();
 						handler.postDelayed(() -> infiCam.calibrate(), 1000);
 						messageView.showMessage(R.string.msg_connected, false);
 					} catch (Exception e) {

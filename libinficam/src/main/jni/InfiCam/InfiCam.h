@@ -44,7 +44,7 @@ class InfiCam {
 	static void uvc_callback(uvc_frame_t *frame, void *user_ptr);
 	void set_float(int addr, float val); /* Write to camera user memory, needs lock. */
 
-	public:
+public:
 	static const int palette_len = InfiFrame::palette_len;
 	/* InfiFrame class gets updated before each stream CB with info relevant to the frame.
 	 * The width and height in there are valid after connect().
@@ -53,10 +53,14 @@ class InfiCam {
 
 	~InfiCam();
 
-	int connect(int fd);
-	void disconnect();
-	int stream_start(frame_callback_t *cb, void *user_ptr); /* CB arguments valid until return. */
-	void stream_stop();
+	int connect(int fd); /* Closes the FD on disconnect. */
+	void disconnect(); /* Opening a new connection will close the previous one if it exists. */
+
+	/* Stream CB arguments valid until return, CB runs on it's own thread. Trying to start a stream
+	 *   when already streaming returns an error.
+	 */
+	int stream_start(frame_callback_t *cb, void *user_ptr);
+	void stream_stop(); /* Attempting to stop stream is okay even when no stream. */
 
 	/* Set range, valid values are 120 and 400 (see InfiFrame class).
 	 * Changes take effect after update/update_table().

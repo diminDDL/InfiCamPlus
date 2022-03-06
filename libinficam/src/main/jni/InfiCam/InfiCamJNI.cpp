@@ -195,11 +195,14 @@ JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeSetSurface(JNIEnv *env, job
 		icj->window = ANativeWindow_fromSurface(env, surface);
 		if (icj->window == NULL)
 			return 1;
-		if (ANativeWindow_setBuffersGeometry(icj->window, icj->infi.width, icj->infi.height,
-											 WINDOW_FORMAT_RGBX_8888)) {
-			ANativeWindow_release(icj->window);
-			icj->window = NULL;
-			return 2;
+		/* Size is set to 0 initially and by disconnect(), we can't resize to 0x0. */
+		if (icj->infi.width != 0 && icj->infi.height != 0) {
+			if (ANativeWindow_setBuffersGeometry(icj->window, icj->infi.width, icj->infi.height,
+												 WINDOW_FORMAT_RGBX_8888)) {
+				ANativeWindow_release(icj->window);
+				icj->window = NULL;
+				return 2;
+			}
 		}
 	}
 

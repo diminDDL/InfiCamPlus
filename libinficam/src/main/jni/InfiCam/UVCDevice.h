@@ -22,18 +22,18 @@ class UVCDevice {
 
 	static void *usb_handle_events(void *arg);
 
-	public:
+public:
 	uint16_t width, height;
 	uvc_frame_format format = UVC_FRAME_FORMAT_ANY;
 
 	~UVCDevice();
 
 	int connect(int fd); /* Closes the FD on disconnect. */
-	void disconnect();
+	void disconnect(); /* Opening a new connection will close the previous one if it exists. */
 
 	/* The callback gets called from a dedicated thread (it's ok to block in the callback). */
-	int stream_start(uvc_frame_callback_t *cb, void *user_ptr);
-	void stream_stop();
+	int stream_start(uvc_frame_callback_t *cb, void *user_ptr); /* Errors if already streaming. */
+	void stream_stop(); /* Attempting to stop stream is okay even when no stream. */
 
 	int set_zoom_abs(uint16_t val);
 };

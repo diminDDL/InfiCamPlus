@@ -19,8 +19,6 @@ TODO
 	- 400 celcius range works quite badly because the float math falls apart below a certain temperature
 	- don't forget to reference/put license for libuvc_build makefile, libuvc, libusb if adding license in root
 	- figure out where i want to go with the UI part
-	- there was a failure related to setSurface (throws the one exception it can) one time on rotate, what was it?
-	- after uninstall, first run gives cameraSurface invisible somehow
 
 Things i learned about the protocol these thermal cameras talk:
 	last 4 lines of the frame have parameters (note that the pointer math is in steps of 16 bytes because unsigned short)
