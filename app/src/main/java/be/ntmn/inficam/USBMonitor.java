@@ -19,7 +19,7 @@ public abstract class USBMonitor extends BroadcastReceiver {
 	boolean registered = false;
 	UsbManager manager;
 
-	public void start(Context ctx) { /* Recommended use is in onStart(). */
+	public void start(Context ctx) { /* Recommended use is in onCreate()/onStart(). */
 		this.ctx = ctx;
 		if (!registered) {
 			manager = (UsbManager) ctx.getSystemService(Context.USB_SERVICE);
@@ -32,7 +32,7 @@ public abstract class USBMonitor extends BroadcastReceiver {
 		}
 	}
 
-	public void stop() { /* Call this in onStop()! */
+	public void stop() { /* Call this in onDestroy()/onStop(), matching start() call! */
 		try {
 			registered = false;
 			ctx.unregisterReceiver(this); /* Prevent resurrection of dead Activities. */
@@ -62,12 +62,15 @@ public abstract class USBMonitor extends BroadcastReceiver {
 		UsbDevice dev = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
 		switch (intent.getAction()) {
 			case UsbManager.ACTION_USB_DEVICE_ATTACHED:
+				Log.e("CONN", "ATTACH broadcast");
 				scan();
 				break;
 			case UsbManager.ACTION_USB_DEVICE_DETACHED:
+				Log.e("CONN", "DETACH broadcast");
 				onDisconnect(dev);
 				break;
 			case ACTION_USB_PERMISSION:
+				Log.e("CONN", "PERM broadcast");
 				if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false))
 					onPermissionGranted(dev);
 				else onPermissionDenied(dev);

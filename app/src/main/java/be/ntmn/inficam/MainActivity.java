@@ -35,28 +35,25 @@ public class MainActivity extends BaseActivity {
 			return false;
 		}
 
-		@Override
+		@Override // TODO what if this arrives before onResume?
 		public void onPermissionGranted(UsbDevice dev) {
-			if (inputSurface != null && usbConnection == null) {
-				try {
-					Log.e("CONN", "TryConnect " + this + " " + usbConnection);
-						UsbDeviceConnection conn = usbMonitor.connect(dev);
-						Log.e("CONN", "Connect");
-						infiCam.connect(conn.getFileDescriptor());
-						messageView.showMessage(R.string.msg_connected, false);
-						usbConnection = conn;
-						infiCam.setSurface(inputSurface.getSurface());
-						infiCam.startStream();
-						handler.postDelayed(() -> infiCam.calibrate(), 1000);
-						Log.e("OSURFACES", "n = " + surfaceMuxer.outputSurfaces.size());
-				} catch (Exception e) {
-					Log.e("CONN", "ERRConnect");
-					e.printStackTrace();
-					messageView.showMessage(e.getMessage(), true);
+			Log.e("CONNECTION", "USB permission granted");
+			if (usbConnection != null)
+				return;
+			Log.e("CONNECTION", "requesting camera permission");
+			/* Connecting to a UVC device needs camera permission. */
+			askPermission(Manifest.permission.CAMERA, granted -> {
+				if (granted) {
+					Log.e("CONNECTION", "CONNECT");
+					usbConnection = usbMonitor.connect(dev);
+					infiCam.connect(usbConnection.getFileDescriptor());
+					infiCam.startStream();
+					handler.postDelayed(() -> infiCam.calibrate(), 1000);
+					messageView.showMessage(R.string.msg_connected, false);
+				} else {
+					messageView.showMessage(R.string.permdenied_cam, true);
 				}
-			} else {
-				Log.e("CONN", "NOConnect " + surfaceMuxer + " " + usbConnection);
-			}
+			});
 		}
 
 		@Override
@@ -66,14 +63,8 @@ public class MainActivity extends BaseActivity {
 
 		@Override
 		public void onDisconnect(UsbDevice dev) {
-			infiCam.stopStream();
-			infiCam.disconnect();
-			if (usbConnection != null)
-				usbConnection.close();
-			usbConnection = null;
-			device = null;
-			Log.e("DISCONNECT", "DISCONNECT");
-			messageView.showMessage(R.string.msg_disconnected, true);
+			Log.e("CONNECTION", "DISCONNECT due to broadcast");
+			disconnect();
 		}
 	};
 
@@ -108,8 +99,8 @@ public class MainActivity extends BaseActivity {
 		inputSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer);
 		infiCam.setSurface(inputSurface.getSurface());
 		cameraView.getHolder().addCallback(surfaceHolderCallback);
+		infiCam.setPalette(Palette.Ironbow.getData()); // TODO UI to choose
 		usbMonitor.start(this);
-		infiCam.setPalette(Palette.Ironbow.getData());
 
 		// TODO very temporary
 		cameraView.setOnClickListener(new View.OnClickListener() {
@@ -118,54 +109,38 @@ public class MainActivity extends BaseActivity {
 				infiCam.calibrate();
 			}
 		});
-
-		try {
-			Log.e("ONCREATE", "Setsurf");
-			//infiCam.stopStream();
-			infiCam.setSurface(inputSurface.getSurface());
-			//infiCam.startStream();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
+		Log.e("ONRESUME", "resuming");
 		surfaceMuxer.init();
-		Log.e("ONRESUME", "START");
-
-		askPermission(Manifest.permission.CAMERA, granted -> {
-			if (granted) {
-				Log.e("USBCONN", "start USBMonitor");
-				// TODO maybe we should do it in onStart(), but try connect to already existing devices in onRresume()
-				 /* Connecting to a UVC device needs camera permission. */
-				usbMonitor.scan();
-			} else {
-				messageView.showMessage(R.string.permdenied_cam, true);
-			}
-		});
+		usbMonitor.scan();
 	}
 
 	@Override
 	protected void onPause() {
-		Log.e("ONPAUSE", "pause");
-		infiCam.stopStream();
-		infiCam.disconnect();
-		device = null;
-		if (usbConnection != null) {
-			usbConnection.close();
-			usbConnection = null;
-		}
-		Log.e("DISCONNECT", "DISCONNECT because pause");
-		messageView.showMessage(R.string.msg_disconnected, true);
+		Log.e("ONPAUSE", "pauseing");
+		Log.e("CONNECTION", "DISCONNECT due to pause");
+		disconnect();
 		surfaceMuxer.deinit();
 		super.onPause();
 	}
 
 	@Override
-	protected void onStop() {
+	protected void onDestroy() {
 		usbMonitor.stop();
-		super.onStop();
+		super.onDestroy();
+	}
+
+	void disconnect() {
+		infiCam.stopStream();
+		infiCam.disconnect();
+		if (usbConnection != null)
+			usbConnection.close();
+		usbConnection = null;
+		device = null;
+		messageView.showMessage(R.string.msg_disconnected, true);
 	}
 }

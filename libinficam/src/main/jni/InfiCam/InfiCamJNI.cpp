@@ -152,13 +152,13 @@ JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_nativeDelete(JNIEnv *env, jclass 
 JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeConnect(JNIEnv *env, jobject self, jint fd) {
 	InfiCamJNI *icj = getObject(env, self);
 	int ret = icj->connect(fd);
-	//pthread_mutex_lock(&icj->window_mutex); // TODO deadlock if frames aren't collected
+	pthread_mutex_lock(&icj->window_mutex);
 	if (icj->window != NULL) { /* Connect means the size may have changed. */
 		if (ANativeWindow_setBuffersGeometry(
 				icj->window, icj->infi.width, icj->infi.height, WINDOW_FORMAT_RGBX_8888))
 			return 1;
 	}
-	//pthread_mutex_unlock(&icj->window_mutex);
+	pthread_mutex_unlock(&icj->window_mutex);
 	return ret;
 }
 
