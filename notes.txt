@@ -139,7 +139,7 @@ Some maybe useful trivia:
 		}
 
 	drawing stuff to a bitmap for overlay
-		/*Bitmap bmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
+		Bitmap bmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
 		Canvas c = new Canvas(bmp);
 		Paint p = new Paint();
 		p.setColor(Color.TRANSPARENT);
@@ -148,14 +148,16 @@ Some maybe useful trivia:
 		p2.setColor(Color.RED);
 		c.drawLine(0, 0, 640, 480, p2);
 
-		SurfaceTexture st = sm.createInputSurfaceTexture();
+		SurfaceMuxer.InputSurface is = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
+		SurfaceTexture st = is.getSurfaceTexture();
 		st.setDefaultBufferSize(640, 480);
 		//st.setOnFrameAvailableListener(et2);
-		Surface s = new Surface(st);
+		Surface s = is.getSurface();
 		Canvas cvs = s.lockCanvas(null);
 		//cvs.drawBitmap(bmp, 0, 0, null);
 		cvs.drawLine(0, 0, 640, 480, p2);
-		s.unlockCanvasAndPost(cvs);*/
+		s.unlockCanvasAndPost(cvs);
+		surfaceMuxer.inputSurfaces.add(is);
 
 	use of the CameraTest class
 		/*askPermission(Manifest.permission.CAMERA, granted -> {

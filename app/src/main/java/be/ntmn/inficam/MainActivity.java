@@ -1,10 +1,17 @@
 package be.ntmn.inficam;
 
 import android.Manifest;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.SurfaceTexture;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -91,6 +98,7 @@ public class MainActivity extends BaseActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		Log.e("ONCREATE", "create");
 		setContentView(R.layout.activity_main);
 		cameraView = findViewById(R.id.cameraView);
 		messageView = findViewById(R.id.message);
@@ -102,8 +110,34 @@ public class MainActivity extends BaseActivity {
 		infiCam.setPalette(Palette.Ironbow.getData()); // TODO UI to choose
 		usbMonitor.start(this);
 
+		Bitmap bmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
+		Canvas c = new Canvas(bmp);
+		Paint p = new Paint();
+		p.setColor(Color.TRANSPARENT);
+		c.drawRect(new Rect(0, 0, 640, 480), p);
+		Paint p2 = new Paint();
+		p2.setColor(Color.RED);
+		c.drawLine(0, 0, 640, 480, p2);
+
+		SurfaceMuxer.InputSurface is = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
+		SurfaceTexture st = is.getSurfaceTexture();
+		st.setDefaultBufferSize(640, 480);
+		//st.setOnFrameAvailableListener(et2);
+		Surface s = is.getSurface();
+		Canvas cvs = s.lockCanvas(null);
+		//cvs.drawBitmap(bmp, 0, 0, null);
+		cvs.drawLine(0, 0, 640, 480, p2);
+		s.unlockCanvasAndPost(cvs);
+		surfaceMuxer.inputSurfaces.add(is);
+
 		// TODO very temporary
-		cameraView.setOnClickListener(view -> infiCam.calibrate());
+		//cameraView.setOnClickListener(view -> infiCam.calibrate());
+		cameraView.setOnClickListener(view -> {
+			//infiCam.calibrate();
+			//infiCam.setSurface(inputSurface.getSurface());
+			surfaceMuxer.deinit();
+			surfaceMuxer.init();
+		});
 	}
 
 	@Override
@@ -125,6 +159,7 @@ public class MainActivity extends BaseActivity {
 
 	@Override
 	protected void onDestroy() {
+		Log.e("ONDESTROY", "destroy");
 		usbMonitor.stop();
 		super.onDestroy();
 	}
