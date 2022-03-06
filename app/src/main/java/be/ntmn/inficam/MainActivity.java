@@ -47,23 +47,17 @@ public class MainActivity extends BaseActivity {
 			if (usbConnection != null)
 				return;
 			Log.e("CONNECTION", "requesting camera permission");
-			/* Connecting to a UVC device needs camera permission. */
-			askPermission(Manifest.permission.CAMERA, granted -> {
-				if (granted) {
-					Log.e("CONNECTION", "CONNECT");
-					usbConnection = usbMonitor.connect(dev);
-					try {
-						infiCam.connect(usbConnection.getFileDescriptor());
-						infiCam.startStream();
-						handler.postDelayed(() -> infiCam.calibrate(), 1000);
-						messageView.showMessage(R.string.msg_connected, false);
-					} catch (Exception e) {
-						messageView.showMessage(getString(R.string.msg_connect_failed), true);
-					}
-				} else {
-					messageView.showMessage(R.string.msg_permdenied_cam, true);
-				}
-			});
+			try {
+				usbConnection = usbMonitor.connect(dev);
+				infiCam.connect(usbConnection.getFileDescriptor());
+				infiCam.startStream();
+				handler.postDelayed(() -> infiCam.calibrate(), 1000);
+				messageView.showMessage(R.string.msg_connected, false);
+			} catch (Exception e) {
+				if (usbConnection != null)
+					usbConnection.close();
+				messageView.showMessage(getString(R.string.msg_connect_failed), true);
+			}
 		}
 
 		@Override
@@ -111,7 +105,16 @@ public class MainActivity extends BaseActivity {
 		infiCam.setSurface(inputSurface.getSurface());
 		cameraView.getHolder().addCallback(surfaceHolderCallback);
 		infiCam.setPalette(Palette.Ironbow.getData()); // TODO UI to choose
-		usbMonitor.start(this);
+
+		/* Connecting to a UVC device needs camera permission. */
+		askPermission(Manifest.permission.CAMERA, granted -> {
+			if (granted) {
+				Log.e("CONNECTION", "start monitor");
+				usbMonitor.start(this);
+			} else {
+				messageView.showMessage(R.string.msg_permdenied_cam, true);
+			}
+		});
 
 		// TODO very temporary
 		cameraView.setOnClickListener(view -> infiCam.calibrate());
@@ -122,6 +125,8 @@ public class MainActivity extends BaseActivity {
 		super.onResume();
 		Log.e("ONRESUME", "resuming");
 		surfaceMuxer.init();
+
+		// TODO first check permissions but not ask, i suppose
 		usbMonitor.scan();
 
 		Bitmap bmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
