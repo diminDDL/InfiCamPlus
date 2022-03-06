@@ -7,6 +7,7 @@ The versions of third party things in libinficam/src/main/jni dir:
 	libuvc    - master at 15925fed1a08462965a2d24a585a0b0c41d6a9ef (patched)
 		modified stream.c to prevent a segmentation fault when starting streams
 			it was merged upstream, now we are at commit e3f36909ec37b1892ac944872fe9f0369f5601bd
+		again patched stream.c to fix a disconnect issue
 
 Short description of the C++ classes in jni/InfiCam dir:
 	- UVCDevice     just a wrapper around libuvc, reason for it existing is that using libuvc with android gets pretty involved
