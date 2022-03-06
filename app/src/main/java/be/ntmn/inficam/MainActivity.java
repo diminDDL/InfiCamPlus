@@ -148,24 +148,6 @@ public class MainActivity extends BaseActivity {
 			}
 		});
 
-		/*Bitmap bmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
-		Canvas c = new Canvas(bmp);
-		Paint p = new Paint();
-		p.setColor(Color.TRANSPARENT);
-		c.drawRect(new Rect(0, 0, 640, 480), p);
-		Paint p2 = new Paint();
-		p2.setColor(Color.RED);
-		c.drawLine(0, 0, 640, 480, p2);
-
-		SurfaceTexture st = sm.createInputSurfaceTexture();
-		st.setDefaultBufferSize(640, 480);
-		//st.setOnFrameAvailableListener(et2);
-		Surface s = new Surface(st);
-		Canvas cvs = s.lockCanvas(null);
-		//cvs.drawBitmap(bmp, 0, 0, null);
-		cvs.drawLine(0, 0, 640, 480, p2);
-		s.unlockCanvasAndPost(cvs);*/
-
 		surfaceMuxer = new SurfaceMuxer();
 		surfaceMuxer.init(); // TODO only needed yet to get a valid surfacetexture...
 		inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
@@ -180,18 +162,6 @@ public class MainActivity extends BaseActivity {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
-
-
-		// TODO we recreate the outputsurface here because the callback only runs once but this is silly, we can find a better way
-		/*if (outputSurface != null) {
-			cameraView = findViewById(R.id.cameraView);
-			SurfaceHolder sh = cameraView.getHolder();
-			outputSurface = new SurfaceMuxer.OutputSurface(surfaceMuxer, sh.getSurface());
-			outputSurface.setSize(1280, 960);
-			surfaceMuxer.outputSurfaces.clear();
-			surfaceMuxer.outputSurfaces.add(outputSurface);
-		}*/
 	}
 
 	@Override
@@ -210,18 +180,6 @@ public class MainActivity extends BaseActivity {
 				messageView.showMessage(R.string.permdenied_cam, true);
 			}
 		});
-
-		/*askPermission(Manifest.permission.CAMERA, granted -> {
-			if (granted) {
-				SurfaceTexture ist = surfaceMuxer.createInputSurfaceTexture();
-				ist.setDefaultBufferSize(1280, 960);
-				CameraTest ct = new CameraTest();
-				ct.initCamera2(this, new Surface(ist));
-				//ist.setOnFrameAvailableListener(surfaceMuxer); // TODO set the right one
-			} else {
-				showMessage(R.string.permdenied_cam, true);
-			}
-		});*/
 	}
 
 	@Override
@@ -236,11 +194,6 @@ public class MainActivity extends BaseActivity {
 		}
 		Log.e("DISCONNECT", "DISCONNECT because pause");
 		messageView.showMessage(R.string.msg_disconnected, true);
-		/*if (inputSurface != null)
-			inputSurface.getSurfaceTexture().setOnFrameAvailableListener(null); // TODO this is crap
-		inputSurface = null;
-		surfaceMuxer.release();
-		surfaceMuxer = null;*/
 		surfaceMuxer.deinit();
 		super.onPause();
 	}

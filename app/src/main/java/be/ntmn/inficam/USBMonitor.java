@@ -18,10 +18,6 @@ public abstract class USBMonitor extends BroadcastReceiver {
 	Context ctx;
 	UsbManager manager;
 
-	public USBMonitor() {
-		super();
-	}
-
 	public void start(Context ctx) {
 		this.ctx = ctx;
 		if (manager == null) {

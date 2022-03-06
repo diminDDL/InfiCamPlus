@@ -137,3 +137,35 @@ Some maybe useful trivia:
 			((uint8_t *) ic.palette)[i + 2] = round(255 * b);
 			((uint8_t *) ic.palette)[i + 3] = 255;
 		}
+
+	drawing stuff to a bitmap for overlay
+		/*Bitmap bmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
+		Canvas c = new Canvas(bmp);
+		Paint p = new Paint();
+		p.setColor(Color.TRANSPARENT);
+		c.drawRect(new Rect(0, 0, 640, 480), p);
+		Paint p2 = new Paint();
+		p2.setColor(Color.RED);
+		c.drawLine(0, 0, 640, 480, p2);
+
+		SurfaceTexture st = sm.createInputSurfaceTexture();
+		st.setDefaultBufferSize(640, 480);
+		//st.setOnFrameAvailableListener(et2);
+		Surface s = new Surface(st);
+		Canvas cvs = s.lockCanvas(null);
+		//cvs.drawBitmap(bmp, 0, 0, null);
+		cvs.drawLine(0, 0, 640, 480, p2);
+		s.unlockCanvasAndPost(cvs);*/
+
+	use of the CameraTest class
+		/*askPermission(Manifest.permission.CAMERA, granted -> {
+			if (granted) {
+				SurfaceTexture ist = surfaceMuxer.createInputSurfaceTexture();
+				ist.setDefaultBufferSize(1280, 960);
+				CameraTest ct = new CameraTest();
+				ct.initCamera2(this, new Surface(ist));
+				//ist.setOnFrameAvailableListener(surfaceMuxer); // TODO set the right one
+			} else {
+				showMessage(R.string.permdenied_cam, true);
+			}
+		});*/
