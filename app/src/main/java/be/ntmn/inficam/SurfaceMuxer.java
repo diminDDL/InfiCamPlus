@@ -127,6 +127,10 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 				surfaceTexture = new SurfaceTexture(textures[0]);
 				surface = new Surface(surfaceTexture);
 			} else surfaceTexture.attachToGLContext(textures[0]);
+			/* After attaching to a new context we must call updateTexImage() or the
+			 *   OnFrameAvailableListener may stop being called for some reason.
+			 */
+			getSurfaceTexture().updateTexImage();
 			initialized = true;
 		}
 
