@@ -74,7 +74,6 @@ public class MainActivity extends BaseActivity {
 	SurfaceHolder.Callback surfaceHolderCallback = new SurfaceHolder.Callback() {
 		@Override
 		public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
-			// TODO this can happen during onPause, not good (also should probably note not to create surfaces between deinit and init)
 			outputSurface =
 					new SurfaceMuxer.OutputSurface(surfaceMuxer, surfaceHolder.getSurface());
 			surfaceMuxer.outputSurfaces.add(outputSurface);

@@ -40,7 +40,11 @@ import java.util.ArrayList;
  *     because at onPause() the EGL context can get destroyed, and in onPause() you should call
  *     deinit() to release any resources attached to the EGL context in question. Also the
  *     InputSurface instances have an init() and deinit() function that should be called at the
- *     same times, but if they are in the inputSurfaces array, this happens automatically.
+ *     same times, but if they are in the inputSurfaces array, this happens automatically. Also
+ *     OutputSurface has init() and deinit() but these will normally survive the context being
+ *     destroyed, yet init() should be called on them if they were created at a time no context
+ *     existed (from a SurfaceHolder callback this can happen). Again SurfaceMuxer.init() will call
+ *     this for you if the OutputSurface is in the outputSurfaces array.
  *
  * The order of operations of the above list isn't of particular importance as long as it's
  *   actually possible, but only use this class from a single thread since the EGL context is
@@ -96,7 +100,6 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 
 		public void setSmooth(boolean smooth) {
 			this.smooth = smooth;
-			deinit();
 			init();
 		}
 
@@ -162,16 +165,32 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	public static class OutputSurface {
 		SurfaceMuxer surfaceMuxer;
 		Surface surface;
-		EGLSurface eglSurface; /* Note that the EGLSurface is not bound to a context. */
+		EGLSurface eglSurface = EGL14.EGL_NO_SURFACE; /* EGLSurface is not bound to context. */
 		int width = 1, height = 1;
 
 		public OutputSurface(SurfaceMuxer muxer, Surface surf) {
 			surfaceMuxer = muxer;
 			surface = surf;
+		}
+
+		void init() {
+			if (surfaceMuxer == null || surfaceMuxer.eglDisplay == EGL14.EGL_NO_DISPLAY)
+				return;
+			deinit();
 			int[] attr = { EGL14.EGL_NONE };
 			eglSurface = EGL14.eglCreateWindowSurface(surfaceMuxer.eglDisplay,
 					surfaceMuxer.eglConfig, surface, attr, 0);
 			surfaceMuxer.checkEglError("eglCreateWindowSurface");
+		}
+
+		void deinit() {
+			if (eglSurface == EGL14.EGL_NO_SURFACE)
+				return;
+			if (surfaceMuxer != null && surfaceMuxer.eglDisplay != EGL14.EGL_NO_DISPLAY &&
+					eglSurface != EGL14.EGL_NO_SURFACE) {
+				EGL14.eglDestroySurface(surfaceMuxer.eglDisplay, eglSurface);
+				eglSurface = EGL14.EGL_NO_SURFACE;
+			}
 		}
 
 		public void setSize(int w, int h) {
@@ -196,11 +215,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		}
 
 		public void release() {
-			if (surfaceMuxer != null && surfaceMuxer.eglDisplay != EGL14.EGL_NO_DISPLAY &&
-					eglSurface != EGL14.EGL_NO_SURFACE) {
-				EGL14.eglDestroySurface(surfaceMuxer.eglDisplay, eglSurface);
-				eglSurface = EGL14.EGL_NO_SURFACE;
-			}
+			deinit();
 			surfaceMuxer = null;
 			surface = null;
 		}
@@ -338,6 +353,12 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		/* Initialize any InputSurfaces we have. */
 		for (InputSurface is : inputSurfaces)
 			is.init();
+
+		/* Initialize output surfaces, these do not perish with the EGL context but need init if
+		 *   they were created at a time no context existed.
+		 */
+		for (OutputSurface os : outputSurfaces)
+			os.init();
 	}
 
 	public void deinit() {
