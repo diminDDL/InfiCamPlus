@@ -48,26 +48,25 @@ public class MainActivity extends BaseActivity {
 
 		@Override
 		public void onPermissionGranted(UsbDevice dev) {
-			// TODO this is bad, we don't want to ignore and leave behind open connections
-			try {
-				Log.e("CONN", "TryConnect " + this + " " + usbConnection);
-				if (surfaceMuxer != null && usbConnection == null) {
-					UsbDeviceConnection conn = usbMonitor.connect(dev);
-					Log.e("CONN", "Connect");
-					infiCam.connect(conn.getFileDescriptor());
-					messageView.showMessage(R.string.msg_connected, false);
-					usbConnection = conn;
-					infiCam.setSurface(inputSurface.getSurface());
-					infiCam.startStream();
-					handler.postDelayed(() -> infiCam.calibrate(), 1000);
-					Log.e("OSURFACES", "n = " + surfaceMuxer.outputSurfaces.size());
-				} else {
-					Log.e("CONN", "NOConnect " + surfaceMuxer + " " + usbConnection);
+			if (surfaceMuxer != null && usbConnection == null) {
+				try {
+					Log.e("CONN", "TryConnect " + this + " " + usbConnection);
+						UsbDeviceConnection conn = usbMonitor.connect(dev);
+						Log.e("CONN", "Connect");
+						infiCam.connect(conn.getFileDescriptor());
+						messageView.showMessage(R.string.msg_connected, false);
+						usbConnection = conn;
+						infiCam.setSurface(inputSurface.getSurface());
+						infiCam.startStream();
+						handler.postDelayed(() -> infiCam.calibrate(), 1000);
+						Log.e("OSURFACES", "n = " + surfaceMuxer.outputSurfaces.size());
+				} catch (Exception e) {
+					Log.e("CONN", "ERRConnect");
+					e.printStackTrace();
+					messageView.showMessage(e.getMessage(), true);
 				}
-			} catch (Exception e) {
-				Log.e("CONN", "ERRConnect");
-				e.printStackTrace();
-				messageView.showMessage(e.getMessage(), true);
+			} else {
+				Log.e("CONN", "NOConnect " + surfaceMuxer + " " + usbConnection);
 			}
 		}
 
@@ -84,9 +83,6 @@ public class MainActivity extends BaseActivity {
 				usbConnection.close();
 			usbConnection = null;
 			device = null;
-			/*if (inputSurface != null)
-				inputSurface.getSurfaceTexture().setOnFrameAvailableListener(null); // TODO this is crap
-			inputSurface = null;*/
 			Log.e("DISCONNECT", "DISCONNECT");
 			messageView.showMessage(R.string.msg_disconnected, true);
 		}
@@ -126,19 +122,7 @@ public class MainActivity extends BaseActivity {
 		SurfaceHolder sh = cameraView.getHolder();
 		sh.addCallback(shcallback);
 
-		/* Generate ironbow palette. */
-		byte[] palette = new byte[InfiCam.paletteLen * 4];
-		for (int i = 0; i + 4 <= palette.length; i += 4) {
-			float x = (float) i / (float) palette.length;
-			palette[i + 0] = (byte) round(255.0 * sqrt(x));
-			palette[i + 1] = (byte) round(255.0 * pow(x, 3));
-			palette[i + 2] = (byte) round(255.0 * max(0.0, sin(2.0 * PI * x)));
-			palette[i + 3] = (byte) 255;
-		}
-		IntBuffer ib = ByteBuffer.wrap(palette).order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
-		int[] intPalette = new int[ib.remaining()];
-		ib.get(intPalette);
-		infiCam.setPalette(intPalette);
+		infiCam.setPalette(Palette.IronBow.getData());
 
 		// TODO very temporary
 		cameraView.setOnClickListener(new View.OnClickListener() {
