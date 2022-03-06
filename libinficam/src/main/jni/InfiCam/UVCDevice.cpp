@@ -7,9 +7,10 @@
 #include <cstdlib> /* NULL */
 
 void *UVCDevice::usb_handle_events(void *arg) {
+	struct timeval timeout = { .tv_sec = 0, .tv_usec = 50000 };
 	UVCDevice *p = (UVCDevice *) arg;
-	while (!p->usb_thread_stop)
-		libusb_handle_events(p->usb_ctx);
+	while (!p->usb_thread_stop) /* See disconnect for importance of the timeout. */
+		libusb_handle_events_timeout(p->usb_ctx, &timeout);
 	return NULL;
 }
 
@@ -67,7 +68,7 @@ int UVCDevice::connect(int fd) {
 
 void UVCDevice::disconnect() {
 	usb_thread_stop = 1; /* Next step closes libusb devh and wakes the thread. */
-	if (uvc_ctx != NULL) {
+	if (uvc_ctx != NULL) { /* When no uvc_ctx, we depend on the timeout in usb_handle_events(). */
 		uvc_exit(uvc_ctx); /* This also closes the libusb devh. */
 		uvc_ctx = NULL;
 		uvc_devh = NULL;

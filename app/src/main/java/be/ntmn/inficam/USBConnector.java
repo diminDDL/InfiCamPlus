@@ -24,7 +24,7 @@ public abstract class USBConnector extends BroadcastReceiver {
 		ctx = context;
 	}
 
-	public void start() {
+	public void start(Context ctx) {
 		if (manager == null) {
 			manager = (UsbManager) ctx.getSystemService(Context.USB_SERVICE);
 			IntentFilter filter = new IntentFilter();
@@ -33,19 +33,33 @@ public abstract class USBConnector extends BroadcastReceiver {
 			filter.addAction(ACTION_USB_PERMISSION);
 			ctx.registerReceiver(this, filter);
 		}
-		tryConnect();
+		tryConnect(ctx);
 	}
 
-	void tryConnect() { /* To connect with devices already connected on start, call this. */
+	public void stop() {
+		try {
+			ctx.unregisterReceiver(this);
+		} catch (Exception e) {
+			/* We don't care, probably wasn't registered yet. */
+		}
+	}
+
+	void tryConnect(Context ctx) { /* To connect with devices already connected on start, call this. */
 		HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
 		for (UsbDevice dev : deviceList.values()) {
-			if (!deviceFilter(dev))
+			boolean res = deviceFilter(dev);
+			Log.e("DEV", "name = " + dev.getProductName() + " take = " + res);
+			if (!res)
 				continue;
-			Intent intent = new Intent(ACTION_USB_PERMISSION);
-			@SuppressLint("UnspecifiedImmutableFlag")
-			PendingIntent pending = PendingIntent.getBroadcast(ctx, 0, intent,
-					PendingIntent.FLAG_MUTABLE);
-			manager.requestPermission(dev, pending);
+			if (manager.hasPermission(dev)) {
+				UsbDeviceConnection conn = manager.openDevice(dev);
+				onConnect(dev, conn);
+			} else {
+				Intent intent = new Intent(ACTION_USB_PERMISSION);
+				PendingIntent pending = PendingIntent.getBroadcast(ctx, 0, intent,
+						PendingIntent.FLAG_MUTABLE);
+				manager.requestPermission(dev, pending);
+			}
 		}
 	}
 
@@ -54,7 +68,7 @@ public abstract class USBConnector extends BroadcastReceiver {
 		UsbDevice dev = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
 		switch (intent.getAction()) {
 			case UsbManager.ACTION_USB_DEVICE_ATTACHED:
-				tryConnect();
+				tryConnect(context);
 				break;
 			case UsbManager.ACTION_USB_DEVICE_DETACHED:
 				onDisconnect(dev);

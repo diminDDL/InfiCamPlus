@@ -10,6 +10,9 @@
  *
  * Note that because Android does not allow libusb to do device discovery related stuff, there is
  *   no way to detect when the device has disconnected here, this has to be implemented separately.
+ *
+ * The callback given to stream_start() can block as long as it wants since libuvc has a separate
+ *   thread dedicated to calling the user callback, in the worst case a few frames are missed.
  */
 class InfiCam {
 	typedef void (frame_callback_t)(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw,
