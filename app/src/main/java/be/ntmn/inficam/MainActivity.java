@@ -78,6 +78,7 @@ public class MainActivity extends BaseActivity {
 	SurfaceHolder.Callback surfaceHolderCallback = new SurfaceHolder.Callback() {
 		@Override
 		public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
+			Log.e("SURF", "new");
 			outputSurface =
 					new SurfaceMuxer.OutputSurface(surfaceMuxer, surfaceHolder.getSurface());
 			surfaceMuxer.outputSurfaces.add(outputSurface);
@@ -85,11 +86,13 @@ public class MainActivity extends BaseActivity {
 
 		@Override
 		public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int w, int h) {
+			Log.e("SURF", "changed " + surfaceHolder.getSurface() + " " + outputSurface.surface);
 			outputSurface.setSize(w, h);
 		}
 
 		@Override
 		public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
+			Log.e("SURF", surfaceHolder.getSurface() + " " + outputSurface.surface);
 			surfaceMuxer.outputSurfaces.remove(outputSurface);
 			outputSurface.release();
 		}
@@ -110,13 +113,32 @@ public class MainActivity extends BaseActivity {
 		infiCam.setPalette(Palette.Ironbow.getData()); // TODO UI to choose
 		usbMonitor.start(this);
 
+		// TODO very temporary
+		//cameraView.setOnClickListener(view -> infiCam.calibrate());
+		cameraView.setOnClickListener(view -> {
+			//infiCam.calibrate();
+			//infiCam.setSurface(inputSurface.getSurface());
+			//surfaceMuxer.deinit();
+			//surfaceMuxer.init();
+			//surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
+			//inputSurface.getSurfaceTexture().updateTexImage();
+		});
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		Log.e("ONRESUME", "resuming");
+		surfaceMuxer.init();
+		usbMonitor.scan();
+
 		Bitmap bmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
 		Canvas c = new Canvas(bmp);
 		Paint p = new Paint();
 		p.setColor(Color.TRANSPARENT);
 		c.drawRect(new Rect(0, 0, 640, 480), p);
 		Paint p2 = new Paint();
-		p2.setColor(Color.RED);
+		p2.setColor(Color.WHITE);
 		c.drawLine(0, 0, 640, 480, p2);
 
 		SurfaceMuxer.InputSurface is = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
@@ -128,24 +150,12 @@ public class MainActivity extends BaseActivity {
 		//cvs.drawBitmap(bmp, 0, 0, null);
 		cvs.drawLine(0, 0, 640, 480, p2);
 		s.unlockCanvasAndPost(cvs);
+		surfaceMuxer.inputSurfaces.clear();
+		surfaceMuxer.inputSurfaces.add(inputSurface);
 		surfaceMuxer.inputSurfaces.add(is);
 
-		// TODO very temporary
-		//cameraView.setOnClickListener(view -> infiCam.calibrate());
-		cameraView.setOnClickListener(view -> {
-			//infiCam.calibrate();
-			//infiCam.setSurface(inputSurface.getSurface());
-			surfaceMuxer.deinit();
-			surfaceMuxer.init();
-		});
-	}
-
-	@Override
-	protected void onResume() {
-		super.onResume();
-		Log.e("ONRESUME", "resuming");
-		surfaceMuxer.init();
-		usbMonitor.scan();
+		/*surfaceMuxer.outputSurfaces.clear();
+		surfaceMuxer.outputSurfaces.add(new SurfaceMuxer.OutputSurface(surfaceMuxer, cameraView.getHolder().getSurface()));*/
 	}
 
 	@Override
