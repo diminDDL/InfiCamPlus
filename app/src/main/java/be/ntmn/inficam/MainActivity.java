@@ -12,6 +12,7 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -77,7 +78,7 @@ public class MainActivity extends BaseActivity {
 
 		@Override
 		public void onPermissionDenied(UsbDevice dev) {
-			Toast.makeText(ctx, R.string.permdenied_usb, Toast.LENGTH_LONG).show();
+			showMessage(R.string.permdenied_usb, true);
 		}
 
 		@Override
@@ -174,7 +175,7 @@ public class MainActivity extends BaseActivity {
 			if (granted) {
 				usbConnector.start(); /* Connecting to a UVC device needs camera permission. */
 			} else {
-				Toast.makeText(this, R.string.permdenied_cam, Toast.LENGTH_LONG).show();
+				showMessage(R.string.permdenied_cam, true);
 			}
 		});
 	}
