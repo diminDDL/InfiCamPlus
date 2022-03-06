@@ -77,7 +77,7 @@ public class BaseActivity extends AppCompatActivity {
 			callback.onPermission(true);
 		} else {
 			permissionCallbacks.add(callback);
-			requestPermissions(new String[]{perm}, permissionCallbacks.size());
+			requestPermissions(new String[] { perm }, permissionCallbacks.size());
 		}
 	}
 

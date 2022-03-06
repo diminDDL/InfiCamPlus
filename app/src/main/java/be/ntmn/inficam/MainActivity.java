@@ -1,6 +1,7 @@
 package be.ntmn.inficam;
 
 import android.Manifest;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -24,6 +25,7 @@ public class MainActivity extends BaseActivity {
 	MessageView messageView;
 	UsbDevice device;
 	UsbDeviceConnection usbConnection;
+	boolean usbPermissionAsked = false, usbPermissionAquired = false;
 	InfiCam infiCam = new InfiCam();
 	SurfaceMuxer surfaceMuxer = new SurfaceMuxer();
 	SurfaceMuxer.OutputSurface outputSurface;
@@ -33,36 +35,37 @@ public class MainActivity extends BaseActivity {
 
 	USBMonitor usbMonitor = new USBMonitor() {
 		@Override
-		public boolean onDeviceFound(UsbDevice dev) {
-			if (device == null) {
-				device = dev;
-				return true;
-			}
-			return false;
-		}
-
-		@Override // TODO what if this arrives before onResume?
-		public void onPermissionGranted(UsbDevice dev) {
-			Log.e("CONNECTION", "USB permission granted");
-			if (usbConnection != null)
+		public void onDeviceFound(UsbDevice dev) {
+			if (device != null)
 				return;
-			Log.e("CONNECTION", "requesting camera permission");
-			try {
-				usbConnection = usbMonitor.connect(dev);
-				infiCam.connect(usbConnection.getFileDescriptor());
-				infiCam.startStream();
-				handler.postDelayed(() -> infiCam.calibrate(), 1000);
-				messageView.showMessage(R.string.msg_connected, false);
-			} catch (Exception e) {
-				if (usbConnection != null)
-					usbConnection.close();
-				messageView.showMessage(getString(R.string.msg_connect_failed), true);
-			}
-		}
+			device = dev;
+			usbPermissionAsked = true;
+			connect(dev, new ConnectCallback() {
+				@Override
+				public void onConnected(UsbDevice dev, UsbDeviceConnection conn) {
+					usbPermissionAquired = true;
+					usbConnection = conn;
+					try {
+						infiCam.connect(usbConnection.getFileDescriptor());
+						infiCam.startStream();
+						handler.postDelayed(() -> infiCam.calibrate(), 1000);
+						messageView.showMessage(R.string.msg_connected, false);
+					} catch (Exception e) {
+						usbConnection.close();
+						messageView.showMessage(getString(R.string.msg_connect_failed), true);
+					}
+				}
 
-		@Override
-		public void onPermissionDenied(UsbDevice dev) {
-			messageView.showMessage(R.string.msg_permdenied_usb, true);
+				@Override
+				public void onPermissionDenied(UsbDevice dev) {
+					messageView.showMessage(R.string.msg_permdenied_usb, true);
+				}
+
+				@Override
+				public void onFailure(UsbDevice dev) {
+					messageView.showMessage(R.string.msg_connect_failed, true);
+				}
+			});
 		}
 
 		@Override
@@ -107,12 +110,9 @@ public class MainActivity extends BaseActivity {
 
 		/* Connecting to a UVC device needs camera permission. */
 		askPermission(Manifest.permission.CAMERA, granted -> {
-			if (granted) {
-				Log.e("CONNECTION", "start monitor");
+			if (granted)
 				usbMonitor.start(this);
-			} else {
-				messageView.showMessage(R.string.msg_permdenied_cam, true);
-			}
+			else messageView.showMessage(R.string.msg_permdenied_cam, true);
 		});
 
 		// TODO very temporary
@@ -125,8 +125,11 @@ public class MainActivity extends BaseActivity {
 		Log.e("ONRESUME", "resuming");
 		surfaceMuxer.init();
 
-		// TODO first check permissions but not ask, i suppose
-		usbMonitor.scan(); // TODO usbMonitor.start() sometimes doesn't run on time because the permission thing
+		if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+			if (!usbPermissionAsked || usbPermissionAquired)
+				usbMonitor.scan();
+			else messageView.showMessage(R.string.msg_permdenied_usb, true);
+		} else messageView.showMessage(R.string.msg_permdenied_cam, true);
 
 		Bitmap bmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
 		Canvas c = new Canvas(bmp);

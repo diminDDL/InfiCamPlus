@@ -15,9 +15,16 @@ import java.util.HashMap;
 public abstract class USBMonitor extends BroadcastReceiver {
 	static final String ACTION_USB_PERMISSION = "be.ntmn.inficam.USB_PERMISSION";
 
+	public interface ConnectCallback {
+		void onConnected(UsbDevice dev, UsbDeviceConnection conn);
+		void onPermissionDenied(UsbDevice dev);
+		void onFailure(UsbDevice dev);
+	}
+
 	Context ctx;
 	boolean registered = false;
 	UsbManager manager;
+	HashMap<UsbDevice, ConnectCallback> callbacks = new HashMap<>();
 
 	public void start(Context ctx) { /* Recommended use is in onCreate()/onStart(). */
 		this.ctx = ctx;
@@ -51,18 +58,8 @@ public abstract class USBMonitor extends BroadcastReceiver {
 		if (manager == null)
 			return;
 		HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
-		for (UsbDevice dev : deviceList.values()) {
-			boolean res = onDeviceFound(dev);
-			Log.e("DEV", "name = " + dev.getProductName() + " take = " + res);
-			if (!res)
-				continue;
-			if (!manager.hasPermission(dev)) {
-				Intent intent = new Intent(ACTION_USB_PERMISSION);
-				PendingIntent pending = PendingIntent.getBroadcast(ctx, 0, intent,
-						PendingIntent.FLAG_MUTABLE);
-				manager.requestPermission(dev, pending);
-			} else onPermissionGranted(dev);
-		}
+		for (UsbDevice dev : deviceList.values())
+			onDeviceFound(dev);
 	}
 
 	@Override
@@ -70,28 +67,36 @@ public abstract class USBMonitor extends BroadcastReceiver {
 		UsbDevice dev = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
 		switch (intent.getAction()) {
 			case UsbManager.ACTION_USB_DEVICE_ATTACHED:
-				Log.e("CONN", "ATTACH broadcast");
 				scan();
 				break;
 			case UsbManager.ACTION_USB_DEVICE_DETACHED:
-				Log.e("CONN", "DETACH broadcast");
 				onDisconnect(dev);
 				break;
 			case ACTION_USB_PERMISSION:
-				Log.e("CONN", "PERM broadcast");
-				if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false))
-					onPermissionGranted(dev);
-				else onPermissionDenied(dev);
+				ConnectCallback cb = callbacks.remove(dev);
+				if (cb == null)
+					return;
+				if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
+					UsbDeviceConnection conn = manager.openDevice(dev);
+					cb.onConnected(dev, conn);
+				} else cb.onPermissionDenied(dev);
 				break;
 		}
 	}
 
-	public UsbDeviceConnection connect(UsbDevice dev) {
-		return manager.openDevice(dev);
+	public void connect(UsbDevice dev, ConnectCallback cb) {
+		if (!manager.hasPermission(dev)) {
+			Log.e("USBPERM", "asking");
+			Intent intent = new Intent(ACTION_USB_PERMISSION);
+			PendingIntent pending = PendingIntent.getBroadcast(ctx, 0, intent, 0);
+			callbacks.put(dev, cb);
+			manager.requestPermission(dev, pending);
+		} else {
+			UsbDeviceConnection conn = manager.openDevice(dev);
+			cb.onConnected(dev, conn);
+		}
 	}
 
-	public abstract boolean onDeviceFound(UsbDevice dev);
-	public abstract void onPermissionGranted(UsbDevice dev);
-	public abstract void onPermissionDenied(UsbDevice dev);
+	public abstract void onDeviceFound(UsbDevice dev);
 	public abstract void onDisconnect(UsbDevice dev);
 }
