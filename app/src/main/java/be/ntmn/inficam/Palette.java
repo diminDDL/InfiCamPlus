@@ -57,52 +57,41 @@ public abstract class Palette {
 	static public Palette Rainbow = new Palette("Rainbow") {
 		@Override
 		Pixel func(double x) {
-			double r, g, b;
-			double h = (1 - x) * 360.0;
-			double y = 1 - abs((h / 60.0) % 2 - 1);
-			if (h >= 0 && h < 60) {
-				r = 1; g = y; b = 0;
-			} else if (h >= 60 && h < 120) {
-				r = y; g = 1; b = 0;
-			} else if (h >= 120 && h < 180) {
-				r = 0; g = 1; b = y;
-			} else if (h >= 180 && h < 240) {
-				r = 0; g = y; b = 1;
-			} else if(h >= 240 && h < 300) {
-				r = y; g = 0; b = 1;
-			} else {
-				r = 1; g = 0; b = y;
-			}
-			return new Pixel(r, g, b);
+			return hsvPixel((1 - x) * 360.0, 1, 1);
 		}
 	};
 
 	static public Palette Rainbow2 = new Palette("Rainbow2") {
 		@Override
 		Pixel func(double x) {
-			double r, g, b;
-			double h = (1 - x) * 270.0;
-			double y = 1 - abs((h / 60.0) % 2 - 1);
-			if (h >= 0 && h < 60) {
-				r = 1; g = y; b = 0;
-			} else if (h >= 60 && h < 120) {
-				r = y; g = 1; b = 0;
-			} else if (h >= 120 && h < 180) {
-				r = 0; g = 1; b = y;
-			} else if (h >= 180 && h < 240) {
-				r = 0; g = y; b = 1;
-			} else if(h >= 240 && h < 300) {
-				r = y; g = 0; b = 1;
-			} else {
-				r = 1; g = 0; b = y;
-			}
-			return new Pixel(r, g, b);
+			return hsvPixel((1 - x) * 270.0, 1, 1);
 		}
 	};
 
 	public static Palette[] palettes = new Palette[] {
 			WhiteHot, BlackHot, Ironbow, Rainbow, Rainbow2
 	};
+
+	Pixel hsvPixel(double h, double s, double v) {
+		double r, g, b;
+		double c = s * v;
+		double y = c * (1 - abs((h / 60.0) % 2 - 1));
+		double m = v - c;
+		if (h >= 0 && h < 60) {
+			r = c; g = y; b = 0;
+		} else if (h >= 60 && h < 120) {
+			r = y; g = c; b = 0;
+		} else if (h >= 120 && h < 180) {
+			r = 0; g = c; b = y;
+		} else if (h >= 180 && h < 240) {
+			r = 0; g = y; b = c;
+		} else if(h >= 240 && h < 300) {
+			r = y; g = 0; b = c;
+		} else {
+			r = c; g = 0; b = y;
+		}
+		return new Pixel(r + m, g + m, b + m);
+	}
 
 	public int[] getData() {
 		byte[] palette = new byte[InfiCam.paletteLen * 4];
