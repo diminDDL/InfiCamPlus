@@ -14,7 +14,6 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.View;
 
 import androidx.annotation.NonNull;
 
@@ -53,24 +52,27 @@ public class MainActivity extends BaseActivity {
 				if (granted) {
 					Log.e("CONNECTION", "CONNECT");
 					usbConnection = usbMonitor.connect(dev);
-					infiCam.connect(usbConnection.getFileDescriptor());
-					infiCam.startStream();
-					handler.postDelayed(() -> infiCam.calibrate(), 1000);
-					messageView.showMessage(R.string.msg_connected, false);
+					try {
+						infiCam.connect(usbConnection.getFileDescriptor());
+						infiCam.startStream();
+						handler.postDelayed(() -> infiCam.calibrate(), 1000);
+						messageView.showMessage(R.string.msg_connected, false);
+					} catch (Exception e) {
+						messageView.showMessage(getString(R.string.msg_connect_failed), true);
+					}
 				} else {
-					messageView.showMessage(R.string.permdenied_cam, true);
+					messageView.showMessage(R.string.msg_permdenied_cam, true);
 				}
 			});
 		}
 
 		@Override
 		public void onPermissionDenied(UsbDevice dev) {
-			messageView.showMessage(R.string.permdenied_usb, true);
+			messageView.showMessage(R.string.msg_permdenied_usb, true);
 		}
 
 		@Override
 		public void onDisconnect(UsbDevice dev) {
-			Log.e("CONNECTION", "DISCONNECT due to broadcast");
 			disconnect();
 		}
 	};
@@ -78,7 +80,6 @@ public class MainActivity extends BaseActivity {
 	SurfaceHolder.Callback surfaceHolderCallback = new SurfaceHolder.Callback() {
 		@Override
 		public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
-			Log.e("SURF", "new");
 			outputSurface =
 					new SurfaceMuxer.OutputSurface(surfaceMuxer, surfaceHolder.getSurface());
 			surfaceMuxer.outputSurfaces.add(outputSurface);
@@ -86,7 +87,6 @@ public class MainActivity extends BaseActivity {
 
 		@Override
 		public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int w, int h) {
-			Log.e("SURF", "changed " + surfaceHolder.getSurface() + " " + outputSurface.surface);
 			outputSurface.setSize(w, h);
 		}
 
@@ -114,15 +114,7 @@ public class MainActivity extends BaseActivity {
 		usbMonitor.start(this);
 
 		// TODO very temporary
-		//cameraView.setOnClickListener(view -> infiCam.calibrate());
-		cameraView.setOnClickListener(view -> {
-			//infiCam.calibrate();
-			//infiCam.setSurface(inputSurface.getSurface());
-			//surfaceMuxer.deinit();
-			//surfaceMuxer.init();
-			//surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
-			//inputSurface.getSurfaceTexture().updateTexImage();
-		});
+		cameraView.setOnClickListener(view -> infiCam.calibrate());
 	}
 
 	@Override
