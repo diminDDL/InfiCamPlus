@@ -75,7 +75,7 @@ public class MainActivity extends BaseActivity {
 		@Override
 		public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
 			outputSurface =
-					new SurfaceMuxer.OutputSurface(surfaceMuxer, surfaceHolder.getSurface());
+					new SurfaceMuxer.OutputSurface(surfaceMuxer, surfaceHolder.getSurface(), false);
 			surfaceMuxer.outputSurfaces.add(outputSurface);
 		}
 
@@ -86,7 +86,6 @@ public class MainActivity extends BaseActivity {
 
 		@Override
 		public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
-			Log.e("SURF", surfaceHolder.getSurface() + " " + outputSurface.surface);
 			surfaceMuxer.outputSurfaces.remove(outputSurface);
 			outputSurface.release();
 		}
@@ -127,7 +126,7 @@ public class MainActivity extends BaseActivity {
 		surfaceMuxer.init();
 
 		// TODO first check permissions but not ask, i suppose
-		//usbMonitor.scan(); // TODO usbMonitor.start() sometimes doesn't run on time because the permission thing
+		usbMonitor.scan(); // TODO usbMonitor.start() sometimes doesn't run on time because the permission thing
 
 		Bitmap bmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
 		Canvas c = new Canvas(bmp);

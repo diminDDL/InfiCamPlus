@@ -50,13 +50,12 @@ import java.util.ArrayList;
  *   actually possible, but only use this class from a single thread since the EGL context is
  *   bound to a single thread.
  *
- * The surface given to the OutputSurface constructor is not released when you call the
- *   OutputSurface.release() function. You should call the release() for instances of
- *   InputSurface and OutputSurface when they're no longer used to free the EGL stuff they use
- *   but if they're in the inputSurfaces/outputSurfaces arrays, that happens automatically
- *   when calling SurfaceMuxer.release(), which also should be called when the SurfaceMuxer
- *   instance is no longer in use.
- *
+ * The surface given to the OutputSurface constructor only released in the OutputSurface.release()
+ *   function. You should call the release() for instances of InputSurface and OutputSurface when
+ *   they're no longer used to free the EGL stuff they use but if they're in the
+ *   inputSurfaces/outputSurfaces arrays, that happens automatically when calling
+ *   SurfaceMuxer.release(), which also should be called when the SurfaceMuxer instance is no
+ *   longer in use.
  */
 public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	static final int EGL_RECORDABLE_ANDROID = 0x3142;
@@ -165,27 +164,28 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	public static class OutputSurface {
 		SurfaceMuxer surfaceMuxer;
 		Surface surface;
+		boolean surfaceOwned;
 		EGLSurface eglSurface = EGL14.EGL_NO_SURFACE; /* EGLSurface is not bound to context. */
 		int width = 1, height = 1;
 
-		public OutputSurface(SurfaceMuxer muxer, Surface surf) {
+		public OutputSurface(SurfaceMuxer muxer, Surface surf, boolean release) {
 			surfaceMuxer = muxer;
 			surface = surf;
+			surfaceOwned = release;
+			init();
 		}
 
-		void init() {
-			if (surfaceMuxer == null || surfaceMuxer.eglDisplay == EGL14.EGL_NO_DISPLAY)
+		public void init() {
+			if (surfaceMuxer == null || surfaceMuxer.eglDisplay == EGL14.EGL_NO_DISPLAY ||
+					eglSurface != EGL14.EGL_NO_SURFACE)
 				return;
-			deinit();
 			int[] attr = { EGL14.EGL_NONE };
 			eglSurface = EGL14.eglCreateWindowSurface(surfaceMuxer.eglDisplay,
 					surfaceMuxer.eglConfig, surface, attr, 0);
 			surfaceMuxer.checkEglError("eglCreateWindowSurface");
 		}
 
-		void deinit() {
-			if (eglSurface == EGL14.EGL_NO_SURFACE)
-				return;
+		public void deinit() {
 			if (surfaceMuxer != null && surfaceMuxer.eglDisplay != EGL14.EGL_NO_DISPLAY &&
 					eglSurface != EGL14.EGL_NO_SURFACE) {
 				EGL14.eglDestroySurface(surfaceMuxer.eglDisplay, eglSurface);
@@ -216,6 +216,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 
 		public void release() {
 			deinit();
+			if (surfaceOwned)
+				surface.release();
 			surfaceMuxer = null;
 			surface = null;
 		}
@@ -231,9 +233,9 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			return;
 		for (InputSurface is : inputSurfaces)
 			is.getSurfaceTexture().updateTexImage();
-		for (OutputSurface ts : outputSurfaces) {
-			ts.makeCurrent();
-			GLES20.glViewport(0, 0, ts.width, ts.height);
+		for (OutputSurface os : outputSurfaces) {
+			os.makeCurrent();
+			GLES20.glViewport(0, 0, os.width, os.height);
 
 			GLES20.glClearColor(0, 0, 0, 1);
 			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
@@ -263,8 +265,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			}
 			GLES20.glFlush();
 
-			ts.setPresentationTime(surfaceTexture.getTimestamp());
-			ts.swapBuffers();
+			os.setPresentationTime(surfaceTexture.getTimestamp());
+			os.swapBuffers();
 		}
 	}
 

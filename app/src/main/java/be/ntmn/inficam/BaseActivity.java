@@ -6,6 +6,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 
@@ -16,7 +18,7 @@ import java.util.ArrayList;
  */
 public class BaseActivity extends AppCompatActivity {
 	ArrayList<PermissionCallback> permissionCallbacks = new ArrayList<>();
-	final static long hideDelay = 2000;
+	final static long hideDelay = 2500;
 	public final Handler handler = new Handler();
 
 	interface PermissionCallback {
@@ -30,14 +32,25 @@ public class BaseActivity extends AppCompatActivity {
 		dv.setOnSystemUiVisibilityChangeListener(i -> {
 			if ((i & View.SYSTEM_UI_FLAG_FULLSCREEN) != 0)
 				return;
-			handler.postDelayed(this::hideUI, hideDelay);
+			deferHide();
 		});
-		hideUI();
+		/* These flags make the layout ignore navigation/tray but don't hide them yet. */
+		int uiOptions = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+				| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+				| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
+		dv.setSystemUiVisibility(uiOptions);
+		deferHide();
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 	}
 
-	void hideUI() {
+	void deferHide() {
+		handler.removeCallbacks(hideUI);
+		handler.postDelayed(hideUI, hideDelay);
+	}
+
+	final Runnable hideUI = () -> {
 		View dv = getWindow().getDecorView();
+		/* Flags to go properly fullscreen. */
 		int uiOptions = View.SYSTEM_UI_FLAG_IMMERSIVE
 				| View.SYSTEM_UI_FLAG_LAYOUT_STABLE
 				| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
@@ -45,6 +58,18 @@ public class BaseActivity extends AppCompatActivity {
 				| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
 				| View.SYSTEM_UI_FLAG_FULLSCREEN;
 		dv.setSystemUiVisibility(uiOptions);
+	};
+
+	@Override
+	public boolean dispatchGenericMotionEvent(MotionEvent ev) {
+		deferHide();
+		return super.dispatchGenericMotionEvent(ev);
+	}
+
+	@Override
+	public boolean dispatchTouchEvent(MotionEvent ev) {
+		deferHide();
+		return super.dispatchTouchEvent(ev);
 	}
 
 	public void askPermission(String perm, PermissionCallback callback) {
