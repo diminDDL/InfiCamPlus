@@ -167,10 +167,10 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 
 		public OutputSurface(SurfaceMuxer muxer, Surface surf) {
 			surfaceMuxer = muxer;
-			int[] attr = { EGL14.EGL_NONE };
 			surface = surf;
+			int[] attr = { EGL14.EGL_NONE };
 			eglSurface = EGL14.eglCreateWindowSurface(surfaceMuxer.eglDisplay,
-					surfaceMuxer.eglConfig, surf, attr, 0);
+					surfaceMuxer.eglConfig, surface, attr, 0);
 			surfaceMuxer.checkEglError("eglCreateWindowSurface");
 		}
 
