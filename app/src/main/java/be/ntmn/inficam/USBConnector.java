@@ -57,7 +57,7 @@ public abstract class USBConnector extends BroadcastReceiver {
 				tryConnect();
 				break;
 			case UsbManager.ACTION_USB_DEVICE_DETACHED:
-				Log.e("DETACHED", "device " + dev.getProductName());
+				onDisconnect(dev);
 				break;
 			case ACTION_USB_PERMISSION:
 				if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
@@ -73,4 +73,5 @@ public abstract class USBConnector extends BroadcastReceiver {
 	public abstract boolean deviceFilter(UsbDevice dev);
 	public abstract void onConnect(UsbDevice dev, UsbDeviceConnection conn);
 	public abstract void onPermissionDenied(UsbDevice dev);
+	public abstract void onDisconnect(UsbDevice dev);
 }

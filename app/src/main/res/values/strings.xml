@@ -3,4 +3,5 @@
 	<string name="permdenied_cam">Camera permission denied.</string>
 	<string name="permdenied_usb">USB permission denied.</string>
 	<string name="msg_disconnected">Disconnected.</string>
+	<string name="msg_connected">Connected.</string>
 </resources>

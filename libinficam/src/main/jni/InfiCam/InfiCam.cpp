@@ -39,6 +39,9 @@ InfiCam::~InfiCam() {
 }
 
 int InfiCam::connect(int fd) {
+	/* We initialize the mutex here because we can't use exceptions with JNI and the constructor
+	 *   thus isn't able to fail.
+	 */
 	if (pthread_mutex_init(&frame_callback_mutex, NULL))
 		return 1;
 	if (dev.connect(fd)) {

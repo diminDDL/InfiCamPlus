@@ -31,7 +31,8 @@ public class MainActivity extends BaseActivity {
 	SurfaceView cameraView;
 	InfiCam infiCam = new InfiCam();
 	boolean isConnected = false; /* Whether a device is connected. */
-	boolean haveDevice = false;
+	UsbDevice device;
+	TextView messageView;;
 	UsbDeviceConnection usbConnection = null;
 	SurfaceMuxer.OutputSurface outputSurface;
 	SurfaceMuxer.InputSurface inputSurface; /* InfiCam class writes to this. */
@@ -41,8 +42,8 @@ public class MainActivity extends BaseActivity {
 	USBConnector usbConnector = new USBConnector(this) {
 		@Override
 		public boolean deviceFilter(UsbDevice dev) {
-			if (!haveDevice) {
-				haveDevice = true;
+			if (device == null) {
+				device = dev;
 				return true;
 			}
 			return false;
@@ -55,7 +56,7 @@ public class MainActivity extends BaseActivity {
 				Log.e("CONN", "TryConnect " + this + " " + Thread.currentThread().getName());
 				if (surfaceMuxer != null && !isConnected) {
 					Log.e("CONN", "Connect");
-					((TextView) findViewById(R.id.message)).setText("TEST");
+					showMessage(R.string.msg_connected, false);
 					infiCam.connect(conn.getFileDescriptor());
 					usbConnection = conn;
 					isConnected = true;
@@ -77,6 +78,22 @@ public class MainActivity extends BaseActivity {
 		@Override
 		public void onPermissionDenied(UsbDevice dev) {
 			Toast.makeText(ctx, R.string.permdenied_usb, Toast.LENGTH_LONG).show();
+		}
+
+		@Override
+		public void onDisconnect(UsbDevice dev) {
+			infiCam.stopStream();
+			infiCam.disconnect();
+			isConnected = false;
+			device = null;
+			if (usbConnection != null) {
+				usbConnection.close();
+				usbConnection = null;
+			}
+			if (inputSurface != null)
+				inputSurface.getSurfaceTexture().setOnFrameAvailableListener(null); // TODO this is crap
+			inputSurface = null;
+			showMessage(R.string.msg_disconnected, true);
 		}
 	};
 
@@ -109,6 +126,7 @@ public class MainActivity extends BaseActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		cameraView = findViewById(R.id.cameraView);
+		messageView = findViewById(R.id.message);
 		SurfaceHolder sh = cameraView.getHolder();
 		sh.addCallback(shcallback);
 
@@ -205,17 +223,29 @@ public class MainActivity extends BaseActivity {
 	@Override
 	protected void onPause() {
 		Log.e("ONPAUSE", "DISCONNECT");
-		isConnected = false;
-		haveDevice = false;
 		infiCam.stopStream();
 		infiCam.disconnect();
+		isConnected = false;
+		device = null;
 		if (usbConnection != null) {
 			usbConnection.close();
 			usbConnection = null;
 		}
-		inputSurface.getSurfaceTexture().setOnFrameAvailableListener(null); // TODO this is crap
+		if (inputSurface != null)
+			inputSurface.getSurfaceTexture().setOnFrameAvailableListener(null); // TODO this is crap
+		inputSurface = null;
 		surfaceMuxer.release();
 		surfaceMuxer = null;
 		super.onPause();
+	}
+
+	final Runnable hideMessage = () -> messageView.setVisibility(View.INVISIBLE);
+
+	public void showMessage(int res, boolean preserve) {
+		messageView.setText(res);
+		messageView.setVisibility(View.VISIBLE);
+		handler.removeCallbacks(hideMessage);
+		if (!preserve)
+			handler.postDelayed(hideMessage, 2000);
 	}
 }

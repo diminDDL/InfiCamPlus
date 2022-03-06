@@ -26,16 +26,14 @@ public:
 	JNIEnv *env;
 	jobject obj;
 	ANativeWindow *window = NULL;
-	pthread_mutex_t window_mutex;
+	pthread_mutex_t window_mutex; /* Initialized elsewhere to avoid needing exceptions. */
 
 	InfiCamJNI(JNIEnv *env, jobject obj) {
 		this->env = env;
 		this->obj = env->NewGlobalRef(obj);
-		pthread_mutex_init(&window_mutex, NULL);
 	}
 
 	~InfiCamJNI() {
-		pthread_mutex_destroy(&window_mutex);
 		env->DeleteGlobalRef(obj);
 	}
 };
@@ -134,12 +132,18 @@ void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, voi
 extern "C" {
 
 JNIEXPORT jlong Java_be_ntmn_libinficam_InfiCam_nativeNew(JNIEnv *env, jclass cls, jobject self) {
-	return (jlong) new InfiCamJNI(env, self);
+	InfiCamJNI *icj = new InfiCamJNI(env, self);
+	if (pthread_mutex_init(&icj->window_mutex, NULL)) {
+		delete icj;
+		return 0;
+	}
+	return (jlong) icj;
 }
 
 JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_nativeDelete(JNIEnv *env, jclass cls, jlong ptr) {
 	InfiCamJNI *icj = (InfiCamJNI *) ptr;
 	ANativeWindow *window = icj->window;
+	pthread_mutex_destroy(&icj->window_mutex);
 	delete icj; /* Delete also disconnects. */
 	if (window != NULL) /* No need to lock, callback isn't called after disconnect. */
 		ANativeWindow_release(window);
