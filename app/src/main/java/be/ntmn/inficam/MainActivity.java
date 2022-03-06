@@ -11,7 +11,6 @@ import android.graphics.SurfaceTexture;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -97,7 +96,6 @@ public class MainActivity extends BaseActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		Log.e("ONCREATE", "create");
 		setContentView(R.layout.activity_main);
 		cameraView = findViewById(R.id.cameraView);
 		messageView = findViewById(R.id.message);
@@ -115,16 +113,28 @@ public class MainActivity extends BaseActivity {
 			else messageView.showMessage(R.string.msg_permdenied_cam, true);
 		});
 
-		// TODO very temporary
-		cameraView.setOnClickListener(view -> infiCam.calibrate());
+		cameraView.setOnClickListener(view -> {
+			/* Allow to retry if connecting failed or permission denied. */
+			if (usbConnection == null) {
+				device = null;
+				askPermission(Manifest.permission.CAMERA, granted -> {
+					if (granted) {
+						usbMonitor.start(this);
+						usbMonitor.scan();
+					} else messageView.showMessage(R.string.msg_permdenied_cam, true);
+				});
+				return;
+			}
+			infiCam.calibrate();
+		});
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-		Log.e("ONRESUME", "resuming");
 		surfaceMuxer.init();
 
+		/* Do not ask permission with dialogs from onResume(), they'd trigger more onResume(). */
 		if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
 			if (!usbPermissionAsked || usbPermissionAquired)
 				usbMonitor.scan();
@@ -159,8 +169,6 @@ public class MainActivity extends BaseActivity {
 
 	@Override
 	protected void onPause() {
-		Log.e("ONPAUSE", "pauseing");
-		Log.e("CONNECTION", "DISCONNECT due to pause");
 		disconnect();
 		surfaceMuxer.deinit();
 		super.onPause();
@@ -168,7 +176,6 @@ public class MainActivity extends BaseActivity {
 
 	@Override
 	protected void onDestroy() {
-		Log.e("ONDESTROY", "destroy");
 		usbMonitor.stop();
 		super.onDestroy();
 	}

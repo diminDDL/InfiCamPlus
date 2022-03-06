@@ -8,7 +8,6 @@ import android.content.IntentFilter;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
-import android.util.Log;
 
 import java.util.HashMap;
 
@@ -86,7 +85,6 @@ public abstract class USBMonitor extends BroadcastReceiver {
 
 	public void connect(UsbDevice dev, ConnectCallback cb) {
 		if (!manager.hasPermission(dev)) {
-			Log.e("USBPERM", "asking");
 			Intent intent = new Intent(ACTION_USB_PERMISSION);
 			PendingIntent pending = PendingIntent.getBroadcast(ctx, 0, intent, 0);
 			callbacks.put(dev, cb);

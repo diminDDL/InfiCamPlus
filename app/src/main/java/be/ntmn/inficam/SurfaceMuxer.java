@@ -37,11 +37,11 @@ import java.util.ArrayList;
  * - Add the InputSurface and OutputSurface instances to the inputSurfaces and outputSurfaces of
  *     the SurfaceMuxer instance, and you're of to the races.
  * - Call init() on the SurfaceMuxer instance, most likely you'll want to do this in onResume()
- *     because at onPause() the EGL context can get destroyed, and in onPause() you should call
- *     deinit() to release any resources attached to the EGL context in question. Also the
- *     InputSurface instances have an init() and deinit() function that should be called at the
- *     same times, but if they are in the inputSurfaces array, this happens automatically. Also
- *     OutputSurface has init() and deinit() but these will normally survive the context being
+ *     because at onPause()  (or onStop()?) the EGL context can get destroyed, and in onPause()
+ *     you should call deinit() to release any resources attached to the EGL context in question.
+ *     Also the InputSurface instances have an init() and deinit() function that should be called
+ *     at the same times, but if they are in the inputSurfaces array, this happens automatically.
+ *     Also OutputSurface has init() and deinit() but these will normally survive the context being
  *     destroyed, yet init() should be called on them if they were created at a time no context
  *     existed (from a SurfaceHolder callback this can happen). Again SurfaceMuxer.init() will call
  *     this for you if the OutputSurface is in the outputSurfaces array.
