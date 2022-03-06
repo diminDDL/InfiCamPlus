@@ -15,7 +15,6 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
@@ -26,21 +25,20 @@ import java.nio.IntBuffer;
 import be.ntmn.libinficam.InfiCam;
 
 public class MainActivity extends BaseActivity {
-	SurfaceMuxer surfaceMuxer;
 	SurfaceView cameraView;
-	InfiCam infiCam = new InfiCam();
-	boolean isConnected = false; /* Whether a device is connected. */
+	MessageView messageView;
 	UsbDevice device;
-	TextView messageView;;
-	UsbDeviceConnection usbConnection = null;
+	UsbDeviceConnection usbConnection;
+	InfiCam infiCam = new InfiCam();
+	SurfaceMuxer surfaceMuxer;
 	SurfaceMuxer.OutputSurface outputSurface;
 	SurfaceMuxer.InputSurface inputSurface; /* InfiCam class writes to this. */
 	SurfaceMuxer.InputSurface overlaySurface; /* This is where we will draw annotations. */
 	SurfaceMuxer.InputSurface videoSurface; /* To draw video from the normal camera if enabled. */
 
-	USBConnector usbConnector = new USBConnector(this) {
+	USBMonitor usbMonitor = new USBMonitor() {
 		@Override
-		public boolean deviceFilter(UsbDevice dev) {
+		public boolean onDeviceFound(UsbDevice dev) {
 			if (device == null) {
 				device = dev;
 				return true;
@@ -49,52 +47,48 @@ public class MainActivity extends BaseActivity {
 		}
 
 		@Override
-		public void onConnect(UsbDevice dev, UsbDeviceConnection conn) {
+		public void onPermissionGranted(UsbDevice dev) {
 			// TODO this is bad, we don't want to ignore and leave behind open connections
 			try {
-				Log.e("CONN", "TryConnect " + this + " " + isConnected);
-				if (surfaceMuxer != null && !isConnected) {
+				Log.e("CONN", "TryConnect " + this + " " + usbConnection);
+				if (surfaceMuxer != null && usbConnection == null) {
+					UsbDeviceConnection conn = usbMonitor.connect(dev);
 					Log.e("CONN", "Connect");
 					infiCam.connect(conn.getFileDescriptor());
-					showMessage(R.string.msg_connected, false);
+					messageView.showMessage(R.string.msg_connected, false);
 					usbConnection = conn;
-					isConnected = true;
 					infiCam.setSurface(inputSurface.getSurface());
 					infiCam.startStream();
 					handler.postDelayed(() -> infiCam.calibrate(), 1000);
 					Log.e("OSURFACES", "n = " + surfaceMuxer.outputSurfaces.size());
 				} else {
-					Log.e("CONN", "NOConnect " + surfaceMuxer + " " + isConnected);
-					conn.close();
+					Log.e("CONN", "NOConnect " + surfaceMuxer + " " + usbConnection);
 				}
 			} catch (Exception e) {
-				conn.close();
 				Log.e("CONN", "ERRConnect");
 				e.printStackTrace();
-				showMessage(e.getMessage(), true);
+				messageView.showMessage(e.getMessage(), true);
 			}
 		}
 
 		@Override
 		public void onPermissionDenied(UsbDevice dev) {
-			showMessage(R.string.permdenied_usb, true);
+			messageView.showMessage(R.string.permdenied_usb, true);
 		}
 
 		@Override
 		public void onDisconnect(UsbDevice dev) {
 			infiCam.stopStream();
 			infiCam.disconnect();
-			isConnected = false;
-			device = null;
-			if (usbConnection != null) {
+			if (usbConnection != null)
 				usbConnection.close();
-				usbConnection = null;
-			}
+			usbConnection = null;
+			device = null;
 			/*if (inputSurface != null)
 				inputSurface.getSurfaceTexture().setOnFrameAvailableListener(null); // TODO this is crap
 			inputSurface = null;*/
 			Log.e("DISCONNECT", "DISCONNECT");
-			showMessage(R.string.msg_disconnected, true);
+			messageView.showMessage(R.string.msg_disconnected, true);
 		}
 	};
 
@@ -208,11 +202,12 @@ public class MainActivity extends BaseActivity {
 
 		askPermission(Manifest.permission.CAMERA, granted -> {
 			if (granted) {
-				Log.e("USBCONN", "start USBConnector");
+				Log.e("USBCONN", "start USBMonitor");
 				// TODO maybe we should do it in onStart(), but try connect to already existing devices in onRresume()
-				usbConnector.start(this); /* Connecting to a UVC device needs camera permission. */
+				usbMonitor.start(this); /* Connecting to a UVC device needs camera permission. */
+				usbMonitor.scan();
 			} else {
-				showMessage(R.string.permdenied_cam, true);
+				messageView.showMessage(R.string.permdenied_cam, true);
 			}
 		});
 
@@ -234,12 +229,13 @@ public class MainActivity extends BaseActivity {
 		Log.e("ONPAUSE", "pause");
 		infiCam.stopStream();
 		infiCam.disconnect();
-		isConnected = false;
 		device = null;
 		if (usbConnection != null) {
 			usbConnection.close();
 			usbConnection = null;
 		}
+		Log.e("DISCONNECT", "DISCONNECT because pause");
+		messageView.showMessage(R.string.msg_disconnected, true);
 		/*if (inputSurface != null)
 			inputSurface.getSurfaceTexture().setOnFrameAvailableListener(null); // TODO this is crap
 		inputSurface = null;
@@ -251,26 +247,7 @@ public class MainActivity extends BaseActivity {
 
 	@Override
 	protected void onStop() {
-		usbConnector.stop();
+		usbMonitor.stop();
 		super.onStop();
-	}
-
-	final Runnable _hideMessage = () -> messageView.setVisibility(View.INVISIBLE);
-
-	void _showMessage(boolean preserve) {
-		messageView.setVisibility(View.VISIBLE);
-		handler.removeCallbacks(_hideMessage);
-		if (!preserve)
-			handler.postDelayed(_hideMessage, 2000);
-	}
-
-	public void showMessage(int res, boolean preserve) {
-		messageView.setText(res);
-		_showMessage(preserve);
-	}
-
-	public void showMessage(String str, boolean preserve) {
-		messageView.setText(str);
-		_showMessage(preserve);
 	}
 }

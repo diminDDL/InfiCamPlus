@@ -1,6 +1,5 @@
 package be.ntmn.inficam;
 
-import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -13,18 +12,18 @@ import android.util.Log;
 
 import java.util.HashMap;
 
-public abstract class USBConnector extends BroadcastReceiver {
+public abstract class USBMonitor extends BroadcastReceiver {
 	static final String ACTION_USB_PERMISSION = "be.ntmn.inficam.USB_PERMISSION";
 
 	Context ctx;
-	UsbManager manager = null;
+	UsbManager manager;
 
-	public USBConnector(Context context) {
+	public USBMonitor() {
 		super();
-		ctx = context;
 	}
 
 	public void start(Context ctx) {
+		this.ctx = ctx;
 		if (manager == null) {
 			manager = (UsbManager) ctx.getSystemService(Context.USB_SERVICE);
 			IntentFilter filter = new IntentFilter();
@@ -33,59 +32,59 @@ public abstract class USBConnector extends BroadcastReceiver {
 			filter.addAction(ACTION_USB_PERMISSION);
 			ctx.registerReceiver(this, filter);
 		}
-		tryConnect(ctx);
 	}
 
-	public void stop() {
+	public void stop() { /* Call this in onPause() or onStop()! */
 		try {
-			ctx.unregisterReceiver(this);
+			manager = null;
+			ctx.unregisterReceiver(this); /* Prevent resurrection of dead Activities. */
 		} catch (Exception e) {
 			/* We don't care, probably wasn't registered yet. */
 		}
 	}
 
-	void tryConnect(Context ctx) { /* To connect with devices already connected on start, call this. */
+	public void scan() { /* To connect with devices already connected on start, call this. */
 		HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
 		for (UsbDevice dev : deviceList.values()) {
-			boolean res = deviceFilter(dev);
+			boolean res = onDeviceFound(dev);
 			Log.e("DEV", "name = " + dev.getProductName() + " take = " + res);
 			if (!res)
 				continue;
-			if (manager.hasPermission(dev)) {
-				UsbDeviceConnection conn = manager.openDevice(dev);
-				onConnect(dev, conn);
-			} else {
+			if (!manager.hasPermission(dev)) {
 				Intent intent = new Intent(ACTION_USB_PERMISSION);
 				PendingIntent pending = PendingIntent.getBroadcast(ctx, 0, intent,
 						PendingIntent.FLAG_MUTABLE);
 				manager.requestPermission(dev, pending);
-			}
+			} else onPermissionGranted(dev);
 		}
 	}
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		UsbDevice dev = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+		if (manager == null)
+			return;
 		switch (intent.getAction()) {
 			case UsbManager.ACTION_USB_DEVICE_ATTACHED:
-				tryConnect(context);
+				scan();
 				break;
 			case UsbManager.ACTION_USB_DEVICE_DETACHED:
 				onDisconnect(dev);
 				break;
 			case ACTION_USB_PERMISSION:
-				if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-					UsbDeviceConnection conn = manager.openDevice(dev);
-					onConnect(dev, conn);
-				} else {
-					onPermissionDenied(dev);
-				}
+				if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false))
+					onPermissionGranted(dev);
+				else onPermissionDenied(dev);
 				break;
 		}
 	}
 
-	public abstract boolean deviceFilter(UsbDevice dev);
-	public abstract void onConnect(UsbDevice dev, UsbDeviceConnection conn);
+	public UsbDeviceConnection connect(UsbDevice dev) {
+		return manager.openDevice(dev);
+	}
+
+	public abstract boolean onDeviceFound(UsbDevice dev);
+	public abstract void onPermissionGranted(UsbDevice dev);
 	public abstract void onPermissionDenied(UsbDevice dev);
 	public abstract void onDisconnect(UsbDevice dev);
 }
