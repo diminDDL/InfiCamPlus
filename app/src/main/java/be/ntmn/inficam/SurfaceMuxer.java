@@ -36,6 +36,11 @@ import java.util.ArrayList;
  *     setSize() on them to set the dimensions.
  * - Add the InputSurface and OutputSurface instances to the inputSurfaces and outputSurfaces of
  *     the SurfaceMuxer instance, and you're of to the races.
+ * - Call init() on the SurfaceMuxer instance, most likely you'll want to do this in onResume()
+ *     because at onPause() the EGL context can get destroyed, and in onPause() you should call
+ *     deinit() to release any resources attached to the EGL context in question. Also the
+ *     InputSurface instances have an init() and deinit() function that should be called at the
+ *     same times, but if they are in the inputSurfaces array, this happens automatically.
  *
  * The order of operations of the above list isn't of particular importance as long as it's
  *   actually possible, but only use this class from a single thread since the EGL context is
@@ -48,9 +53,6 @@ import java.util.ArrayList;
  *   when calling SurfaceMuxer.release(), which also should be called when the SurfaceMuxer
  *   instance is no longer in use.
  *
- * Between Activity.onPause() and and Activity.onResume() the EGL context gets destroyed on some
- *   devices that's probably where to create and destroy the SurfaceMuxer instance and anything
- *   associated.
  */
 public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	static final int EGL_RECORDABLE_ANDROID = 0x3142;
@@ -84,9 +86,29 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		SurfaceTexture surfaceTexture;
 		Surface surface;
 		int[] textures = new int[1];
+		boolean smooth, initialized = false;
 
-		InputSurface(SurfaceMuxer muxer, boolean smooth) {
+		public InputSurface(SurfaceMuxer muxer, boolean smooth) {
 			surfaceMuxer = muxer;
+			this.smooth = smooth;
+			init();
+		}
+
+		public void setSmooth(boolean smooth) {
+			this.smooth = smooth;
+			deinit();
+			init();
+		}
+
+		public int getTexture() { return textures[0]; }
+		public SurfaceTexture getSurfaceTexture() { return surfaceTexture; }
+		public Surface getSurface() { return surface; }
+
+		public void init() {
+			int filter = smooth ? GLES20.GL_LINEAR : GLES20.GL_NEAREST;
+			if (surfaceMuxer == null || surfaceMuxer.eglDisplay == EGL14.EGL_NO_DISPLAY)
+				return;
+			deinit();
 			EGL14.eglMakeCurrent(surfaceMuxer.eglDisplay, EGL14.EGL_NO_SURFACE,
 					EGL14.EGL_NO_SURFACE, surfaceMuxer.eglContext);
 			surfaceMuxer.checkEglError("eglMakeCurrent");
@@ -97,60 +119,51 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 					GLES20.GL_CLAMP_TO_EDGE);
 			GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T,
 					GLES20.GL_CLAMP_TO_EDGE);
-			setSmooth(smooth);
-			surfaceTexture = new SurfaceTexture(textures[0]);
-			surface = new Surface(surfaceTexture);
-		}
-
-		void setSmooth(boolean smooth) {
-			int filter = smooth ? GLES20.GL_LINEAR : GLES20.GL_NEAREST;
-			EGL14.eglMakeCurrent(surfaceMuxer.eglDisplay, EGL14.EGL_NO_SURFACE,
-					EGL14.EGL_NO_SURFACE, surfaceMuxer.eglContext);
-			surfaceMuxer.checkEglError("eglMakeCurrent");
-			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-			GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textures[0]);
 			GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER,
 					filter);
 			GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER,
 					filter);
+			if (surfaceTexture == null) {
+				surfaceTexture = new SurfaceTexture(textures[0]);
+				surface = new Surface(surfaceTexture);
+			} else surfaceTexture.attachToGLContext(textures[0]);
+			initialized = true;
 		}
 
-		public int getTexture() {
-			return textures[0];
-		}
-
-		public SurfaceTexture getSurfaceTexture() {
-			return surfaceTexture;
-		}
-
-		public Surface getSurface() {
-			return surface;
-		}
-
-		public void release() {
-			surfaceTexture.release();
-			surfaceTexture = null;
-			surface.release();
-			surface = null;
-			if (surfaceMuxer != null && surfaceMuxer.eglDisplay != EGL14.EGL_NO_DISPLAY) {
+		public void deinit() {
+			if (initialized && surfaceMuxer != null &&
+					surfaceMuxer.eglDisplay != EGL14.EGL_NO_DISPLAY) {
 				EGL14.eglMakeCurrent(surfaceMuxer.eglDisplay, EGL14.EGL_NO_SURFACE,
 						EGL14.EGL_NO_SURFACE, surfaceMuxer.eglContext);
 				surfaceMuxer.checkEglError("eglMakeCurrent");
+				surfaceTexture.detachFromGLContext();
 				GLES20.glDeleteTextures(1, textures, 0);
 			}
+			initialized = false;
+		}
+
+		public void release() {
+			if (surfaceMuxer != null && surfaceMuxer.eglDisplay != EGL14.EGL_NO_DISPLAY)
+				deinit();
 			surfaceMuxer = null;
+			if (surface != null)
+				surface.release();
+			surface = null;
+			if (surfaceTexture != null)
+				surfaceTexture.release();
+			surfaceTexture = null;
 		}
 	}
 
 	public static class OutputSurface {
 		SurfaceMuxer surfaceMuxer;
 		Surface surface;
-		EGLSurface eglSurface;
+		EGLSurface eglSurface; /* Note that the EGLSurface is not bound to a context. */
 		int width = 1, height = 1;
 
 		public OutputSurface(SurfaceMuxer muxer, Surface surf) {
 			surfaceMuxer = muxer;
-			int[] attr = {EGL14.EGL_NONE};
+			int[] attr = { EGL14.EGL_NONE };
 			surface = surf;
 			eglSurface = EGL14.eglCreateWindowSurface(surfaceMuxer.eglDisplay,
 					surfaceMuxer.eglConfig, surf, attr, 0);
@@ -181,8 +194,6 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		public void release() {
 			if (surfaceMuxer != null && surfaceMuxer.eglDisplay != EGL14.EGL_NO_DISPLAY &&
 					eglSurface != EGL14.EGL_NO_SURFACE) {
-				EGL14.eglMakeCurrent(surfaceMuxer.eglDisplay, EGL14.EGL_NO_SURFACE,
-						EGL14.EGL_NO_SURFACE, surfaceMuxer.eglContext);
 				EGL14.eglDestroySurface(surfaceMuxer.eglDisplay, eglSurface);
 				eglSurface = EGL14.EGL_NO_SURFACE;
 			}
@@ -191,12 +202,10 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		}
 	}
 
-	public SurfaceMuxer() {
-		init();
-	}
-
 	@Override
 	public void onFrameAvailable(SurfaceTexture surfaceTexture) {
+		if (eglContext == EGL14.EGL_NO_CONTEXT)
+			return;
 		for (InputSurface is : inputSurfaces)
 			is.getSurfaceTexture().updateTexImage();
 		for (OutputSurface ts : outputSurfaces) {
@@ -242,7 +251,9 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			throw new RuntimeException(msg + ": EGL error: 0x" + Integer.toHexString(error));
 	}
 
-	void init() { /* Initialize EGL context. */
+	public void init() { /* Initialize EGL context. */
+		if (eglContext != EGL14.EGL_NO_CONTEXT)
+			deinit();
 		eglDisplay = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
 		if (eglDisplay == EGL14.EGL_NO_DISPLAY)
 			throw new RuntimeException("unable to get EGL14 display");
@@ -283,8 +294,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 
 		/* Initialize the vertexes and textures. */
-		float[] vtmp = {1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f};
-		float[] ttmp = {1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f};
+		float[] vtmp = { 1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f };
+		float[] ttmp = { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f };
 		pVertex = ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
 		pVertex.put(vtmp);
 		pVertex.position(0);
@@ -315,6 +326,25 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		GLES20.glLinkProgram(hProgram);
 		GLES20.glDeleteShader(vshader); /* They will still live until the program dies. */
 		GLES20.glDeleteShader(fshader);
+
+		/* Initialize any InputSurfaces we have. */
+		for (InputSurface is : inputSurfaces)
+			is.init();
+	}
+
+	public void deinit() {
+		for (InputSurface is : inputSurfaces)
+			is.deinit();
+		if (eglDisplay != EGL14.EGL_NO_DISPLAY) {
+			EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE,
+					EGL14.EGL_NO_CONTEXT);
+			/* Destroying the context will also delete textures, program, etc. */
+			EGL14.eglDestroyContext(eglDisplay, eglContext);
+			EGL14.eglReleaseThread();
+			EGL14.eglTerminate(eglDisplay);
+		}
+		eglDisplay = EGL14.EGL_NO_DISPLAY;
+		eglContext = EGL14.EGL_NO_CONTEXT;
 	}
 
 	public void release() { // TODO don't forget to call
@@ -327,17 +357,6 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			is.release();
 			inputSurfaces.remove(is);
 		}
-
-		if (eglDisplay != EGL14.EGL_NO_DISPLAY) {
-			EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE,
-					EGL14.EGL_NO_CONTEXT);
-			/* Destroying the context will also delete textures, program, etc. */
-			EGL14.eglDestroyContext(eglDisplay, eglContext);
-			EGL14.eglReleaseThread();
-			EGL14.eglTerminate(eglDisplay);
-		}
-
-		eglDisplay = EGL14.EGL_NO_DISPLAY;
-		eglContext = EGL14.EGL_NO_CONTEXT;
+		deinit();
 	}
 }

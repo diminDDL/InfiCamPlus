@@ -178,13 +178,9 @@ public class MainActivity extends BaseActivity {
 				showMessage(R.string.permdenied_cam, true);
 			}
 		});
-	}
 
-	@Override
-	protected void onResume() {
-		super.onResume();
-		Log.e("ONRESUME", "START");
 		surfaceMuxer = new SurfaceMuxer();
+		surfaceMuxer.init();
 		inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
 		surfaceMuxer.inputSurfaces.clear();
 		surfaceMuxer.inputSurfaces.add(inputSurface);
@@ -199,14 +195,22 @@ public class MainActivity extends BaseActivity {
 		}
 
 		// TODO we recreate the outputsurface here because the callback only runs once but this is silly, we can find a better way
-		if (outputSurface != null) {
+		/*if (outputSurface != null) {
 			cameraView = findViewById(R.id.cameraView);
 			SurfaceHolder sh = cameraView.getHolder();
 			outputSurface = new SurfaceMuxer.OutputSurface(surfaceMuxer, sh.getSurface());
 			outputSurface.setSize(1280, 960);
 			surfaceMuxer.outputSurfaces.clear();
 			surfaceMuxer.outputSurfaces.add(outputSurface);
-		}
+		}*/
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		surfaceMuxer.init();
+		Log.e("ONRESUME", "START");
+
 
 		/*askPermission(Manifest.permission.CAMERA, granted -> {
 			if (granted) {
@@ -224,7 +228,7 @@ public class MainActivity extends BaseActivity {
 	@Override
 	protected void onPause() {
 		Log.e("ONPAUSE", "DISCONNECT");
-		infiCam.stopStream();
+		/*infiCam.stopStream();
 		infiCam.disconnect();
 		isConnected = false;
 		device = null;
@@ -236,7 +240,8 @@ public class MainActivity extends BaseActivity {
 			inputSurface.getSurfaceTexture().setOnFrameAvailableListener(null); // TODO this is crap
 		inputSurface = null;
 		surfaceMuxer.release();
-		surfaceMuxer = null;
+		surfaceMuxer = null;*/
+		surfaceMuxer.deinit();
 		super.onPause();
 	}
 
