@@ -19,7 +19,7 @@ public class Overlay {
 		width = w;
 		height = h;
 		is.getSurfaceTexture().setDefaultBufferSize(width, height);
-		paint.setTextSize(45);
+		paint.setTextSize(45); // TODO font size how big?
 	}
 
 	public void draw(InfiCam.FrameInfo fi, float[] temp) {
@@ -40,10 +40,11 @@ public class Overlay {
 
 	void drawTPoint(Canvas cvs, InfiCam.FrameInfo fi, int tx, int ty, float temp) {
 		paint.setStrokeWidth(5); // TODO what size should the markers have?
-		int x = tx * width / fi.width;
+		int x = tx * width / fi.width; // TODO maybe we can just set scale for the entire canvas
 		int y = ty * height / fi.height;
-		cvs.drawLine(x - 20, y, x + 20, y, paint);
+		cvs.drawLine(x - 20, y, x + 20, y, paint); // TODO size also depends on this
 		cvs.drawLine(x, y - 20, x, y + 20, paint);
+		// TODO make sure the text is in frame, also the +25 here shouldn't be hardcoded
 		cvs.drawText(formatTemp(temp), x + 25, y - (paint.descent() + paint.ascent()) / 2, paint);
 	}
 
