@@ -2,18 +2,10 @@ package be.ntmn.inficam;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Rect;
-import android.graphics.SurfaceTexture;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
-import android.hardware.usb.UsbManager;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -28,6 +20,7 @@ public class MainActivity extends BaseActivity {
 	UsbDeviceConnection usbConnection;
 	boolean usbPermissionAsked = false, usbPermissionAquired = false;
 	InfiCam infiCam = new InfiCam();
+	Overlay overlay;
 	SurfaceMuxer surfaceMuxer = new SurfaceMuxer();
 	SurfaceMuxer.OutputSurface outputSurface;
 	SurfaceMuxer.InputSurface inputSurface; /* InfiCam class writes to this. */
@@ -102,12 +95,21 @@ public class MainActivity extends BaseActivity {
 		setContentView(R.layout.activity_main);
 		cameraView = findViewById(R.id.cameraView);
 		messageView = findViewById(R.id.message);
+
+		/* Create and set up the InputSurface for thermal image. */
 		inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
 		surfaceMuxer.inputSurfaces.add(inputSurface);
-		inputSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer);
+		//inputSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer);
 		infiCam.setSurface(inputSurface.getSurface());
 		cameraView.getHolder().addCallback(surfaceHolderCallback);
 		infiCam.setPalette(Palette.Ironbow.getData()); // TODO UI to choose
+
+		/* Create and set up the InputSurface for annotations overlay. */
+		overlaySurface = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
+		surfaceMuxer.inputSurfaces.add(overlaySurface);
+		overlaySurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer);
+		overlay = new Overlay(overlaySurface, 1280, 960); // TODO decide the size
+		infiCam.setFrameCallback((fi, temp) -> overlay.draw(fi, temp));
 
 		/* Connecting to a UVC device needs camera permission. */
 		askPermission(Manifest.permission.CAMERA, granted -> {
@@ -143,28 +145,6 @@ public class MainActivity extends BaseActivity {
 				usbMonitor.scan();
 			else messageView.showMessage(R.string.msg_permdenied_usb, true);
 		} else messageView.showMessage(R.string.msg_permdenied_cam, true);
-
-		Bitmap bmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
-		Canvas c = new Canvas(bmp);
-		Paint p = new Paint();
-		p.setColor(Color.TRANSPARENT);
-		c.drawRect(new Rect(0, 0, 640, 480), p);
-		Paint p2 = new Paint();
-		p2.setColor(Color.RED);
-		c.drawLine(0, 0, 640, 480, p2);
-
-		SurfaceMuxer.InputSurface is = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
-		SurfaceTexture st = is.getSurfaceTexture();
-		st.setDefaultBufferSize(640, 480);
-		//st.setOnFrameAvailableListener(et2);
-		Surface s = is.getSurface();
-		Canvas cvs = s.lockCanvas(null);
-		//cvs.drawBitmap(bmp, 0, 0, null);
-		cvs.drawLine(0, 0, 640, 480, p2);
-		s.unlockCanvasAndPost(cvs);
-		surfaceMuxer.inputSurfaces.clear();
-		surfaceMuxer.inputSurfaces.add(inputSurface);
-		surfaceMuxer.inputSurfaces.add(is);
 
 		/*surfaceMuxer.outputSurfaces.clear();
 		surfaceMuxer.outputSurfaces.add(new SurfaceMuxer.OutputSurface(surfaceMuxer, cameraView.getHolder().getSurface()));*/

@@ -139,15 +139,16 @@ Some maybe useful trivia:
 		}
 
 	drawing stuff to a bitmap for overlay
+		// First is just drawing to a bitmap, we may not need this
 		Bitmap bmp = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);
 		Canvas c = new Canvas(bmp);
 		Paint p = new Paint();
 		p.setColor(Color.TRANSPARENT);
 		c.drawRect(new Rect(0, 0, 640, 480), p);
-		Paint p2 = new Paint();
-		p2.setColor(Color.RED);
 		c.drawLine(0, 0, 640, 480, p2);
 
+		Paint p2 = new Paint();
+		p2.setColor(Color.RED);
 		SurfaceMuxer.InputSurface is = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
 		SurfaceTexture st = is.getSurfaceTexture();
 		st.setDefaultBufferSize(640, 480);

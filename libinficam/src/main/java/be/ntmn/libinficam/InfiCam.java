@@ -44,6 +44,7 @@ public class InfiCam {
 	public static class FrameInfo {
 		public float min, max, avg, center;
 		public int min_x, min_y, max_x, max_y;
+		public int width, height;
 
 		public float correction, temp_reflected, temp_air, humidity, emissivity, distance;
 	}

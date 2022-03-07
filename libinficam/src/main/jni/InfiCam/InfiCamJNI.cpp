@@ -106,6 +106,9 @@ void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, voi
 	setFloatVar(cenv, fi, "center", icj->infi.temp(icj->infi.temp_center));
 	setFloatVar(cenv, fi, "avg", icj->infi.temp(icj->infi.temp_avg));
 
+	setIntVar(cenv, fi, "width", icj->infi.width);
+	setIntVar(cenv, fi, "height", icj->infi.height);
+
 	setFloatVar(cenv, fi, "correction", icj->infi.correction);
 	setFloatVar(cenv, fi, "temp_reflected", icj->infi.temp_reflected);
 	setFloatVar(cenv, fi, "temp_air", icj->infi.temp_air);
