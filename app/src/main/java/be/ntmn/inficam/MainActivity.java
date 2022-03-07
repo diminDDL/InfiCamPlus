@@ -145,9 +145,6 @@ public class MainActivity extends BaseActivity {
 				usbMonitor.scan();
 			else messageView.showMessage(R.string.msg_permdenied_usb, true);
 		} else messageView.showMessage(R.string.msg_permdenied_cam, true);
-
-		/*surfaceMuxer.outputSurfaces.clear();
-		surfaceMuxer.outputSurfaces.add(new SurfaceMuxer.OutputSurface(surfaceMuxer, cameraView.getHolder().getSurface()));*/
 	}
 
 	@Override
