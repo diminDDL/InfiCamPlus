@@ -1,5 +1,6 @@
 package be.ntmn.inficam;
 
+import android.annotation.SuppressLint;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -46,6 +47,7 @@ public class Overlay {
 		cvs.drawText(formatTemp(temp), x + 25, y - (paint.descent() + paint.ascent()) / 2, paint);
 	}
 
+	@SuppressLint("DefaultLocale")
 	String formatTemp(float temp) {
 		return String.format("%.2f°C", temp);
 	}
