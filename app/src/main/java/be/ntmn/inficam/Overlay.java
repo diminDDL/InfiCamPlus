@@ -18,6 +18,8 @@ public class Overlay {
 	Paint paintTextOutline;
 	int width, height;
 
+	float smarker = 20; /* Marker size. */
+	float toff = 25; /* How far to put the text away from marker. */
 	float tclearance = 5; /* How far the text should stay away from screen edges. */
 
 	public Overlay(SurfaceMuxer.InputSurface is, int w, int h) {
@@ -57,14 +59,13 @@ public class Overlay {
 	void drawTPoint(Canvas cvs, InfiCam.FrameInfo fi, int tx, int ty, float temp) {
 		int x = tx * width / fi.width; // TODO maybe we can just set scale for the entire canvas
 		int y = ty * height / fi.height;
-		cvs.drawLine(x - 20, y, x + 20, y, paintOutline); // TODO size also depends on this
-		cvs.drawLine(x, y - 20, x, y + 20, paintOutline);
-		cvs.drawLine(x - 20, y, x + 20, y, paint); // TODO size also depends on this
-		cvs.drawLine(x, y - 20, x, y + 20, paint);
-		// TODO make sure the text is in frame, also the +25 here shouldn't be hardcoded
+		cvs.drawLine(x - smarker, y, x + smarker, y, paintOutline);
+		cvs.drawLine(x, y - smarker, x, y + smarker, paintOutline);
+		cvs.drawLine(x - smarker, y, x + smarker, y, paint);
+		cvs.drawLine(x, y - smarker, x, y + smarker, paint);
 
 		String text = String.format("%.2f°C", temp);
-		float offX = 25;
+		float offX = toff;
 		float offY = -(paint.descent() + paint.ascent()) / 2.0f;
 		if (paintTextOutline.measureText(text) + offX + tclearance < width - x) {
 			paint.setTextAlign(Paint.Align.LEFT);

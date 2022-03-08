@@ -118,7 +118,6 @@ void InfiFrame::update(uint16_t *frame) {
 	cal_c = cal_01 * powf(ts, 2) + ts * cal_02;
 	cal_d = cal_03 * powf(tfpa, 2) + cal_04 * tfpa + cal_05;
 
-
 	int cal_00_corr = 0;
 	if (range == 120)
 		cal_00_corr = roundf(cal_00_offset - tfpa * cal_00_fpamul);
