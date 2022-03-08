@@ -5,12 +5,11 @@ import static android.content.Context.MODE_PRIVATE;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.AttributeSet;
+import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
 
 import androidx.annotation.Nullable;
-
-import java.util.Set;
 
 public class Settings extends LinearLayout {
 	private static final String SP_NAME = "PREFS";
@@ -44,12 +43,16 @@ public class Settings extends LinearLayout {
 		@Override
 		void init(Settings set) {
 			box = new CheckBox(set.getContext());
-
+			box.setText(res);
+			box.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+					ViewGroup.LayoutParams.WRAP_CONTENT));
 			box.setOnCheckedChangeListener((compoundButton, b) -> {
 				ed.putBoolean(name, b);
 				ed.commit();
 				onSet(b);
 			});
+			box.setVisibility(VISIBLE);
+			set.addView(box);
 		}
 
 		@Override
