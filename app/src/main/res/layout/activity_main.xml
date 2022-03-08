@@ -7,14 +7,33 @@
 	android:layout_width="match_parent"
 	android:layout_height="match_parent">
 
-	<Button
-		android:id="@+id/buttonPhoto"
+	<LinearLayout
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:text="Photo"
+		android:orientation="vertical"
 		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toTopOf="parent" />
+		app:layout_constraintTop_toTopOf="parent" >
+
+		<Button
+			android:id="@+id/buttonShutter"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="Shutter" />
+
+		<Button
+			android:id="@+id/buttonPhoto"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="Photo" />
+
+		<Button
+			android:id="@+id/buttonPalette"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="palette" />
+
+	</LinearLayout>
 
 	<FrameLayout
 		android:layout_width="0dp"

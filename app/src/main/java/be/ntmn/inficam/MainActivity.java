@@ -32,6 +32,7 @@ public class MainActivity extends BaseActivity {
 	int picWidth = 640, picHeight = 480;
 	boolean takePic = false;
 	volatile boolean disconnecting = false;
+	int currentPalette = 3;
 
 	USBMonitor usbMonitor = new USBMonitor() {
 		@Override
@@ -166,10 +167,20 @@ public class MainActivity extends BaseActivity {
 			infiCam.calibrate();
 		});
 
+		Button buttonShutter = findViewById(R.id.buttonShutter);
+		buttonShutter.setOnClickListener(view -> infiCam.calibrate());
+
 		Button buttonPhoto = findViewById(R.id.buttonPhoto);
 		buttonPhoto.setOnClickListener(view -> {
 			if (usbConnection != null)
 				takePic = true;
+		});
+
+		Button buttonPalette = findViewById(R.id.buttonPalette);
+		buttonPalette.setOnClickListener(view -> {
+			if (++currentPalette == Palette.palettes.length)
+				currentPalette = 0;
+			infiCam.setPalette(Palette.palettes[currentPalette].getData());
 		});
 	}
 
