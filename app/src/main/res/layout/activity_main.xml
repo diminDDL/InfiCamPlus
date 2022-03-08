@@ -6,6 +6,16 @@
 	tools:context=".MainActivity"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent">
+
+	<Button
+		android:id="@+id/buttonPhoto"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="Photo"
+		app:layout_constraintBottom_toBottomOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toTopOf="parent" />
+
 	<FrameLayout
 		android:layout_width="0dp"
 		android:layout_height="0dp"
@@ -30,4 +40,5 @@
 			android:textAppearance="@style/TextAppearance.AppCompat.Large"
 			android:textColor="@color/white" />
 	</FrameLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
