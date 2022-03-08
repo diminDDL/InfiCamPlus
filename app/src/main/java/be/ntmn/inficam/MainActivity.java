@@ -7,7 +7,7 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.os.Bundle;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.widget.Button;
+import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
 
@@ -167,16 +167,16 @@ public class MainActivity extends BaseActivity {
 			infiCam.calibrate();
 		});
 
-		Button buttonShutter = findViewById(R.id.buttonShutter);
+		ImageButton buttonShutter = findViewById(R.id.buttonShutter);
 		buttonShutter.setOnClickListener(view -> infiCam.calibrate());
 
-		Button buttonPhoto = findViewById(R.id.buttonPhoto);
+		ImageButton buttonPhoto = findViewById(R.id.buttonPhoto);
 		buttonPhoto.setOnClickListener(view -> {
 			if (usbConnection != null)
 				takePic = true;
 		});
 
-		Button buttonPalette = findViewById(R.id.buttonPalette);
+		ImageButton buttonPalette = findViewById(R.id.buttonPalette);
 		buttonPalette.setOnClickListener(view -> {
 			if (++currentPalette == Palette.palettes.length)
 				currentPalette = 0;

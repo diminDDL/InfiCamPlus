@@ -20,6 +20,9 @@ TODO
 	- 400 celcius range works quite badly because the float math falls apart below a certain temperature
 	- don't forget to reference/put license for libuvc_build makefile, libuvc, libusb if adding license in root
 	- figure out where i want to go with the UI part
+	- remember to make a setting for the keeping screen on part
+	- setting for immersive mode
+	- setting for regular shutter interval
 
 Things i learned about the protocol these thermal cameras talk:
 	last 4 lines of the frame have parameters (note that the pointer math is in steps of 16 bytes because unsigned short)
