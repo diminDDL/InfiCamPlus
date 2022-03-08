@@ -146,6 +146,7 @@ public class MainActivity extends BaseActivity {
 				return;
 			}
 			infiCam.calibrate();
+			takePic();
 		});
 	}
 

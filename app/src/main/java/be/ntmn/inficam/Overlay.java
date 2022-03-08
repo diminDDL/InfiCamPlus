@@ -21,11 +21,21 @@ public class Overlay {
 	Paint paintTextOutline;
 	int width, height;
 
-	float smarker = 20; /* Marker size. */
-	float toff = 25; /* How far to put the text away from marker. */
-	float tclearance = 5; /* How far the text should stay away from screen edges. */
+	/* These sizes are in fractions of the total width of the bitmap drawn. */
+	float smarker = 0.015f; /* Marker size. */
+	float wmarker = 0.004f; /* How fat the markers are. */
+	float toff = 0.03f; /* How far to put the text away from marker. */
+	float tclearance = 0.005f; /* How far the text should stay away from screen edges. */
+	float textsize = 0.04f;
+	float woutline = 0.008f; /* Text outline thickness. */
 
 	public Overlay(SurfaceMuxer.InputSurface is, int w, int h) {
+		smarker *= w;
+		toff *= w;
+		tclearance *= w;
+		textsize *= w;
+		wmarker *= w;
+		woutline *= w;
 		surface = is.getSurface();
 		surfaceTexture = is.getSurfaceTexture();
 		width = w;
@@ -33,13 +43,14 @@ public class Overlay {
 		is.getSurfaceTexture().setDefaultBufferSize(width, height);
 		paint = new Paint();
 		paint.setAntiAlias(true);
-		paint.setStrokeWidth(3); // TODO what size should the markers have?
-		paint.setTextSize(45); // TODO font size how big?
+		paint.setStrokeWidth(wmarker); // TODO what size should the markers have?
+		paint.setTextSize(textsize);
 		paint.setStrokeCap(Paint.Cap.ROUND);
+		paint.setStrokeJoin(Paint.Join.ROUND);
 		paintOutline = new Paint(paint);
-		paintOutline.setStrokeWidth(6);
+		paintOutline.setStrokeWidth(wmarker * 3);
 		paintTextOutline = new Paint(paint);
-		paintTextOutline.setStrokeWidth(4);
+		paintTextOutline.setStrokeWidth(woutline);
 		paintTextOutline.setColor(Color.BLACK);
 		paintTextOutline.setStyle(Paint.Style.STROKE);
 	}
@@ -61,8 +72,8 @@ public class Overlay {
 	}
 
 	void drawTPoint(Canvas cvs, InfiCam.FrameInfo fi, int tx, int ty, float temp) {
-		int x = tx * width / fi.width; // TODO maybe we can just set scale for the entire canvas
-		int y = ty * height / fi.height;
+		float x = (tx + 0.5f) * width / fi.width; // TODO maybe we can just set scale for the entire canvas
+		float y = (ty + 0.5f) * height / fi.height;
 		cvs.drawLine(x - smarker, y, x + smarker, y, paintOutline);
 		cvs.drawLine(x, y - smarker, x, y + smarker, paintOutline);
 		cvs.drawLine(x - smarker, y, x + smarker, y, paint);
