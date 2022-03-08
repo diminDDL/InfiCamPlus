@@ -14,7 +14,7 @@ import androidx.annotation.NonNull;
 
 import be.ntmn.libinficam.InfiCam;
 
-public class MainActivity extends BaseActivity implements SurfaceTexture.OnFrameAvailableListener {
+public class MainActivity extends BaseActivity {
 	SurfaceView cameraView;
 	MessageView messageView;
 	UsbDevice device;
@@ -29,8 +29,9 @@ public class MainActivity extends BaseActivity implements SurfaceTexture.OnFrame
 	SurfaceMuxer.InputSurface videoSurface; /* To draw video from the normal camera if enabled. */
 	InfiCam.FrameInfo lastFi;
 	float[] lastTemp;
-	Object frameLock = new Object();
+	final Object frameLock = new Object();
 	int picWidth = 640, picHeight = 480;
+	boolean takePic = false;
 
 	USBMonitor usbMonitor = new USBMonitor() {
 		@Override
@@ -109,22 +110,35 @@ public class MainActivity extends BaseActivity implements SurfaceTexture.OnFrame
 		cameraView.getHolder().addCallback(surfaceHolderCallback);
 		infiCam.setPalette(Palette.Ironbow.getData()); // TODO UI to choose
 
-		/* Create and set up the InputSurface for annotations overlay.
-		 * We also set the frame callback for this one, the way this works is that first the
-		 *   thermal image on inputSurface gets written, then the frame callback runs, the frame
-		 *   callback draws the overlay, and when we flip the buffer of the overlay the output
-		 *   surface(s) get written by the muxer. Only once the frame callback returns can another
-		 *   frame be processed upstream.
-		 */
+		/* Create and set up the InputSurface for annotations overlay. */
 		overlaySurface = new SurfaceMuxer.InputSurface(surfaceMuxer, false);
 		surfaceMuxer.inputSurfaces.add(overlaySurface);
-		overlaySurface.getSurfaceTexture().setOnFrameAvailableListener(this);
 		overlay = new Overlay(overlaySurface, 1280, 960); // TODO decide the size
+
+		/* Now we set the frame callback, the way this works is that first the thermal image on
+		 *   inputSurface gets written, then the frame callback runs, we copy over the info to
+		 *   lastFi and lastTemp, ask onFrame() to be called on the main thread and then we hold
+		 *   off on returning from the callback until that frame and the matching lastFi and
+		 *   lastTemp have been dealt with, after which the frameLock should be notified.
+		 * The point of it is to make sure we have a matching lastFi and lastTemp with the last
+		 *   frame that don't get overwritten by the next run of this callback. The contents of the
+		 *   inputSurface texture etc are less of a concern since they don't get updated until
+		 *   updateTexImage() is called. We can't just do everything on the callback thread because
+		 *   we need our EGL context and EGL contexts are stuck to a particular thread.
+		 */
 		infiCam.setFrameCallback((fi, temp) -> { /* Note this is called from another thread. */
-			synchronized (this) { /* This is called from another thread. */
-				lastFi = fi; /* Save for taking picture and the likes. */
-				lastTemp = temp;
-				overlay.draw(fi, temp);
+			lastFi = fi; /* Save for taking picture and the likes. */
+			lastTemp = temp;
+			handler.post(this::onFrame);
+			/* Now we wait until the main thread has finished drawing the frame, so lastFi and
+			 *   lastTemp don't get overwritten before they've been used.
+			 */
+			synchronized (frameLock) {
+				try {
+					frameLock.wait();
+				} catch (Exception e) {
+					e.printStackTrace(); /* Not the end of the world, we do try to continue. */
+				}
 			}
 		});
 
@@ -148,7 +162,7 @@ public class MainActivity extends BaseActivity implements SurfaceTexture.OnFrame
 				return;
 			}
 			infiCam.calibrate();
-			takePic();
+			takePic = true;
 		});
 	}
 
@@ -178,16 +192,20 @@ public class MainActivity extends BaseActivity implements SurfaceTexture.OnFrame
 		super.onDestroy();
 	}
 
-	void takePic() {
-		synchronized (this) { /* Stop the frame callback from interfering. */
+	public void onFrame() {
+		/* We use the inputSurface for the listener because it has the most relevant timestamp. */
+		surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
+		/* At this point we are certain the frame and the lastFi and lastTemp are matched up with
+		 *   eachother, so now we can do stuff like taking a screenshot, "the frame" here meaning
+		 *   what's in the SurfaceTexture buffers after the updateTexImage() calls surfaceMuxer
+		 *   should have done.
+		 */
+		overlay.draw(lastFi, lastTemp);
+		if (takePic) {
 			/* For taking picture, we substitute in another overlay surface so that we can draw
 			 *   it at the exact resolution the image is saved, to make it look nice. The video
 			 *   surface(s) come in at whatever resolution they are and are scaled by the muxer
 			 *   regardless, so we don't need to worry about those.
-			 *
-			 * TODO make sure the FrameInfo actually matches the exact frame, we only sync to the
-			 *  frame callback but the surfaces could get updated if onFrameAvailable() is called
-			 *  before our routine here. Or if it hasn't yet been called?
 			 */
 			SurfaceMuxer.InputSurface tmpOverlaySurf =
 					new SurfaceMuxer.InputSurface(surfaceMuxer, false);
@@ -201,18 +219,13 @@ public class MainActivity extends BaseActivity implements SurfaceTexture.OnFrame
 			surfaceMuxer.inputSurfaces.remove(tmpOverlaySurf);
 			surfaceMuxer.inputSurfaces.add(overlaySurface);
 			tmpOverlaySurf.release();
+			takePic = false;
 		}
-	}
 
-	@Override
-	public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-		surfaceMuxer.onFrameAvailable(surfaceTexture);
-		/* At this point we are certain the frame and the lastFi and lastTemp are matched up with
-		 *   eachother, so now we can do stuff like taking a screenshot, "the frame" here meaning
-		 *   what's in the SurfaceTexture buffers after the updateTexImage() calls surfaceMuxer
-		 *   should have done.
-		 */
-
+		/* Now we allow another frame to come in */
+		synchronized (frameLock) {
+			frameLock.notify();
+		}
 	}
 
 	void disconnect() {
