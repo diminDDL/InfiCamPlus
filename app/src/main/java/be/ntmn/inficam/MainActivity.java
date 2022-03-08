@@ -179,19 +179,6 @@ public class MainActivity extends BaseActivity {
 		} else messageView.showMessage(R.string.msg_permdenied_cam, true);
 	}
 
-	@Override
-	protected void onPause() {
-		disconnect();
-		surfaceMuxer.deinit();
-		super.onPause();
-	}
-
-	@Override
-	protected void onDestroy() {
-		usbMonitor.stop();
-		super.onDestroy();
-	}
-
 	public void onFrame() {
 		/* We use the inputSurface for the listener because it has the most relevant timestamp. */
 		surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
@@ -236,5 +223,18 @@ public class MainActivity extends BaseActivity {
 		usbConnection = null;
 		device = null;
 		messageView.showMessage(R.string.msg_disconnected, true);
+	}
+
+	@Override
+	protected void onPause() {
+		disconnect();
+		surfaceMuxer.deinit();
+		super.onPause();
+	}
+
+	@Override
+	protected void onDestroy() {
+		usbMonitor.stop();
+		super.onDestroy();
 	}
 }
