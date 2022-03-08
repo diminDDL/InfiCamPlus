@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
+import android.graphics.Rect;
 import android.view.Surface;
 
 import be.ntmn.libinficam.InfiCam;
@@ -38,13 +39,13 @@ public class Overlay {
 		Canvas cvs = surface.lockCanvas(null);
 		cvs.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
-		paint.setColor(Color.YELLOW);
+		paint.setColor(Color.rgb(255, 255, 0)); // Yellow.
 		drawTPoint(cvs, fi, fi.width / 2, fi.height / 2, fi.center);
 
-		paint.setColor(Color.RED);
+		paint.setColor(Color.rgb(255, 64, 64)); // Red.
 		drawTPoint(cvs, fi, fi.max_x, fi.max_y, fi.max);
 
-		paint.setColor(Color.BLUE);
+		paint.setColor(Color.rgb(0, 127, 255)); // Blue.
 		drawTPoint(cvs, fi, fi.min_x, fi.min_y, fi.min);
 
 		surface.unlockCanvasAndPost(cvs);
@@ -58,14 +59,21 @@ public class Overlay {
 		cvs.drawLine(x - 20, y, x + 20, y, paint); // TODO size also depends on this
 		cvs.drawLine(x, y - 20, x, y + 20, paint);
 		// TODO make sure the text is in frame, also the +25 here shouldn't be hardcoded
-		cvs.drawText(formatTemp(temp), x + 25, y - (paint.descent() + paint.ascent()) / 2.0f,
-				paintTextOutline);
-		cvs.drawText(formatTemp(temp), x + 25, y - (paint.descent() + paint.ascent()) / 2.0f,
-				paint);
-	}
 
-	@SuppressLint("DefaultLocale")
-	String formatTemp(float temp) {
-		return String.format("%.2f°C", temp);
+		String text = String.format("%.2f°C", temp);
+		Rect tbounds = new Rect();
+		paintTextOutline.getTextBounds(text, 0, text.length(), tbounds);
+		float offX = 30;
+		float offY = tbounds.height() / 2.0f - tbounds.bottom;
+		if (tbounds.width() + offX * 2 < width - x) { /* Could also use Paint.measureText(). */
+			paint.setTextAlign(Paint.Align.LEFT);
+			paintTextOutline.setTextAlign(Paint.Align.LEFT);
+		} else {
+			offX = -offX;
+			paint.setTextAlign(Paint.Align.RIGHT);
+			paintTextOutline.setTextAlign(Paint.Align.RIGHT);
+		}
+		cvs.drawText(text, x + offX, y + offY, paintTextOutline);
+		cvs.drawText(text, x + offX, y + offY, paint);
 	}
 }
