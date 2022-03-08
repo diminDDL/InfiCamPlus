@@ -5,8 +5,10 @@ import android.graphics.Bitmap;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.Bundle;
+import android.view.ViewGroup;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
@@ -33,6 +35,9 @@ public class MainActivity extends BaseActivity {
 	boolean takePic = false;
 	volatile boolean disconnecting = false;
 	int currentPalette = 3;
+
+	ViewGroup dialogBackground;
+	View dialogSettings;
 
 	USBMonitor usbMonitor = new USBMonitor() {
 		@Override
@@ -183,6 +188,15 @@ public class MainActivity extends BaseActivity {
 			infiCam.setPalette(Palette.palettes[currentPalette].getData());
 			messageView.showMessage(Palette.palettes[currentPalette].name, false);
 		});
+
+		dialogBackground = findViewById(R.id.dialogBackground);
+		dialogBackground.setOnClickListener(view -> dialogBackground.setVisibility(View.GONE));
+		dialogSettings = findViewById(R.id.dialogSettings);
+
+		ImageButton buttonSettings = findViewById(R.id.buttonSettings);
+		buttonSettings.setOnClickListener(view -> {
+			openDialog(dialogSettings);
+		});
 	}
 
 	@Override
@@ -226,6 +240,13 @@ public class MainActivity extends BaseActivity {
 		synchronized (frameLock) {
 			frameLock.notify();
 		}
+	}
+
+	void openDialog(View dialog) {
+		for (int i = 0; i < dialogBackground.getChildCount(); ++i)
+			dialogBackground.getChildAt(i).setVisibility(View.GONE);
+		dialog.setVisibility(View.VISIBLE);
+		dialogBackground.setVisibility(View.VISIBLE);
 	}
 
 	void disconnect() {
