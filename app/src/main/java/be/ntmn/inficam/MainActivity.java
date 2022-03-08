@@ -1,15 +1,30 @@
 package be.ntmn.inficam;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
+import android.icu.util.Output;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import androidx.annotation.NonNull;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import be.ntmn.libinficam.InfiCam;
 
@@ -130,7 +145,10 @@ public class MainActivity extends BaseActivity {
 				});
 				return;
 			}
-			infiCam.calibrate();
+			//infiCam.calibrate();
+
+			Bitmap bitmap = surfaceMuxer.getBitmap(1280, 960);
+			Util.writePNG(this, bitmap);
 		});
 	}
 

@@ -11,7 +11,9 @@ import be.ntmn.libinficam.InfiCam;
 
 public class Overlay {
 	Surface surface;
-	Paint paint = new Paint();
+	Paint paint;
+	Paint paintOutline;
+	Paint paintTextOutline;
 	int width, height;
 
 	public Overlay(SurfaceMuxer.InputSurface is, int w, int h) {
@@ -19,7 +21,17 @@ public class Overlay {
 		width = w;
 		height = h;
 		is.getSurfaceTexture().setDefaultBufferSize(width, height);
+		paint = new Paint();
+		paint.setAntiAlias(true);
+		paint.setStrokeWidth(3); // TODO what size should the markers have?
 		paint.setTextSize(45); // TODO font size how big?
+		paint.setStrokeCap(Paint.Cap.ROUND);
+		paintOutline = new Paint(paint);
+		paintOutline.setStrokeWidth(6);
+		paintTextOutline = new Paint(paint);
+		paintTextOutline.setStrokeWidth(4);
+		paintTextOutline.setColor(Color.BLACK);
+		paintTextOutline.setStyle(Paint.Style.STROKE);
 	}
 
 	public void draw(InfiCam.FrameInfo fi, float[] temp) {
@@ -39,13 +51,17 @@ public class Overlay {
 	}
 
 	void drawTPoint(Canvas cvs, InfiCam.FrameInfo fi, int tx, int ty, float temp) {
-		paint.setStrokeWidth(5); // TODO what size should the markers have?
 		int x = tx * width / fi.width; // TODO maybe we can just set scale for the entire canvas
 		int y = ty * height / fi.height;
+		cvs.drawLine(x - 20, y, x + 20, y, paintOutline); // TODO size also depends on this
+		cvs.drawLine(x, y - 20, x, y + 20, paintOutline);
 		cvs.drawLine(x - 20, y, x + 20, y, paint); // TODO size also depends on this
 		cvs.drawLine(x, y - 20, x, y + 20, paint);
 		// TODO make sure the text is in frame, also the +25 here shouldn't be hardcoded
-		cvs.drawText(formatTemp(temp), x + 25, y - (paint.descent() + paint.ascent()) / 2, paint);
+		cvs.drawText(formatTemp(temp), x + 25, y - (paint.descent() + paint.ascent()) / 2.0f,
+				paintTextOutline);
+		cvs.drawText(formatTemp(temp), x + 25, y - (paint.descent() + paint.ascent()) / 2.0f,
+				paint);
 	}
 
 	@SuppressLint("DefaultLocale")

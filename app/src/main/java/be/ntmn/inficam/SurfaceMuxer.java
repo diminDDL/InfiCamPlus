@@ -1,5 +1,8 @@
 package be.ntmn.inficam;
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
 import android.opengl.EGLConfig;
@@ -227,6 +230,38 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		init();
 	}
 
+	void render(int w, int h) {
+		GLES20.glViewport(0, 0, w, h);
+
+		GLES20.glClearColor(0, 0, 0, 1);
+		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+		GLES20.glUseProgram(hProgram);
+
+		int ph = GLES20.glGetAttribLocation(hProgram, "vPosition");
+		int tch = GLES20.glGetAttribLocation(hProgram, "vTexCoord");
+		int th = GLES20.glGetUniformLocation(hProgram, "sTexture");
+
+		GLES20.glVertexAttribPointer(ph, 2, GLES20.GL_FLOAT, false, 4 * 2, pVertex);
+		GLES20.glVertexAttribPointer(tch, 2, GLES20.GL_FLOAT, false, 4 * 2, pTexCoord);
+		GLES20.glEnableVertexAttribArray(ph);
+		GLES20.glEnableVertexAttribArray(tch);
+		GLES20.glUniform1i(th, 0); /* Tells the shader what texture to use. */
+
+		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+		//GLES20.glBlendColor(1, 1, 1, 0.1f);
+		for (InputSurface is : inputSurfaces) {
+			GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+			/*if (inputSurfaces.indexOf(is) == 1)
+				GLES20.glBlendFunc(GLES20.GL_CONSTANT_ALPHA, GLES20.GL_ONE_MINUS_CONSTANT_ALPHA);*/
+			/*if (inputSurfaces.indexOf(is) == 1) // TODO this is lame
+					GLES20.glViewport(0, 0, 640, 480);*/
+
+			GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, is.getTexture());
+			GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+		}
+		GLES20.glFlush();
+	}
+
 	@Override
 	public void onFrameAvailable(SurfaceTexture surfaceTexture) {
 		if (eglContext == EGL14.EGL_NO_CONTEXT)
@@ -235,39 +270,30 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			is.getSurfaceTexture().updateTexImage();
 		for (OutputSurface os : outputSurfaces) {
 			os.makeCurrent();
-			GLES20.glViewport(0, 0, os.width, os.height);
-
-			GLES20.glClearColor(0, 0, 0, 1);
-			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-			GLES20.glUseProgram(hProgram);
-
-			int ph = GLES20.glGetAttribLocation(hProgram, "vPosition");
-			int tch = GLES20.glGetAttribLocation(hProgram, "vTexCoord");
-			int th = GLES20.glGetUniformLocation(hProgram, "sTexture");
-
-			GLES20.glVertexAttribPointer(ph, 2, GLES20.GL_FLOAT, false, 4 * 2, pVertex);
-			GLES20.glVertexAttribPointer(tch, 2, GLES20.GL_FLOAT, false, 4 * 2, pTexCoord);
-			GLES20.glEnableVertexAttribArray(ph);
-			GLES20.glEnableVertexAttribArray(tch);
-			GLES20.glUniform1i(th, 0); /* Tells the shader what texture to use. */
-
-			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-			//GLES20.glBlendColor(1, 1, 1, 0.1f);
-			for (InputSurface is : inputSurfaces) {
-				GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-			/*if (inputSurfaces.indexOf(is) == 1)
-				GLES20.glBlendFunc(GLES20.GL_CONSTANT_ALPHA, GLES20.GL_ONE_MINUS_CONSTANT_ALPHA);*/
-			/*if (inputSurfaces.indexOf(is) == 1) // TODO this is lame
-					GLES20.glViewport(0, 0, 640, 480);*/
-
-				GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, is.getTexture());
-				GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
-			}
-			GLES20.glFlush();
-
+			render(os.width, os.height);
 			os.setPresentationTime(surfaceTexture.getTimestamp());
 			os.swapBuffers();
 		}
+	}
+
+	Bitmap getBitmap(int w, int h) {
+		Bitmap ret = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+		ByteBuffer buf = ByteBuffer.allocateDirect(w * h * 4);
+		int[] attr = new int[]{
+				EGL14.EGL_WIDTH, w,
+				EGL14.EGL_HEIGHT, h,
+				EGL14.EGL_NONE
+		};
+		EGLSurface surface = EGL14.eglCreatePbufferSurface(eglDisplay, eglConfig, attr, 0);
+		checkEglError("eglCreatePbufferSurface");
+		EGL14.eglMakeCurrent(eglDisplay, surface, surface, eglContext);
+		render(w, h);
+		GLES20.glReadPixels(0, 0, w, h, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buf);
+		EGL14.eglDestroySurface(eglDisplay, surface);
+		ret.copyPixelsFromBuffer(buf);
+		Matrix matrix = new Matrix(); /* We have to flip y because OpenGL is weird. */
+		matrix.postScale(1, -1, w / 2.0f, h / 2.0f);
+		return Bitmap.createBitmap(ret, 0, 0, w, h, matrix, false);
 	}
 
 	void checkEglError(String msg) {
@@ -299,7 +325,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		EGLConfig[] configs = new EGLConfig[1];
 		int[] numConfigs = new int[1];
 		EGL14.eglChooseConfig(eglDisplay, cfga, 0, configs, 0, configs.length, numConfigs, 0);
-		checkEglError("eglCreateContext");
+		checkEglError("eglChooseConfig");
 		eglConfig = configs[0];
 
 		/* Create an EGL context. */
