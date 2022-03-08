@@ -3,7 +3,9 @@ package be.ntmn.inficam;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.Manifest;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -73,12 +75,20 @@ public class BaseActivity extends AppCompatActivity {
 	}
 
 	public void askPermission(String perm, PermissionCallback callback) {
-		if (checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED) {
-			callback.onPermission(true);
-		} else {
-			permissionCallbacks.add(callback);
-			requestPermissions(new String[] { perm }, permissionCallbacks.size());
-		}
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+			if (checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED) {
+				callback.onPermission(true);
+			} else {
+				permissionCallbacks.add(callback);
+				requestPermissions(new String[]{perm}, permissionCallbacks.size());
+			}
+		} else callback.onPermission(true);
+	}
+
+	public boolean checkPermission(String perm) {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+			return true;
+		return checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
 	}
 
 	@Override

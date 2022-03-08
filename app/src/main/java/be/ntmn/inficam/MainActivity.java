@@ -1,30 +1,16 @@
 package be.ntmn.inficam;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
-import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
-import android.icu.util.Output;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import androidx.annotation.NonNull;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import be.ntmn.libinficam.InfiCam;
 
@@ -158,7 +144,7 @@ public class MainActivity extends BaseActivity {
 		surfaceMuxer.init();
 
 		/* Do not ask permission with dialogs from onResume(), they'd trigger more onResume(). */
-		if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+		if (checkPermission(Manifest.permission.CAMERA)) {
 			if (!usbPermissionAsked || usbPermissionAquired)
 				usbMonitor.scan();
 			else messageView.showMessage(R.string.msg_permdenied_usb, true);

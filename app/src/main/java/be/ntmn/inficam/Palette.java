@@ -21,7 +21,7 @@ public abstract class Palette {
 		this.name = name;
 	}
 
-	class Pixel {
+	static class Pixel {
 		double r, g, b;
 
 		Pixel(double r, double g, double b) {
