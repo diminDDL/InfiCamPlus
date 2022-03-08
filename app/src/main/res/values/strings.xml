@@ -1,8 +1,16 @@
 <resources>
 	<string name="app_name">InfiCam</string>
+
 	<string name="msg_permdenied_cam">Camera permission denied.</string>
 	<string name="msg_permdenied_usb">USB permission denied.</string>
 	<string name="msg_disconnected">Disconnected.</string>
 	<string name="msg_connected">Connected.</string>
 	<string name="msg_connect_failed">Failed to connect.</string>
+
+	<string name="btn_settings">Settings</string>
+	<string name="btn_shutter">Shutter</string>
+	<string name="btn_photo">Take photo</string>
+	<string name="btn_palette">Change palette</string>
+
+	<string name="set_smooth">Smooth upscaling</string>
 </resources>

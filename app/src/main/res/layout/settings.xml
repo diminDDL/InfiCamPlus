@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<be.ntmn.inficam.Settings xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/settings"
 	android:orientation="vertical"
 	android:paddingHorizontal="20dp"
 	android:paddingVertical="10dp"
@@ -8,10 +9,11 @@
 	android:layout_height="match_parent">
 
 	<CheckBox
+		android:id="@+id/set_smooth"
 		android:layout_width="match_parent"
 		android:layout_height="0dp"
 		android:layout_weight="1"
-		android:text="CheckBox" />
+		android:text="@string/set_smooth" />
 
 	<CheckBox
 		android:layout_width="match_parent"
@@ -19,4 +21,4 @@
 		android:layout_weight="1"
 		android:text="CheckBox" />
 
-</LinearLayout>
+</be.ntmn.inficam.Settings>

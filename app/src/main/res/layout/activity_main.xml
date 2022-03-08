@@ -24,6 +24,7 @@
 			android:layout_height="wrap_content"
 			android:layout_margin="20dp"
 			android:padding="20dp"
+			android:contentDescription="@string/btn_shutter"
 			android:backgroundTint="@color/white"
 			android:background="@drawable/ic_baseline_camera_24" />
 
@@ -33,6 +34,7 @@
 			android:layout_height="wrap_content"
 			android:layout_margin="20dp"
 			android:padding="25dp"
+			android:contentDescription="@string/btn_photo"
 			android:backgroundTint="@color/white"
 			android:background="@drawable/ic_baseline_photo_camera_24" />
 
@@ -42,6 +44,7 @@
 			android:layout_height="wrap_content"
 			android:layout_margin="20dp"
 			android:padding="20dp"
+			android:contentDescription="@string/btn_palette"
 			android:backgroundTint="@color/white"
 			android:background="@drawable/ic_baseline_palette_24" />
 
@@ -91,6 +94,7 @@
 			android:layout_height="wrap_content"
 			android:layout_margin="20dp"
 			android:padding="20dp"
+			android:contentDescription="@string/btn_settings"
 			android:backgroundTint="@color/white"
 			android:background="@drawable/ic_baseline_settings_24" />
 
@@ -116,7 +120,16 @@
 			android:layout_margin="40dp"
 			android:layout_gravity="center"
 			android:gravity="center">
-			<include layout="@layout/settings" />
+
+			<be.ntmn.inficam.Settings
+				android:id="@+id/settings"
+				android:orientation="vertical"
+				android:paddingHorizontal="20dp"
+				android:paddingVertical="10dp"
+				android:minWidth="200dp"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content" />
+
 		</ScrollView>
 
 	</FrameLayout>

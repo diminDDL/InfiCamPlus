@@ -38,6 +38,7 @@ public class MainActivity extends BaseActivity {
 
 	ViewGroup dialogBackground;
 	View dialogSettings;
+	Settings settings;
 
 	USBMonitor usbMonitor = new USBMonitor() {
 		@Override
@@ -192,6 +193,8 @@ public class MainActivity extends BaseActivity {
 		dialogBackground = findViewById(R.id.dialogBackground);
 		dialogBackground.setOnClickListener(view -> dialogBackground.setVisibility(View.GONE));
 		dialogSettings = findViewById(R.id.dialogSettings);
+		settings = findViewById(R.id.settings);
+		settings.init(this);
 
 		ImageButton buttonSettings = findViewById(R.id.buttonSettings);
 		buttonSettings.setOnClickListener(view -> {
@@ -203,6 +206,7 @@ public class MainActivity extends BaseActivity {
 	protected void onResume() {
 		super.onResume();
 		surfaceMuxer.init();
+		settings.load();
 
 		/* Do not ask permission with dialogs from onResume(), they'd trigger more onResume(). */
 		if (checkPermission(Manifest.permission.CAMERA)) {
@@ -274,5 +278,13 @@ public class MainActivity extends BaseActivity {
 	protected void onDestroy() {
 		usbMonitor.stop();
 		super.onDestroy();
+	}
+
+	/********************************************************/
+	/* Following are routines called by the settings class. */
+	/********************************************************/
+
+	public void setSmooth(boolean smooth) {
+		inputSurface.setSmooth(smooth);
 	}
 }
