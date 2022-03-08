@@ -181,6 +181,7 @@ public class MainActivity extends BaseActivity {
 			if (++currentPalette == Palette.palettes.length)
 				currentPalette = 0;
 			infiCam.setPalette(Palette.palettes[currentPalette].getData());
+			messageView.showMessage(Palette.palettes[currentPalette].name, false);
 		});
 	}
 
