@@ -84,6 +84,7 @@ public class MainActivity extends BaseActivity {
 		@Override
 		public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int w, int h) {
 			outputSurface.setSize(w, h);
+			overlay.setSize(w, h);
 		}
 
 		@Override
@@ -111,7 +112,7 @@ public class MainActivity extends BaseActivity {
 		/* Create and set up the InputSurface for annotations overlay. */
 		overlaySurface = new SurfaceMuxer.InputSurface(surfaceMuxer, false);
 		surfaceMuxer.inputSurfaces.add(overlaySurface);
-		overlay = new Overlay(overlaySurface, 1280, 960); // TODO decide the size
+		overlay = new Overlay(overlaySurface, cameraView.getWidth(), cameraView.getHeight());
 
 		/* Now we set the frame callback, the way this works is that first the thermal image on
 		 *   inputSurface gets written, then the frame callback runs, we copy over the info to
