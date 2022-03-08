@@ -52,6 +52,13 @@ public class InfiCam {
 	public static final int paletteLen = 0x4000;
 	FrameCallback userFrameCallback = null;
 
+	/* These are what get passed to the frameCallback, so that we don't have to allocate a new one
+	 *   for every frame. The way we make sure they won't get overwritten is that frameCallback()
+	 *   only runs again if the last frameCallback() has finished.
+	 */
+	FrameInfo frameInfo = new FrameInfo();
+	float[] temp;
+
 	/* Called by the C++ code, do not rename. */
 	void frameCallback(FrameInfo fi, float[] temp) {
 		synchronized (this) {

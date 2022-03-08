@@ -9,15 +9,11 @@
 
 JavaVM *javaVM = NULL;
 
-jclass cls_FrameInfo;
-
 extern "C" JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 	javaVM = vm;
 	JNIEnv *env;
 	if (vm->GetEnv((void **) &env, JNI_VERSION_1_6))
 		return JNI_ERR;
-	cls_FrameInfo = env->FindClass(FRAMEINFO_TYPE);
-	cls_FrameInfo = (jclass) env->NewGlobalRef(cls_FrameInfo);
 	return JNI_VERSION_1_6;
 }
 
@@ -96,7 +92,10 @@ void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, voi
 	javaVM->AttachCurrentThread(&cenv, NULL);
 
 	/* Fill the FrameInfo struct. */
-	jobject fi = cenv->AllocObject(cls_FrameInfo);
+	jclass cls = cenv->GetObjectClass(icj->obj);
+	jfieldID fi_id = cenv->GetFieldID(cls, "frameInfo", "L" FRAMEINFO_TYPE ";");
+	jobject fi = cenv->GetObjectField(icj->obj, fi_id);
+
 	setFloatVar(cenv, fi, "max", icj->infi.temp(icj->infi.temp_max));
 	setIntVar(cenv, fi, "max_x", icj->infi.temp_max_x);
 	setIntVar(cenv, fi, "max_y", icj->infi.temp_max_y);
@@ -118,11 +117,15 @@ void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, voi
 
 	/* Make a Java array from the temperature array. */
 	size_t temp_len = icj->infi.width * icj->infi.height;
-	jfloatArray jtemp = cenv->NewFloatArray(temp_len);
+	jfieldID jtemp_id = cenv->GetFieldID(cls, "temp", "[F");
+	jfloatArray jtemp = (jfloatArray) cenv->GetObjectField(icj->obj, jtemp_id);
+	if (!jtemp || cenv->GetArrayLength(jtemp) != temp_len) {
+		jtemp = cenv->NewFloatArray(temp_len);
+		cenv->SetObjectField(icj->obj, jtemp_id, jtemp);
+	}
 	cenv->SetFloatArrayRegion(jtemp, 0, temp_len, temp);
 
 	/* Call the callback. */
-	jclass cls = cenv->GetObjectClass(icj->obj);
 	jmethodID mid = cenv->GetMethodID(cls, "frameCallback", "(L" FRAMEINFO_TYPE ";[F)V");
 	cenv->CallVoidMethod(icj->obj, mid, fi, jtemp);
 

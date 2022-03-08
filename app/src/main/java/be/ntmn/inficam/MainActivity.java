@@ -130,10 +130,14 @@ public class MainActivity extends BaseActivity {
 				});
 				return;
 			}
-			//infiCam.calibrate();
+			infiCam.calibrate();
 
-			Bitmap bitmap = surfaceMuxer.getBitmap(1280, 960);
-			Util.writePNG(this, bitmap);
+			// Code to take picture,
+			synchronized (overlay) {
+				overlay.redraw(320, 240);
+				Bitmap bitmap = surfaceMuxer.getBitmap(320, 240);
+				Util.writePNG(this, bitmap);
+			}
 		});
 	}
 

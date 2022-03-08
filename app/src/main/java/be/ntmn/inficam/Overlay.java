@@ -8,16 +8,20 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
+import android.graphics.SurfaceTexture;
 import android.view.Surface;
 
 import be.ntmn.libinficam.InfiCam;
 
 public class Overlay {
 	Surface surface;
+	SurfaceTexture surfaceTexture;
 	Paint paint;
 	Paint paintOutline;
 	Paint paintTextOutline;
 	int width, height;
+	InfiCam.FrameInfo lastFi;
+	float[] lastTemp;
 
 	float smarker = 20; /* Marker size. */
 	float toff = 25; /* How far to put the text away from marker. */
@@ -25,6 +29,7 @@ public class Overlay {
 
 	public Overlay(SurfaceMuxer.InputSurface is, int w, int h) {
 		surface = is.getSurface();
+		surfaceTexture = is.getSurfaceTexture();
 		width = w;
 		height = h;
 		is.getSurfaceTexture().setDefaultBufferSize(width, height);
@@ -42,19 +47,34 @@ public class Overlay {
 	}
 
 	public void draw(InfiCam.FrameInfo fi, float[] temp) {
-		Canvas cvs = surface.lockCanvas(null);
-		cvs.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+		synchronized (this) {
+			Canvas cvs = surface.lockCanvas(null);
+			cvs.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
-		paint.setColor(Color.rgb(255, 255, 0)); // Yellow.
-		drawTPoint(cvs, fi, fi.width / 2, fi.height / 2, fi.center);
+			paint.setColor(Color.rgb(255, 255, 0)); // Yellow.
+			drawTPoint(cvs, fi, fi.width / 2, fi.height / 2, fi.center);
 
-		paint.setColor(Color.rgb(255, 64, 64)); // Red.
-		drawTPoint(cvs, fi, fi.max_x, fi.max_y, fi.max);
+			paint.setColor(Color.rgb(255, 64, 64)); // Red.
+			drawTPoint(cvs, fi, fi.max_x, fi.max_y, fi.max);
 
-		paint.setColor(Color.rgb(0, 127, 255)); // Blue.
-		drawTPoint(cvs, fi, fi.min_x, fi.min_y, fi.min);
+			paint.setColor(Color.rgb(0, 127, 255)); // Blue.
+			drawTPoint(cvs, fi, fi.min_x, fi.min_y, fi.min);
 
-		surface.unlockCanvasAndPost(cvs);
+			surface.unlockCanvasAndPost(cvs);
+
+			lastFi = fi;
+			lastTemp = temp;
+		}
+	}
+
+	/* Redraw at a particular resolution, for taking screenshots and the likes.
+	 * Synchronize to object until capture of frame done.
+	 */
+	public void redraw(int w, int h) {
+		surfaceTexture.setDefaultBufferSize(w, h);
+		draw(lastFi, lastTemp);
+		surfaceTexture.updateTexImage();
+		surfaceTexture.setDefaultBufferSize(width, height);
 	}
 
 	void drawTPoint(Canvas cvs, InfiCam.FrameInfo fi, int tx, int ty, float temp) {
