@@ -30,29 +30,28 @@ public class Overlay {
 	float woutline = 0.008f; /* Text outline thickness. */
 
 	public Overlay(SurfaceMuxer.InputSurface is, int w, int h) {
-		smarker *= w;
-		toff *= w;
-		tclearance *= w;
-		textsize *= w;
-		wmarker *= w;
-		woutline *= w;
 		surface = is.getSurface();
 		surfaceTexture = is.getSurfaceTexture();
-		width = w;
-		height = h;
-		is.getSurfaceTexture().setDefaultBufferSize(width, height);
 		paint = new Paint();
 		paint.setAntiAlias(true);
-		paint.setStrokeWidth(wmarker); // TODO what size should the markers have?
-		paint.setTextSize(textsize);
 		paint.setStrokeCap(Paint.Cap.ROUND);
 		paint.setStrokeJoin(Paint.Join.ROUND);
 		paintOutline = new Paint(paint);
-		paintOutline.setStrokeWidth(wmarker * 3);
 		paintTextOutline = new Paint(paint);
-		paintTextOutline.setStrokeWidth(woutline);
 		paintTextOutline.setColor(Color.BLACK);
 		paintTextOutline.setStyle(Paint.Style.STROKE);
+		setSize(w, h);
+	}
+
+	public void setSize(int w, int h) {
+		width = w;
+		height = h;
+		surfaceTexture.setDefaultBufferSize(w, h);
+		paint.setStrokeWidth(wmarker * w);
+		paint.setTextSize(textsize * w);
+		paintOutline.setStrokeWidth(wmarker * w * 3);
+		paintTextOutline.setStrokeWidth(woutline * w);
+		paintTextOutline.setTextSize(textsize * w);
 	}
 
 	public void draw(InfiCam.FrameInfo fi, float[] temp) {
@@ -74,16 +73,17 @@ public class Overlay {
 	void drawTPoint(Canvas cvs, InfiCam.FrameInfo fi, int tx, int ty, float temp) {
 		float x = (tx + 0.5f) * width / fi.width; // TODO maybe we can just set scale for the entire canvas
 		float y = (ty + 0.5f) * height / fi.height;
-		cvs.drawLine(x - smarker, y, x + smarker, y, paintOutline);
-		cvs.drawLine(x, y - smarker, x, y + smarker, paintOutline);
-		cvs.drawLine(x - smarker, y, x + smarker, y, paint);
-		cvs.drawLine(x, y - smarker, x, y + smarker, paint);
+		float smarkerw = smarker * width;
+		cvs.drawLine(x - smarkerw, y, x + smarkerw, y, paintOutline);
+		cvs.drawLine(x, y - smarkerw, x, y + smarkerw, paintOutline);
+		cvs.drawLine(x - smarkerw, y, x + smarkerw, y, paint);
+		cvs.drawLine(x, y - smarkerw, x, y + smarkerw, paint);
 
 		@SuppressLint("DefaultLocale")
 		String text = String.format("%.2f°C", temp);
-		float offX = toff;
+		float offX = toff * width;
 		float offY = -(paint.descent() + paint.ascent()) / 2.0f;
-		if (paintTextOutline.measureText(text) + offX + tclearance < width - x) {
+		if (paintTextOutline.measureText(text) + offX + tclearance * width < width - x) {
 			paint.setTextAlign(Paint.Align.LEFT);
 			paintTextOutline.setTextAlign(Paint.Align.LEFT);
 		} else {
@@ -91,8 +91,8 @@ public class Overlay {
 			paint.setTextAlign(Paint.Align.RIGHT);
 			paintTextOutline.setTextAlign(Paint.Align.RIGHT);
 		}
-		offY -= max(y + offY + paintTextOutline.descent() + tclearance - height, 0);
-		offY -= min(y + offY + paintTextOutline.ascent() - tclearance, 0);
+		offY -= max(y + offY + paintTextOutline.descent() + tclearance * width - height, 0);
+		offY -= min(y + offY + paintTextOutline.ascent() - tclearance * width, 0);
 		cvs.drawText(text, x + offX, y + offY, paintTextOutline);
 		cvs.drawText(text, x + offX, y + offY, paint);
 	}

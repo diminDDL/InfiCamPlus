@@ -39,8 +39,20 @@ public class BaseActivity extends AppCompatActivity {
 				| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
 				| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
 		dv.setSystemUiVisibility(uiOptions);
-		deferHide();
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		deferHide();
+	}
+
+	@Override
+	protected void onPause() {
+		/* To make sure the navigation doesn't suddenly hide on resume. */
+		handler.removeCallbacks(hideUI);
+		super.onPause();
 	}
 
 	void deferHide() {

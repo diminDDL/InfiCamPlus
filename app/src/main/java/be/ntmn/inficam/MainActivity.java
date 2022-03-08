@@ -2,11 +2,9 @@ package be.ntmn.inficam;
 
 import android.Manifest;
 import android.graphics.Bitmap;
-import android.graphics.SurfaceTexture;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -32,6 +30,7 @@ public class MainActivity extends BaseActivity {
 	final Object frameLock = new Object();
 	int picWidth = 640, picHeight = 480;
 	boolean takePic = false;
+	volatile boolean disconnecting = false;
 
 	USBMonitor usbMonitor = new USBMonitor() {
 		@Override
@@ -52,7 +51,6 @@ public class MainActivity extends BaseActivity {
 						messageView.showMessage(R.string.msg_connected, false);
 					} catch (Exception e) {
 						usbConnection.close();
-						Log.e("TESTROT", "" + e.getMessage());
 						messageView.showMessage(getString(R.string.msg_connect_failed), true);
 					}
 				}
@@ -134,6 +132,8 @@ public class MainActivity extends BaseActivity {
 			 *   lastTemp don't get overwritten before they've been used.
 			 */
 			synchronized (frameLock) {
+				if (disconnecting)
+					return;
 				try {
 					frameLock.wait();
 				} catch (Exception e) {
@@ -162,7 +162,7 @@ public class MainActivity extends BaseActivity {
 				return;
 			}
 			infiCam.calibrate();
-			takePic = true;
+			//takePic = true;
 		});
 	}
 
@@ -194,18 +194,12 @@ public class MainActivity extends BaseActivity {
 			 *   surface(s) come in at whatever resolution they are and are scaled by the muxer
 			 *   regardless, so we don't need to worry about those.
 			 */
-			SurfaceMuxer.InputSurface tmpOverlaySurf =
-					new SurfaceMuxer.InputSurface(surfaceMuxer, false);
-			Overlay tmpOverlay = new Overlay(tmpOverlaySurf, picWidth, picHeight);
-			surfaceMuxer.inputSurfaces.remove(overlaySurface);
-			surfaceMuxer.inputSurfaces.add(tmpOverlaySurf);
-			tmpOverlay.draw(lastFi, lastTemp);
-			tmpOverlaySurf.getSurfaceTexture().updateTexImage();
+			overlay.setSize(picWidth, picHeight);
+			overlay.draw(lastFi, lastTemp);
+			overlaySurface.getSurfaceTexture().updateTexImage();
 			Bitmap bitmap = surfaceMuxer.getBitmap(picWidth, picHeight);
 			Util.writePNG(this, bitmap);
-			surfaceMuxer.inputSurfaces.remove(tmpOverlaySurf);
-			surfaceMuxer.inputSurfaces.add(overlaySurface);
-			tmpOverlaySurf.release();
+			overlay.setSize(cameraView.getWidth(), cameraView.getHeight());
 			takePic = false;
 		}
 
@@ -216,6 +210,10 @@ public class MainActivity extends BaseActivity {
 	}
 
 	void disconnect() {
+		synchronized (frameLock) { /* Make sure the frameLock thing doesn't deadlock. */
+			disconnecting = true;
+			frameLock.notify();
+		}
 		infiCam.stopStream();
 		infiCam.disconnect();
 		if (usbConnection != null)
