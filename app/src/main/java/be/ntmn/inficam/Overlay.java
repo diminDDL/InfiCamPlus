@@ -1,11 +1,12 @@
 package be.ntmn.inficam;
 
-import android.annotation.SuppressLint;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
-import android.graphics.Rect;
 import android.view.Surface;
 
 import be.ntmn.libinficam.InfiCam;
@@ -16,6 +17,8 @@ public class Overlay {
 	Paint paintOutline;
 	Paint paintTextOutline;
 	int width, height;
+
+	float tclearance = 5; /* How far the text should stay away from screen edges. */
 
 	public Overlay(SurfaceMuxer.InputSurface is, int w, int h) {
 		surface = is.getSurface();
@@ -61,11 +64,9 @@ public class Overlay {
 		// TODO make sure the text is in frame, also the +25 here shouldn't be hardcoded
 
 		String text = String.format("%.2f°C", temp);
-		Rect tbounds = new Rect();
-		paintTextOutline.getTextBounds(text, 0, text.length(), tbounds);
-		float offX = 30;
-		float offY = tbounds.height() / 2.0f - tbounds.bottom;
-		if (tbounds.width() + offX * 2 < width - x) { /* Could also use Paint.measureText(). */
+		float offX = 25;
+		float offY = -(paint.descent() + paint.ascent()) / 2.0f;
+		if (paintTextOutline.measureText(text) + offX + tclearance < width - x) {
 			paint.setTextAlign(Paint.Align.LEFT);
 			paintTextOutline.setTextAlign(Paint.Align.LEFT);
 		} else {
@@ -73,6 +74,8 @@ public class Overlay {
 			paint.setTextAlign(Paint.Align.RIGHT);
 			paintTextOutline.setTextAlign(Paint.Align.RIGHT);
 		}
+		offY -= max(y + offY + paintTextOutline.descent() + tclearance - height, 0);
+		offY -= min(y + offY + paintTextOutline.ascent() - tclearance, 0);
 		cvs.drawText(text, x + offX, y + offY, paintTextOutline);
 		cvs.drawText(text, x + offX, y + offY, paint);
 	}
