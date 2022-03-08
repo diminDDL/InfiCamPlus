@@ -33,14 +33,14 @@ public abstract class Palette {
 
 	abstract Pixel func(double x);
 
-	static public Palette WhiteHot = new Palette("WhiteHot") {
+	static public Palette WhiteHot = new Palette("White Hot") {
 		@Override
 		public Pixel func(double x) {
 			return new Pixel(x, x, x);
 		}
 	};
 
-	static public Palette BlackHot = new Palette("BlackHot") {
+	static public Palette BlackHot = new Palette("Black Hot") {
 		@Override
 		public Pixel func(double x) {
 			return new Pixel(1 - x, 1 - x, 1 - x);
@@ -61,7 +61,7 @@ public abstract class Palette {
 		}
 	};
 
-	static public Palette Rainbow2 = new Palette("Rainbow2") {
+	static public Palette Rainbow2 = new Palette("Rainbow 2") {
 		@Override
 		Pixel func(double x) {
 			return hsvPixel((1 - x) * 270.0, 1, 1);

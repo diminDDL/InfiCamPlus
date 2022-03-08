@@ -53,12 +53,16 @@
 			android:layout_height="match_parent" />
 
 		<be.ntmn.inficam.MessageView android:id="@+id/message"
-			android:layout_width="match_parent"
-			android:layout_height="match_parent"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
 			android:gravity="center"
 			android:text="@string/msg_disconnected"
 			android:textAppearance="@style/TextAppearance.AppCompat.Large"
-			android:textColor="@color/white" />
+			android:textColor="@color/white"
+			android:layout_gravity="center"
+			android:paddingVertical="5dp"
+			android:paddingHorizontal="12dp"
+			android:background="@color/black" />
 	</FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
