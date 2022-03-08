@@ -20,10 +20,13 @@ void InfiCam::uvc_callback(uvc_frame_t *frame, void *user_ptr) {
 	} else p->infi.update((uint16_t *) frame->data);
 	p->infi.temp((uint16_t *) frame->data, p->frame_temp);
 	p->infi.palette_appy(p->frame_temp, p->frame_rgb);
+
+	/* Unlock before the callback so if it decides to call a function that locks the this callback
+	 *   we don't end up in a deadlock.
+	 */
+	pthread_mutex_unlock(&p->frame_callback_mutex);
 	p->frame_callback(p, p->frame_rgb, p->frame_temp, (uint16_t *) frame->data,
 					  p->frame_callback_arg);
-
-	pthread_mutex_unlock(&p->frame_callback_mutex);
 }
 
 void InfiCam::set_float(int addr, float val) {

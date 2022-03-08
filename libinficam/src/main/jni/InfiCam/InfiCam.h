@@ -57,9 +57,13 @@ public:
 	void disconnect(); /* Opening a new connection will close the previous one if it exists. */
 
 	/* Stream CB arguments valid until return, CB runs on it's own thread. Trying to start a stream
-	 *   when already streaming returns an error. Do be aware a lot of other functions in this
-	 *   class will block while the callback is running, so it would be wise not to call them from
-	 *   the callback or lock the callback for some reason.
+	 *   when already streaming returns an error. Do beware of some possible thread safety issues
+	 *   as set_palette() for example will modify the InfiFrame instance passed to the callback
+	 *   and calling update() on that after set_range()/set_distance_multipler() or changing
+	 *   any of it's parameters from another thread is not guarded against. The update_table()
+	 *   and such done before calling the callback are guarded against the functions below with a
+	 *   mutex so they should be okay to use whenever as long as you don't do something crazy like
+	 *   call infi.update() in a different thread.
 	 */
 	int stream_start(frame_callback_t *cb, void *user_ptr);
 	void stream_stop(); /* Attempting to stop stream is okay even when no stream. */
