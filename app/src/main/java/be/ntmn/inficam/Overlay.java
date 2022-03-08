@@ -3,6 +3,7 @@ package be.ntmn.inficam;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
+import android.annotation.SuppressLint;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -64,6 +65,7 @@ public class Overlay {
 		cvs.drawLine(x - smarker, y, x + smarker, y, paint);
 		cvs.drawLine(x, y - smarker, x, y + smarker, paint);
 
+		@SuppressLint("DefaultLocale")
 		String text = String.format("%.2f°C", temp);
 		float offX = toff;
 		float offY = -(paint.descent() + paint.ascent()) / 2.0f;

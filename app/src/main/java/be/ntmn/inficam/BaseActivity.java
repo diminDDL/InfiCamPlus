@@ -3,12 +3,10 @@ package be.ntmn.inficam;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -88,7 +86,7 @@ public class BaseActivity extends AppCompatActivity {
 	public boolean checkPermission(String perm) {
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
 			return true;
-		return checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+		return checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED;
 	}
 
 	@Override

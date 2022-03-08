@@ -1,7 +1,6 @@
 package be.ntmn.inficam;
 
 import android.Manifest;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
@@ -19,7 +18,7 @@ public class MainActivity extends BaseActivity {
 	MessageView messageView;
 	UsbDevice device;
 	UsbDeviceConnection usbConnection;
-	boolean usbPermissionAsked = false, usbPermissionAquired = false;
+	boolean usbPermissionAsked = false, usbPermissionAcquired = false;
 	InfiCam infiCam = new InfiCam();
 	Overlay overlay;
 	SurfaceMuxer surfaceMuxer = new SurfaceMuxer();
@@ -38,7 +37,7 @@ public class MainActivity extends BaseActivity {
 			connect(dev, new ConnectCallback() {
 				@Override
 				public void onConnected(UsbDevice dev, UsbDeviceConnection conn) {
-					usbPermissionAquired = true;
+					usbPermissionAcquired = true;
 					usbConnection = conn;
 					try {
 						infiCam.connect(conn.getFileDescriptor());
@@ -145,7 +144,7 @@ public class MainActivity extends BaseActivity {
 
 		/* Do not ask permission with dialogs from onResume(), they'd trigger more onResume(). */
 		if (checkPermission(Manifest.permission.CAMERA)) {
-			if (!usbPermissionAsked || usbPermissionAquired)
+			if (!usbPermissionAsked || usbPermissionAcquired)
 				usbMonitor.scan();
 			else messageView.showMessage(R.string.msg_permdenied_usb, true);
 		} else messageView.showMessage(R.string.msg_permdenied_cam, true);
