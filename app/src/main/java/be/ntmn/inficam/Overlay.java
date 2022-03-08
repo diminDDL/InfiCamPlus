@@ -23,10 +23,10 @@ public class Overlay {
 
 	/* These sizes are in fractions of the total width of the bitmap drawn. */
 	float smarker = 0.015f; /* Marker size. */
-	float wmarker = 0.004f; /* How fat the markers are. */
+	float wmarker = 0.003f; /* How fat the markers are. */
 	float toff = 0.03f; /* How far to put the text away from marker. */
 	float tclearance = 0.005f; /* How far the text should stay away from screen edges. */
-	float textsize = 0.04f;
+	float textsize = 0.038f;
 	float woutline = 0.008f; /* Text outline thickness. */
 
 	public Overlay(SurfaceMuxer.InputSurface is, int w, int h) {
