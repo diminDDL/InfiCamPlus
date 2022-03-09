@@ -23,6 +23,7 @@ TODO
 	- setting for regular shutter interval
 	- audio recording along with video
 	- setting for resolution of pictures, video
+	- don't clear stuff like disconnected message if not connected
 
 Things i learned about the protocol these thermal cameras talk:
 	last 4 lines of the frame have parameters (note that the pointer math is in steps of 16 bytes because unsigned short)

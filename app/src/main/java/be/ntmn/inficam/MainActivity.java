@@ -2,7 +2,9 @@ package be.ntmn.inficam;
 
 import android.Manifest;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.Bundle;
@@ -99,6 +101,8 @@ public class MainActivity extends BaseActivity {
 		public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int w, int h) {
 			outputSurface.setSize(w, h);
 			overlay.setSize(w, h);
+			// TODO redraw more proper, perhaps also redraw when dirty
+			surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
 		}
 
 		@Override
@@ -128,6 +132,20 @@ public class MainActivity extends BaseActivity {
 		overlaySurface = new SurfaceMuxer.InputSurface(surfaceMuxer, false);
 		surfaceMuxer.inputSurfaces.add(overlaySurface);
 		overlay = new Overlay(overlaySurface, cameraView.getWidth(), cameraView.getHeight());
+
+		// TODO this is just test for interpolation
+		SurfaceMuxer.InputSurface test = new SurfaceMuxer.InputSurface(surfaceMuxer, false);
+		test.getSurfaceTexture().setDefaultBufferSize(8, 6);
+		Canvas tcvs = test.getSurface().lockCanvas(null);
+		Paint p = new Paint();
+		tcvs.drawColor(Color.YELLOW);
+		p.setColor(Color.BLUE);
+		tcvs.drawLine(0, 6, 8, 0, p);
+		p.setColor(Color.RED);
+		tcvs.drawLine(0, 0, 8, 6, p);
+		test.getSurface().unlockCanvasAndPost(tcvs);
+		surfaceMuxer.inputSurfaces.add(test);
+		surfaceMuxer.onFrameAvailable(test.getSurfaceTexture());
 
 		/* Now we set the frame callback, the way this works is that first the thermal image on
 		 *   inputSurface gets written, then the frame callback runs, we copy over the info to

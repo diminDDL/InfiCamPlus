@@ -215,7 +215,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	public SurfaceMuxer(Context ctx) {
 		try {
 			vss = Util.readStringAsset(ctx, "vshader.glsl");
-			fss = Util.readStringAsset(ctx, "fshader.glsl");
+			//fss = Util.readStringAsset(ctx, "fshader.glsl");
+			fss = Util.readStringAsset(ctx, "fcubic.glsl");
 		} catch (IOException e) {
 			/* Crash to inform the user I done did a stupid. */
 			throw new RuntimeException(e);
