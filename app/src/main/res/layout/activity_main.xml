@@ -76,7 +76,7 @@
 			android:layout_gravity="center"
 			android:paddingVertical="5dp"
 			android:paddingHorizontal="12dp"
-			android:background="@color/black" />
+			android:background="@drawable/message_background" />
 	</FrameLayout>
 
 	<LinearLayout
@@ -102,7 +102,7 @@
 
 	<FrameLayout
 		android:id="@+id/dialogBackground"
-		android:background="@color/dialogBackground"
+		android:background="@color/dialog_background"
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
 		android:elevation="20dp"
