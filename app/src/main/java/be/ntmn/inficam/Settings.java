@@ -11,6 +11,9 @@ import android.widget.LinearLayout;
 
 import androidx.annotation.Nullable;
 
+/* TODO To add profiles i want to just make a function to load and store all the sharedprefs to a
+ *   JSON array that is stored in sharedprefs.
+ */
 public class Settings extends LinearLayout {
 	private static final String SP_NAME = "PREFS";
 	MainActivity act;
