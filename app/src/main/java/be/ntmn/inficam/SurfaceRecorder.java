@@ -17,7 +17,6 @@ import android.view.Surface;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -59,7 +58,6 @@ public class SurfaceRecorder implements Runnable {
 		@SuppressLint("SimpleDateFormat")
 		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
 		String dirname = ctx.getString(R.string.app_name);
-		OutputStream out;
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 			String fname = "vid_" + timeStamp + ".mp4"; /* MediaStore won't overwrite. */
 			ContentValues cv = new ContentValues();

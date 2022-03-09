@@ -18,7 +18,6 @@ public abstract class USBMonitor extends BroadcastReceiver {
 	public interface ConnectCallback {
 		void onConnected(UsbDevice dev, UsbDeviceConnection conn);
 		void onPermissionDenied(UsbDevice dev);
-		void onFailure(UsbDevice dev);
 	}
 
 	Context ctx;

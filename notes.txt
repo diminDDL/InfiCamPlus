@@ -27,6 +27,9 @@ TODO
 	- we can flip the image upside down via the vertex shader, might or might not be useful for the
 	    image capturing thing that has to flip the image (maybe more trouble than it's worth just
 	    for that) but it may turn out useful in the future
+	- audio along with the video
+	- rarely but does happen the video gets stuck while camera is still connected (shutter commands still works)
+			why what how?
 
 Things i learned about the protocol these thermal cameras talk:
 	last 4 lines of the frame have parameters (note that the pointer math is in steps of 16 bytes because unsigned short)
@@ -197,3 +200,19 @@ On the stackoverflow that inspired the cubic interpolation shader (
 				(-x2 + x3) * a
 			) * 0.5;
 		}
+
+To test the interpolation i slapped this into onCreate()
+	// We may need setSize on the InputSurface() if we do this again
+	// TODO this is just test for interpolation
+	/*SurfaceMuxer.InputSurface test = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
+	test.getSurfaceTexture().setDefaultBufferSize(8, 6);
+	Canvas tcvs = test.getSurface().lockCanvas(null);
+	Paint p = new Paint();
+	tcvs.drawColor(Color.YELLOW);
+	p.setColor(Color.BLUE);
+	tcvs.drawLine(0, 6, 8, 0, p);
+	p.setColor(Color.RED);
+	tcvs.drawLine(0, 0, 8, 6, p);
+	test.getSurface().unlockCanvasAndPost(tcvs);
+	surfaceMuxer.inputSurfaces.add(test);
+	surfaceMuxer.onFrameAvailable(test.getSurfaceTexture());*/

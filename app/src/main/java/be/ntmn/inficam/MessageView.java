@@ -32,12 +32,12 @@ public class MessageView extends androidx.appcompat.widget.AppCompatTextView {
 
 	public void setMessage(int res) {
 		setText(res);
-		_showMessage(false, TIME_LONG);
+		_showMessage(true, TIME_LONG);
 	}
 
 	public void setMessage(String str) {
 		setText(str);
-		_showMessage(false, TIME_LONG);
+		_showMessage(true, TIME_LONG);
 	}
 
 	public void showMessage(int res) {
