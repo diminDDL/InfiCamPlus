@@ -124,9 +124,10 @@
 			<be.ntmn.inficam.Settings
 				android:id="@+id/settings"
 				android:orientation="vertical"
-				android:paddingHorizontal="20dp"
-				android:paddingVertical="10dp"
+				android:padding="20dp"
 				android:minWidth="200dp"
+				android:showDividers="middle"
+				android:divider="@drawable/settings_divider"
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content" />
 
