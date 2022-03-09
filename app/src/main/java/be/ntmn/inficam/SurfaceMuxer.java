@@ -62,33 +62,43 @@ import java.util.ArrayList;
  *   longer in use.
  */
 public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
+	public final static int IMODE_NEAREST = 0;
+	public final static int IMODE_LINEAR = 1;
+	public final static int IMODE_BICUBIC = 2;
+
 	static final int EGL_RECORDABLE_ANDROID = 0x3142;
 	EGLDisplay eglDisplay = EGL14.EGL_NO_DISPLAY;
 	EGLContext eglContext = EGL14.EGL_NO_CONTEXT;
 	EGLConfig eglConfig;
 	FloatBuffer pVertex;
 	FloatBuffer pTexCoord;
-	int hProgram;
+	int hProgram, hProgram_cubic;
 	public ArrayList<InputSurface> inputSurfaces = new ArrayList<>();
 	public ArrayList<OutputSurface> outputSurfaces = new ArrayList<>();
-	String vss, fss;
+	String vss, fss, fss_cubic;
 
 	public static class InputSurface {
 		SurfaceMuxer surfaceMuxer;
 		SurfaceTexture surfaceTexture;
 		Surface surface;
 		int[] textures = new int[1];
-		boolean smooth, initialized = false;
+		boolean initialized = false;
+		int imode, width, height;
 
-		public InputSurface(SurfaceMuxer muxer, boolean smooth) {
+		public InputSurface(SurfaceMuxer muxer, int imode) {
 			surfaceMuxer = muxer;
-			this.smooth = smooth;
+			this.imode = imode;
 			init();
 		}
 
-		public void setSmooth(boolean smooth) {
-			this.smooth = smooth;
+		public void setIMode(int imode) {
+			this.imode = imode;
 			init();
+		}
+
+		public void setSize(int w, int h) { /* Only important for IMODE_BICUBIC. */
+			width = w;
+			height = h;
 		}
 
 		public int getTexture() { return textures[0]; }
@@ -96,7 +106,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		public Surface getSurface() { return surface; }
 
 		public void init() {
-			int filter = smooth ? GLES20.GL_LINEAR : GLES20.GL_NEAREST;
+			int filter = (imode != IMODE_NEAREST) ? GLES20.GL_LINEAR : GLES20.GL_NEAREST;
 			if (surfaceMuxer == null || surfaceMuxer.eglDisplay == EGL14.EGL_NO_DISPLAY)
 				return;
 			deinit();
@@ -215,8 +225,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	public SurfaceMuxer(Context ctx) {
 		try {
 			vss = Util.readStringAsset(ctx, "vshader.glsl");
-			//fss = Util.readStringAsset(ctx, "fshader.glsl");
-			fss = Util.readStringAsset(ctx, "fcubic.glsl");
+			fss = Util.readStringAsset(ctx, "fshader.glsl");
+			fss_cubic = Util.readStringAsset(ctx, "fcubic.glsl");
 		} catch (IOException e) {
 			/* Crash to inform the user I done did a stupid. */
 			throw new RuntimeException(e);
@@ -229,27 +239,25 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 
 		GLES20.glClearColor(0, 0, 0, 1);
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-		GLES20.glUseProgram(hProgram);
 
-		int ph = GLES20.glGetAttribLocation(hProgram, "vPosition");
-		int tch = GLES20.glGetAttribLocation(hProgram, "vTexCoord");
-		int th = GLES20.glGetUniformLocation(hProgram, "sTexture");
-
-		GLES20.glVertexAttribPointer(ph, 2, GLES20.GL_FLOAT, false, 4 * 2, pVertex);
-		GLES20.glVertexAttribPointer(tch, 2, GLES20.GL_FLOAT, false, 4 * 2, pTexCoord);
-		GLES20.glEnableVertexAttribArray(ph);
-		GLES20.glEnableVertexAttribArray(tch);
-		GLES20.glUniform1i(th, 0); /* Tells the shader what texture to use. */
-
-		// TODO temporary for test
-		int isc = GLES20.glGetUniformLocation(hProgram, "texSize");
-		GLES20.glUniform2f(isc, 8.0f, 6.0f);
-
-		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-		//GLES20.glBlendColor(1, 1, 1, 0.1f);
 		for (InputSurface is : inputSurfaces) {
+			int program = (is.imode == IMODE_BICUBIC) ? hProgram_cubic : hProgram;
+			GLES20.glUseProgram(program);
+			if (program == hProgram_cubic) {
+				int isc = GLES20.glGetUniformLocation(program, "texSize");
+				GLES20.glUniform2f(isc, is.width, is.height);
+			}
+			int ph = GLES20.glGetAttribLocation(program, "vPosition");
+			GLES20.glVertexAttribPointer(ph, 2, GLES20.GL_FLOAT, false, 4 * 2, pVertex);
+			GLES20.glEnableVertexAttribArray(ph);
+			int tch = GLES20.glGetAttribLocation(program, "vTexCoord");
+			GLES20.glVertexAttribPointer(tch, 2, GLES20.GL_FLOAT, false, 4 * 2, pTexCoord);
+			GLES20.glEnableVertexAttribArray(tch);
+			int th = GLES20.glGetUniformLocation(program, "sTexture");
+			GLES20.glUniform1i(th, 0); /* Tells the shader what texture to use. */
+			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+			//GLES20.glBlendColor(1, 1, 1, 0.1f);
 
-			// TODO does the alpha belong here? depends whether we do something with the commented crap i guess
 			GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 			/*if (inputSurfaces.indexOf(is) == 1)
 				GLES20.glBlendFunc(GLES20.GL_CONSTANT_ALPHA, GLES20.GL_ONE_MINUS_CONSTANT_ALPHA);*/
@@ -368,15 +376,27 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		GLES20.glCompileShader(fshader);
 		GLES20.glGetShaderiv(fshader, GLES20.GL_COMPILE_STATUS, compiled, 0);
 		if (compiled[0] == 0)
-			throw new RuntimeException(GLES20.glGetShaderInfoLog(vshader));
+			throw new RuntimeException(GLES20.glGetShaderInfoLog(fshader));
+
+		int fshaderc = GLES20.glCreateShader(GLES20.GL_FRAGMENT_SHADER);
+		GLES20.glShaderSource(fshaderc, fss_cubic);
+		GLES20.glCompileShader(fshaderc);
+		GLES20.glGetShaderiv(fshaderc, GLES20.GL_COMPILE_STATUS, compiled, 0);
+		if (compiled[0] == 0)
+			throw new RuntimeException(GLES20.glGetShaderInfoLog(fshaderc));
 
 		/* Create the program. */
 		hProgram = GLES20.glCreateProgram();
 		GLES20.glAttachShader(hProgram, vshader);
 		GLES20.glAttachShader(hProgram, fshader);
 		GLES20.glLinkProgram(hProgram);
+		hProgram_cubic = GLES20.glCreateProgram();
+		GLES20.glAttachShader(hProgram_cubic, vshader);
+		GLES20.glAttachShader(hProgram_cubic, fshaderc);
+		GLES20.glLinkProgram(hProgram_cubic);
 		GLES20.glDeleteShader(vshader); /* They will still live until the program dies. */
 		GLES20.glDeleteShader(fshader);
+		GLES20.glDeleteShader(fshaderc);
 
 		/* Initialize any InputSurfaces we have. */
 		for (InputSurface is : inputSurfaces)

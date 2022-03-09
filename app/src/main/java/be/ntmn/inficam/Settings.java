@@ -8,6 +8,9 @@ import android.util.AttributeSet;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
@@ -68,11 +71,65 @@ public class Settings extends LinearLayout {
 		abstract void onSet(boolean value);
 	}
 
+	abstract class SettingRadio extends Setting {
+		int def;
+		RadioGroup rg;
+		int[] items;
+
+		SettingRadio(String name, int res, int def, int[] items) {
+			super(name, res);
+			this.def = def; /* RadioGroup indexes from 1, wtf... */
+			this.items = items;
+		}
+
+		@Override
+		void init(Settings set) {
+			rg = new RadioGroup(set.getContext());
+			TextView title = new TextView(set.getContext());
+			title.setText(res);
+			rg.addView(title);
+			rg.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+					ViewGroup.LayoutParams.WRAP_CONTENT));
+			rg.setOnCheckedChangeListener((compoundButton, i) -> {
+				ed.putInt(name, i - 1);
+				ed.commit();
+				onSet(i - 1);
+			});
+			for (int item : items) {
+				RadioButton rb = new RadioButton(set.getContext());
+				rb.setText(item);
+				rb.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+						ViewGroup.LayoutParams.WRAP_CONTENT));
+				rg.addView(rb);
+			}
+			rg.setVisibility(VISIBLE);
+			set.addView(rg);
+		}
+
+		@Override
+		void load() {
+			int value = sp.getInt(name, def);
+			rg.check(value + 1);
+			onSet(value);
+		}
+
+		abstract void onSet(int value);
+	}
+
 	Setting[] settings = {
-			new SettingBool("smooth", R.string.set_smooth, true) {
+			new SettingRadio("imode", R.string.set_imode, 2, new int[] {
+					R.string.imode_nearest,
+					R.string.imode_linear,
+					R.string.imode_cubic
+				}) {
 				@Override
-				void onSet(boolean value) {
-					act.setSmooth(value);
+				void onSet(int value) {
+					final int[] imodes = new int[] {
+							SurfaceMuxer.IMODE_NEAREST,
+							SurfaceMuxer.IMODE_LINEAR,
+							SurfaceMuxer.IMODE_BICUBIC
+					};
+					act.setIMode(imodes[value]);
 				}
 			},
 			new SettingBool("fullscreen", R.string.set_fullscreen, true) {

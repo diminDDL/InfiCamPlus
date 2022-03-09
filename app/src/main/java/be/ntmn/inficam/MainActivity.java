@@ -38,7 +38,7 @@ public class MainActivity extends BaseActivity {
 	InfiCam.FrameInfo lastFi;
 	float[] lastTemp;
 	final Object frameLock = new Object();
-	int picWidth = 640, picHeight = 480;
+	int picWidth = 1024, picHeight = 768;
 	boolean takePic = false;
 	volatile boolean disconnecting = false;
 	int currentPalette = 3;
@@ -62,6 +62,8 @@ public class MainActivity extends BaseActivity {
 					usbConnection = conn;
 					try {
 						infiCam.connect(conn.getFileDescriptor());
+						/* Size is only important for cubic interpolation. */
+						inputSurface.setSize(infiCam.getWidth(), infiCam.getHeight());
 						infiCam.startStream();
 						handler.postDelayed(() -> infiCam.calibrate(), 1000);
 						messageView.showMessage(R.string.msg_connected);
@@ -120,8 +122,8 @@ public class MainActivity extends BaseActivity {
 		messageView = findViewById(R.id.message);
 		surfaceMuxer = new SurfaceMuxer(this);
 
-		/* Create and set up the InputSurface for thermal image. */
-		inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
+		/* Create and set up the InputSurface for thermal image, imode setting is not final. */
+		inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_NEAREST);
 		surfaceMuxer.inputSurfaces.add(inputSurface);
 		//inputSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer);
 		infiCam.setSurface(inputSurface.getSurface());
@@ -129,12 +131,12 @@ public class MainActivity extends BaseActivity {
 		infiCam.setPalette(Palette.Ironbow.getData()); // TODO UI to choose
 
 		/* Create and set up the InputSurface for annotations overlay. */
-		overlaySurface = new SurfaceMuxer.InputSurface(surfaceMuxer, false);
+		overlaySurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_NEAREST);
 		surfaceMuxer.inputSurfaces.add(overlaySurface);
 		overlay = new Overlay(overlaySurface, cameraView.getWidth(), cameraView.getHeight());
 
 		// TODO this is just test for interpolation
-		SurfaceMuxer.InputSurface test = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
+		/*SurfaceMuxer.InputSurface test = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
 		test.getSurfaceTexture().setDefaultBufferSize(8, 6);
 		Canvas tcvs = test.getSurface().lockCanvas(null);
 		Paint p = new Paint();
@@ -145,7 +147,7 @@ public class MainActivity extends BaseActivity {
 		tcvs.drawLine(0, 0, 8, 6, p);
 		test.getSurface().unlockCanvasAndPost(tcvs);
 		surfaceMuxer.inputSurfaces.add(test);
-		surfaceMuxer.onFrameAvailable(test.getSurfaceTexture());
+		surfaceMuxer.onFrameAvailable(test.getSurfaceTexture());*/
 
 		/* Now we set the frame callback, the way this works is that first the thermal image on
 		 *   inputSurface gets written, then the frame callback runs, we copy over the info to
@@ -338,7 +340,7 @@ public class MainActivity extends BaseActivity {
 	 * Following are routines called by the settings class.
 	 */
 
-	public void setSmooth(boolean smooth) {
-		inputSurface.setSmooth(smooth);
+	public void setIMode(int value) {
+		inputSurface.setIMode(value);
 	}
 }

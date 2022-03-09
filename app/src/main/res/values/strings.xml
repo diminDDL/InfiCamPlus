@@ -14,8 +14,11 @@
 	<string name="btn_video">Record video</string>
 	<string name="btn_palette">Change palette</string>
 
-	<string name="set_smooth">Smooth upscaling</string>
+	<string name="set_imode">Scaling mode</string>
 	<string name="set_fullscreen">Full-screen mode</string>
 	<string name="set_hide_navigation">Hide navigation</string>
 	<string name="set_keep_screen_on">Keep screen on</string>
+	<string name="imode_nearest">Nearest Neighbor</string>
+	<string name="imode_linear">Linear</string>
+	<string name="imode_cubic">Bicubic</string>
 </resources>
