@@ -20,33 +20,36 @@
 
 		<ImageButton
 			android:id="@+id/buttonShutter"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:layout_margin="20dp"
-			android:padding="20dp"
+			android:src="@drawable/ic_baseline_camera_24"
 			android:contentDescription="@string/btn_shutter"
-			android:backgroundTint="@color/white"
-			android:background="@drawable/ic_baseline_camera_24" />
+			android:layout_width="40dp"
+			android:layout_height="40dp"
+			android:scaleType="fitCenter"
+			android:layout_margin="20dp"
+			app:tint="@color/white"
+			android:background="?android:attr/selectableItemBackground" />
 
 		<ImageButton
 			android:id="@+id/buttonPhoto"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:layout_margin="20dp"
-			android:padding="25dp"
+			android:src="@drawable/ic_baseline_photo_camera_24"
 			android:contentDescription="@string/btn_photo"
-			android:backgroundTint="@color/white"
-			android:background="@drawable/ic_baseline_photo_camera_24" />
+			android:layout_width="60dp"
+			android:layout_height="60dp"
+			android:scaleType="fitCenter"
+			android:layout_margin="20dp"
+			app:tint="@color/white"
+			android:background="?android:attr/selectableItemBackground" />
 
 		<ImageButton
 			android:id="@+id/buttonPalette"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:layout_margin="20dp"
-			android:padding="20dp"
+			android:src="@drawable/ic_baseline_palette_24"
 			android:contentDescription="@string/btn_palette"
-			android:backgroundTint="@color/white"
-			android:background="@drawable/ic_baseline_palette_24" />
+			android:layout_width="40dp"
+			android:layout_height="40dp"
+			android:scaleType="fitCenter"
+			android:layout_margin="20dp"
+			app:tint="@color/white"
+			android:background="?android:attr/selectableItemBackground" />
 
 	</LinearLayout>
 
@@ -90,13 +93,14 @@
 
 		<ImageButton
 			android:id="@+id/buttonSettings"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:layout_margin="20dp"
-			android:padding="20dp"
+			android:src="@drawable/ic_baseline_settings_24"
 			android:contentDescription="@string/btn_settings"
-			android:backgroundTint="@color/white"
-			android:background="@drawable/ic_baseline_settings_24" />
+			android:layout_width="40dp"
+			android:layout_height="40dp"
+			android:scaleType="fitCenter"
+			android:layout_margin="20dp"
+			app:tint="@color/white"
+			android:background="?android:attr/selectableItemBackground" />
 
 	</LinearLayout>
 
