@@ -29,7 +29,10 @@ TODO
 	    for that) but it may turn out useful in the future
 	- audio along with the video
 	- rarely but does happen the video gets stuck while camera is still connected (shutter commands still works)
-			why what how?
+		why what how?
+	- the libinficam part should work on linux/windows with small work
+		the main thing would be implementing InfiCam and UVCDevice .connect() variation that takes a more sensible
+		device specifier than just a FD, and having a palette to feed to setPalette()
 
 Things i learned about the protocol these thermal cameras talk:
 	last 4 lines of the frame have parameters (note that the pointer math is in steps of 16 bytes because unsigned short)
