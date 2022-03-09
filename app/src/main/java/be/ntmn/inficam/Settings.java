@@ -12,7 +12,8 @@ import android.widget.LinearLayout;
 import androidx.annotation.Nullable;
 
 /* TODO To add profiles i want to just make a function to load and store all the sharedprefs to a
- *   JSON array that is stored in sharedprefs.
+ *   JSON array that is stored in sharedprefs. Should palette and termometry parameters be part of
+ *   profile, or option to choose what is part of it or how?
  */
 public class Settings extends LinearLayout {
 	private static final String SP_NAME = "PREFS";

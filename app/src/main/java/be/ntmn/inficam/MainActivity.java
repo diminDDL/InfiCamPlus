@@ -238,6 +238,7 @@ public class MainActivity extends BaseActivity {
 			Util.writePNG(this, bitmap);
 			overlay.setSize(cameraView.getWidth(), cameraView.getHeight());
 			takePic = false;
+			messageView.showMessage(getString(R.string.msg_captured), false);
 		}
 
 		/* Now we allow another frame to come in */
