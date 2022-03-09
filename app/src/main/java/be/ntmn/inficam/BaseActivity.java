@@ -36,7 +36,6 @@ public class BaseActivity extends AppCompatActivity {
 				return;
 			deferHide();
 		});
-		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); // TODO setting
 	}
 
 	@Override
@@ -109,7 +108,10 @@ public class BaseActivity extends AppCompatActivity {
 		}
 	}
 
-	/* Called by settings, has to be called before fullscreen starts working. */
+	/********************************************************/
+	/* Following are routines called by the settings class. */
+	/********************************************************/
+
 	public void setFullscreen(boolean value) {
 		fullscreen = value;
 		deferHide();
@@ -128,5 +130,11 @@ public class BaseActivity extends AppCompatActivity {
 			int uiOptions = dv.getSystemUiVisibility() & ~View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
 			dv.setSystemUiVisibility(uiOptions);
 		}
+	}
+
+	public void setKeepScreenOn(boolean value) {
+		if (value)
+			getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+		else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 	}
 }

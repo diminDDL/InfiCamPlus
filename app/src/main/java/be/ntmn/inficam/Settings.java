@@ -20,9 +20,8 @@ public class Settings extends LinearLayout {
 	MainActivity act;
 	SharedPreferences sp;
 	SharedPreferences.Editor ed;
-	CheckBox setSmooth;
 
-	abstract class Setting {
+	static abstract class Setting {
 		String name;
 		int res;
 
@@ -87,6 +86,12 @@ public class Settings extends LinearLayout {
 				void onSet(boolean value) {
 					act.setHideNavigation(value);
 				}
+			},
+			new SettingBool("keep_screen_on", R.string.set_keep_screen_on, true) {
+				@Override
+				void onSet(boolean value) {
+					act.setKeepScreenOn(value);
+				}
 			}
 	};
 
@@ -106,12 +111,12 @@ public class Settings extends LinearLayout {
 		this.act = act;
 		sp = act.getSharedPreferences(SP_NAME, MODE_PRIVATE);
 		ed = sp.edit();
-		for (int i = 0; i < settings.length; ++i)
-			settings[i].init(this);
+		for (Setting setting : settings)
+			setting.init(this);
 	}
 
 	void load() {
-		for (int i = 0; i < settings.length; ++i)
-			settings[i].load();
+		for (Setting setting : settings)
+			setting.load();
 	}
 }

@@ -291,12 +291,14 @@ public class MainActivity extends BaseActivity {
 	}
 
 	void stopRecording() {
-		ImageButton buttonVideo = findViewById(R.id.buttonVideo);
-		buttonVideo.clearColorFilter();
-		recorder.stopRecording();
-		surfaceMuxer.outputSurfaces.remove(recordSurface);
-		recordSurface.release();
-		recordSurface = null;
+		if (recordSurface != null) {
+			ImageButton buttonVideo = findViewById(R.id.buttonVideo);
+			buttonVideo.clearColorFilter();
+			recorder.stopRecording();
+			surfaceMuxer.outputSurfaces.remove(recordSurface);
+			recordSurface.release();
+			recordSurface = null;
+		}
 	}
 
 	@Override
