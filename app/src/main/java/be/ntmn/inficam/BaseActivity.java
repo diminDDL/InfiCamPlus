@@ -108,9 +108,9 @@ public class BaseActivity extends AppCompatActivity {
 		}
 	}
 
-	/********************************************************/
-	/* Following are routines called by the settings class. */
-	/********************************************************/
+	/*
+	 * Following are routines called by the settings class.
+	 */
 
 	public void setFullscreen(boolean value) {
 		fullscreen = value;

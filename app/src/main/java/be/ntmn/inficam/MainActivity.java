@@ -315,9 +315,9 @@ public class MainActivity extends BaseActivity {
 		super.onDestroy();
 	}
 
-	/********************************************************/
-	/* Following are routines called by the settings class. */
-	/********************************************************/
+	/*
+	 * Following are routines called by the settings class.
+	 */
 
 	public void setSmooth(boolean smooth) {
 		inputSurface.setSmooth(smooth);
