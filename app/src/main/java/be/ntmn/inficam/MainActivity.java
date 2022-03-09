@@ -301,6 +301,7 @@ public class MainActivity extends BaseActivity {
 
 	@Override
 	protected void onPause() {
+		stopRecording();
 		disconnect();
 		surfaceMuxer.deinit();
 		super.onPause();
