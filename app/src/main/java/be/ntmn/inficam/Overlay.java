@@ -37,11 +37,9 @@ public class Overlay {
 		paint.setStrokeCap(Paint.Cap.ROUND);
 		paint.setStrokeJoin(Paint.Join.ROUND);
 		paintOutline = new Paint(paint);
-		paintOutline.setAlpha(200);
 		paintTextOutline = new Paint(paint);
 		paintTextOutline.setColor(Color.BLACK);
 		paintTextOutline.setStyle(Paint.Style.STROKE);
-		paintTextOutline.setAlpha(200);
 		setSize(w, h);
 	}
 
