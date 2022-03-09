@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.Bundle;
+import android.view.Surface;
 import android.view.ViewGroup;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -25,6 +26,7 @@ public class MainActivity extends BaseActivity {
 	Overlay overlay;
 	SurfaceMuxer surfaceMuxer = new SurfaceMuxer();
 	SurfaceMuxer.OutputSurface outputSurface;
+	SurfaceMuxer.OutputSurface recordSurface;
 	SurfaceMuxer.InputSurface inputSurface; /* InfiCam class writes to this. */
 	SurfaceMuxer.InputSurface overlaySurface; /* This is where we will draw annotations. */
 	SurfaceMuxer.InputSurface videoSurface; /* To draw video from the normal camera if enabled. */
@@ -35,6 +37,7 @@ public class MainActivity extends BaseActivity {
 	boolean takePic = false;
 	volatile boolean disconnecting = false;
 	int currentPalette = 3;
+	SurfaceRecorder recorder;
 
 	ViewGroup dialogBackground;
 	View dialogSettings;
@@ -190,6 +193,28 @@ public class MainActivity extends BaseActivity {
 			messageView.showMessage(Palette.palettes[currentPalette].name);
 		});
 
+		ImageButton buttonVideo = findViewById(R.id.buttonVideo);
+		buttonVideo.setOnClickListener(view -> {
+			try {
+				if (recorder == null) {
+					recorder = new SurfaceRecorder(this, picWidth, picHeight);
+					Surface rsurface = recorder.getInputSurface();
+					recordSurface = new SurfaceMuxer.OutputSurface(surfaceMuxer, rsurface, true);
+					recordSurface.setSize(picWidth, picHeight);
+					surfaceMuxer.outputSurfaces.add(recordSurface);
+					recorder.startRecording();
+					// TODO change rec button color
+				} else {
+					recorder.stopRecording(); // TODO recorder should wait for it's thread to finish
+					surfaceMuxer.outputSurfaces.remove(recordSurface);
+					recorder = null;
+					// TODO deinit properly
+				}
+			} catch (Exception e) {
+				messageView.showMessage(e.getMessage());
+			}
+		});
+
 		dialogBackground = findViewById(R.id.dialogBackground);
 		dialogBackground.setOnClickListener(view -> dialogBackground.setVisibility(View.GONE));
 		dialogSettings = findViewById(R.id.dialogSettings);
@@ -197,9 +222,7 @@ public class MainActivity extends BaseActivity {
 		settings.init(this);
 
 		ImageButton buttonSettings = findViewById(R.id.buttonSettings);
-		buttonSettings.setOnClickListener(view -> {
-			openDialog(dialogSettings);
-		});
+		buttonSettings.setOnClickListener(view -> openDialog(dialogSettings));
 	}
 
 	@Override

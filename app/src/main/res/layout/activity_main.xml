@@ -41,9 +41,9 @@
 			android:background="?android:attr/selectableItemBackground" />
 
 		<ImageButton
-			android:id="@+id/buttonPalette"
-			android:src="@drawable/ic_baseline_palette_24"
-			android:contentDescription="@string/btn_palette"
+			android:id="@+id/buttonVideo"
+			android:src="@drawable/ic_baseline_videocam_24"
+			android:contentDescription="@string/btn_video"
 			android:layout_width="40dp"
 			android:layout_height="40dp"
 			android:scaleType="fitCenter"
@@ -90,6 +90,17 @@
 		app:layout_constraintTop_toTopOf="parent"
 		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintEnd_toEndOf="parent">
+
+		<ImageButton
+			android:id="@+id/buttonPalette"
+			android:src="@drawable/ic_baseline_palette_24"
+			android:contentDescription="@string/btn_palette"
+			android:layout_width="40dp"
+			android:layout_height="40dp"
+			android:scaleType="fitCenter"
+			android:layout_margin="20dp"
+			app:tint="@color/white"
+			android:background="?android:attr/selectableItemBackground" />
 
 		<ImageButton
 			android:id="@+id/buttonSettings"
