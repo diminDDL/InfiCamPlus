@@ -17,9 +17,10 @@ import java.util.ArrayList;
  *   permissions.
  */
 public class BaseActivity extends AppCompatActivity {
-	ArrayList<PermissionCallback> permissionCallbacks = new ArrayList<>();
-	final static long hideDelay = 2500;
 	public final Handler handler = new Handler();
+	ArrayList<PermissionCallback> permissionCallbacks = new ArrayList<>();
+	boolean fullscreen = false; /* If you want to change the default, look at Settings class. */
+	final static long hideDelay = 2500;
 
 	interface PermissionCallback {
 		void onPermission(boolean granted);
@@ -34,12 +35,7 @@ public class BaseActivity extends AppCompatActivity {
 				return;
 			deferHide();
 		});
-		/* These flags make the layout ignore navigation/tray but don't hide them yet. */
-		int uiOptions = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-				| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-				| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
-		dv.setSystemUiVisibility(uiOptions);
-		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); // TODO setting
 	}
 
 	@Override
@@ -56,17 +52,19 @@ public class BaseActivity extends AppCompatActivity {
 	}
 
 	void deferHide() {
-		handler.removeCallbacks(hideUI);
-		handler.postDelayed(hideUI, hideDelay);
+		if (fullscreen) {
+			handler.removeCallbacks(hideUI);
+			handler.postDelayed(hideUI, hideDelay);
+		}
 	}
 
 	final Runnable hideUI = () -> {
 		View dv = getWindow().getDecorView();
 		/* Flags to go properly fullscreen. */
 		int uiOptions = View.SYSTEM_UI_FLAG_IMMERSIVE
-				| View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-				| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-				| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+				//| View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+				//| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+				//| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
 				| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
 				| View.SYSTEM_UI_FLAG_FULLSCREEN;
 		dv.setSystemUiVisibility(uiOptions);
@@ -110,6 +108,24 @@ public class BaseActivity extends AppCompatActivity {
 			cb.onPermission(grantResults[0] == PackageManager.PERMISSION_GRANTED);
 		} catch (Exception e) {
 			e.printStackTrace(); /* Sometimes we get two calls, idk why... */
+		}
+	}
+
+	/* Called by settings, has to be called before fullscreen starts working. */
+	public void setFullscreen(boolean value) {
+		View dv = getWindow().getDecorView();
+		if (value) {
+			/*int uiOptions = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+					| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+					| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;*/
+			int uiOptions = 0;
+			dv.setSystemUiVisibility(uiOptions);
+			fullscreen = true;
+			deferHide();
+		} else {
+			fullscreen = false;
+			handler.removeCallbacks(hideUI);
+			dv.setSystemUiVisibility(0);
 		}
 	}
 }

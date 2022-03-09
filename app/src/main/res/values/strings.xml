@@ -13,4 +13,5 @@
 	<string name="btn_palette">Change palette</string>
 
 	<string name="set_smooth">Smooth upscaling</string>
+	<string name="set_fullscreen">Full-screen mode</string>
 </resources>

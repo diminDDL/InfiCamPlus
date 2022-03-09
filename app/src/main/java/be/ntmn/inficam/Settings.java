@@ -71,6 +71,12 @@ public class Settings extends LinearLayout {
 				void onSet(boolean value) {
 					act.setSmooth(value);
 				}
+			},
+			new SettingBool("fullscreen", R.string.set_fullscreen, true) {
+				@Override
+				void onSet(boolean value) {
+					act.setFullscreen(value);
+				}
 			}
 	};
 
