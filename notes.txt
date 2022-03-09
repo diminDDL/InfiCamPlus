@@ -28,6 +28,7 @@ TODO
 	    image capturing thing that has to flip the image (maybe more trouble than it's worth just
 	    for that) but it may turn out useful in the future
 	- audio along with the video
+	- show current palette and range on the side
 	- rarely but does happen the video gets stuck while camera is still connected (shutter commands still works)
 		why what how?
 	- the libinficam part should work on linux/windows with small work
