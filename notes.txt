@@ -24,6 +24,9 @@ TODO
 	- audio recording along with video
 	- setting for resolution of pictures, video
 	- don't clear stuff like disconnected message if not connected
+	- we can flip the image upside down via the vertex shader, might or might not be useful for the
+	    image capturing thing that has to flip the image (maybe more trouble than it's worth just
+	    for that) but it may turn out useful in the future
 
 Things i learned about the protocol these thermal cameras talk:
 	last 4 lines of the frame have parameters (note that the pointer math is in steps of 16 bytes because unsigned short)
@@ -177,3 +180,20 @@ Some maybe useful trivia:
 				showMessage(R.string.permdenied_cam, true);
 			}
 		});*/
+
+On the stackoverflow that inspired the cubic interpolation shader (
+	https://stackoverflow.com/questions/13501081/efficient-bicubic-filtering-code-in-glsl )
+	the idea of applying the same concept with Catmull-Rom interpolation is mentioned, but this
+	does not work for reasons I only partially understand, i've played around with it though and
+	thus I have implemented the basis functions for that, maybe it's useful some day:
+		vec4 cmspline(float x) { // See: DOI:10.3390/mca21030033
+			float x2 = x * x;
+			float x3 = x2 * x;
+			float a = 1.0;
+			return vec4(
+				(-x + 2.0 * x2 - x3) * a,
+				2.0 + (a - 6.0) * x2 + (4.0 - a) * x3,
+				x * a + (6.0 - 2.0 * a) * x2 - (4.0 - a) * x3,
+				(-x2 + x3) * a
+			) * 0.5;
+		}

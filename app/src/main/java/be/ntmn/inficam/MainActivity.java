@@ -134,7 +134,7 @@ public class MainActivity extends BaseActivity {
 		overlay = new Overlay(overlaySurface, cameraView.getWidth(), cameraView.getHeight());
 
 		// TODO this is just test for interpolation
-		SurfaceMuxer.InputSurface test = new SurfaceMuxer.InputSurface(surfaceMuxer, false);
+		SurfaceMuxer.InputSurface test = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
 		test.getSurfaceTexture().setDefaultBufferSize(8, 6);
 		Canvas tcvs = test.getSurface().lockCanvas(null);
 		Paint p = new Paint();

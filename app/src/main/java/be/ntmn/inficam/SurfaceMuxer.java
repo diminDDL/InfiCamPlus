@@ -242,12 +242,14 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		GLES20.glUniform1i(th, 0); /* Tells the shader what texture to use. */
 
 		// TODO temporary for test
-		int isc = GLES20.glGetAttribLocation(hProgram, "invScreenSize");
-		GLES20.glVertexAttrib2f(isc, 1.0f, 1.0f);
+		int isc = GLES20.glGetUniformLocation(hProgram, "texSize");
+		GLES20.glUniform2f(isc, 8.0f, 6.0f);
 
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		//GLES20.glBlendColor(1, 1, 1, 0.1f);
 		for (InputSurface is : inputSurfaces) {
+
+			// TODO does the alpha belong here? depends whether we do something with the commented crap i guess
 			GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 			/*if (inputSurfaces.indexOf(is) == 1)
 				GLES20.glBlendFunc(GLES20.GL_CONSTANT_ALPHA, GLES20.GL_ONE_MINUS_CONSTANT_ALPHA);*/
