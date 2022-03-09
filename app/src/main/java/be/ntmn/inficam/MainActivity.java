@@ -56,21 +56,21 @@ public class MainActivity extends BaseActivity {
 						infiCam.connect(conn.getFileDescriptor());
 						infiCam.startStream();
 						handler.postDelayed(() -> infiCam.calibrate(), 1000);
-						messageView.showMessage(R.string.msg_connected, false);
+						messageView.showMessage(R.string.msg_connected);
 					} catch (Exception e) {
 						usbConnection.close();
-						messageView.showMessage(getString(R.string.msg_connect_failed), true);
+						messageView.setMessage(getString(R.string.msg_connect_failed));
 					}
 				}
 
 				@Override
 				public void onPermissionDenied(UsbDevice dev) {
-					messageView.showMessage(R.string.msg_permdenied_usb, true);
+					messageView.setMessage(R.string.msg_permdenied_usb);
 				}
 
 				@Override
 				public void onFailure(UsbDevice dev) {
-					messageView.showMessage(R.string.msg_connect_failed, true);
+					messageView.setMessage(R.string.msg_connect_failed);
 				}
 			});
 		}
@@ -155,7 +155,7 @@ public class MainActivity extends BaseActivity {
 		askPermission(Manifest.permission.CAMERA, granted -> {
 			if (granted)
 				usbMonitor.start(this);
-			else messageView.showMessage(R.string.msg_permdenied_cam, true);
+			else messageView.setMessage(R.string.msg_permdenied_cam);
 		});
 
 		cameraView.setOnClickListener(view -> {
@@ -166,7 +166,7 @@ public class MainActivity extends BaseActivity {
 					if (granted) {
 						usbMonitor.start(this);
 						usbMonitor.scan();
-					} else messageView.showMessage(R.string.msg_permdenied_cam, true);
+					} else messageView.setMessage(R.string.msg_permdenied_cam);
 				});
 				return;
 			}
@@ -187,7 +187,7 @@ public class MainActivity extends BaseActivity {
 			if (++currentPalette == Palette.palettes.length)
 				currentPalette = 0;
 			infiCam.setPalette(Palette.palettes[currentPalette].getData());
-			messageView.showMessage(Palette.palettes[currentPalette].name, false);
+			messageView.showMessage(Palette.palettes[currentPalette].name);
 		});
 
 		dialogBackground = findViewById(R.id.dialogBackground);
@@ -212,8 +212,8 @@ public class MainActivity extends BaseActivity {
 		if (checkPermission(Manifest.permission.CAMERA)) {
 			if (!usbPermissionAsked || usbPermissionAcquired)
 				usbMonitor.scan();
-			else messageView.showMessage(R.string.msg_permdenied_usb, true);
-		} else messageView.showMessage(R.string.msg_permdenied_cam, true);
+			else messageView.setMessage(R.string.msg_permdenied_usb);
+		} else messageView.setMessage(R.string.msg_permdenied_cam);
 	}
 
 	public void onFrame() {
@@ -238,7 +238,7 @@ public class MainActivity extends BaseActivity {
 			Util.writePNG(this, bitmap);
 			overlay.setSize(cameraView.getWidth(), cameraView.getHeight());
 			takePic = false;
-			messageView.showMessage(getString(R.string.msg_captured), false);
+			messageView.shortMessage(getString(R.string.msg_captured));
 		}
 
 		/* Now we allow another frame to come in */
@@ -265,7 +265,7 @@ public class MainActivity extends BaseActivity {
 			usbConnection.close();
 		usbConnection = null;
 		device = null;
-		messageView.showMessage(R.string.msg_disconnected, true);
+		messageView.setMessage(R.string.msg_disconnected);
 	}
 
 	@Override
