@@ -15,9 +15,9 @@ import java.nio.IntBuffer;
 import be.ntmn.libinficam.InfiCam;
 
 public abstract class Palette {
-	public String name;
+	public int name;
 
-	Palette(String name) {
+	Palette(int name) {
 		this.name = name;
 	}
 
@@ -33,35 +33,35 @@ public abstract class Palette {
 
 	abstract Pixel func(double x);
 
-	static public Palette WhiteHot = new Palette("White Hot") {
+	static public Palette WhiteHot = new Palette(R.string.palette_whitehot) {
 		@Override
 		public Pixel func(double x) {
 			return new Pixel(x, x, x);
 		}
 	};
 
-	static public Palette BlackHot = new Palette("Black Hot") {
+	static public Palette BlackHot = new Palette(R.string.palette_blackhot) {
 		@Override
 		public Pixel func(double x) {
 			return new Pixel(1 - x, 1 - x, 1 - x);
 		}
 	};
 
-	static public Palette Ironbow = new Palette("Ironbow") {
+	static public Palette Ironbow = new Palette(R.string.palette_ironbow) {
 		@Override
 		public Pixel func(double x) {
 			return new Pixel(sqrt(x), pow(x, 3), max(0.0, sin(2.0 * PI * x)));
 		}
 	};
 
-	static public Palette Rainbow = new Palette("Rainbow") {
+	static public Palette Rainbow = new Palette(R.string.palette_rainbow) {
 		@Override
 		Pixel func(double x) {
 			return hsvPixel((1 - x) * 360.0, 1, 1);
 		}
 	};
 
-	static public Palette Rainbow2 = new Palette("Rainbow 2") {
+	static public Palette Rainbow2 = new Palette(R.string.palette_rainbow2) {
 		@Override
 		Pixel func(double x) {
 			return hsvPixel((1 - x) * 270.0, 1, 1);
