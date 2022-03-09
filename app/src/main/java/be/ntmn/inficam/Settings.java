@@ -77,6 +77,12 @@ public class Settings extends LinearLayout {
 				void onSet(boolean value) {
 					act.setFullscreen(value);
 				}
+			},
+			new SettingBool("hide_navigation", R.string.set_hide_navigation, true) {
+				@Override
+				void onSet(boolean value) {
+					act.setHideNavigation(value);
+				}
 			}
 	};
 

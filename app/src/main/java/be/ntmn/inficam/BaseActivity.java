@@ -20,6 +20,7 @@ public class BaseActivity extends AppCompatActivity {
 	public final Handler handler = new Handler();
 	ArrayList<PermissionCallback> permissionCallbacks = new ArrayList<>();
 	boolean fullscreen = false; /* If you want to change the default, look at Settings class. */
+	boolean hideNav = false;
 	final static long hideDelay = 2500;
 
 	interface PermissionCallback {
@@ -52,21 +53,18 @@ public class BaseActivity extends AppCompatActivity {
 	}
 
 	void deferHide() {
-		if (fullscreen) {
-			handler.removeCallbacks(hideUI);
-			handler.postDelayed(hideUI, hideDelay);
-		}
+		handler.removeCallbacks(hideUI);
+		handler.postDelayed(hideUI, hideDelay);
 	}
 
 	final Runnable hideUI = () -> {
 		View dv = getWindow().getDecorView();
 		/* Flags to go properly fullscreen. */
-		int uiOptions = View.SYSTEM_UI_FLAG_IMMERSIVE
-				//| View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-				//| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-				//| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-				| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-				| View.SYSTEM_UI_FLAG_FULLSCREEN;
+		int uiOptions = 0;
+		if (fullscreen)
+			uiOptions |= View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE;
+		if (hideNav)
+			uiOptions |= View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE;
 		dv.setSystemUiVisibility(uiOptions);
 	};
 
@@ -113,19 +111,22 @@ public class BaseActivity extends AppCompatActivity {
 
 	/* Called by settings, has to be called before fullscreen starts working. */
 	public void setFullscreen(boolean value) {
-		View dv = getWindow().getDecorView();
-		if (value) {
-			/*int uiOptions = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-					| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-					| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;*/
-			int uiOptions = 0;
+		fullscreen = value;
+		deferHide();
+		if (!value) {
+			View dv = getWindow().getDecorView();
+			int uiOptions = dv.getSystemUiVisibility() & ~View.SYSTEM_UI_FLAG_FULLSCREEN;
 			dv.setSystemUiVisibility(uiOptions);
-			fullscreen = true;
-			deferHide();
-		} else {
-			fullscreen = false;
-			handler.removeCallbacks(hideUI);
-			dv.setSystemUiVisibility(0);
+		}
+	}
+
+	public void setHideNavigation(boolean value) {
+		hideNav = value;
+		deferHide();
+		if (!value) {
+			View dv = getWindow().getDecorView();
+			int uiOptions = dv.getSystemUiVisibility() & ~View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+			dv.setSystemUiVisibility(uiOptions);
 		}
 	}
 }
