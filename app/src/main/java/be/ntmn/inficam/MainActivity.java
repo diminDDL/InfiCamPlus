@@ -27,7 +27,7 @@ public class MainActivity extends BaseActivity {
 	boolean usbPermissionAsked = false, usbPermissionAcquired = false;
 	InfiCam infiCam = new InfiCam();
 	Overlay overlay;
-	SurfaceMuxer surfaceMuxer = new SurfaceMuxer();
+	SurfaceMuxer surfaceMuxer;
 	SurfaceMuxer.OutputSurface outputSurface;
 	SurfaceMuxer.OutputSurface recordSurface;
 	SurfaceMuxer.InputSurface inputSurface; /* InfiCam class writes to this. */
@@ -114,6 +114,7 @@ public class MainActivity extends BaseActivity {
 		setContentView(R.layout.activity_main);
 		cameraView = findViewById(R.id.cameraView);
 		messageView = findViewById(R.id.message);
+		surfaceMuxer = new SurfaceMuxer(this);
 
 		/* Create and set up the InputSurface for thermal image. */
 		inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, true);

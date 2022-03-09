@@ -10,9 +10,15 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -49,5 +55,18 @@ public class Util {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	static String readStringAsset(Context ctx, String filename) throws IOException {
+		InputStream input = ctx.getAssets().open(filename);
+		byte[] buffer = new byte[4096];
+		ByteArrayOutputStream bas = new ByteArrayOutputStream();
+		int len;
+		while ((len = input.read(buffer)) >= 0) {
+			bas.write(buffer, 0, len);
+		}
+		input.close();
+		bas.close();
+		return bas.toString();
 	}
 }

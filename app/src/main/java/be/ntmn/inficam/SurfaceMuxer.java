@@ -1,5 +1,6 @@
 package be.ntmn.inficam;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
@@ -13,6 +14,7 @@ import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.view.Surface;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -69,101 +71,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	int hProgram;
 	public ArrayList<InputSurface> inputSurfaces = new ArrayList<>();
 	public ArrayList<OutputSurface> outputSurfaces = new ArrayList<>();
-
-	final String vss = "attribute vec2 vPosition;\n" +
-			"attribute vec2 vTexCoord;\n" +
-			"varying vec2 texCoord;\n" +
-			"void main() {\n" +
-			"  texCoord = vTexCoord;\n" +
-			"  gl_Position = vec4 ( vPosition.x, vPosition.y, 0.0, 1.0 );\n" +
-			"}";
-
-	final String fss = "#extension GL_OES_EGL_image_external : require\n" +
-			"precision mediump float;\n" +
-			"uniform samplerExternalOES sTexture;\n" +
-			"varying vec2 texCoord;\n" +
-			"void main() {\n" +
-			"  gl_FragColor = texture2D(sTexture,texCoord);\n" +
-			"}";
-
-	final String fss2 = "#extension GL_OES_EGL_image_external : require\n" +
-			"precision mediump float;\n" +
-			"varying vec2 texCoord;\n" +
-			"uniform samplerExternalOES sTexture;\n" +
-			"uniform vec2 invScreenSize;\n" +
-			"\n" +
-			"float w0(float a)\n" +
-			"{\n" +
-			"    return (1.0/6.0)*(a*(a*(-a + 3.0) - 3.0) + 1.0);\n" +
-			"}\n" +
-			"\n" +
-			"float w1(float a)\n" +
-			"{\n" +
-			"    return (1.0/6.0)*(a*a*(3.0*a - 6.0) + 4.0);\n" +
-			"}\n" +
-			"\n" +
-			"float w2(float a)\n" +
-			"{\n" +
-			"    return (1.0/6.0)*(a*(a*(-3.0*a + 3.0) + 3.0) + 1.0);\n" +
-			"}\n" +
-			"\n" +
-			"float w3(float a)\n" +
-			"{\n" +
-			"    return (1.0/6.0)*(a*a*a);\n" +
-			"}\n" +
-			"\n" +
-			"// g0 and g1 are the two amplitude functions\n" +
-			"float g0(float a)\n" +
-			"{\n" +
-			"    return w0(a) + w1(a);\n" +
-			"}\n" +
-			"\n" +
-			"float g1(float a)\n" +
-			"{\n" +
-			"    return w2(a) + w3(a);\n" +
-			"}\n" +
-			"\n" +
-			"// h0 and h1 are the two offset functions\n" +
-			"float h0(float a)\n" +
-			"{\n" +
-			"    return -1.0 + w1(a) / (w0(a) + w1(a));\n" +
-			"}\n" +
-			"\n" +
-			"float h1(float a)\n" +
-			"{\n" +
-			"    return 1.0 + w3(a) / (w2(a) + w3(a));\n" +
-			"}\n" +
-			"\n" +
-			"vec4 texture2D_bicubic(sampler2D tex, vec2 uv, vec2 res)\n" +
-			"{\n" +
-			"\tuv = uv*res + 0.5;\n" +
-			"\tvec2 iuv = floor( uv );\n" +
-			"\tvec2 fuv = fract( uv );\n" +
-			"\n" +
-			"    float g0x = g0(fuv.x);\n" +
-			"    float g1x = g1(fuv.x);\n" +
-			"    float h0x = h0(fuv.x);\n" +
-			"    float h1x = h1(fuv.x);\n" +
-			"    float h0y = h0(fuv.y);\n" +
-			"    float h1y = h1(fuv.y);\n" +
-			"\n" +
-			"\tvec2 p0 = (vec2(iuv.x + h0x, iuv.y + h0y) - 0.5) / res;\n" +
-			"\tvec2 p1 = (vec2(iuv.x + h1x, iuv.y + h0y) - 0.5) / res;\n" +
-			"\tvec2 p2 = (vec2(iuv.x + h0x, iuv.y + h1y) - 0.5) / res;\n" +
-			"\tvec2 p3 = (vec2(iuv.x + h1x, iuv.y + h1y) - 0.5) / res;\n" +
-			"\t\n" +
-			"    return g0(fuv.y) * (g0x * texture2D(tex, p0)  +\n" +
-			"                        g1x * texture2D(tex, p1)) +\n" +
-			"           g1(fuv.y) * (g0x * texture2D(tex, p2)  +\n" +
-			"                        g1x * texture2D(tex, p3));\n" +
-			"}" +
-			"void main() {\n" +
-			//"  gl_FragColor = texture2D(sTexture,texCoord);\n" +
-			// gl_FragCoord.xy is a thing apparently
-			"vec2 p = texCoord / vec2(1.0, 1.0);" +
-			"vec2 uv = p * 1.0;" +
-			"    gl_FragColor = texture2D_bicubic(sTexture, uv, vec2(256.0, 192.0));" +
-			"}";
+	String vss, fss;
 
 	public static class InputSurface {
 		SurfaceMuxer surfaceMuxer;
@@ -304,7 +212,14 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		}
 	}
 
-	public SurfaceMuxer () {
+	public SurfaceMuxer(Context ctx) {
+		try {
+			vss = Util.readStringAsset(ctx, "vshader.glsl");
+			fss = Util.readStringAsset(ctx, "fshader.glsl");
+		} catch (IOException e) {
+			/* Crash to inform the user I done did a stupid. */
+			throw new RuntimeException(e);
+		}
 		init();
 	}
 
