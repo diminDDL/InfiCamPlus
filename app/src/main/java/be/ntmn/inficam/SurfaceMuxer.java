@@ -78,12 +78,59 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			"  gl_Position = vec4 ( vPosition.x, vPosition.y, 0.0, 1.0 );\n" +
 			"}";
 
-	final String fss = "#extension GL_OES_EGL_image_external : require\n" +
+	final String fss2 = "#extension GL_OES_EGL_image_external : require\n" +
 			"precision mediump float;\n" +
 			"uniform samplerExternalOES sTexture;\n" +
 			"varying vec2 texCoord;\n" +
 			"void main() {\n" +
 			"  gl_FragColor = texture2D(sTexture,texCoord);\n" +
+			"}";
+
+	final String fss = "#extension GL_OES_EGL_image_external : require\n" +
+			"precision mediump float;\n" +
+			"varying vec2 texCoord;\n" +
+			"uniform samplerExternalOES sTexture;\n" +
+			"uniform vec2 invScreenSize;\n" +
+			"\n" +
+			"vec4 cubic(float v){\n" +
+			"    vec4 n = vec4(1.0, 2.0, 3.0, 4.0) - v;\n" +
+			"    vec4 s = n * n * n;\n" +
+			"    float x = s.x;\n" +
+			"    float y = s.y - 4.0 * s.x;\n" +
+			"    float z = s.z - 4.0 * s.y + 6.0 * s.x;\n" +
+			"    float w = 6.0 - x - y - z;\n" +
+			"    return vec4(x, y, z, w) * (1.0/6.0);\n" +
+			"}" +
+			"" +
+			"void main() {\n" +
+			"    vec2 texCoord2 = texCoord;" +
+			"    float fx = fract(texCoord2.x);\n" +
+			"    float fy = fract(texCoord2.y);\n" +
+			"    texCoord2.x -= fx;\n" +
+			"    texCoord2.y -= fy;\n" +
+			"\n" +
+			"    vec4 xcubic = cubic(fx);\n" +
+			"    vec4 ycubic = cubic(fy);\n" +
+			"\n" +
+			"    vec4 c = vec4(texCoord2.x - 0.5, texCoord2.x + 1.5, texCoord2.y -\n" +
+			"0.5, texCoord2.y + 1.5);\n" +
+			"    vec4 s = vec4(xcubic.x + xcubic.y, xcubic.z + xcubic.w, ycubic.x +\n" +
+			"ycubic.y, ycubic.z + ycubic.w);\n" +
+			"    vec4 offset = c + vec4(xcubic.y, xcubic.w, ycubic.y, ycubic.w) / s;\n" +
+			"\n" +
+			"vec2 nv2 = vec2(1.0 / 1.0, 1.0 / 1.0);" +
+			"    offset *= nv2.xxyy;" +
+			"    vec4 sample0 = texture2D(sTexture, vec2(offset.x, offset.z));\n" +
+			"    vec4 sample1 = texture2D(sTexture, vec2(offset.y, offset.z));\n" +
+			"    vec4 sample2 = texture2D(sTexture, vec2(offset.x, offset.w));\n" +
+			"    vec4 sample3 = texture2D(sTexture, vec2(offset.y, offset.w));\n" +
+			"\n" +
+			"    float sx = s.x / (s.x + s.y);\n" +
+			"    float sy = s.z / (s.z + s.w);\n" +
+			"\n" +
+			"    gl_FragColor = mix(\n" +
+			"        mix(sample3, sample2, sx),\n" +
+			"        mix(sample1, sample0, sx), sy);" +
 			"}";
 
 	public static class InputSurface {
@@ -245,6 +292,10 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		GLES20.glEnableVertexAttribArray(ph);
 		GLES20.glEnableVertexAttribArray(tch);
 		GLES20.glUniform1i(th, 0); /* Tells the shader what texture to use. */
+
+		// TODO temporary for test
+		int isc = GLES20.glGetAttribLocation(hProgram, "invScreenSize");
+		GLES20.glVertexAttrib2f(isc, 1.0f, 1.0f);
 
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		//GLES20.glBlendColor(1, 1, 1, 0.1f);
