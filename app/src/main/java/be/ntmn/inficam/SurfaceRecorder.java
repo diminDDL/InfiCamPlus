@@ -23,7 +23,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 // TODO remember to try MediaRecorder.AudioSource.CAMCORDER first, then default/mic, it's allegedly better
-public class SurfaceRecorder extends Thread {
+public class SurfaceRecorder implements Runnable {
 	static final String MIME_TYPE = "video/avc"; /* H.264 */
 	static final int FRAME_RATE = 25;
 	static final int IFRAME_INTERVAL = 10; /* In seconds. */
@@ -34,12 +34,13 @@ public class SurfaceRecorder extends Thread {
 	MediaCodec videoEncoder;
 	MediaMuxer muxer;
 	int videoTrack;
-	boolean muxerStarted;
 	MediaCodec.BufferInfo bufferInfo;
-	volatile boolean endOfStream = false;
+	volatile boolean endSignal = false; /* Volatile is important because threading. */
+	Thread thread;
 
-	public SurfaceRecorder(Context ctx, int width, int height) throws IOException {
-		super();
+	public Surface startRecording(Context ctx, int width, int height) throws IOException {
+		/* Just restart if started to prevent disasters. */
+		stopRecording();
 
 		/* Prepare the format etc. */
 		bufferInfo = new MediaCodec.BufferInfo();
@@ -53,7 +54,6 @@ public class SurfaceRecorder extends Thread {
 		videoEncoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
 		inputSurface = videoEncoder.createInputSurface();
 		videoTrack = -1;
-		muxerStarted = false; /* The muxer starts when we get the actual video format later. */
 
 		/* Deal with actually getting a file and opening the muxer. */
 		@SuppressLint("SimpleDateFormat")
@@ -82,23 +82,20 @@ public class SurfaceRecorder extends Thread {
 			}
 			muxer = new MediaMuxer(file.getPath(), MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
 		}
-	}
-
-	public Surface getInputSurface() {
+		videoEncoder.start();
+		thread = new Thread(this);
+		thread.start();
 		return inputSurface;
 	}
 
-	public void startRecording() {
-		videoEncoder.start(); // TODO maybe make this only happen on stream start
-		start();
-	}
-
+	/* Safe to call when stopped. */
 	public void stopRecording() {
-		synchronized (this) {
-			endOfStream = true;
-		}
 		try {
-			join();
+			if (thread != null) {
+				endSignal = true;
+				thread.join();
+				thread = null;
+			}
 		} catch (InterruptedException e) {
 			e.printStackTrace(); /* This should never happen. */
 		}
@@ -127,30 +124,27 @@ public class SurfaceRecorder extends Thread {
 			int encoderStatus = videoEncoder.dequeueOutputBuffer(bufferInfo, DEQUEUE_TIMEOUT);
 			if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
 				/* Should happen exactly once, before output buffer given. */
-				if (muxerStarted)
-					throw new RuntimeException("Format changed twice.");
 				MediaFormat format = videoEncoder.getOutputFormat();
 				videoTrack = muxer.addTrack(format);
 				muxer.start();
-				muxerStarted = true;
 			} else if (encoderStatus >= 0) {
+				ByteBuffer encodedData = videoEncoder.getOutputBuffer(encoderStatus);
 				if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0)
 					bufferInfo.size = 0;
-				ByteBuffer encodedData = videoEncoder.getOutputBuffer(encoderStatus);
-				if (bufferInfo.size != 0) {
-					if (!muxerStarted)
-						throw new RuntimeException("Muxer hasn't started.");
+				if (bufferInfo.size != 0)
 					muxer.writeSampleData(videoTrack, encodedData, bufferInfo);
-				}
 				videoEncoder.releaseOutputBuffer(encoderStatus, false);
+				if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0)
+					break;
 			} /* Most likely MediaCodec.INFO_TRY_AGAIN_LATER. */
-			if (endOfStream) {
-				/* Note to self, I read that a more generic way to signal the stream end is:
-				 *   encode((byte[]) null, 0, presentationTime);
-				 * The usefulness is that it works both on audio and video streams.
-				 */
+
+			/* Note to self, I read that a more generic way to signal the stream end is:
+			 *   encode((byte[]) null, 0, presentationTime);
+			 * The usefulness is that it works both on audio and video streams.
+			 */
+			if (endSignal) {
+				endSignal = false;
 				videoEncoder.signalEndOfInputStream();
-				break;
 			}
 		}
 	}

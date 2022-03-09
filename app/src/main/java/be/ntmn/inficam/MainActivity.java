@@ -2,6 +2,7 @@ package be.ntmn.inficam;
 
 import android.Manifest;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.Bundle;
@@ -13,6 +14,8 @@ import android.view.View;
 import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
+
+import java.io.IOException;
 
 import be.ntmn.libinficam.InfiCam;
 
@@ -37,7 +40,7 @@ public class MainActivity extends BaseActivity {
 	boolean takePic = false;
 	volatile boolean disconnecting = false;
 	int currentPalette = 3;
-	SurfaceRecorder recorder;
+	SurfaceRecorder recorder = new SurfaceRecorder();
 
 	ViewGroup dialogBackground;
 	View dialogSettings;
@@ -194,26 +197,7 @@ public class MainActivity extends BaseActivity {
 		});
 
 		ImageButton buttonVideo = findViewById(R.id.buttonVideo);
-		buttonVideo.setOnClickListener(view -> {
-			try {
-				if (recorder == null) {
-					recorder = new SurfaceRecorder(this, picWidth, picHeight);
-					Surface rsurface = recorder.getInputSurface();
-					recordSurface = new SurfaceMuxer.OutputSurface(surfaceMuxer, rsurface, true);
-					recordSurface.setSize(picWidth, picHeight);
-					surfaceMuxer.outputSurfaces.add(recordSurface);
-					recorder.startRecording();
-					// TODO change rec button color
-				} else {
-					recorder.stopRecording(); // TODO recorder should wait for it's thread to finish
-					surfaceMuxer.outputSurfaces.remove(recordSurface);
-					recorder = null;
-					// TODO deinit properly
-				}
-			} catch (Exception e) {
-				messageView.showMessage(e.getMessage());
-			}
-		});
+		buttonVideo.setOnClickListener(view -> toggleRecording());
 
 		dialogBackground = findViewById(R.id.dialogBackground);
 		dialogBackground.setOnClickListener(view -> dialogBackground.setVisibility(View.GONE));
@@ -289,6 +273,30 @@ public class MainActivity extends BaseActivity {
 		usbConnection = null;
 		device = null;
 		messageView.setMessage(R.string.msg_disconnected);
+	}
+
+	void toggleRecording() {
+		if (recordSurface == null) {
+			try {
+				Surface rsurface = recorder.startRecording(this, picWidth, picHeight);
+				recordSurface = new SurfaceMuxer.OutputSurface(surfaceMuxer, rsurface, false);
+				recordSurface.setSize(picWidth, picHeight);
+				surfaceMuxer.outputSurfaces.add(recordSurface);
+				ImageButton buttonVideo = findViewById(R.id.buttonVideo);
+				buttonVideo.setColorFilter(Color.RED);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} else stopRecording();
+	}
+
+	void stopRecording() {
+		ImageButton buttonVideo = findViewById(R.id.buttonVideo);
+		buttonVideo.clearColorFilter();
+		recorder.stopRecording();
+		surfaceMuxer.outputSurfaces.remove(recordSurface);
+		recordSurface.release();
+		recordSurface = null;
 	}
 
 	@Override
