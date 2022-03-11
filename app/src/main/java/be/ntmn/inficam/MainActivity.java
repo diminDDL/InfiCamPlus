@@ -241,6 +241,8 @@ public class MainActivity extends BaseActivity {
 			else messageView.setMessage(R.string.msg_permdenied_usb);
 		} else messageView.setMessage(R.string.msg_permdenied_cam);
 
+		//inputSurface.rotate = true;
+		//inputSurface.mirror = true;
 		/*videoSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_LINEAR);
 		NormalCamera ct = new NormalCamera() {
 			@Override

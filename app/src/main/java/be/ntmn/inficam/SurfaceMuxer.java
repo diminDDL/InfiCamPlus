@@ -70,7 +70,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	EGLDisplay eglDisplay = EGL14.EGL_NO_DISPLAY;
 	EGLContext eglContext = EGL14.EGL_NO_CONTEXT;
 	EGLConfig eglConfig;
-	FloatBuffer pVertex;
+	FloatBuffer[][] pVertex = new FloatBuffer[2][2];
 	FloatBuffer pTexCoord;
 	int hProgram, hProgram_cubic;
 	public ArrayList<InputSurface> inputSurfaces = new ArrayList<>();
@@ -84,6 +84,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		int[] textures = new int[1];
 		boolean initialized = false;
 		int imode, width, height;
+		boolean rotate = false, mirror = false;
 
 		public InputSurface(SurfaceMuxer muxer, int imode) {
 			surfaceMuxer = muxer;
@@ -248,7 +249,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 				GLES20.glUniform2f(isc, is.width, is.height);
 			}
 			int ph = GLES20.glGetAttribLocation(program, "vPosition");
-			GLES20.glVertexAttribPointer(ph, 2, GLES20.GL_FLOAT, false, 4 * 2, pVertex);
+			GLES20.glVertexAttribPointer(ph, 2, GLES20.GL_FLOAT, false, 4 * 2,
+					pVertex[is.rotate ? 1 : 0][is.mirror ? 1 : 0]);
 			GLES20.glEnableVertexAttribArray(ph);
 			int tch = GLES20.glGetAttribLocation(program, "vTexCoord");
 			GLES20.glVertexAttribPointer(tch, 2, GLES20.GL_FLOAT, false, 4 * 2, pTexCoord);
@@ -353,11 +355,36 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 
 		/* Initialize the vertexes and textures. */
-		float[] vtmp = { 1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f };
 		float[] ttmp = { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f };
-		pVertex = ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
-		pVertex.put(vtmp);
-		pVertex.position(0);
+		pVertex[0][0] =
+				ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+		pVertex[0][1] =
+				ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+		pVertex[1][0] =
+				ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+		pVertex[1][1] =
+				ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+
+		/* Normal.*/
+		float[] vtmp = new float[] { 1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f };
+		pVertex[0][0].put(vtmp);
+		pVertex[0][0].position(0);
+
+		/* Mirrored. */
+		vtmp = new float[] { -1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f };
+		pVertex[0][1].put(vtmp);
+		pVertex[0][1].position(0);
+
+		/* Upside down. */
+		vtmp = new float[] { -1.0f, 1.0f, 1.0f, 1.0f, -1.0f, -1.0f, 1.0f, -1.0f };
+		pVertex[1][0].put(vtmp);
+		pVertex[1][0].position(0);
+
+		/* Upside down and mirrored. */
+		vtmp = new float[] { 1.0f, 1.0f, -1.0f, 1.0f, 1.0f, -1.0f, -1.0f, -1.0f };
+		pVertex[1][1].put(vtmp);
+		pVertex[1][1].position(0);
+
 		pTexCoord = ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
 		pTexCoord.put(ttmp);
 		pTexCoord.position(0);
