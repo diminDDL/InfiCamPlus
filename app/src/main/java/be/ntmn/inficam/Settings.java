@@ -10,9 +10,11 @@ import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatSeekBar;
 
 /* TODO To add profiles i want to just make a function to load and store all the sharedprefs to a
  *   JSON array that is stored in sharedprefs. Should palette and termometry parameters be part of
@@ -48,11 +50,11 @@ public class Settings extends LinearLayout {
 
 		@Override
 		void init(Settings set) {
-			box = new CheckBox(set.getContext());
+			box = new CheckBox(getContext());
 			box.setText(res);
 			box.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
 					ViewGroup.LayoutParams.WRAP_CONTENT));
-			box.setOnCheckedChangeListener((compoundButton, b) -> {
+			box.setOnCheckedChangeListener((view, b) -> {
 				ed.putBoolean(name, b);
 				ed.commit();
 				onSet(b);
@@ -84,19 +86,19 @@ public class Settings extends LinearLayout {
 
 		@Override
 		void init(Settings set) {
-			rg = new RadioGroup(set.getContext());
-			TextView title = new TextView(set.getContext());
+			rg = new RadioGroup(getContext());
+			TextView title = new TextView(getContext());
 			title.setText(res);
 			rg.addView(title);
 			rg.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
 					ViewGroup.LayoutParams.WRAP_CONTENT));
-			rg.setOnCheckedChangeListener((compoundButton, i) -> {
+			rg.setOnCheckedChangeListener((view, i) -> {
 				ed.putInt(name, i - 1);
 				ed.commit();
 				onSet(i - 1);
 			});
 			for (int item : items) {
-				RadioButton rb = new RadioButton(set.getContext());
+				RadioButton rb = new RadioButton(getContext());
 				rb.setText(item);
 				rb.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
 						ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -116,7 +118,67 @@ public class Settings extends LinearLayout {
 		abstract void onSet(int value);
 	}
 
+	abstract class SettingSlider extends Setting {
+		int def, min, max, step;
+		Slider slider;
+		TextView title;
+
+		SettingSlider(String name, int res, int def, int min, int max, int step) {
+			super(name, res);
+			this.def = def;
+			this.min = min;
+			this.max = max;
+			this.step = step;
+		}
+
+		@Override
+		void init(Settings set) {
+			title = new TextView(getContext());
+			title.setText(getContext().getString(res, def));
+			set.addView(title);
+			slider = new Slider(getContext());
+			slider.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+					ViewGroup.LayoutParams.WRAP_CONTENT));
+			slider.setMin(min);
+			slider.setMax(max);
+			slider.setStep(step);
+			slider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+				@Override
+				public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+					ed.putInt(name, i);
+					ed.commit();
+					title.setText(getContext().getString(res, i));
+					onSet(i);
+				}
+
+				@Override
+				public void onStartTrackingTouch(SeekBar seekBar) { /* Empty. */ }
+
+				@Override
+				public void onStopTrackingTouch(SeekBar seekBar) { /* Empty. */ }
+			});
+			slider.setVisibility(VISIBLE);
+			set.addView(slider);
+		}
+
+		@Override
+		void load() {
+			int value = sp.getInt(name, def);
+			slider.setProgress(value);
+			title.setText(getContext().getString(res, value));
+			onSet(value);
+		}
+
+		abstract void onSet(int i);
+	}
+
 	Setting[] settings = {
+			new SettingSlider("shutinterval", R.string.set_shutinterval, 60, 0, 240, 10) {
+				@Override
+				void onSet(int i) {
+
+				}
+			},
 			new SettingRadio("imode", R.string.set_imode, 2, new int[] {
 					R.string.imode_nearest,
 					R.string.imode_linear,
@@ -174,6 +236,7 @@ public class Settings extends LinearLayout {
 		this.act = act;
 		sp = act.getSharedPreferences(SP_NAME, MODE_PRIVATE);
 		ed = sp.edit();
+		removeAllViews();
 		for (Setting setting : settings)
 			setting.init(this);
 	}

@@ -28,6 +28,7 @@
 	<string name="set_fullscreen">Full-screen mode</string>
 	<string name="set_hide_navigation">Hide navigation</string>
 	<string name="set_keep_screen_on">Keep screen on</string>
+	<string name="set_shutinterval">Shutter interval (%d seconds)</string>
 
 	<string name="imode_nearest">Nearest</string>
 	<string name="imode_linear">Linear</string>
