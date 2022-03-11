@@ -21,6 +21,10 @@ vec4 cubic(float x) {
  *   by EGL. This is not my idea, I pieced it together from things on StackOverflow and various
  *   other sources, most notably:
  *     https://stackoverflow.com/questions/13501081/efficient-bicubic-filtering-code-in-glsl
+ * Apparently on some phones passing the samplerExternalOES as a parameter of sampler2D type fails
+ *   because the shader compiler refuses to see the function as a fitting overload (casting didn't
+ *   seem to work either) and on other phones having the parameter be typed samplerExternalOES
+ *   fails for whatever reason, so i just dumped it all in main().
  */
 void main(void) {
 	vec2 uv = texCoord * texSize + 0.5; /* Center of the closest texel in bitmap coords. */
