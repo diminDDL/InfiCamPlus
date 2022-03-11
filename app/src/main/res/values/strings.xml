@@ -32,16 +32,8 @@
 	<string name="set_shutinterval">Shutter interval (%d seconds)</string>
 	<string name="set_shutinterval_never">Shutter interval (never)</string>
 	<string name="set_firstshutdelay">Initial shutter delay (%d ms)</string>
-
-	<string name="imode_nearest">Nearest</string>
-	<string name="imode_linear">Linear</string>
-	<string name="imode_cubic">Bicubic</string>
-
-	<string name="palette_whitehot">White Hot</string>
-	<string name="palette_blackhot">Black Hot</string>
-	<string name="palette_ironbow">Ironbow</string>
-	<string name="palette_rainbow">Rainbow</string>
-	<string name="palette_rainbow2">Rainbow 2</string>
+	<string name="set_rotate180">Turn image upside down</string>
+	<string name="set_mirror">Mirror image</string>
 
 	<string name="set_emissivity">Emissivity (%.2f)</string>
 	<string name="set_temp_reflected">Reflected temperature (%.1f°C)</string>
@@ -53,4 +45,14 @@
 	<string name="set_range_120">-20 - 120°C</string>
 	<string name="set_range_400">120-400°C</string>
 	<string name="set_palette">Palette</string>
+
+	<string name="imode_nearest">Nearest</string>
+	<string name="imode_linear">Linear</string>
+	<string name="imode_cubic">Bicubic</string>
+
+	<string name="palette_whitehot">White Hot</string>
+	<string name="palette_blackhot">Black Hot</string>
+	<string name="palette_ironbow">Ironbow</string>
+	<string name="palette_rainbow">Rainbow</string>
+	<string name="palette_rainbow2">Rainbow 2</string>
 </resources>

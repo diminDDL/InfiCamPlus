@@ -41,6 +41,20 @@ public class SettingsMain extends Settings {
 				act.setShutterInterval((long) i * 1000);
 			}
 		},
+		new SettingBool("rotate180", R.string.set_rotate180, false) {
+			@Override
+			void onSet(boolean value) {
+				act.inputSurface.rotate = value;
+				act.overlay.rotate = value;
+			}
+		},
+		new SettingBool("mirror", R.string.set_mirror, false) {
+			@Override
+			void onSet(boolean value) {
+				act.inputSurface.mirror = value;
+				act.overlay.mirror = value;
+			}
+		},
 		new SettingRadio("imode", R.string.set_imode, 2, new int[] {
 				R.string.imode_nearest,
 				R.string.imode_linear,

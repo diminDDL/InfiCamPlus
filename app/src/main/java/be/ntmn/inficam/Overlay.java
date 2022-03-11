@@ -20,6 +20,7 @@ public class Overlay {
 	Paint paintOutline;
 	Paint paintTextOutline;
 	int width, height;
+	boolean rotate = false, mirror = false;
 
 	/* These sizes are in fractions of the total width of the bitmap drawn. */
 	float smarker = 0.015f; /* Marker size. */
@@ -56,6 +57,7 @@ public class Overlay {
 
 	public void draw(InfiCam.FrameInfo fi, float[] temp) {
 		Canvas cvs = surface.lockCanvas(null);
+
 		cvs.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
 		paint.setColor(Color.rgb(255, 255, 0)); // Yellow.
@@ -73,6 +75,15 @@ public class Overlay {
 	void drawTPoint(Canvas cvs, InfiCam.FrameInfo fi, int tx, int ty, float temp) {
 		float x = (tx + 0.5f) * width / fi.width; // TODO maybe we can just set scale for the entire canvas
 		float y = (ty + 0.5f) * height / fi.height;
+
+		if (rotate) {
+			x = width - x;
+			y = height - y;
+		}
+		if (mirror) {
+			x = width - x;
+		}
+
 		float smarkerw = smarker * width;
 		cvs.drawLine(x - smarkerw, y, x + smarkerw, y, paintOutline);
 		cvs.drawLine(x, y - smarkerw, x, y + smarkerw, paintOutline);
