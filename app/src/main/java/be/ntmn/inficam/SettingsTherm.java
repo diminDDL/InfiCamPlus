@@ -2,6 +2,7 @@ package be.ntmn.inficam;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 
@@ -53,6 +54,7 @@ public class SettingsTherm extends Settings {
 			@Override
 			void onSet(int i) {
 				act.infiCam.setHumidity((float) i / 100.0f);
+				act.infiCam.updateTable();
 			}
 		},
 		new SettingSliderInt("distance", R.string.set_distance, 1, 0, 100, 1) {
@@ -62,7 +64,7 @@ public class SettingsTherm extends Settings {
 				act.infiCam.updateTable();
 			}
 		},
-		new SettingSliderFloat("correction", R.string.set_correction, 200, -100, 400, 5, 10) {
+		new SettingSliderFloat("correction", R.string.set_correction, 0, -200, 200, 5, 10) {
 			@Override
 			void onSet(float f) {
 				act.infiCam.setCorrection(f);
