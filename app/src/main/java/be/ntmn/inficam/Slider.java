@@ -1,13 +1,12 @@
 package be.ntmn.inficam;
 
 import android.content.Context;
-import android.content.res.Resources;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.util.TypedValue;
 import android.widget.SeekBar;
 
 /* Subclass the SeekBar widget so it looks right when the minimum is below 0, add step increment
@@ -36,12 +35,13 @@ public class Slider extends androidx.appcompat.widget.AppCompatSeekBar {
 	}
 
 	private void init(Context ctx) {
-		TypedValue typedValue = new TypedValue();
-		Resources.Theme theme = ctx.getTheme();
-		theme.resolveAttribute(android.R.attr.colorButtonNormal, typedValue, true);
-		colorBg = typedValue.data;
-		theme.resolveAttribute(android.R.attr.colorControlActivated, typedValue, true);
-		colorAccent = typedValue.data;
+		TypedArray ta = ctx.obtainStyledAttributes(new int[] {
+				android.R.attr.colorControlHighlight,
+				android.R.attr.colorControlActivated
+		});
+		colorBg = ta.getColor(0, Color.RED);
+		colorAccent = ta.getColor(1, Color.RED);
+		ta.recycle();
 		paint.setAntiAlias(true);
 		super.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 			@Override
@@ -100,7 +100,7 @@ public class Slider extends androidx.appcompat.widget.AppCompatSeekBar {
 		int left = getPaddingLeft();
 		int right = getPaddingRight();
 		int zeroX = left - min * (width - left - right) / (getMax() - min);
-		float dotSizePressed = getHeight() / 2;
+		float dotSizePressed = getHeight() / 2.0f;
 		float dotSize = dotSizePressed * 2 / 3;
 		int barTop = height * 4 / 9;
 		int barBot = height - barTop;
@@ -113,7 +113,5 @@ public class Slider extends androidx.appcompat.widget.AppCompatSeekBar {
 		rect.set(thumbX, barTop, zeroX, barBot);
 		canvas.drawRect(rect, paint);
 		canvas.drawCircle(thumbX, height / 2.0f, isPressed() ? dotSizePressed : dotSize, paint);
-
-		//super.onDraw(canvas);
 	}
 }
