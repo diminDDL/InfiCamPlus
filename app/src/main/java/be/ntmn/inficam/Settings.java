@@ -132,7 +132,7 @@ public abstract class Settings extends LinearLayout {
 		@Override
 		void init(Settings set) {
 			title = new TextView(getContext());
-			title.setText(getContext().getString(res, def));
+			setText(def);
 			set.addView(title);
 			slider = new Slider(getContext());
 			slider.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
@@ -145,7 +145,7 @@ public abstract class Settings extends LinearLayout {
 				public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
 					ed.putInt(name, i);
 					ed.commit();
-					title.setText(getContext().getString(res, i));
+					setText(i);
 					onSet(i);
 				}
 
@@ -163,11 +163,44 @@ public abstract class Settings extends LinearLayout {
 		void load() {
 			int value = sp.getInt(name, def);
 			slider.setProgress(value);
-			title.setText(getContext().getString(res, value));
+			setText(value);
 			onSet(value);
 		}
 
+		abstract void setText(int i);
 		abstract void onSet(int i);
+	}
+
+	abstract class SettingSliderInt extends SettingSlider {
+		SettingSliderInt(String name, int res, int def, int min, int max, int step) {
+			super(name, res, def, min, max, step);
+		}
+
+		@Override
+		void setText(int i) {
+			title.setText(getContext().getString(res, i));
+		}
+	}
+
+	abstract class SettingSliderFloat extends SettingSlider {
+		int div;
+
+		SettingSliderFloat(String name, int res, int def, int min, int max, int step, int div) {
+			super(name, res, def, min, max, step);
+			this.div = div;
+		}
+
+		@Override
+		void setText(int i) {
+			title.setText(getContext().getString(res, (float) i / div));
+		}
+
+		@Override
+		void onSet(int i) {
+			onSet((float) i / div);
+		}
+
+		abstract void onSet(float f);
 	}
 
 	public Settings(Context context) {
