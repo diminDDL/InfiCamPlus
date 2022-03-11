@@ -6,6 +6,8 @@ import android.util.AttributeSet;
 import androidx.annotation.Nullable;
 
 public class SettingsMain extends Settings {
+	static final String SP_NAME = "PREFS";
+
 	public SettingsMain(Context context) {
 		super(context);
 	}
@@ -16,6 +18,11 @@ public class SettingsMain extends Settings {
 
 	public SettingsMain(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
 		super(context, attrs, defStyleAttr);
+	}
+
+	@Override
+	public String getSPName() {
+		return SP_NAME;
 	}
 
 	@Override

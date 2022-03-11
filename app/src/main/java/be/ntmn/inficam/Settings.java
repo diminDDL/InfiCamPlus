@@ -20,7 +20,6 @@ import androidx.annotation.Nullable;
  *   profile, or option to choose what is part of it or how?
  */
 public abstract class Settings extends LinearLayout {
-	static final String SP_NAME = "PREFS";
 	MainActivity act;
 	SharedPreferences sp;
 	SharedPreferences.Editor ed;
@@ -185,7 +184,7 @@ public abstract class Settings extends LinearLayout {
 
 	void init(MainActivity act) {
 		this.act = act;
-		sp = act.getSharedPreferences(SP_NAME, MODE_PRIVATE);
+		sp = act.getSharedPreferences(getSPName(), MODE_PRIVATE);
 		ed = sp.edit();
 		removeAllViews();
 		Setting[] settings = getSettings();
@@ -200,4 +199,5 @@ public abstract class Settings extends LinearLayout {
 	}
 
 	public abstract Setting[] getSettings();
+	public abstract String getSPName(); /* Name for "shared preferences file". */
 }
