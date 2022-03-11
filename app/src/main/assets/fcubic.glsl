@@ -22,8 +22,8 @@ vec4 cubic(float x) {
  *   other sources, most notably:
  *     https://stackoverflow.com/questions/13501081/efficient-bicubic-filtering-code-in-glsl
  */
-vec4 texcubic(samplerExternalOES tex, vec2 uv, vec2 res) {
-	uv = uv * res + 0.5; /* Center of the closest texel multiplied in bitmap coords. */
+void main(void) {
+	vec2 uv = texCoord * texSize + 0.5; /* Center of the closest texel in bitmap coords. */
 	vec2 iuv = floor(uv); /* Top left of that pixel. */
 	vec2 fuv = fract(uv); /* How far off the top left of that we are. */
 	vec4 xc = cubic(fuv.x); /* Spline basis weights for X offsets. */
@@ -39,19 +39,15 @@ vec4 texcubic(samplerExternalOES tex, vec2 uv, vec2 res) {
 	vec4 pos = c + vec4(xc.y, xc.w, yc.y, yc.w) / s - 0.5;
 
 	/* Sample the 4 already linearly interpolated points. */
-	vec4 s0 = texture2D(tex, vec2(pos.x, pos.z) / res);
-	vec4 s1 = texture2D(tex, vec2(pos.y, pos.z) / res);
-	vec4 s2 = texture2D(tex, vec2(pos.x, pos.w) / res);
-	vec4 s3 = texture2D(tex, vec2(pos.y, pos.w) / res);
+	vec4 s0 = texture2D(sTexture, vec2(pos.x, pos.z) / texSize);
+	vec4 s1 = texture2D(sTexture, vec2(pos.y, pos.z) / texSize);
+	vec4 s2 = texture2D(sTexture, vec2(pos.x, pos.w) / texSize);
+	vec4 s3 = texture2D(sTexture, vec2(pos.y, pos.w) / texSize);
 
 	/* Get weights per row/column. */
 	float sx = s.x / (s.x + s.y);
 	float sy = s.z / (s.z + s.w);
 
 	/* Mix the rows and columns. */
-	return mix(mix(s3, s2, sx), mix(s1, s0, sx), sy);
-}
-
-void main(void) {
-	gl_FragColor = texcubic(sTexture, texCoord, texSize);
+	gl_FragColor = mix(mix(s3, s2, sx), mix(s1, s0, sx), sy);
 }
