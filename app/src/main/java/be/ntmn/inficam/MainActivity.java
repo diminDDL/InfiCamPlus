@@ -243,7 +243,7 @@ public class MainActivity extends BaseActivity {
 				messageView.showMessage(message);
 			}
 		};
-		videoSurface.getSurfaceTexture().setDefaultBufferSize(1024, 768); // TODO
+		videoSurface.getSurfaceTexture().setDefaultBufferSize(1024, 768); // TODO don't hardcode, also what about aspect?
 		videoSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer); // TODO is it not needed? should we separately update tex images?
 		ct.start(this, videoSurface.getSurface());
 	}
