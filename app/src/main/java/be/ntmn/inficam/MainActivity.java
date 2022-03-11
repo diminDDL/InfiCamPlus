@@ -277,16 +277,22 @@ public class MainActivity extends BaseActivity {
 
 	void toggleRecording() {
 		if (recordSurface == null) {
-			try {
-				Surface rsurface = recorder.startRecording(this, picWidth, picHeight);
-				recordSurface = new SurfaceMuxer.OutputSurface(surfaceMuxer, rsurface, false);
-				recordSurface.setSize(picWidth, picHeight);
-				surfaceMuxer.outputSurfaces.add(recordSurface);
-				ImageButton buttonVideo = findViewById(R.id.buttonVideo);
-				buttonVideo.setColorFilter(Color.RED);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			askPermission(Manifest.permission.RECORD_AUDIO, granted -> {
+				if (!granted) {
+					// TODO
+					return;
+				}
+				try {
+					Surface rsurface = recorder.start(this, picWidth, picHeight, true); // TODO optional audio
+					recordSurface = new SurfaceMuxer.OutputSurface(surfaceMuxer, rsurface, false);
+					recordSurface.setSize(picWidth, picHeight);
+					surfaceMuxer.outputSurfaces.add(recordSurface);
+					ImageButton buttonVideo = findViewById(R.id.buttonVideo);
+					buttonVideo.setColorFilter(Color.RED);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			});
 		} else stopRecording();
 	}
 
@@ -294,7 +300,7 @@ public class MainActivity extends BaseActivity {
 		if (recordSurface != null) {
 			ImageButton buttonVideo = findViewById(R.id.buttonVideo);
 			buttonVideo.clearColorFilter();
-			recorder.stopRecording();
+			recorder.stop();
 			surfaceMuxer.outputSurfaces.remove(recordSurface);
 			recordSurface.release();
 			recordSurface = null;

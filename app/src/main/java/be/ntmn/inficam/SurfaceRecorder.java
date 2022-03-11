@@ -4,11 +4,15 @@ import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.media.AudioFormat;
+import android.media.AudioRecord;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
+import android.media.MediaRecorder;
 import android.net.Uri;
+import android.net.rtp.AudioCodec;
 import android.os.Build;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
@@ -21,48 +25,44 @@ import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-// TODO remember to try MediaRecorder.AudioSource.CAMCORDER first, then default/mic, it's allegedly better
 public class SurfaceRecorder implements Runnable {
-	static final String MIME_TYPE = "video/avc"; /* H.264 */
+	static final String MUX_MIME_TYPE = "video/mp4";
+	static final String MUX_EXT = ".mp4";
+	static final String VID_MIME_TYPE = "video/avc"; /* H.264 */
 	static final int FRAME_RATE = 25;
 	static final int IFRAME_INTERVAL = 10; /* In seconds. */
 	static final float BITRATE = 1; /* In bits per pixel. */
 	static final int DEQUEUE_TIMEOUT = 10000; /* In microseconds. */
 
+	static final String SND_MIME_TYPE = "audio/mp4a-latm";
+	static final int SND_SAMPLERATE = 44100;
+	static final boolean SND_STEREO = false;
+	static final int SND_BITRATE = 128000;
+
 	Surface inputSurface;
 	MediaCodec videoEncoder;
+	MediaCodec audioEncoder;
+	AudioRecord audioRecord;
+	int audioBufferSize;
 	MediaMuxer muxer;
-	int videoTrack;
+	int videoTrack, audioTrack;
 	MediaCodec.BufferInfo bufferInfo;
-	volatile boolean endSignal = false; /* Volatile is important because threading. */
+	volatile boolean endSignal; /* Volatile is important because threading. */
+	boolean muxerStarted;
 	Thread thread;
 
-	public Surface startRecording(Context ctx, int width, int height) throws IOException {
-		/* Just restart if started to prevent disasters. */
-		stopRecording();
-
-		/* Prepare the format etc. */
-		bufferInfo = new MediaCodec.BufferInfo();
-		MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, width, height);
-		format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
-				MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
-		format.setInteger(MediaFormat.KEY_BIT_RATE, (int) (BITRATE * width * height * FRAME_RATE));
-		format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);
-		format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
-		videoEncoder = MediaCodec.createEncoderByType(MIME_TYPE);
-		videoEncoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
-		inputSurface = videoEncoder.createInputSurface();
-		videoTrack = -1;
-
+	/* If enabling audio, request audio permission first! */
+	@SuppressLint("MissingPermission")
+	Surface _start(Context ctx, int w, int h, boolean sound) throws IOException {
 		/* Deal with actually getting a file and opening the muxer. */
 		@SuppressLint("SimpleDateFormat")
 		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
 		String dirname = ctx.getString(R.string.app_name);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-			String fname = "vid_" + timeStamp + ".mp4"; /* MediaStore won't overwrite. */
+			String fname = "vid_" + timeStamp + MUX_EXT; /* MediaStore won't overwrite. */
 			ContentValues cv = new ContentValues();
 			cv.put(MediaStore.MediaColumns.DISPLAY_NAME, fname);
-			cv.put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4");
+			cv.put(MediaStore.MediaColumns.MIME_TYPE, MUX_MIME_TYPE);
 			cv.put(MediaStore.MediaColumns.RELATIVE_PATH, "DCIM/" + dirname);
 			ContentResolver cr = ctx.getContentResolver();
 			Uri uri = cr.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, cv);
@@ -71,23 +71,76 @@ public class SurfaceRecorder implements Runnable {
 					MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
 		} else {
 			int num = 0;
-			String fname = "vid_" + timeStamp + "_" + num + ".mp4";
+			String fname = "vid_" + timeStamp + "_" + num + MUX_EXT;
 			File dir = new File(Environment.DIRECTORY_DCIM, dirname);
 			File file = new File(dir, fname);
 			while (file.exists()) { /* Avoid overwriting existing files. */
-				fname = "vid_" + timeStamp + "_" + ++num + ".mp4";
+				fname = "vid_" + timeStamp + "_" + ++num + MUX_EXT;
 				file = new File(fname);
 			}
 			muxer = new MediaMuxer(file.getPath(), MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
 		}
+		muxerStarted = false; /* We start it later, when the codecs report they're configured. */
+
+		/* Prepare the format etc. */
+		bufferInfo = new MediaCodec.BufferInfo();
+		MediaFormat format = MediaFormat.createVideoFormat(VID_MIME_TYPE, w, h);
+		format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
+				MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+		format.setInteger(MediaFormat.KEY_BIT_RATE, (int) (BITRATE * w * h * FRAME_RATE));
+		format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);
+		format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
+		videoEncoder = MediaCodec.createEncoderByType(VID_MIME_TYPE);
+		videoEncoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+		inputSurface = videoEncoder.createInputSurface();
+		videoTrack = -1;
 		videoEncoder.start();
+
+		if (sound) {
+			/* MediaCodec defaults to 16bit PCM input, changing it seems to only be possible if we
+			 *   would change minimum API level.
+			 */
+			int achannels =
+					SND_STEREO ? AudioFormat.CHANNEL_IN_STEREO : AudioFormat.CHANNEL_IN_MONO;
+			audioBufferSize = AudioRecord.getMinBufferSize(SND_SAMPLERATE, achannels,
+					AudioFormat.ENCODING_PCM_16BIT);
+			MediaFormat aFormat = MediaFormat.createAudioFormat(SND_MIME_TYPE, SND_SAMPLERATE,
+					SND_STEREO ? 2 : 1);
+			aFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, audioBufferSize);
+			format.setInteger(
+					MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
+			aFormat.setInteger(MediaFormat.KEY_BIT_RATE, SND_BITRATE);
+			audioEncoder = MediaCodec.createEncoderByType(SND_MIME_TYPE);
+			audioEncoder.configure(aFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+			audioRecord = new AudioRecord(MediaRecorder.AudioSource.CAMCORDER, SND_SAMPLERATE,
+					achannels, AudioFormat.ENCODING_PCM_16BIT, audioBufferSize);
+			audioTrack = -1;
+			audioEncoder.start();
+			audioRecord.startRecording();
+		} else {
+			audioEncoder = null;
+			audioRecord = null;
+		}
+
+		endSignal = false;
 		thread = new Thread(this);
 		thread.start();
 		return inputSurface;
 	}
 
+	/* Wrapper so we don't need to indent everything so far to call stop in case of exceptions. */
+	public Surface start(Context ctx, int w, int h, boolean sound) throws IOException {
+		stop(); /* Just restart if started to prevent disasters. */
+		try {
+			return _start(ctx, w, h, sound);
+		} catch (Exception e) {
+			stop();
+			throw e;
+		}
+	}
+
 	/* Safe to call when stopped. */
-	public void stopRecording() {
+	public void stop() {
 		try {
 			if (thread != null) {
 				endSignal = true;
@@ -102,6 +155,16 @@ public class SurfaceRecorder implements Runnable {
 			videoEncoder.release();
 			videoEncoder = null;
 		}
+		if (audioRecord != null) {
+			audioRecord.stop();
+			audioRecord.release();
+			audioRecord = null;
+		}
+		if (audioEncoder != null) {
+			audioEncoder.stop();
+			audioEncoder.release();
+			audioEncoder = null;
+		}
 		if (muxer != null) {
 			muxer.stop();
 			muxer.release();
@@ -111,21 +174,30 @@ public class SurfaceRecorder implements Runnable {
 			inputSurface.release();
 			inputSurface = null;
 		}
+		muxerStarted = false;
+		audioTrack = -1;
+		videoTrack = -1;
 	}
 
 	@Override
 	public void run() {
+		boolean stop = false, vidDone = false, sndDone = false;
 		/* This has to be a separate thread because if the encoder runs out of buffers then
 		 *   swapBuffers() on the surface will block.
 		 */
-		while (true) {
+		while (!vidDone || (!sndDone && audioEncoder != null)) {
 			int encoderStatus = videoEncoder.dequeueOutputBuffer(bufferInfo, DEQUEUE_TIMEOUT);
 			if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
 				/* Should happen exactly once, before output buffer given. */
 				MediaFormat format = videoEncoder.getOutputFormat();
 				videoTrack = muxer.addTrack(format);
-				muxer.start();
-			} else if (encoderStatus >= 0) {
+				if (audioTrack >= 0 || audioEncoder == null) {
+					muxer.start();
+					muxerStarted = true;
+				}
+			} else if (encoderStatus >= 0 && !vidDone) {
+				if (!muxerStarted)
+					continue;
 				ByteBuffer encodedData = videoEncoder.getOutputBuffer(encoderStatus);
 				if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0)
 					bufferInfo.size = 0;
@@ -133,16 +205,49 @@ public class SurfaceRecorder implements Runnable {
 					muxer.writeSampleData(videoTrack, encodedData, bufferInfo);
 				videoEncoder.releaseOutputBuffer(encoderStatus, false);
 				if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0)
-					break;
+					vidDone = true;
 			} /* Most likely MediaCodec.INFO_TRY_AGAIN_LATER. */
 
-			/* Note to self, I read that a more generic way to signal the stream end is:
-			 *   encode((byte[]) null, 0, presentationTime);
-			 * The usefulness is that it works both on audio and video streams.
-			 */
+			if (audioEncoder != null) {
+				/* Shovel audio from the recorder to the encoder. */
+				int index = audioEncoder.dequeueInputBuffer(DEQUEUE_TIMEOUT);
+				if (index >= 0) { /* Won't be >= 0 after BUFFER_FLAG_END_OF_STREAM. */
+					ByteBuffer buffer = audioEncoder.getInputBuffer(index);
+					buffer.clear();
+					int len = audioRecord.read(buffer, audioBufferSize);
+					if (len > 0)
+						audioEncoder.queueInputBuffer(index, 0, len, System.nanoTime() / 1000,
+								stop ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
+				}
+
+				/* Shovel audio from the encoder to the muxer. */
+				encoderStatus = audioEncoder.dequeueOutputBuffer(bufferInfo, DEQUEUE_TIMEOUT);
+				if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+					/* Should happen exactly once, before output buffer given. */
+					MediaFormat format = audioEncoder.getOutputFormat();
+					audioTrack = muxer.addTrack(format);
+					if (videoTrack >= 0) {
+						muxer.start();
+						muxerStarted = true;
+					}
+				} else if (encoderStatus >= 0 && !sndDone) {
+					if (!muxerStarted)
+						continue;
+					ByteBuffer encodedData = audioEncoder.getOutputBuffer(encoderStatus);
+					if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0)
+						bufferInfo.size = 0;
+					if (bufferInfo.size != 0)
+						muxer.writeSampleData(audioTrack, encodedData, bufferInfo);
+					audioEncoder.releaseOutputBuffer(encoderStatus, false);
+					if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0)
+						sndDone = true;
+				} /* Most likely MediaCodec.INFO_TRY_AGAIN_LATER. */
+			}
+
 			if (endSignal) {
 				endSignal = false;
-				videoEncoder.signalEndOfInputStream();
+				stop = true;
+				videoEncoder.signalEndOfInputStream(); /* Only allowed after getInputSurface(). */
 			}
 		}
 	}

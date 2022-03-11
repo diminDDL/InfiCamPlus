@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="be.ntmn.inficam">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:tools="http://schemas.android.com/tools"
+	package="be.ntmn.inficam">
 
 	<uses-permission android:name="android.permission.CAMERA" />
+	<uses-permission android:name="android.permission.RECORD_AUDIO" />
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
 		android:maxSdkVersion="28" />
 
@@ -30,7 +33,8 @@
 			android:launchMode="singleTop"
 			android:directBootAware="true"
 			android:screenOrientation="landscape"
-			android:configChanges="keyboardHidden|orientation">
+			android:configChanges="keyboardHidden|orientation"
+			tools:targetApi="n">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
 				<category android:name="android.intent.category.LAUNCHER" />
