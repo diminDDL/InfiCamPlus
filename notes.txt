@@ -19,7 +19,6 @@ Short description of the C++ classes in jni/InfiCam dir:
 TODO
 	- 400 celcius range works quite badly because the float math falls apart below a certain temperature
 	- don't forget to reference/put license for libuvc_build makefile, libuvc, libusb if adding license in root
-	- setting for regular shutter interval
 	- setting for resolution of pictures, video
 	- don't clear stuff like disconnected message if not connected
 	- we can flip the image upside down via the vertex shader, might or might not be useful for the

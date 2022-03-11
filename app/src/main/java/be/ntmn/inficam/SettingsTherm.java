@@ -2,8 +2,6 @@ package be.ntmn.inficam;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.widget.RadioButton;
 
 import androidx.annotation.Nullable;
 
@@ -86,6 +84,22 @@ public class SettingsTherm extends Settings {
 			void onSet(float f) {
 				act.infiCam.setCorrection(f);
 				act.infiCam.updateTable();
+			}
+		},
+		new SettingRadio("range", R.string.set_range, 0, new int[] {
+				R.string.set_range_120,
+				R.string.set_range_400
+			}) {
+			@Override
+			void onSet(int value) {
+				switch (value) {
+					case 0:
+						act.setRange(120);
+						break;
+					case 1:
+						act.setRange(400);
+						break;
+				}
 			}
 		},
 		palette

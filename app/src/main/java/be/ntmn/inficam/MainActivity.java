@@ -400,4 +400,15 @@ public class MainActivity extends BaseActivity {
 	public void setRecordAudio(boolean value) {
 		recordAudio = value;
 	}
+
+	public void setRange(int range) {
+		infiCam.setRange(range);
+		requestReinit();
+	}
+
+	/* For settings that need a calibration, defers the initial click. */
+	void requestReinit() {
+		handler.removeCallbacks(timedShutter);
+		handler.postDelayed(timedShutter, shutterIntervalInitial);
+	}
 }

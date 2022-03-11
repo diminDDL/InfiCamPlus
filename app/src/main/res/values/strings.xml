@@ -49,5 +49,8 @@
 	<string name="set_humidity">Humidity (%d%%)</string>
 	<string name="set_distance">Distance (%dm)</string>
 	<string name="set_correction">Correction (%.1f°C)</string>
+	<string name="set_range">Range</string>
+	<string name="set_range_120">-20 - 120°C</string>
+	<string name="set_range_400">120-400°C</string>
 	<string name="set_palette">Palette</string>
 </resources>
