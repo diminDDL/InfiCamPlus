@@ -6,6 +6,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.TypedValue;
 import android.widget.SeekBar;
 
@@ -15,9 +16,6 @@ import android.widget.SeekBar;
 public class Slider extends androidx.appcompat.widget.AppCompatSeekBar {
 	final Rect rect = new Rect();
 	final Paint paint = new Paint();
-	final static int vExtent = 6 / 2; /* Half of the bar height. */
-	final static int dotSize = 18; /* Size of the dot. */
-	final static int dotSizePressed = 27;
 	int colorBg, colorAccent;
 	OnSeekBarChangeListener listener;
 	int min = 0, max = 100, step = 1;
@@ -44,6 +42,7 @@ public class Slider extends androidx.appcompat.widget.AppCompatSeekBar {
 		colorBg = typedValue.data;
 		theme.resolveAttribute(android.R.attr.colorControlActivated, typedValue, true);
 		colorAccent = typedValue.data;
+		paint.setAntiAlias(true);
 		super.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 			@Override
 			public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
@@ -96,19 +95,25 @@ public class Slider extends androidx.appcompat.widget.AppCompatSeekBar {
 	@Override
 	protected synchronized void onDraw(Canvas canvas) {
 		int thumbX = getPaddingLeft() + getThumb().getBounds().left;
-		int centerY = getHeight() / 2;
 		int width = getWidth();
+		int height = getHeight();
 		int left = getPaddingLeft();
 		int right = getPaddingRight();
 		int zeroX = left - min * (width - left - right) / (getMax() - min);
+		float dotSizePressed = getHeight() / 2;
+		float dotSize = dotSizePressed * 2 / 3;
+		int barTop = height * 4 / 9;
+		int barBot = height - barTop;
 
 		paint.setColor(colorBg);
-		rect.set(left, centerY - vExtent, width - right, centerY + vExtent);
+		rect.set(left, barTop, width - right, barBot);
 		canvas.drawRect(rect, paint);
 
 		paint.setColor(colorAccent);
-		rect.set(thumbX, centerY - vExtent, zeroX, centerY + vExtent);
+		rect.set(thumbX, barTop, zeroX, barBot);
 		canvas.drawRect(rect, paint);
-		canvas.drawCircle(thumbX, centerY, isPressed() ? dotSizePressed : dotSize, paint);
+		canvas.drawCircle(thumbX, height / 2.0f, isPressed() ? dotSizePressed : dotSize, paint);
+
+		//super.onDraw(canvas);
 	}
 }
