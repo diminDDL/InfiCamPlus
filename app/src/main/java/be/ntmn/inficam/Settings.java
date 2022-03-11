@@ -172,7 +172,6 @@ public class Settings extends LinearLayout {
 	}
 
 	Setting[] settings = {
-			/* Xtherm does shutter every 380 sec. */
 			new SettingSlider("firstshutdelay", R.string.set_firstshutdelay, 1000, 0, 2000, 100) {
 				@Override
 				void onSet(int i) {
