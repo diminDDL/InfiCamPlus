@@ -14,7 +14,6 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatSeekBar;
 
 /* TODO To add profiles i want to just make a function to load and store all the sharedprefs to a
  *   JSON array that is stored in sharedprefs. Should palette and termometry parameters be part of
@@ -173,10 +172,19 @@ public class Settings extends LinearLayout {
 	}
 
 	Setting[] settings = {
-			new SettingSlider("shutinterval", R.string.set_shutinterval, 60, 0, 240, 10) {
+			/* Xtherm does shutter every 380 sec. */
+			new SettingSlider("firstshutdelay", R.string.set_firstshutdelay, 1000, 0, 2000, 100) {
 				@Override
 				void onSet(int i) {
-
+					act.setShutterIntervalInitial(i);
+				}
+			},
+			new SettingSlider("shutinterval", R.string.set_shutinterval, 380, 0, 1000, 10) {
+				@Override
+				void onSet(int i) {
+					if (i == 0)
+						title.setText(getContext().getString(R.string.set_shutinterval_never));
+					act.setShutterInterval(i * 1000);
 				}
 			},
 			new SettingRadio("imode", R.string.set_imode, 2, new int[] {

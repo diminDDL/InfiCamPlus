@@ -47,6 +47,17 @@ public class MainActivity extends BaseActivity {
 	View dialogSettings;
 	Settings settings;
 
+	long shutterIntervalInitial = 1000;
+	long shutterInterval = 380000; /* Xtherm does it 1 sec after connect and then every 380 sec. */
+	final Runnable timedShutter = new Runnable() {
+		@Override
+		public void run() {
+			infiCam.calibrate(); /* No harm when not connected. */
+			if (shutterInterval > 0)
+				handler.postDelayed(timedShutter, shutterInterval);
+		}
+	};
+
 	USBMonitor usbMonitor = new USBMonitor() {
 		@Override
 		public void onDeviceFound(UsbDevice dev) {
@@ -63,8 +74,9 @@ public class MainActivity extends BaseActivity {
 						infiCam.connect(conn.getFileDescriptor());
 						/* Size is only important for cubic interpolation. */
 						inputSurface.setSize(infiCam.getWidth(), infiCam.getHeight());
+						handler.removeCallbacks(timedShutter); /* Before stream starts! */
 						infiCam.startStream();
-						handler.postDelayed(() -> infiCam.calibrate(), 1000);
+						handler.postDelayed(timedShutter, shutterIntervalInitial);
 						messageView.showMessage(R.string.msg_connected);
 					} catch (Exception e) {
 						usbConnection.close(); // TODO execution can end up here with usbConnection being null, how?
@@ -122,7 +134,7 @@ public class MainActivity extends BaseActivity {
 		//inputSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer);
 		infiCam.setSurface(inputSurface.getSurface());
 		cameraView.getHolder().addCallback(surfaceHolderCallback);
-		infiCam.setPalette(Palette.Ironbow.getData()); // TODO UI to choose
+		infiCam.setPalette(Palette.Ironbow.getData()); // TODO improve this, should remember last setting
 
 		/* Create and set up the InputSurface for annotations overlay. */
 		overlaySurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_NEAREST);
@@ -364,6 +376,17 @@ public class MainActivity extends BaseActivity {
 	/*
 	 * Following are routines called by the settings class.
 	 */
+
+	public void setShutterIntervalInitial(long value) {
+		shutterIntervalInitial = value;
+	}
+
+	public void setShutterInterval(long value) {
+		shutterInterval = value;
+		handler.removeCallbacks(timedShutter);
+		if (shutterInterval > 0)
+			handler.postDelayed(timedShutter, shutterInterval);
+	}
 
 	public void setIMode(int value) {
 		inputSurface.setIMode(value);
