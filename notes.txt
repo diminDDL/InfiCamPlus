@@ -27,6 +27,7 @@ TODO
 	    for that) but it may turn out useful in the future
 	  * we kinda need a setting to flip all anyway...
 	  * remember we separately want to control flip of normal camera
+	  * also add mirroring
 	- option to swap the side buttons are on
 	- show current palette and range on the side
 	- rarely but does happen the video gets stuck while camera is still connected (shutter commands still works)

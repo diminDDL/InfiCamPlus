@@ -225,7 +225,7 @@ public class MainActivity extends BaseActivity {
 			else messageView.setMessage(R.string.msg_permdenied_usb);
 		} else messageView.setMessage(R.string.msg_permdenied_cam);
 
-		videoSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_LINEAR);
+		/*videoSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_LINEAR);
 		NormalCamera ct = new NormalCamera() {
 			@Override
 			public void onStarted() {
@@ -245,7 +245,7 @@ public class MainActivity extends BaseActivity {
 		};
 		videoSurface.getSurfaceTexture().setDefaultBufferSize(1024, 768); // TODO don't hardcode, also what about aspect?
 		videoSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer); // TODO is it not needed? should we separately update tex images?
-		ct.start(this, videoSurface.getSurface());
+		ct.start(this, videoSurface.getSurface());*/
 	}
 
 	public void onFrame() {
