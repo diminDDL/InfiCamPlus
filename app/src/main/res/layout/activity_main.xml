@@ -92,9 +92,9 @@
 		app:layout_constraintEnd_toEndOf="parent">
 
 		<ImageButton
-			android:id="@+id/buttonSettingsTherm"
-			android:src="@drawable/ic_baseline_device_thermostat_24"
-			android:contentDescription="@string/btn_settings_therm"
+			android:id="@+id/buttonPalette"
+			android:src="@drawable/ic_baseline_palette_24"
+			android:contentDescription="@string/btn_palette"
 			android:layout_width="40dp"
 			android:layout_height="40dp"
 			android:scaleType="fitCenter"
@@ -103,9 +103,9 @@
 			android:background="?android:attr/selectableItemBackground" />
 
 		<ImageButton
-			android:id="@+id/buttonPalette"
-			android:src="@drawable/ic_baseline_palette_24"
-			android:contentDescription="@string/btn_palette"
+			android:id="@+id/buttonSettingsTherm"
+			android:src="@drawable/ic_baseline_device_thermostat_24"
+			android:contentDescription="@string/btn_settings_therm"
 			android:layout_width="40dp"
 			android:layout_height="40dp"
 			android:scaleType="fitCenter"
