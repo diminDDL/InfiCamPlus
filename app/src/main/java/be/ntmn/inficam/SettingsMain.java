@@ -59,7 +59,7 @@ public class SettingsMain extends Settings {
 				R.string.imode_nearest,
 				R.string.imode_linear,
 				R.string.imode_cubic
-		}) {
+			}) {
 			@Override
 			void onSet(int value) {
 				final int[] imodes = new int[] {
@@ -92,6 +92,12 @@ public class SettingsMain extends Settings {
 			@Override
 			void onSet(boolean value) {
 				act.setKeepScreenOn(value);
+			}
+		},
+		new SettingButton(R.string.set_defaults) {
+			@Override
+			void onPress() {
+				setDefaults();
 			}
 		}
 	};

@@ -58,4 +58,5 @@
 	<string name="palette_ironbow">Ironbow</string>
 	<string name="palette_rainbow">Rainbow</string>
 	<string name="palette_rainbow2">Rainbow 2</string>
+	<string name="set_defaults">Reset to defaults</string>
 </resources>

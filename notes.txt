@@ -28,7 +28,6 @@ TODO
 	- the libinficam part should work on linux/windows with small work
 		the main thing would be implementing InfiCam and UVCDevice .connect() variation that takes a more sensible
 		device specifier than just a FD, and having a palette to feed to setPalette()
-	- make button to return settings to default
 	- if permission for usb temporary granted we get false usb permission denied messages (happened for me on pro1)
 	- connect when already running sometimes broken
 	- indicate overrange rather than saying NaN

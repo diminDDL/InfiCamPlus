@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.AttributeSet;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
@@ -35,6 +36,7 @@ public abstract class Settings extends LinearLayout {
 
 		abstract void init(Settings set);
 		abstract void load();
+		abstract void setDefault();
 	}
 
 	abstract class SettingBool extends Setting {
@@ -66,6 +68,13 @@ public abstract class Settings extends LinearLayout {
 			boolean value = sp.getBoolean(name, def);
 			box.setChecked(value);
 			onSet(value);
+		}
+
+		@Override
+		void setDefault() {
+			ed.putBoolean(name, def);
+			ed.commit();
+			load();
 		}
 
 		abstract void onSet(boolean value);
@@ -117,6 +126,13 @@ public abstract class Settings extends LinearLayout {
 				value = def;
 			}
 			onSet(value);
+		}
+
+		@Override
+		void setDefault() {
+			ed.putInt(name, def);
+			ed.commit();
+			load();
 		}
 
 		void set(int i) {
@@ -177,6 +193,13 @@ public abstract class Settings extends LinearLayout {
 			onSet(value);
 		}
 
+		@Override
+		void setDefault() {
+			ed.putInt(name, def);
+			ed.commit();
+			load();
+		}
+
 		abstract void setText(int i);
 		abstract void onSet(int i);
 	}
@@ -213,6 +236,33 @@ public abstract class Settings extends LinearLayout {
 		abstract void onSet(float f);
 	}
 
+	abstract class SettingButton extends Setting {
+		Button button;
+
+		SettingButton(int res) {
+			super(null, res);
+		}
+
+		@Override
+		void init(Settings set) {
+			button = new Button(getContext());
+			button.setText(res);
+			button.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+					ViewGroup.LayoutParams.WRAP_CONTENT));
+			button.setOnClickListener(view -> onPress());
+			button.setVisibility(VISIBLE);
+			set.addView(button);
+		}
+
+		@Override
+		void load() { /* Empty. */ }
+
+		@Override
+		void setDefault() { /* Empty. */ }
+
+		abstract void onPress();
+	}
+
 	public Settings(Context context) {
 		super(context);
 	}
@@ -239,6 +289,12 @@ public abstract class Settings extends LinearLayout {
 		Setting[] settings = getSettings();
 		for (Setting setting : settings)
 			setting.load();
+	}
+
+	void setDefaults() {
+		Setting[] settings = getSettings();
+		for (Setting setting : settings)
+			setting.setDefault();
 	}
 
 	public abstract Setting[] getSettings();

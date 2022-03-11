@@ -120,6 +120,12 @@ public class SettingsTherm extends Settings {
 				}
 			}
 		},
-		palette
+		palette,
+		new SettingButton(R.string.set_defaults) {
+			@Override
+			void onPress() {
+				setDefaults();
+			}
+		}
 	};
 }
