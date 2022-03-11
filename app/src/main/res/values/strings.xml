@@ -10,6 +10,13 @@
 	<string name="msg_permdenied_audio">Audio permission denied.</string>
 	<string name="msg_failrecord">Failed to start recording.</string>
 
+	<!-- The difference between err_ and msg_ that are errors is that the err_ signify exceptions
+	       thrown by classes other than MainActivity that may or may not be shown to user but are
+	       a resource because they're likely enough to happen in a real world situation that we may
+	       have them actually shown as a message to the user rather than just going to logcat -->
+	<string name="err_failopencamera">Failed to open camera.</string>
+	<string name="err_failconfigcamera">Failed to configure camera.</string>
+
 	<string name="btn_settings">Settings</string>
 	<string name="btn_shutter">Shutter</string>
 	<string name="btn_photo">Take photo</string>

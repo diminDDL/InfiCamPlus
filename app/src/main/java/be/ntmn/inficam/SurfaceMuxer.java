@@ -315,10 +315,10 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			deinit();
 		eglDisplay = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
 		if (eglDisplay == EGL14.EGL_NO_DISPLAY)
-			throw new RuntimeException("unable to get EGL14 display");
+			throw new RuntimeException("Unable to get EGL14 display.");
 		int[] version = new int[2];
 		if (!EGL14.eglInitialize(eglDisplay, version, 0, version, 1))
-			throw new RuntimeException("unable to initialize EGL14");
+			throw new RuntimeException("Unable to initialize EGL14.");
 
 		/* Get an EGL configuration. */
 		int[] cfga = {

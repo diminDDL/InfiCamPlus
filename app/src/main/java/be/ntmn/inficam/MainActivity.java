@@ -216,12 +216,36 @@ public class MainActivity extends BaseActivity {
 		surfaceMuxer.init();
 		settings.load();
 
-		/* Do not ask permission with dialogs from onResume(), they'd trigger more onResume(). */
+		/* Do not ask permission with dialogs from onResume(), they'd trigger more onResume(), but
+		 *   we do have to check it in case permissions have changed since onPause().
+		 */
 		if (checkPermission(Manifest.permission.CAMERA)) {
 			if (!usbPermissionAsked || usbPermissionAcquired)
 				usbMonitor.scan();
 			else messageView.setMessage(R.string.msg_permdenied_usb);
 		} else messageView.setMessage(R.string.msg_permdenied_cam);
+
+		videoSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_LINEAR);
+		NormalCamera ct = new NormalCamera() {
+			@Override
+			public void onStarted() {
+				surfaceMuxer.inputSurfaces.add(videoSurface);
+			}
+
+			@Override
+			public void onStopped() {
+				surfaceMuxer.inputSurfaces.remove(videoSurface);
+			}
+
+			@Override
+			public void onStartFailed(String message) {
+				surfaceMuxer.inputSurfaces.remove(videoSurface);
+				messageView.showMessage(message);
+			}
+		};
+		videoSurface.getSurfaceTexture().setDefaultBufferSize(1024, 768); // TODO
+		videoSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer); // TODO is it not needed? should we separately update tex images?
+		ct.start(this, videoSurface.getSurface());
 	}
 
 	public void onFrame() {
