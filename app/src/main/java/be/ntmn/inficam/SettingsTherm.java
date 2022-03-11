@@ -30,38 +30,43 @@ public class SettingsTherm extends Settings {
 		new SettingSliderFloat("emissivity", R.string.set_emissivity, 100, 0, 100, 1, 100) {
 			@Override
 			void onSet(float f) {
-				// TODO
+				act.infiCam.setEmissivity(f);
+				act.infiCam.updateTable();
 			}
 		},
-			new SettingSliderFloat("temp_reflected", R.string.set_temp_reflected,
-					200, -100, 400, 1, 10) {
-				@Override
-				void onSet(float f) {
-					// TODO
-				}
-			},
+		new SettingSliderFloat("temp_reflected", R.string.set_temp_reflected,
+				200, -100, 400, 1, 10) {
+			@Override
+			void onSet(float f) {
+				act.infiCam.setTempReflected(f);
+				act.infiCam.updateTable();
+			}
+		},
 		new SettingSliderFloat("temp_ambient", R.string.set_temp_ambient, 200, -100, 400, 1, 10) {
 			@Override
 			void onSet(float f) {
-				// TODO
+				act.infiCam.setTempAir(f);
+				act.infiCam.updateTable();
 			}
 		},
 		new SettingSliderInt("humidity", R.string.set_humidity, 50, 0, 100, 1) {
 			@Override
 			void onSet(int i) {
-				// TODO
+				act.infiCam.setHumidity((float) i / 100.0f);
 			}
 		},
 		new SettingSliderInt("distance", R.string.set_distance, 1, 0, 100, 1) {
 			@Override
 			void onSet(int i) {
-				// TODO
+				act.infiCam.setDistance(i);
+				act.infiCam.updateTable();
 			}
 		},
 		new SettingSliderFloat("correction", R.string.set_correction, 200, -100, 400, 1, 10) {
 			@Override
 			void onSet(float f) {
-				// TODO
+				act.infiCam.setCorrection(f);
+				act.infiCam.updateTable();
 			}
 		}
 	};
