@@ -41,6 +41,7 @@ public class MainActivity extends BaseActivity {
 	volatile boolean disconnecting = false;
 	int currentPalette = 3;
 	SurfaceRecorder recorder = new SurfaceRecorder();
+	boolean recordAudio;
 
 	ViewGroup dialogBackground;
 	View dialogSettings;
@@ -262,6 +263,7 @@ public class MainActivity extends BaseActivity {
 	}
 
 	void disconnect() {
+		stopRecording();
 		synchronized (frameLock) { /* Make sure the frameLock thing doesn't deadlock. */
 			disconnecting = true;
 			frameLock.notify();
@@ -277,23 +279,37 @@ public class MainActivity extends BaseActivity {
 
 	void toggleRecording() {
 		if (recordSurface == null) {
-			askPermission(Manifest.permission.RECORD_AUDIO, granted -> {
-				if (!granted) {
-					// TODO
-					return;
-				}
-				try {
-					Surface rsurface = recorder.start(this, picWidth, picHeight, true); // TODO optional audio
-					recordSurface = new SurfaceMuxer.OutputSurface(surfaceMuxer, rsurface, false);
-					recordSurface.setSize(picWidth, picHeight);
-					surfaceMuxer.outputSurfaces.add(recordSurface);
-					ImageButton buttonVideo = findViewById(R.id.buttonVideo);
-					buttonVideo.setColorFilter(Color.RED);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+			askPermission(Manifest.permission.CAMERA, granted -> {
+				if (granted) {
+					if (!recordAudio) {
+						startRecording(false);
+						return;
+					}
+					askPermission(Manifest.permission.RECORD_AUDIO, audiogranted -> {
+						if (!audiogranted) {
+							messageView.showMessage(R.string.msg_permdenied_audio);
+							return;
+						}
+						startRecording(recordAudio);
+					});
+				} else messageView.setMessage(R.string.msg_permdenied_cam);
 			});
 		} else stopRecording();
+	}
+
+	/* Request audio permission first when necessary! */
+	void startRecording(boolean recordAudio) {
+		try {
+			Surface rsurface = recorder.start(this, picWidth, picHeight, recordAudio);
+			recordSurface = new SurfaceMuxer.OutputSurface(surfaceMuxer, rsurface, false);
+			recordSurface.setSize(picWidth, picHeight);
+			surfaceMuxer.outputSurfaces.add(recordSurface);
+			ImageButton buttonVideo = findViewById(R.id.buttonVideo);
+			buttonVideo.setColorFilter(Color.RED);
+		} catch (IOException e) {
+			e.printStackTrace();
+			messageView.showMessage(R.string.msg_failrecord);
+		}
 	}
 
 	void stopRecording() {
@@ -327,5 +343,9 @@ public class MainActivity extends BaseActivity {
 
 	public void setIMode(int value) {
 		inputSurface.setIMode(value);
+	}
+
+	public void setRecordAudio(boolean value) {
+		recordAudio = value;
 	}
 }

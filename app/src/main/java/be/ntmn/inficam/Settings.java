@@ -132,6 +132,12 @@ public class Settings extends LinearLayout {
 					act.setIMode(imodes[value]);
 				}
 			},
+			new SettingBool("recordaudio", R.string.set_recordaudio, true) {
+				@Override
+				void onSet(boolean value) {
+					act.setRecordAudio(value);
+				}
+			},
 			new SettingBool("fullscreen", R.string.set_fullscreen, true) {
 				@Override
 				void onSet(boolean value) {
