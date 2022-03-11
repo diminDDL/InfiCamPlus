@@ -41,11 +41,13 @@
 	<string name="palette_blackhot">Black Hot</string>
 	<string name="palette_ironbow">Ironbow</string>
 	<string name="palette_rainbow">Rainbow</string>
-	<string name="palette_rainbow2">Rainbow2</string>
+	<string name="palette_rainbow2">Rainbow 2</string>
+
 	<string name="set_emissivity">Emissivity (%.2f)</string>
 	<string name="set_temp_reflected">Reflected temperature (%.1f°C)</string>
 	<string name="set_temp_ambient">Ambient temperature (%.1f°C)</string>
 	<string name="set_humidity">Humidity (%d%%)</string>
 	<string name="set_distance">Distance (%dm)</string>
 	<string name="set_correction">Correction (%.1f°C)</string>
+	<string name="set_palette">Palette</string>
 </resources>

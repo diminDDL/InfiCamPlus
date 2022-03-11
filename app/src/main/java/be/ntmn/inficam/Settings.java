@@ -72,13 +72,13 @@ public abstract class Settings extends LinearLayout {
 	}
 
 	abstract class SettingRadio extends Setting {
-		int def;
+		int def, current;
 		RadioGroup rg;
 		int[] items;
 
 		SettingRadio(String name, int res, int def, int[] items) {
 			super(name, res);
-			this.def = def; /* RadioGroup indexes from 1, wtf... */
+			this.def = def; /* RadioGroup indexes from 1, wtf... Ah! Because our TextView xD. */
 			this.items = items;
 		}
 
@@ -90,9 +90,11 @@ public abstract class Settings extends LinearLayout {
 			rg.addView(title);
 			rg.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
 					ViewGroup.LayoutParams.WRAP_CONTENT));
-			rg.setOnCheckedChangeListener((view, i) -> {
+			rg.setOnCheckedChangeListener((view, id) -> {
+				int i = rg.indexOfChild(rg.findViewById(id));
 				ed.putInt(name, i - 1);
 				ed.commit();
+				current = i - 1;
 				onSet(i - 1);
 			});
 			for (int item : items) {
@@ -109,8 +111,16 @@ public abstract class Settings extends LinearLayout {
 		@Override
 		void load() {
 			int value = sp.getInt(name, def);
-			rg.check(value + 1);
+			try {
+				((RadioButton) rg.getChildAt(value + 1)).setChecked(true);
+			} catch (Exception e) {
+				value = def;
+			}
 			onSet(value);
+		}
+
+		void set(int i) {
+			((RadioButton) rg.getChildAt(i + 1)).setChecked(true);
 		}
 
 		abstract void onSet(int value);

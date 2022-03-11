@@ -3,6 +3,7 @@ package be.ntmn.inficam;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.widget.RadioButton;
 
 import androidx.annotation.Nullable;
 
@@ -26,6 +27,22 @@ public class SettingsTherm extends Settings {
 
 	@Override
 	public Setting[] getSettings() { return settings; }
+
+	class SettingPalette extends SettingRadio {
+		SettingPalette() {
+			super("palette", R.string.set_palette, 2, new int[] {});
+			items = new int[Palette.palettes.length];
+			for (int i = 0; i < Palette.palettes.length; ++i)
+				items[i] = Palette.palettes[i].name;
+		}
+
+		@Override
+		void onSet(int value) {
+			act.infiCam.setPalette(Palette.palettes[value].getData());
+		}
+	}
+
+	SettingPalette palette = new SettingPalette();
 
 	Setting[] settings = {
 		new SettingSliderFloat("emissivity", R.string.set_emissivity, 100, 0, 100, 1, 100) {
@@ -70,6 +87,7 @@ public class SettingsTherm extends Settings {
 				act.infiCam.setCorrection(f);
 				act.infiCam.updateTable();
 			}
-		}
+		},
+		palette
 	};
 }

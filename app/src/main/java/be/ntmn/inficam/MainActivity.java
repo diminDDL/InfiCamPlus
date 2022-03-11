@@ -6,7 +6,6 @@ import android.graphics.Color;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.Bundle;
-import android.text.Layout;
 import android.view.Surface;
 import android.view.ViewGroup;
 import android.view.SurfaceHolder;
@@ -41,12 +40,12 @@ public class MainActivity extends BaseActivity {
 	int picWidth = 1024, picHeight = 768;
 	boolean takePic = false;
 	volatile boolean disconnecting = false;
-	int currentPalette = 3;
 	SurfaceRecorder recorder = new SurfaceRecorder();
 	boolean recordAudio;
 
 	ViewGroup dialogBackground;
-	Settings settings, settingsTherm;
+	SettingsMain settings;
+	SettingsTherm settingsTherm;
 
 	long shutterIntervalInitial = 1000;
 	long shutterInterval = 380000; /* Xtherm does it 1 sec after connect and then every 380 sec. */
@@ -135,7 +134,7 @@ public class MainActivity extends BaseActivity {
 		//inputSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer);
 		infiCam.setSurface(inputSurface.getSurface());
 		cameraView.getHolder().addCallback(surfaceHolderCallback);
-		infiCam.setPalette(Palette.Ironbow.getData()); // TODO improve this, should remember last setting
+		//infiCam.setPalette(Palette.Ironbow.getData()); /* SettingsTherm will set palette. */
 
 		/* Create and set up the InputSurface for annotations overlay. */
 		overlaySurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_NEAREST);
@@ -204,10 +203,9 @@ public class MainActivity extends BaseActivity {
 
 		ImageButton buttonPalette = findViewById(R.id.buttonPalette);
 		buttonPalette.setOnClickListener(view -> {
-			if (++currentPalette == Palette.palettes.length)
-				currentPalette = 0;
-			infiCam.setPalette(Palette.palettes[currentPalette].getData());
-			messageView.showMessage(Palette.palettes[currentPalette].name);
+			settingsTherm.palette.set((settingsTherm.palette.current + 1) %
+					settingsTherm.palette.items.length);
+			messageView.showMessage(Palette.palettes[settingsTherm.palette.current].name);
 		});
 
 		ImageButton buttonVideo = findViewById(R.id.buttonVideo);
