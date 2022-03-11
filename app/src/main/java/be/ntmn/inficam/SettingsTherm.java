@@ -27,11 +27,42 @@ public class SettingsTherm extends Settings {
 	public Setting[] getSettings() { return settings; }
 
 	Setting[] settings = {
-		new SettingSliderFloat("emissivity", R.string.set_firstshutdelay, 100, 0, 100, 1, 100) {
+		new SettingSliderFloat("emissivity", R.string.set_emissivity, 100, 0, 100, 1, 100) {
 			@Override
 			void onSet(float f) {
 				// TODO
 			}
 		},
+			new SettingSliderFloat("temp_reflected", R.string.set_temp_reflected,
+					200, -100, 400, 1, 10) {
+				@Override
+				void onSet(float f) {
+					// TODO
+				}
+			},
+		new SettingSliderFloat("temp_ambient", R.string.set_temp_ambient, 200, -100, 400, 1, 10) {
+			@Override
+			void onSet(float f) {
+				// TODO
+			}
+		},
+		new SettingSliderInt("humidity", R.string.set_humidity, 50, 0, 100, 1) {
+			@Override
+			void onSet(int i) {
+				// TODO
+			}
+		},
+		new SettingSliderInt("distance", R.string.set_distance, 1, 0, 100, 1) {
+			@Override
+			void onSet(int i) {
+				// TODO
+			}
+		},
+		new SettingSliderFloat("correction", R.string.set_correction, 200, -100, 400, 1, 10) {
+			@Override
+			void onSet(float f) {
+				// TODO
+			}
+		}
 	};
 }

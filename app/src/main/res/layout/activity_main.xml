@@ -92,6 +92,17 @@
 		app:layout_constraintEnd_toEndOf="parent">
 
 		<ImageButton
+			android:id="@+id/buttonSettingsTherm"
+			android:src="@drawable/ic_baseline_device_thermostat_24"
+			android:contentDescription="@string/btn_settings_therm"
+			android:layout_width="40dp"
+			android:layout_height="40dp"
+			android:scaleType="fitCenter"
+			android:layout_margin="20dp"
+			app:tint="@color/white"
+			android:background="?android:attr/selectableItemBackground" />
+
+		<ImageButton
 			android:id="@+id/buttonPalette"
 			android:src="@drawable/ic_baseline_palette_24"
 			android:contentDescription="@string/btn_palette"
@@ -128,24 +139,38 @@
 		app:layout_constraintEnd_toEndOf="parent">
 
 		<ScrollView
-			android:id="@+id/dialogSettings"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:background="@color/white"
 			android:layout_margin="40dp"
 			android:layout_gravity="center"
 			android:gravity="center">
+			<FrameLayout
+				android:id="@+id/dialogs"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content">
 
-			<be.ntmn.inficam.SettingsMain
-				android:id="@+id/settings"
-				android:orientation="vertical"
-				android:padding="20dp"
-				android:minWidth="200dp"
-				android:showDividers="middle"
-				android:divider="@drawable/settings_divider"
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content" />
+				<be.ntmn.inficam.SettingsMain
+					android:id="@+id/settings"
+					android:orientation="vertical"
+					android:padding="20dp"
+					android:minWidth="200dp"
+					android:showDividers="middle"
+					android:divider="@drawable/settings_divider"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content" />
 
+				<be.ntmn.inficam.SettingsTherm
+					android:id="@+id/settingsTherm"
+					android:orientation="vertical"
+					android:padding="20dp"
+					android:minWidth="200dp"
+					android:showDividers="middle"
+					android:divider="@drawable/settings_divider"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content" />
+
+			</FrameLayout>
 		</ScrollView>
 
 	</FrameLayout>

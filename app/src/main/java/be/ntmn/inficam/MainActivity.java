@@ -6,11 +6,13 @@ import android.graphics.Color;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.Bundle;
+import android.text.Layout;
 import android.view.Surface;
 import android.view.ViewGroup;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
@@ -44,8 +46,7 @@ public class MainActivity extends BaseActivity {
 	boolean recordAudio;
 
 	ViewGroup dialogBackground;
-	View dialogSettings;
-	Settings settings;
+	Settings settings, settingsTherm;
 
 	long shutterIntervalInitial = 1000;
 	long shutterInterval = 380000; /* Xtherm does it 1 sec after connect and then every 380 sec. */
@@ -214,12 +215,16 @@ public class MainActivity extends BaseActivity {
 
 		dialogBackground = findViewById(R.id.dialogBackground);
 		dialogBackground.setOnClickListener(view -> dialogBackground.setVisibility(View.GONE));
-		dialogSettings = findViewById(R.id.dialogSettings);
 		settings = findViewById(R.id.settings);
 		settings.init(this);
+		settingsTherm = findViewById(R.id.settingsTherm);
+		settingsTherm.init(this);
 
 		ImageButton buttonSettings = findViewById(R.id.buttonSettings);
-		buttonSettings.setOnClickListener(view -> openDialog(dialogSettings));
+		buttonSettings.setOnClickListener(view -> openDialog(settings));
+
+		ImageButton buttonSettingsTherm = findViewById(R.id.buttonSettingsTherm);
+		buttonSettingsTherm.setOnClickListener(view -> openDialog(settingsTherm));
 	}
 
 	@Override
@@ -227,6 +232,7 @@ public class MainActivity extends BaseActivity {
 		super.onResume();
 		surfaceMuxer.init();
 		settings.load();
+		settingsTherm.load();
 
 		/* Do not ask permission with dialogs from onResume(), they'd trigger more onResume(), but
 		 *   we do have to check it in case permissions have changed since onPause().
@@ -292,8 +298,9 @@ public class MainActivity extends BaseActivity {
 	}
 
 	void openDialog(View dialog) {
-		for (int i = 0; i < dialogBackground.getChildCount(); ++i)
-			dialogBackground.getChildAt(i).setVisibility(View.GONE);
+		FrameLayout dialogs = (FrameLayout) dialogBackground.findViewById(R.id.dialogs);
+		for (int i = 0; i < dialogs.getChildCount(); ++i)
+			dialogs.getChildAt(i).setVisibility(View.GONE);
 		dialog.setVisibility(View.VISIBLE);
 		dialogBackground.setVisibility(View.VISIBLE);
 	}
