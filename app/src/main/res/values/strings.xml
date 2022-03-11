@@ -35,6 +35,9 @@
 	<string name="set_rotate180">Turn image upside down</string>
 	<string name="set_mirror">Mirror image</string>
 
+	<string name="set_show_min">Show min temperature</string>
+	<string name="set_show_max">Show max temperature</string>
+	<string name="set_show_center">Show center temperature</string>
 	<string name="set_emissivity">Emissivity (%.2f)</string>
 	<string name="set_temp_reflected">Reflected temperature (%.1f°C)</string>
 	<string name="set_temp_ambient">Ambient temperature (%.1f°C)</string>

@@ -43,6 +43,24 @@ public class SettingsTherm extends Settings {
 	SettingPalette palette = new SettingPalette();
 
 	Setting[] settings = {
+		new SettingBool("showmin", R.string.set_show_min, true) {
+			@Override
+			void onSet(boolean value) {
+				act.overlay.showMin = value;
+			}
+		},
+		new SettingBool("showmax", R.string.set_show_max, true) {
+			@Override
+			void onSet(boolean value) {
+				act.overlay.showMax = value;
+			}
+		},
+		new SettingBool("showcenter", R.string.set_show_center, true) {
+			@Override
+			void onSet(boolean value) {
+				act.overlay.showCenter = value;
+			}
+		},
 		new SettingSliderFloat("emissivity", R.string.set_emissivity, 100, 0, 100, 1, 100) {
 			@Override
 			void onSet(float f) {

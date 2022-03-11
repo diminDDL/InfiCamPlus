@@ -20,7 +20,10 @@ public class Overlay {
 	Paint paintOutline;
 	Paint paintTextOutline;
 	int width, height;
-	boolean rotate = false, mirror = false;
+	boolean rotate = false, mirror = false; /* Set by Settings. */
+	boolean showMin = false; /* Set by SettingsTherm. */
+	boolean showMax = false;
+	boolean showCenter = false;
 
 	/* These sizes are in fractions of the total width of the bitmap drawn. */
 	float smarker = 0.015f; /* Marker size. */
@@ -60,14 +63,20 @@ public class Overlay {
 
 		cvs.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
-		paint.setColor(Color.rgb(255, 255, 0)); // Yellow.
-		drawTPoint(cvs, fi, fi.width / 2, fi.height / 2, fi.center);
+		if (showCenter) {
+			paint.setColor(Color.rgb(255, 255, 0)); // Yellow.
+			drawTPoint(cvs, fi, fi.width / 2, fi.height / 2, fi.center);
+		}
 
-		paint.setColor(Color.rgb(255, 64, 64)); // Red.
-		drawTPoint(cvs, fi, fi.max_x, fi.max_y, fi.max);
+		if (showMin) {
+			paint.setColor(Color.rgb(0, 127, 255)); // Blue.
+			drawTPoint(cvs, fi, fi.min_x, fi.min_y, fi.min);
+		}
 
-		paint.setColor(Color.rgb(0, 127, 255)); // Blue.
-		drawTPoint(cvs, fi, fi.min_x, fi.min_y, fi.min);
+		if (showMax) {
+			paint.setColor(Color.rgb(255, 64, 64)); // Red.
+			drawTPoint(cvs, fi, fi.max_x, fi.max_y, fi.max);
+		}
 
 		surface.unlockCanvasAndPost(cvs);
 	}
