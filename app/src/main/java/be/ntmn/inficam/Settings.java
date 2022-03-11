@@ -183,7 +183,7 @@ public class Settings extends LinearLayout {
 				void onSet(int i) {
 					if (i == 0)
 						title.setText(getContext().getString(R.string.set_shutinterval_never));
-					act.setShutterInterval(i * 1000);
+					act.setShutterInterval((long) i * 1000);
 				}
 			},
 			new SettingRadio("imode", R.string.set_imode, 2, new int[] {
