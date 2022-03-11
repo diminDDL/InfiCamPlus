@@ -21,7 +21,6 @@ TODO
 	- don't forget to reference/put license for libuvc_build makefile, libuvc, libusb if adding license in root
 	- figure out where i want to go with the UI part
 	- setting for regular shutter interval
-	- audio recording along with video
 	- setting for resolution of pictures, video
 	- don't clear stuff like disconnected message if not connected
 	- we can flip the image upside down via the vertex shader, might or might not be useful for the
