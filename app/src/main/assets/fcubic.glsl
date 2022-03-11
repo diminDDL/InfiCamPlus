@@ -22,7 +22,7 @@ vec4 cubic(float x) {
  *   other sources, most notably:
  *     https://stackoverflow.com/questions/13501081/efficient-bicubic-filtering-code-in-glsl
  */
-vec4 texcubic(sampler2D tex, vec2 uv, vec2 res) {
+vec4 texcubic(samplerExternalOES tex, vec2 uv, vec2 res) {
 	uv = uv * res + 0.5; /* Center of the closest texel multiplied in bitmap coords. */
 	vec2 iuv = floor(uv); /* Top left of that pixel. */
 	vec2 fuv = fract(uv); /* How far off the top left of that we are. */
