@@ -136,7 +136,7 @@
 			android:layout_gravity="center"
 			android:gravity="center">
 
-			<be.ntmn.inficam.Settings
+			<be.ntmn.inficam.SettingsMain
 				android:id="@+id/settings"
 				android:orientation="vertical"
 				android:padding="20dp"

@@ -19,8 +19,8 @@ import androidx.annotation.Nullable;
  *   JSON array that is stored in sharedprefs. Should palette and termometry parameters be part of
  *   profile, or option to choose what is part of it or how?
  */
-public class Settings extends LinearLayout {
-	private static final String SP_NAME = "PREFS";
+public abstract class Settings extends LinearLayout {
+	static final String SP_NAME = "PREFS";
 	MainActivity act;
 	SharedPreferences sp;
 	SharedPreferences.Editor ed;
@@ -171,62 +171,6 @@ public class Settings extends LinearLayout {
 		abstract void onSet(int i);
 	}
 
-	Setting[] settings = {
-			new SettingSlider("firstshutdelay", R.string.set_firstshutdelay, 1000, 0, 2000, 100) {
-				@Override
-				void onSet(int i) {
-					act.setShutterIntervalInitial(i);
-				}
-			},
-			new SettingSlider("shutinterval", R.string.set_shutinterval, 380, 0, 1000, 10) {
-				@Override
-				void onSet(int i) {
-					if (i == 0)
-						title.setText(getContext().getString(R.string.set_shutinterval_never));
-					act.setShutterInterval((long) i * 1000);
-				}
-			},
-			new SettingRadio("imode", R.string.set_imode, 2, new int[] {
-					R.string.imode_nearest,
-					R.string.imode_linear,
-					R.string.imode_cubic
-				}) {
-				@Override
-				void onSet(int value) {
-					final int[] imodes = new int[] {
-							SurfaceMuxer.IMODE_NEAREST,
-							SurfaceMuxer.IMODE_LINEAR,
-							SurfaceMuxer.IMODE_BICUBIC
-					};
-					act.setIMode(imodes[value]);
-				}
-			},
-			new SettingBool("recordaudio", R.string.set_recordaudio, true) {
-				@Override
-				void onSet(boolean value) {
-					act.setRecordAudio(value);
-				}
-			},
-			new SettingBool("fullscreen", R.string.set_fullscreen, true) {
-				@Override
-				void onSet(boolean value) {
-					act.setFullscreen(value);
-				}
-			},
-			new SettingBool("hide_navigation", R.string.set_hide_navigation, true) {
-				@Override
-				void onSet(boolean value) {
-					act.setHideNavigation(value);
-				}
-			},
-			new SettingBool("keep_screen_on", R.string.set_keep_screen_on, true) {
-				@Override
-				void onSet(boolean value) {
-					act.setKeepScreenOn(value);
-				}
-			}
-	};
-
 	public Settings(Context context) {
 		super(context);
 	}
@@ -244,12 +188,16 @@ public class Settings extends LinearLayout {
 		sp = act.getSharedPreferences(SP_NAME, MODE_PRIVATE);
 		ed = sp.edit();
 		removeAllViews();
+		Setting[] settings = getSettings();
 		for (Setting setting : settings)
 			setting.init(this);
 	}
 
 	void load() {
+		Setting[] settings = getSettings();
 		for (Setting setting : settings)
 			setting.load();
 	}
+
+	public abstract Setting[] getSettings();
 }
