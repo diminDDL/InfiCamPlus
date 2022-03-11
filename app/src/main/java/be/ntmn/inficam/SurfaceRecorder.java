@@ -32,7 +32,7 @@ public class SurfaceRecorder implements Runnable {
 	static final int FRAME_RATE = 25;
 	static final int IFRAME_INTERVAL = 10; /* In seconds. */
 	static final float BITRATE = 1; /* In bits per pixel. */
-	static final int DEQUEUE_TIMEOUT = 10000; /* In microseconds. */
+	static final int DEQUEUE_TIMEOUT = 5000; /* In microseconds. */
 
 	static final String SND_MIME_TYPE = "audio/mp4a-latm";
 	static final int SND_SAMPLERATE = 44100;
