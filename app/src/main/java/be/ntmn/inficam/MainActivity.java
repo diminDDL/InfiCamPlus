@@ -124,6 +124,26 @@ public class MainActivity extends BaseActivity {
 		}
 	};
 
+	NormalCamera normalCamera = new NormalCamera() {
+		@Override
+		public void onStarted() {
+			videoSurface.init();
+			surfaceMuxer.inputSurfaces.add(videoSurface);
+		}
+
+		@Override
+		public void onStopped() {
+			surfaceMuxer.inputSurfaces.remove(videoSurface);
+			videoSurface.deinit();
+		}
+
+		@Override
+		public void onStartFailed(String message) {
+			surfaceMuxer.inputSurfaces.remove(videoSurface);
+			messageView.showMessage(message);
+		}
+	};
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -144,6 +164,10 @@ public class MainActivity extends BaseActivity {
 		overlaySurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_NEAREST);
 		surfaceMuxer.inputSurfaces.add(overlaySurface);
 		overlay = new Overlay(overlaySurface, cameraView.getWidth(), cameraView.getHeight());
+
+		/* We use it later. */
+		videoSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_LINEAR);
+		videoSurface.deinit(); /* Don't leave it initialized, we'll ignore it until later. */
 
 		/* Now we set the frame callback, the way this works is that first the thermal image on
 		 *   inputSurface gets written, then the frame callback runs, we copy over the info to
@@ -256,27 +280,10 @@ public class MainActivity extends BaseActivity {
 			else messageView.showMessage(R.string.msg_permdenied_usb);
 		} else messageView.showMessage(R.string.msg_permdenied_cam);
 
-		/*videoSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_LINEAR);
-		NormalCamera ct = new NormalCamera() {
-			@Override
-			public void onStarted() {
-				surfaceMuxer.inputSurfaces.add(videoSurface);
-			}
-
-			@Override
-			public void onStopped() {
-				surfaceMuxer.inputSurfaces.remove(videoSurface);
-			}
-
-			@Override
-			public void onStartFailed(String message) {
-				surfaceMuxer.inputSurfaces.remove(videoSurface);
-				messageView.showMessage(message);
-			}
-		};
-		videoSurface.getSurfaceTexture().setDefaultBufferSize(1024, 768); // TODO don't hardcode, also what about aspect?
+		// TODO
+		/*videoSurface.getSurfaceTexture().setDefaultBufferSize(1024, 768); // TODO don't hardcode, also what about aspect?
 		videoSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer); // TODO is it not needed? should we separately update tex images?
-		ct.start(this, videoSurface.getSurface());*/
+		normalCamera.start(this, videoSurface.getSurface());*/
 	}
 
 	public void onFrame() {
