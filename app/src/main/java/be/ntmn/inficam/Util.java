@@ -54,7 +54,7 @@ public class Util {
 		}
 	}
 
-	static String readStringAsset(Context ctx, String filename) throws IOException {
+	public static String readStringAsset(Context ctx, String filename) throws IOException {
 		InputStream input = ctx.getAssets().open(filename);
 		byte[] buffer = new byte[4096];
 		ByteArrayOutputStream bas = new ByteArrayOutputStream();
