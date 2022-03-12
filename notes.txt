@@ -52,6 +52,7 @@ TODO
 	- store thermometry data in videos and pictures
 	- allow to regenerate images and videos from thermometry data, measure from it
 	- show camera product and version info somewhere
+	- option to save separate normal and thermal image side by side (what about video?)
 	- software zoom?
 
 Things i learned about the protocol these thermal cameras talk:
