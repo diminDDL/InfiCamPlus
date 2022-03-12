@@ -67,6 +67,7 @@ int UVCDevice::connect(int fd) {
 }
 
 void UVCDevice::disconnect() {
+	stream_stop(); /* Mostly just important to set streaming = 0. */
 	usb_thread_stop = 1; /* Next step closes libusb devh and wakes the thread. */
 	if (uvc_ctx != NULL) { /* When no uvc_ctx, we depend on the timeout in usb_handle_events(). */
 		uvc_exit(uvc_ctx); /* This also closes the libusb devh. */

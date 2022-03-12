@@ -74,10 +74,11 @@ public class MainActivity extends BaseActivity {
 			connect(dev, new ConnectCallback() {
 				@Override
 				public void onConnected(UsbDevice dev, UsbDeviceConnection conn) {
+					disconnect(); /* Important! Frame callback not allowed during connect. */
 					usbPermissionAcquired = true;
 					usbConnection = conn;
+					disconnecting = false;
 					try {
-						disconnecting = false;
 						infiCam.connect(conn.getFileDescriptor());
 						/* Size is only important for cubic interpolation. */
 						inputSurface.setSize(infiCam.getWidth(), infiCam.getHeight());
@@ -276,7 +277,7 @@ public class MainActivity extends BaseActivity {
 		 *   we do have to check it in case permissions have changed since onPause().
 		 */
 		if (checkPermission(Manifest.permission.CAMERA)) {
-			if (!usbPermissionAsked || usbPermissionAcquired)
+			if (!usbPermissionAsked || usbPermissionAcquired) // TODO this is a hot mess
 				usbMonitor.scan();
 			else messageView.showMessage(R.string.msg_permdenied_usb);
 		} else messageView.showMessage(R.string.msg_permdenied_cam);

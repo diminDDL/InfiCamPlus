@@ -79,7 +79,8 @@ public class InfiCam {
 	public native int getHeight();
 
 	/* Be aware that when streaming is started, the output surface has to flip buffers or following
-	 *   calls to setSurface() or
+	 *   calls to setSurface() or else the frame callback will get stuck. Also do NOT block the CB
+	 *   during startStream/stopStream/connect/disconnect!
 	 */
 	private native int nativeStartStream();
 	public void startStream() {
