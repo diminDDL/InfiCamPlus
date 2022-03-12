@@ -2,29 +2,44 @@ This code is originally from https://github.com/saki4510t/UVCCamera/
 It was modified by infiray, and later by netman.
 And by now everything was rewritten by netman except libuvc_build/libuvc.mk xD
 
+A short what-is-what:
+	libinficam  - Has the native (C, C++) library stuff to talk to the camera and a JNI binding to
+	  couple this to Java for the android app, the JNI binding has a small amount of Android
+	  specific stuff so it can write the thermal image to a Surface object. The C++ stuff does all
+	  the processing to turn the cameras output into a palettized thermal image and numbers in
+	  celsius, but a palette has to be provided externally. The headers have a fair amount of info
+	  on how to use it and it should all be reasonably portable. Android handles USB devices a bit
+	  funny though so to port this code to another OS you may want to look at UVCDevice.connect()
+	  and InfiCam.connect(), other than that it should be relatively straightforward in use.
+	app         - Has the Android UI stuff, pallete generation, etc. It gets somewhat involved when
+	  you look at the SurfaceMuxer class, but this is not for no reason, EGL allows us to use
+	  hardware to handle the scaling and combining of the various things we want to visualize and
+	  we **need** to use EGL anyway if we want to write to a video with Android's MediaCodec stuff.
+
 The versions of third party things in libinficam/src/main/jni dir:
 	libusb    - master at 4622bfcf44db373c53502e3fe873bd611e8332f6 (untouched)
 	libuvc    - master at 15925fed1a08462965a2d24a585a0b0c41d6a9ef (patched)
 		modified stream.c to prevent a segmentation fault when starting streams
 			it was merged upstream, now we are at commit e3f36909ec37b1892ac944872fe9f0369f5601bd
 		again patched stream.c to fix a disconnect issue
-			again taken upstream, current is identical to upstream d3318ae72a2b916ae352ad0abbbfa2c0990f455e
+			again merged upstream, now identical to d3318ae72a2b916ae352ad0abbbfa2c0990f455e
 
 Short description of the C++ classes in jni/InfiCam dir:
-	- UVCDevice     just a wrapper around libuvc, reason for it existing is that using libuvc with android gets pretty involved
-	- InfiFrame     that's where i dumped everything to do with analyzing a frame as it comes out of the camera
+	- UVCDevice     just a wrapper around libuvc, reason for it existing is that using libuvc with
+	    android gets pretty involved
+	- InfiFrame     that's where i dumped everything to do with analyzing a frame as it comes out
+	    of the camera
 	- InfiCam       connecting to the camera, feeding the frames to InifFrame class, etc
 	- InfiCamJNI    whatever garbage is needed to glue InfiCam class to the Java end
 
 TODO
 	- 400 celcius range works quite badly because the float math falls apart below a certain temperature
-	- setting for resolution of pictures, video
 	- show current palette and range on the side
+	- show average temp somewhere?
+	- setting for resolution of pictures, video (first to the range showing thing and normal camera part, what
+	    if we want to record video/pic wider than just the thermal image, how will we go about that?)
 	- rarely but does happen the video gets stuck while camera is still connected (shutter commands still works)
 		why what how?
-	- the libinficam part should work on linux/windows with small work
-		the main thing would be implementing InfiCam and UVCDevice .connect() variation that takes a more sensible
-		device specifier than just a FD, and having a palette to feed to setPalette()
 	- if permission for usb temporary granted we get false usb permission denied messages (happened for me on pro1)
 	- connect when already running sometimes broken
 	- indicate overrange rather than saying NaN
@@ -110,7 +125,8 @@ Things i learned about the protocol these thermal cameras talk:
 		- 0x8020 to set -20 to 120C range (followed by shutter)
 		- 0x8021 to set 120 to 400C range (followed by shutter)
 		- 0x80FF (as before) to store user area in non-volatile storage
-		- 0xEC.., 0xEE.. Mark dead pixel with x, y to low bytes? "用户盲元表" (MainActivity suggests as much)
+		- 0xEC.., 0xEE.. Mark dead pixel with x, y to low bytes? "用户盲元表" (MainActivity from
+		    the original SDK suggests as much)
 
 Some maybe useful trivia:
 	* Generating an ironbow palette:
