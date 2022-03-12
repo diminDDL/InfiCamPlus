@@ -36,7 +36,7 @@ TODO
 	- 400 celcius range works quite badly because the float math falls apart below a certain temperature
 	- show current palette and range on the side
 	- show average temp somewhere?
-	- showing of normal camera also
+	- showing of normal camera also (and allow choosing which one, rotation)
 	- overlaying normal camera
 	- setting for resolution of pictures, video (first to the range showing thing and normal camera part, what
 	    if we want to record video/pic wider than just the thermal image, how will we go about that?)
@@ -45,6 +45,7 @@ TODO
 	- if permission for usb temporary granted we get false usb permission denied messages (happened for me on pro1)
 	- connect when already running sometimes broken
 	- manual temperature range setting for the palettization
+	- deal with phone orientation (auto + allow user to choose, rotate markers etc)
 	- indicate overrange rather than saying NaN
 	- more measurement modes
 	- gallery to check pictures and videos taken
