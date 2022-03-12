@@ -83,8 +83,8 @@ public class Overlay {
 			drawTPoint(cvs, fi, fi.max_x, fi.max_y, fi.max);
 		}
 
-		cvs.drawRect(cvs.getWidth() - 64, 36, cvs.getWidth() - 16, cvs.getHeight() - 36, paintOutline);
-		drawPalette(cvs, cvs.getWidth() - 60, 40, 40, cvs.getHeight() - 80, palette);
+		/*cvs.drawRect(cvs.getWidth() - 64, 36, cvs.getWidth() - 16, cvs.getHeight() - 36, paintOutline);
+		drawPalette(cvs, cvs.getWidth() - 60, 40, 40, cvs.getHeight() - 80, palette);*/
 		surface.unlockCanvasAndPost(cvs);
 	}
 
