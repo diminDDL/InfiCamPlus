@@ -102,9 +102,7 @@ public class SettingsMain extends Settings {
 		},
 		new SettingButton(R.string.set_defaults) {
 			@Override
-			void onPress() {
-				setDefaults();
-			}
+			void onPress() { setDefaults(); }
 		}
 	};
 }
