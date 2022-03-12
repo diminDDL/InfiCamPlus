@@ -38,7 +38,7 @@ public abstract class USBMonitor extends BroadcastReceiver {
 		}
 	}
 
-	public void stop() { /* Call this in onDestroy()/onStop(), matching start() call! */
+	public void stop() { /* Call this in onDestroy()/onStop(), matching start() call. */
 		try {
 			registered = false;
 			ctx.unregisterReceiver(this); /* Prevent resurrection of dead Activities. */
@@ -47,7 +47,7 @@ public abstract class USBMonitor extends BroadcastReceiver {
 		}
 	}
 
-	public void scan() { /* To connect with devices already connected on start, call this. */
+	public void scan() { /* To discover devices already connected on start, call this. */
 		if (manager == null)
 			return;
 		HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
