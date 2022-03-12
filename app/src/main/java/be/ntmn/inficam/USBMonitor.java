@@ -48,12 +48,6 @@ public abstract class USBMonitor extends BroadcastReceiver {
 	}
 
 	public void scan() { /* To connect with devices already connected on start, call this. */
-		/* We have to account for the fact manager could be null because we can't start() until
-		 *   camera permission is obtained (when looking for UVC devices) and if the dialog has to
-		 *   be show, start() will be delayed until after onResume() and onPause(). An onResume()
-		 *   will luckily follow any dialog dismissal, so if we call scan() in onResume() it will
-		 *   be called again anyway.
-		 */
 		if (manager == null)
 			return;
 		HashMap<String, UsbDevice> deviceList = manager.getDeviceList();

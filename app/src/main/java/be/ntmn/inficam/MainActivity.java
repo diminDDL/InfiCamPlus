@@ -32,7 +32,6 @@ public class MainActivity extends BaseActivity {
 	private MessageView messageView;
 	private UsbDevice device;
 	private UsbDeviceConnection usbConnection;
-	private boolean usbPermissionAsked = false, usbPermissionAcquired = false;
 	private SurfaceMuxer surfaceMuxer;
 	private SurfaceMuxer.OutputSurface outputSurface;
 	private SurfaceMuxer.OutputSurface recordSurface;
@@ -70,33 +69,38 @@ public class MainActivity extends BaseActivity {
 			if (device != null)
 				return;
 			device = dev;
-			usbPermissionAsked = true;
-			connect(dev, new ConnectCallback() {
-				@Override
-				public void onConnected(UsbDevice dev, UsbDeviceConnection conn) {
-					disconnect(); /* Important! Frame callback not allowed during connect. */
-					usbPermissionAcquired = true;
-					usbConnection = conn;
-					disconnecting = false;
-					try {
-						infiCam.connect(conn.getFileDescriptor());
-						/* Size is only important for cubic interpolation. */
-						inputSurface.setSize(infiCam.getWidth(), infiCam.getHeight());
-						handler.removeCallbacks(timedShutter); /* Before stream starts! */
-						infiCam.startStream();
-						handler.postDelayed(timedShutter, shutterIntervalInitial);
-						messageView.clearMessage();
-						messageView.showMessage(R.string.msg_connected);
-					} catch (Exception e) {
-						usbConnection.close(); // TODO execution can end up here with usbConnection being null, how?
-						messageView.showMessage(getString(R.string.msg_connect_failed));
+			/* Connecting to a UVC device needs camera permission. */
+			askPermission(Manifest.permission.CAMERA, granted -> {
+				if (!granted) {
+					messageView.showMessage(R.string.msg_permdenied_cam);
+					return;
+				}
+				connect(dev, new ConnectCallback() {
+					@Override
+					public void onConnected(UsbDevice dev, UsbDeviceConnection conn) {
+						disconnect(); /* Important! Frame callback not allowed during connect. */
+						usbConnection = conn;
+						disconnecting = false;
+						try {
+							infiCam.connect(conn.getFileDescriptor());
+							/* Size is only important for cubic interpolation. */
+							inputSurface.setSize(infiCam.getWidth(), infiCam.getHeight());
+							handler.removeCallbacks(timedShutter); /* Before stream starts! */
+							infiCam.startStream();
+							handler.postDelayed(timedShutter, shutterIntervalInitial);
+							messageView.clearMessage();
+							messageView.showMessage(R.string.msg_connected);
+						} catch (Exception e) {
+							usbConnection.close();
+							messageView.showMessage(getString(R.string.msg_connect_failed));
+						}
 					}
-				}
 
-				@Override
-				public void onPermissionDenied(UsbDevice dev) {
-					messageView.showMessage(R.string.msg_permdenied_usb);
-				}
+					@Override
+					public void onPermissionDenied(UsbDevice dev) {
+						messageView.showMessage(R.string.msg_permdenied_usb);
+					}
+				});
 			});
 		}
 
@@ -118,7 +122,8 @@ public class MainActivity extends BaseActivity {
 		public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int w, int h) {
 			outputSurface.setSize(w, h);
 			overlay.setSize(w, h);
-			// TODO redraw more proper, perhaps also redraw when dirty
+			// TODO redraw more proper, perhaps also redraw when dirty (or do we only needa on resize?)
+			//   but maybe it's fiine already, hmm
 			surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
 		}
 
@@ -147,6 +152,70 @@ public class MainActivity extends BaseActivity {
 		}
 	};
 
+	/* The way this works is that first the thermal image on inputSurface gets written, then
+	 *   the frame callback runs, we copy over the info to lastFi and lastTemp, ask
+	 *   handleFrame() to be called on the main thread and then we hold off on returning from
+	 *   the callback until that frame and the matching lastFi and lastTemp have been dealt
+	 *   with, after which the frameLock should be notified.
+	 * The point of it is to make sure we have a matching lastFi and lastTemp with the last
+	 *   frame that don't get overwritten by the next run of this callback. The contents of the
+	 *   inputSurface texture etc are less of a concern since they don't get updated until
+	 *   updateTexImage() is called. We can't just do everything on the callback thread because
+	 *   we need our EGL context and EGL contexts are stuck to a particular thread.
+	 */
+	private final InfiCam.FrameCallback frameCallback = new InfiCam.FrameCallback() {
+		@Override
+		public void onFrame(InfiCam.FrameInfo fi, float[] temp) {
+			/* Note this is called from another thread. */
+			lastFi = fi; /* Save for taking picture and the likes. */
+			lastTemp = temp;
+			handler.post(() -> handleFrame());
+			/* Now we wait until the main thread has finished drawing the frame, so lastFi and
+			 *   lastTemp don't get overwritten before they've been used.
+			 */
+			synchronized (frameLock) {
+				if (disconnecting)
+					return;
+				try {
+					frameLock.wait();
+				} catch (Exception e) {
+					e.printStackTrace(); /* Not the end of the world, we do try to continue. */
+				}
+			}
+		}
+	};
+
+	private void handleFrame() {
+		/* We use the inputSurface for the listener because it has the most relevant timestamp. */
+		surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
+		/* At this point we are certain the frame and the lastFi and lastTemp are matched up with
+		 *   eachother, so now we can do stuff like taking a screenshot, "the frame" here meaning
+		 *   what's in the SurfaceTexture buffers after the updateTexImage() calls surfaceMuxer
+		 *   should have done.
+		 */
+		overlay.draw(lastFi, lastTemp, palette);
+		if (takePic) {
+			/* For taking picture, we substitute in another overlay surface so that we can draw
+			 *   it at the exact resolution the image is saved, to make it look nice. The video
+			 *   surface(s) come in at whatever resolution they are and are scaled by the muxer
+			 *   regardless, so we don't need to worry about those.
+			 */
+			overlay.setSize(picWidth, picHeight);
+			overlay.draw(lastFi, lastTemp, palette);
+			overlaySurface.getSurfaceTexture().updateTexImage();
+			Bitmap bitmap = surfaceMuxer.getBitmap(picWidth, picHeight);
+			Util.writePNG(this, bitmap);
+			overlay.setSize(cameraView.getWidth(), cameraView.getHeight());
+			takePic = false;
+			messageView.shortMessage(getString(R.string.msg_captured));
+		}
+
+		/* Now we allow another frame to come in */
+		synchronized (frameLock) {
+			frameLock.notify();
+		}
+	}
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -171,52 +240,14 @@ public class MainActivity extends BaseActivity {
 		/* We use it later. */
 		videoSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_LINEAR);
 
-		/* Now we set the frame callback, the way this works is that first the thermal image on
-		 *   inputSurface gets written, then the frame callback runs, we copy over the info to
-		 *   lastFi and lastTemp, ask onFrame() to be called on the main thread and then we hold
-		 *   off on returning from the callback until that frame and the matching lastFi and
-		 *   lastTemp have been dealt with, after which the frameLock should be notified.
-		 * The point of it is to make sure we have a matching lastFi and lastTemp with the last
-		 *   frame that don't get overwritten by the next run of this callback. The contents of the
-		 *   inputSurface texture etc are less of a concern since they don't get updated until
-		 *   updateTexImage() is called. We can't just do everything on the callback thread because
-		 *   we need our EGL context and EGL contexts are stuck to a particular thread.
-		 */
-		infiCam.setFrameCallback((fi, temp) -> { /* Note this is called from another thread. */
-			lastFi = fi; /* Save for taking picture and the likes. */
-			lastTemp = temp;
-			handler.post(this::onFrame);
-			/* Now we wait until the main thread has finished drawing the frame, so lastFi and
-			 *   lastTemp don't get overwritten before they've been used.
-			 */
-			synchronized (frameLock) {
-				if (disconnecting)
-					return;
-				try {
-					frameLock.wait();
-				} catch (Exception e) {
-					e.printStackTrace(); /* Not the end of the world, we do try to continue. */
-				}
-			}
-		});
-
-		/* Connecting to a UVC device needs camera permission. */
-		askPermission(Manifest.permission.CAMERA, granted -> {
-			if (granted)
-				usbMonitor.start(this);
-			else messageView.showMessage(R.string.msg_permdenied_cam);
-		});
+		/* This one will run every frame. */
+		infiCam.setFrameCallback(frameCallback);
 
 		cameraView.setOnClickListener(view -> {
 			/* Allow to retry if connecting failed or permission denied. */
 			if (usbConnection == null) {
 				device = null;
-				askPermission(Manifest.permission.CAMERA, granted -> {
-					if (granted) {
-						usbMonitor.start(this);
-						usbMonitor.scan();
-					} else messageView.showMessage(R.string.msg_permdenied_cam);
-				});
+				usbMonitor.scan();
 				return;
 			}
 			infiCam.calibrate();
@@ -266,21 +297,17 @@ public class MainActivity extends BaseActivity {
 	}
 
 	@Override
-	protected void onResume() {
-		super.onResume();
-		surfaceMuxer.init();
+	protected void onStart() {
+		super.onStart();
 		settings.load();
 		settingsTherm.load();
 		settingsMeasure.load();
 
-		/* Do not ask permission with dialogs from onResume(), they'd trigger more onResume(), but
-		 *   we do have to check it in case permissions have changed since onPause().
+		/* Beware that we can't call these in onResume as they'll ask permission with dialogs and
+		 *   thus trigger another onResume().
 		 */
-		if (checkPermission(Manifest.permission.CAMERA)) {
-			if (!usbPermissionAsked || usbPermissionAcquired) // TODO this is a hot mess
-				usbMonitor.scan();
-			else messageView.showMessage(R.string.msg_permdenied_usb);
-		} else messageView.showMessage(R.string.msg_permdenied_cam);
+		usbMonitor.start(this);
+		usbMonitor.scan();
 
 		// TODO
 		/*videoSurface.getSurfaceTexture().setDefaultBufferSize(1024, 768); // TODO don't hardcode, also what about aspect?
@@ -288,35 +315,30 @@ public class MainActivity extends BaseActivity {
 		normalCamera.start(this, videoSurface.getSurface());*/
 	}
 
-	private void onFrame() {
-		/* We use the inputSurface for the listener because it has the most relevant timestamp. */
-		surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
-		/* At this point we are certain the frame and the lastFi and lastTemp are matched up with
-		 *   eachother, so now we can do stuff like taking a screenshot, "the frame" here meaning
-		 *   what's in the SurfaceTexture buffers after the updateTexImage() calls surfaceMuxer
-		 *   should have done.
-		 */
-		overlay.draw(lastFi, lastTemp, palette);
-		if (takePic) {
-			/* For taking picture, we substitute in another overlay surface so that we can draw
-			 *   it at the exact resolution the image is saved, to make it look nice. The video
-			 *   surface(s) come in at whatever resolution they are and are scaled by the muxer
-			 *   regardless, so we don't need to worry about those.
-			 */
-			overlay.setSize(picWidth, picHeight);
-			overlay.draw(lastFi, lastTemp, palette);
-			overlaySurface.getSurfaceTexture().updateTexImage();
-			Bitmap bitmap = surfaceMuxer.getBitmap(picWidth, picHeight);
-			Util.writePNG(this, bitmap);
-			overlay.setSize(cameraView.getWidth(), cameraView.getHeight());
-			takePic = false;
-			messageView.shortMessage(getString(R.string.msg_captured));
-		}
+	@Override
+	protected void onResume() {
+		super.onResume();
+		surfaceMuxer.init();
+	}
 
-		/* Now we allow another frame to come in */
-		synchronized (frameLock) {
-			frameLock.notify();
-		}
+	@Override
+	protected void onPause() {
+		surfaceMuxer.deinit();
+		super.onPause();
+	}
+
+	@Override
+	protected void onStop() {
+		stopRecording();
+		disconnect();
+		usbMonitor.stop();
+		super.onStop();
+	}
+
+	@Override
+	protected void onDestroy() {
+		surfaceMuxer.release();
+		super.onDestroy();
 	}
 
 	private void openDialog(View dialog) {
@@ -386,21 +408,6 @@ public class MainActivity extends BaseActivity {
 			recordSurface.release();
 			recordSurface = null;
 		}
-	}
-
-	@Override
-	protected void onPause() {
-		stopRecording();
-		disconnect();
-		surfaceMuxer.deinit();
-		super.onPause();
-	}
-
-	@Override
-	protected void onDestroy() {
-		usbMonitor.stop();
-		surfaceMuxer.release();
-		super.onDestroy();
 	}
 
 	/*
