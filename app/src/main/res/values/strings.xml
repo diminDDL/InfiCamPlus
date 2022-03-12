@@ -59,4 +59,5 @@
 	<string name="palette_rainbow">Rainbow</string>
 	<string name="palette_rainbow2">Rainbow 2</string>
 	<string name="set_defaults">Reset to defaults</string>
+	<string name="set_swap_controls">Swap left and right buttons</string>
 </resources>

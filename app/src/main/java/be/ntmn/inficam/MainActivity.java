@@ -13,8 +13,10 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import java.io.IOException;
 
@@ -46,6 +48,7 @@ public class MainActivity extends BaseActivity {
 	ViewGroup dialogBackground;
 	SettingsMain settings;
 	SettingsTherm settingsTherm;
+	ViewGroup.LayoutParams buttonsLeftLayout, buttonsRightLayout;
 
 	long shutterIntervalInitial = 1000;
 	long shutterInterval = 380000; /* Xtherm does it 1 sec after connect and then every 380 sec. */
@@ -223,6 +226,11 @@ public class MainActivity extends BaseActivity {
 
 		ImageButton buttonSettingsTherm = findViewById(R.id.buttonSettingsTherm);
 		buttonSettingsTherm.setOnClickListener(view -> openDialog(settingsTherm));
+
+		LinearLayout left = findViewById(R.id.buttonsLeft);
+		LinearLayout right = findViewById(R.id.buttonsRight);
+		buttonsLeftLayout = left.getLayoutParams();
+		buttonsRightLayout = right.getLayoutParams();
 	}
 
 	@Override
@@ -412,5 +420,17 @@ public class MainActivity extends BaseActivity {
 	void requestReinit() {
 		handler.removeCallbacks(timedShutter);
 		handler.postDelayed(timedShutter, shutterIntervalInitial);
+	}
+
+	public void setSwapControls(boolean value) {
+		LinearLayout left = findViewById(R.id.buttonsLeft);
+		LinearLayout right = findViewById(R.id.buttonsRight);
+		if (value) {
+			left.setLayoutParams(buttonsRightLayout);
+			right.setLayoutParams(buttonsLeftLayout);
+		} else {
+			left.setLayoutParams(buttonsLeftLayout);
+			right.setLayoutParams(buttonsRightLayout);
+		}
 	}
 }

@@ -94,6 +94,12 @@ public class SettingsMain extends Settings {
 				act.setKeepScreenOn(value);
 			}
 		},
+		new SettingBool("swap_controls", R.string.set_swap_controls, true) {
+			@Override
+			void onSet(boolean value) {
+				act.setSwapControls(value);
+			}
+		},
 		new SettingButton(R.string.set_defaults) {
 			@Override
 			void onPress() {
