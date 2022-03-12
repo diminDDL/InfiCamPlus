@@ -29,9 +29,7 @@ public class SettingsMain extends Settings {
 	Setting[] settings = {
 		new SettingSliderInt("firstshutdelay", R.string.set_firstshutdelay, 1000, 0, 2000, 100) {
 			@Override
-			void onSet(int i) {
-				act.setShutterIntervalInitial(i);
-			}
+			void onSet(int i) { act.setShutterIntervalInitial(i); }
 		},
 		new SettingSliderInt("shutinterval", R.string.set_shutinterval, 380, 0, 1000, 10) {
 			@Override
@@ -72,33 +70,23 @@ public class SettingsMain extends Settings {
 		},
 		new SettingBool("recordaudio", R.string.set_recordaudio, true) {
 			@Override
-			void onSet(boolean value) {
-				act.setRecordAudio(value);
-			}
+			void onSet(boolean value) { act.setRecordAudio(value); }
 		},
 		new SettingBool("fullscreen", R.string.set_fullscreen, true) {
 			@Override
-			void onSet(boolean value) {
-				act.setFullscreen(value);
-			}
+			void onSet(boolean value) { act.setFullscreen(value); }
 		},
 		new SettingBool("hide_navigation", R.string.set_hide_navigation, true) {
 			@Override
-			void onSet(boolean value) {
-				act.setHideNavigation(value);
-			}
+			void onSet(boolean value) { act.setHideNavigation(value); }
 		},
 		new SettingBool("keep_screen_on", R.string.set_keep_screen_on, true) {
 			@Override
-			void onSet(boolean value) {
-				act.setKeepScreenOn(value);
-			}
+			void onSet(boolean value) { act.setKeepScreenOn(value); }
 		},
 		new SettingBool("swap_controls", R.string.set_swap_controls, false) {
 			@Override
-			void onSet(boolean value) {
-				act.setSwapControls(value);
-			}
+			void onSet(boolean value) { act.setSwapControls(value); }
 		},
 		new SettingButton(R.string.set_defaults) {
 			@Override

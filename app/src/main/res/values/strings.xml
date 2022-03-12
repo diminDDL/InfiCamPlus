@@ -23,6 +23,7 @@
 	<string name="btn_palette">Change palette</string>
 	<string name="btn_settings">Settings</string>
 	<string name="btn_settings_therm">Thermometry settings</string>
+	<string name="btn_settings_measure">Measurement settings</string>
 
 	<string name="set_imode">Scaling mode</string>
 	<string name="set_recordaudio">Record audio with videos</string>

@@ -47,6 +47,7 @@ public class MainActivity extends BaseActivity {
 	ViewGroup dialogBackground;
 	SettingsMain settings;
 	SettingsTherm settingsTherm;
+	SettingsMeasure settingsMeasure;
 	ViewGroup.LayoutParams buttonsLeftLayout, buttonsRightLayout;
 
 	long shutterIntervalInitial; /* These are set by Settings class later. */
@@ -219,12 +220,17 @@ public class MainActivity extends BaseActivity {
 		settings.init(this);
 		settingsTherm = findViewById(R.id.settingsTherm);
 		settingsTherm.init(this);
+		settingsMeasure = findViewById(R.id.settingsMeasure);
+		settingsMeasure.init(this);
 
 		ImageButton buttonSettings = findViewById(R.id.buttonSettings);
 		buttonSettings.setOnClickListener(view -> openDialog(settings));
 
 		ImageButton buttonSettingsTherm = findViewById(R.id.buttonSettingsTherm);
 		buttonSettingsTherm.setOnClickListener(view -> openDialog(settingsTherm));
+
+		ImageButton buttonSettingsMeasure = findViewById(R.id.buttonSettingsMeasure);
+		buttonSettingsMeasure.setOnClickListener(view -> openDialog(settingsMeasure));
 
 		LinearLayout left = findViewById(R.id.buttonsLeft);
 		LinearLayout right = findViewById(R.id.buttonsRight);
@@ -238,6 +244,7 @@ public class MainActivity extends BaseActivity {
 		surfaceMuxer.init();
 		settings.load();
 		settingsTherm.load();
+		settingsMeasure.load();
 
 		/* Do not ask permission with dialogs from onResume(), they'd trigger more onResume(), but
 		 *   we do have to check it in case permissions have changed since onPause().
