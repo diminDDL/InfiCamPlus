@@ -431,7 +431,7 @@ public class MainActivity extends BaseActivity {
 	}
 
 	/* For settings that need a calibration, defers the initial click. */
-	void requestReinit() {
+	public void requestReinit() {
 		handler.removeCallbacks(timedShutter);
 		handler.postDelayed(timedShutter, shutterIntervalInitial);
 	}
