@@ -42,7 +42,7 @@ public class SettingsTherm extends Settings {
 
 	public SettingPalette palette = new SettingPalette();
 
-	private Setting[] settings = {
+	private final Setting[] settings = {
 		new SettingSliderFloat("emissivity", R.string.set_emissivity, 100, 0, 100, 1, 100) {
 			@Override
 			void onSet(float f) {

@@ -26,7 +26,7 @@ public class SettingsMain extends Settings {
 	@Override
 	public Setting[] getSettings() { return settings; }
 
-	private Setting[] settings = {
+	private final Setting[] settings = {
 		new SettingSliderInt("firstshutdelay", R.string.set_firstshutdelay, 1000, 0, 2000, 100) {
 			@Override
 			void onSet(int i) { act.setShutterIntervalInitial(i); }

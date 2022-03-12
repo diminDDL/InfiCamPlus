@@ -23,7 +23,7 @@ public abstract class USBMonitor extends BroadcastReceiver {
 	private Context ctx;
 	private boolean registered = false;
 	private UsbManager manager;
-	private HashMap<UsbDevice, ConnectCallback> callbacks = new HashMap<>();
+	private final HashMap<UsbDevice, ConnectCallback> callbacks = new HashMap<>();
 
 	public void start(Context ctx) { /* Recommended use is in onCreate()/onStart(). */
 		this.ctx = ctx;

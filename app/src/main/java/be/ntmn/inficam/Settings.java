@@ -40,7 +40,7 @@ public abstract class Settings extends LinearLayout {
 	}
 
 	abstract class SettingBool extends Setting {
-		private boolean def;
+		private final boolean def;
 		private CheckBox box;
 
 		SettingBool(String name, int res, boolean def) {
@@ -81,7 +81,7 @@ public abstract class Settings extends LinearLayout {
 	}
 
 	abstract class SettingRadio extends Setting {
-		private int def;
+		private final int def;
 		private RadioGroup rg;
 		int[] items;
 		int current;
@@ -144,7 +144,7 @@ public abstract class Settings extends LinearLayout {
 	}
 
 	abstract class SettingSlider extends Setting {
-		private int def, min, max, step;
+		private final int def, min, max, step;
 		private Slider slider;
 		TextView title;
 
@@ -217,7 +217,7 @@ public abstract class Settings extends LinearLayout {
 	}
 
 	abstract class SettingSliderFloat extends SettingSlider {
-		private int div;
+		private final int div;
 
 		SettingSliderFloat(String name, int res, int def, int min, int max, int step, int div) {
 			super(name, res, def, min, max, step);
@@ -238,15 +238,13 @@ public abstract class Settings extends LinearLayout {
 	}
 
 	abstract class SettingButton extends Setting {
-		private Button button;
-
 		SettingButton(int res) {
 			super(null, res);
 		}
 
 		@Override
 		void init(Settings set) {
-			button = new Button(getContext());
+			Button button = new Button(getContext());
 			button.setText(res);
 			button.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
 					ViewGroup.LayoutParams.WRAP_CONTENT));

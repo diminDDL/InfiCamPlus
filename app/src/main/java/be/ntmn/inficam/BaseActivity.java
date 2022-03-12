@@ -18,7 +18,7 @@ import java.util.ArrayList;
  */
 public class BaseActivity extends AppCompatActivity {
 	final Handler handler = new Handler();
-	private ArrayList<PermissionCallback> permissionCallbacks = new ArrayList<>();
+	private final ArrayList<PermissionCallback> permissionCallbacks = new ArrayList<>();
 	private boolean fullscreen = false; /* to change the default, look at Settings class. */
 	private boolean hideNav = false;
 	private final static long hideDelay = 2500;

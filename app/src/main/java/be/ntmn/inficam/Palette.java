@@ -31,35 +31,35 @@ public abstract class Palette {
 
 	abstract Pixel func(double x);
 
-	private static Palette WhiteHot = new Palette(R.string.palette_whitehot) {
+	private static final Palette WhiteHot = new Palette(R.string.palette_whitehot) {
 		@Override
 		public Pixel func(double x) {
 			return new Pixel(x, x, x);
 		}
 	};
 
-	private static Palette BlackHot = new Palette(R.string.palette_blackhot) {
+	private static final Palette BlackHot = new Palette(R.string.palette_blackhot) {
 		@Override
 		public Pixel func(double x) {
 			return new Pixel(1 - x, 1 - x, 1 - x);
 		}
 	};
 
-	private static Palette Ironbow = new Palette(R.string.palette_ironbow) {
+	private static final Palette Ironbow = new Palette(R.string.palette_ironbow) {
 		@Override
 		public Pixel func(double x) {
 			return new Pixel(sqrt(x), pow(x, 3), max(0.0, sin(2.0 * PI * x)));
 		}
 	};
 
-	private static Palette Rainbow = new Palette(R.string.palette_rainbow) {
+	private static final Palette Rainbow = new Palette(R.string.palette_rainbow) {
 		@Override
 		Pixel func(double x) {
 			return hsvPixel((1 - x) * 360.0, 1, 1);
 		}
 	};
 
-	private static Palette Rainbow2 = new Palette(R.string.palette_rainbow2) {
+	private static final Palette Rainbow2 = new Palette(R.string.palette_rainbow2) {
 		@Override
 		Pixel func(double x) {
 			return hsvPixel((1 - x) * 270.0, 1, 1);

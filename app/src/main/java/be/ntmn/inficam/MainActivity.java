@@ -44,7 +44,7 @@ public class MainActivity extends BaseActivity {
 	private int[] palette;
 	private boolean takePic = false;
 	private volatile boolean disconnecting = false;
-	private SurfaceRecorder recorder = new SurfaceRecorder();
+	private final SurfaceRecorder recorder = new SurfaceRecorder();
 	private boolean recordAudio;
 
 	private ViewGroup dialogBackground;
@@ -64,7 +64,7 @@ public class MainActivity extends BaseActivity {
 		}
 	};
 
-	private USBMonitor usbMonitor = new USBMonitor() {
+	private final USBMonitor usbMonitor = new USBMonitor() {
 		@Override
 		public void onDeviceFound(UsbDevice dev) {
 			if (device != null)
@@ -105,7 +105,7 @@ public class MainActivity extends BaseActivity {
 		}
 	};
 
-	private SurfaceHolder.Callback surfaceHolderCallback = new SurfaceHolder.Callback() {
+	private final SurfaceHolder.Callback surfaceHolderCallback = new SurfaceHolder.Callback() {
 		@Override
 		public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
 			outputSurface =
@@ -128,7 +128,7 @@ public class MainActivity extends BaseActivity {
 		}
 	};
 
-	private NormalCamera normalCamera = new NormalCamera() {
+	private final NormalCamera normalCamera = new NormalCamera() {
 		@Override
 		public void onStarted() {
 			surfaceMuxer.inputSurfaces.add(videoSurface);

@@ -26,7 +26,7 @@ public class SettingsMeasure extends Settings {
 	@Override
 	public Setting[] getSettings() { return settings; }
 
-	private Setting[] settings = {
+	private final Setting[] settings = {
 			new SettingBool("showcenter", R.string.set_show_center, true) {
 				@Override
 				void onSet(boolean value) { act.overlay.setShowCenter(value); }

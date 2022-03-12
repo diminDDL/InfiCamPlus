@@ -9,10 +9,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.SurfaceTexture;
-import android.os.Build;
 import android.view.Surface;
-
-import androidx.annotation.RequiresApi;
 
 import be.ntmn.libinficam.InfiCam;
 
