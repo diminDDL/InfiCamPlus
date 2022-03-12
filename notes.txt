@@ -20,7 +20,6 @@ TODO
 	- 400 celcius range works quite badly because the float math falls apart below a certain temperature
 	- don't forget to reference/put license for libuvc_build makefile, libuvc, libusb if adding license in root
 	- setting for resolution of pictures, video
-	- don't clear stuff like disconnected message if not connected
 	- show current palette and range on the side
 	- rarely but does happen the video gets stuck while camera is still connected (shutter commands still works)
 		why what how?

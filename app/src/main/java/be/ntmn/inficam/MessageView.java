@@ -9,18 +9,32 @@ import androidx.annotation.Nullable;
 public class MessageView extends androidx.appcompat.widget.AppCompatTextView {
 	final static long TIME_LONG = 2000;
 	final static long TIME_SHORT = 500;
-	final Runnable _hideMessage = () -> setVisibility(View.INVISIBLE);
+	String persistentMessage;
+
+	final Runnable _hideMessage = () -> {
+		if (persistentMessage != null)
+			setText(persistentMessage);
+		else setVisibility(View.INVISIBLE);
+	};
 
 	public MessageView(Context context) {
 		super(context);
+		init();
 	}
 
 	public MessageView(Context context, @Nullable AttributeSet attrs) {
 		super(context, attrs);
+		init();
 	}
 
 	public MessageView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
 		super(context, attrs, defStyleAttr);
+		init();
+	}
+
+	void init() {
+		if (getVisibility() == VISIBLE)
+			persistentMessage = getText().toString();
 	}
 
 	void _showMessage(boolean preserve, long time) {
@@ -31,13 +45,19 @@ public class MessageView extends androidx.appcompat.widget.AppCompatTextView {
 	}
 
 	public void setMessage(int res) {
-		setText(res);
-		_showMessage(true, TIME_LONG);
+		setMessage(getContext().getString(res));
 	}
 
 	public void setMessage(String str) {
+		persistentMessage = str;
 		setText(str);
-		_showMessage(true, TIME_LONG);
+		_showMessage(true, 0);
+	}
+
+	public void clearMessage() {
+		persistentMessage = null;
+		removeCallbacks(_hideMessage);
+		_hideMessage.run();
 	}
 
 	public void showMessage(int res) {

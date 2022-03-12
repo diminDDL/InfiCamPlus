@@ -80,16 +80,17 @@ public class MainActivity extends BaseActivity {
 						handler.removeCallbacks(timedShutter); /* Before stream starts! */
 						infiCam.startStream();
 						handler.postDelayed(timedShutter, shutterIntervalInitial);
+						messageView.clearMessage();
 						messageView.showMessage(R.string.msg_connected);
 					} catch (Exception e) {
 						usbConnection.close(); // TODO execution can end up here with usbConnection being null, how?
-						messageView.setMessage(getString(R.string.msg_connect_failed));
+						messageView.showMessage(getString(R.string.msg_connect_failed));
 					}
 				}
 
 				@Override
 				public void onPermissionDenied(UsbDevice dev) {
-					messageView.setMessage(R.string.msg_permdenied_usb);
+					messageView.showMessage(R.string.msg_permdenied_usb);
 				}
 			});
 		}
@@ -177,7 +178,7 @@ public class MainActivity extends BaseActivity {
 		askPermission(Manifest.permission.CAMERA, granted -> {
 			if (granted)
 				usbMonitor.start(this);
-			else messageView.setMessage(R.string.msg_permdenied_cam);
+			else messageView.showMessage(R.string.msg_permdenied_cam);
 		});
 
 		cameraView.setOnClickListener(view -> {
@@ -188,7 +189,7 @@ public class MainActivity extends BaseActivity {
 					if (granted) {
 						usbMonitor.start(this);
 						usbMonitor.scan();
-					} else messageView.setMessage(R.string.msg_permdenied_cam);
+					} else messageView.showMessage(R.string.msg_permdenied_cam);
 				});
 				return;
 			}
@@ -252,8 +253,8 @@ public class MainActivity extends BaseActivity {
 		if (checkPermission(Manifest.permission.CAMERA)) {
 			if (!usbPermissionAsked || usbPermissionAcquired)
 				usbMonitor.scan();
-			else messageView.setMessage(R.string.msg_permdenied_usb);
-		} else messageView.setMessage(R.string.msg_permdenied_cam);
+			else messageView.showMessage(R.string.msg_permdenied_usb);
+		} else messageView.showMessage(R.string.msg_permdenied_cam);
 
 		/*videoSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_LINEAR);
 		NormalCamera ct = new NormalCamera() {
@@ -347,7 +348,7 @@ public class MainActivity extends BaseActivity {
 						}
 						startRecording(recordAudio);
 					});
-				} else messageView.setMessage(R.string.msg_permdenied_cam);
+				} else messageView.showMessage(R.string.msg_permdenied_cam);
 			});
 		} else stopRecording();
 	}
