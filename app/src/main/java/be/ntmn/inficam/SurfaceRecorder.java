@@ -12,7 +12,6 @@ import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.media.MediaRecorder;
 import android.net.Uri;
-import android.net.rtp.AudioCodec;
 import android.os.Build;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;

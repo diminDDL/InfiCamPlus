@@ -16,7 +16,6 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
-import androidx.constraintlayout.widget.ConstraintLayout;
 
 import java.io.IOException;
 
@@ -50,8 +49,8 @@ public class MainActivity extends BaseActivity {
 	SettingsTherm settingsTherm;
 	ViewGroup.LayoutParams buttonsLeftLayout, buttonsRightLayout;
 
-	long shutterIntervalInitial = 1000;
-	long shutterInterval = 380000; /* Xtherm does it 1 sec after connect and then every 380 sec. */
+	long shutterIntervalInitial; /* These are set by Settings class later. */
+	long shutterInterval; /* Xtherm does it 1 sec after connect and then every 380 sec. */
 	final Runnable timedShutter = new Runnable() {
 		@Override
 		public void run() {
@@ -249,8 +248,6 @@ public class MainActivity extends BaseActivity {
 			else messageView.setMessage(R.string.msg_permdenied_usb);
 		} else messageView.setMessage(R.string.msg_permdenied_cam);
 
-		//inputSurface.rotate = true;
-		//inputSurface.mirror = true;
 		/*videoSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_LINEAR);
 		NormalCamera ct = new NormalCamera() {
 			@Override
@@ -385,6 +382,7 @@ public class MainActivity extends BaseActivity {
 	@Override
 	protected void onDestroy() {
 		usbMonitor.stop();
+		surfaceMuxer.release();
 		super.onDestroy();
 	}
 
