@@ -36,7 +36,7 @@ public class SettingsTherm extends Settings {
 
 		@Override
 		void onSet(int value) {
-			act.infiCam.setPalette(Palette.palettes[value].getData());
+			act.setPalette(Palette.palettes[value].getData());
 		}
 	}
 

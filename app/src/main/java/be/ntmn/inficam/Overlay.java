@@ -9,7 +9,10 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.SurfaceTexture;
+import android.os.Build;
 import android.view.Surface;
+
+import androidx.annotation.RequiresApi;
 
 import be.ntmn.libinficam.InfiCam;
 
@@ -19,6 +22,7 @@ public class Overlay {
 	Paint paint;
 	Paint paintOutline;
 	Paint paintTextOutline;
+	Paint paintPalette;
 	int width, height;
 	boolean rotate = false, mirror = false; /* Set by Settings. */
 	boolean showMin = false; /* Set by SettingsTherm. */
@@ -37,6 +41,7 @@ public class Overlay {
 		surface = is.getSurface();
 		surfaceTexture = is.getSurfaceTexture();
 		paint = new Paint();
+		paintPalette = new Paint();
 		paint.setAntiAlias(true);
 		paint.setStrokeCap(Paint.Cap.ROUND);
 		paint.setStrokeJoin(Paint.Join.ROUND);
@@ -58,7 +63,7 @@ public class Overlay {
 		paintTextOutline.setTextSize(textsize * w);
 	}
 
-	public void draw(InfiCam.FrameInfo fi, float[] temp) {
+	public void draw(InfiCam.FrameInfo fi, float[] temp, int[] palette) {
 		Canvas cvs = surface.lockCanvas(null);
 
 		cvs.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
@@ -78,7 +83,17 @@ public class Overlay {
 			drawTPoint(cvs, fi, fi.max_x, fi.max_y, fi.max);
 		}
 
+		cvs.drawRect(cvs.getWidth() - 64, 36, cvs.getWidth() - 16, cvs.getHeight() - 36, paintOutline);
+		drawPalette(cvs, cvs.getWidth() - 60, 40, 40, cvs.getHeight() - 80, palette);
 		surface.unlockCanvasAndPost(cvs);
+	}
+
+	void drawPalette(Canvas cvs, int x, int y, int w, int h, int[] palette) {
+		for (int i = 0; i < h; ++i) {
+			int col = palette[palette.length - 1 - i * palette.length / h];
+			paintPalette.setARGB(255, (col >> 0) & 0xFF, (col >> 8) & 0xFF, (col >> 16) & 0xFF);
+			cvs.drawLine(x, y + i, x + w, y + i, paintPalette);
+		}
 	}
 
 	void drawTPoint(Canvas cvs, InfiCam.FrameInfo fi, int tx, int ty, float temp) {

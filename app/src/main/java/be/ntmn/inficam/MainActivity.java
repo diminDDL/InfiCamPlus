@@ -39,6 +39,7 @@ public class MainActivity extends BaseActivity {
 	float[] lastTemp;
 	final Object frameLock = new Object();
 	int picWidth = 1024, picHeight = 768;
+	int[] palette;
 	boolean takePic = false;
 	volatile boolean disconnecting = false;
 	SurfaceRecorder recorder = new SurfaceRecorder();
@@ -294,7 +295,7 @@ public class MainActivity extends BaseActivity {
 		 *   what's in the SurfaceTexture buffers after the updateTexImage() calls surfaceMuxer
 		 *   should have done.
 		 */
-		overlay.draw(lastFi, lastTemp);
+		overlay.draw(lastFi, lastTemp, palette);
 		if (takePic) {
 			/* For taking picture, we substitute in another overlay surface so that we can draw
 			 *   it at the exact resolution the image is saved, to make it look nice. The video
@@ -302,7 +303,7 @@ public class MainActivity extends BaseActivity {
 			 *   regardless, so we don't need to worry about those.
 			 */
 			overlay.setSize(picWidth, picHeight);
-			overlay.draw(lastFi, lastTemp);
+			overlay.draw(lastFi, lastTemp, palette);
 			overlaySurface.getSurfaceTexture().updateTexImage();
 			Bitmap bitmap = surfaceMuxer.getBitmap(picWidth, picHeight);
 			Util.writePNG(this, bitmap);
@@ -445,5 +446,10 @@ public class MainActivity extends BaseActivity {
 			left.setLayoutParams(buttonsLeftLayout);
 			right.setLayoutParams(buttonsRightLayout);
 		}
+	}
+
+	public void setPalette(int[] data) {
+		palette = data;
+		infiCam.setPalette(data);
 	}
 }
