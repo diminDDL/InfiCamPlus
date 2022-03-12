@@ -131,14 +131,12 @@ public class MainActivity extends BaseActivity {
 	private NormalCamera normalCamera = new NormalCamera() {
 		@Override
 		public void onStarted() {
-			videoSurface.init();
 			surfaceMuxer.inputSurfaces.add(videoSurface);
 		}
 
 		@Override
 		public void onStopped() {
 			surfaceMuxer.inputSurfaces.remove(videoSurface);
-			videoSurface.deinit();
 		}
 
 		@Override
@@ -171,7 +169,6 @@ public class MainActivity extends BaseActivity {
 
 		/* We use it later. */
 		videoSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_LINEAR);
-		videoSurface.deinit(); /* Don't leave it initialized, we'll ignore it until later. */
 
 		/* Now we set the frame callback, the way this works is that first the thermal image on
 		 *   inputSurface gets written, then the frame callback runs, we copy over the info to

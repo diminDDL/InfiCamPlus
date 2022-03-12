@@ -4,7 +4,8 @@ import android.view.Surface;
 
 public class InfiCam {
 	/* We start with a bit of fluff to make JNI work. */
-	final long instance;
+	private final long instance;
+	private FrameCallback userFrameCallback = null;
 
 	static {
 		System.loadLibrary("usb1.0");
@@ -12,8 +13,8 @@ public class InfiCam {
 		System.loadLibrary("InfiCam");
 	}
 
-	native static long nativeNew(InfiCam self);
-	native static void nativeDelete(long ptr);
+	private native static long nativeNew(InfiCam self);
+	private native static void nativeDelete(long ptr);
 
 	public InfiCam() {
 		if ((instance = nativeNew(this)) == 0)
@@ -50,24 +51,23 @@ public class InfiCam {
 	}
 
 	public static final int paletteLen = 0x4000;
-	FrameCallback userFrameCallback = null;
 
 	/* These are what get passed to the frameCallback, so that we don't have to allocate a new one
 	 *   for every frame. The way we make sure they won't get overwritten is that frameCallback()
 	 *   only runs again if the last frameCallback() has finished.
 	 */
-	FrameInfo frameInfo = new FrameInfo();
-	float[] temp;
+	private FrameInfo frameInfo = new FrameInfo();
+	private float[] temp;
 
 	/* Called by the C++ code, do not rename. */
-	void frameCallback(FrameInfo fi, float[] temp) {
+	private void frameCallback(FrameInfo fi, float[] temp) {
 		synchronized (this) {
 			if (userFrameCallback != null)
 				userFrameCallback.onFrame(fi, temp);
 		}
 	}
 
-	native int nativeConnect(int fd);
+	private native int nativeConnect(int fd);
 	/* Make sure surface is either valid, not set or null before calling connect. */
 	public void connect(int fd) {
 		if (nativeConnect(fd) != 0)
@@ -81,14 +81,14 @@ public class InfiCam {
 	/* Be aware that when streaming is started, the output surface has to flip buffers or following
 	 *   calls to setSurface() or
 	 */
-	native int nativeStartStream();
+	private native int nativeStartStream();
 	public void startStream() {
 		if (nativeStartStream() != 0)
 			throw new RuntimeException("Failed to start stream.");
 	}
 	public native void stopStream();
 
-	native int nativeSetSurface(Surface surface);
+	private native int nativeSetSurface(Surface surface);
 	public void setSurface(Surface surface) {
 		if (nativeSetSurface(surface) != 0)
 			throw new RuntimeException("Failed to set surface.");
@@ -128,7 +128,7 @@ public class InfiCam {
 	public native void updateTable();
 	public native void calibrate();
 
-	native int nativeSetPalette(int[] palette); /* Length must be paletteLen. */
+	private native int nativeSetPalette(int[] palette); /* Length must be paletteLen. */
 	public void setPalette(int[] palette) {
 		if (nativeSetPalette(palette) != 0)
 			throw new IllegalArgumentException();

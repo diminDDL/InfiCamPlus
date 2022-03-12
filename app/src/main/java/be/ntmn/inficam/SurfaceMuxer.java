@@ -32,6 +32,7 @@ import java.util.ArrayList;
  * - Create an instance of the SurfaceMuxer class.
  * - To get an input surface create a SurfaceMuxer.InputSurface instance, this is bound to the
  *     SurfaceMuxer instance you give the constructor.
+ * - If you are going to use cubic interpolation, also call setSize() on the InputSurface.
  * - Call getSurface() and/or getSurfaceTexture on that to get the actual input Surface and/or
  *     SurfaceTexture texture to draw to.
  * - Call setOnFrameAvailableListener(surfaceMuxer) on the SurfaceTexture from the InputSurface(s)
@@ -43,12 +44,6 @@ import java.util.ArrayList;
  * - Call init() on the SurfaceMuxer instance, most likely you'll want to do this in onResume()
  *     because at onPause()  (or onStop()?) the EGL context can get destroyed, and in onPause()
  *     you should call deinit() to release any resources attached to the EGL context in question.
- *     Also the InputSurface instances have an init() and deinit() function that should be called
- *     at the same times, but if they are in the inputSurfaces array, this happens automatically.
- *     Also OutputSurface has init() and deinit() but these will normally survive the context being
- *     destroyed, yet init() should be called on them if they were created at a time no context
- *     existed (from a SurfaceHolder callback this can happen). Again SurfaceMuxer.init() will call
- *     this for you if the OutputSurface is in the outputSurfaces array.
  *
  * The order of operations of the above list isn't of particular importance as long as it's
  *   actually possible, but only use this class from a single thread since the EGL context is
@@ -66,9 +61,9 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	public final static int IMODE_LINEAR = 1;
 	public final static int IMODE_BICUBIC = 2;
 
-	// TODO maybe make so we can keep track of all surfaces? like even when not added here
 	public final ArrayList<InputSurface> inputSurfaces = new ArrayList<>();
 	public final ArrayList<OutputSurface> outputSurfaces = new ArrayList<>();
+	private final ArrayList<Object> allSurfaces = new ArrayList<>();
 
 	private static final int EGL_RECORDABLE_ANDROID = 0x3142;
 	private EGLDisplay eglDisplay = EGL14.EGL_NO_DISPLAY;
@@ -77,13 +72,13 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	private final FloatBuffer[][] pVertex = new FloatBuffer[2][2];
 	private FloatBuffer pTexCoord;
 	private int hProgram, hProgram_cubic;
-	private String vss, fss, fss_cubic;
+	private final String vss, fss, fss_cubic;
 
 	public static class InputSurface {
 		private SurfaceMuxer surfaceMuxer;
 		private SurfaceTexture surfaceTexture;
 		private Surface surface;
-		private int[] textures = new int[1];
+		private final int[] textures = new int[1];
 		private boolean initialized = false;
 		private int imode, width, height;
 		private boolean rotate = false, mirror = false;
@@ -91,6 +86,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		public InputSurface(SurfaceMuxer muxer, int imode) {
 			surfaceMuxer = muxer;
 			this.imode = imode;
+			muxer.allSurfaces.add(this);
 			init();
 		}
 
@@ -111,7 +107,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		public SurfaceTexture getSurfaceTexture() { return surfaceTexture; }
 		public Surface getSurface() { return surface; }
 
-		public void init() {
+		private void init() {
 			int filter = (imode != IMODE_NEAREST) ? GLES20.GL_LINEAR : GLES20.GL_NEAREST;
 			if (surfaceMuxer == null || surfaceMuxer.eglDisplay == EGL14.EGL_NO_DISPLAY)
 				return;
@@ -141,7 +137,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			initialized = true;
 		}
 
-		public void deinit() {
+		private void deinit() {
 			if (initialized && surfaceMuxer != null &&
 					surfaceMuxer.eglDisplay != EGL14.EGL_NO_DISPLAY) {
 				EGL14.eglMakeCurrent(surfaceMuxer.eglDisplay, EGL14.EGL_NO_SURFACE,
@@ -154,8 +150,11 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		}
 
 		public void release() {
-			if (surfaceMuxer != null && surfaceMuxer.eglDisplay != EGL14.EGL_NO_DISPLAY)
-				deinit();
+			deinit();
+			if (surfaceMuxer != null) {
+				surfaceMuxer.inputSurfaces.remove(this);
+				surfaceMuxer.allSurfaces.remove(this);
+			}
 			surfaceMuxer = null;
 			if (surface != null)
 				surface.release();
@@ -169,7 +168,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	public static class OutputSurface {
 		private SurfaceMuxer surfaceMuxer;
 		private Surface surface;
-		private boolean surfaceOwned;
+		private final boolean surfaceOwned;
 		private EGLSurface eglSurface = EGL14.EGL_NO_SURFACE; /* Not dependent on context. */
 		private int width = 1, height = 1;
 
@@ -177,10 +176,11 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			surfaceMuxer = muxer;
 			surface = surf;
 			surfaceOwned = release;
+			muxer.allSurfaces.add(this);
 			init();
 		}
 
-		public void init() {
+		private void init() {
 			if (surfaceMuxer == null || surfaceMuxer.eglDisplay == EGL14.EGL_NO_DISPLAY ||
 					eglSurface != EGL14.EGL_NO_SURFACE)
 				return;
@@ -190,7 +190,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			surfaceMuxer.checkEglError("eglCreateWindowSurface");
 		}
 
-		public void deinit() {
+		private void deinit() {
 			if (surfaceMuxer != null && surfaceMuxer.eglDisplay != EGL14.EGL_NO_DISPLAY &&
 					eglSurface != EGL14.EGL_NO_SURFACE) {
 				EGL14.eglDestroySurface(surfaceMuxer.eglDisplay, eglSurface);
@@ -221,6 +221,10 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 
 		public void release() {
 			deinit();
+			if (surfaceMuxer != null) {
+				surfaceMuxer.outputSurfaces.remove(this);
+				surfaceMuxer.allSurfaces.remove(this);
+			}
 			if (surfaceOwned)
 				surface.release();
 			surfaceMuxer = null;
@@ -430,20 +434,24 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		GLES20.glDeleteShader(fshader);
 		GLES20.glDeleteShader(fshaderc);
 
-		/* Initialize any InputSurfaces we have. */
-		for (InputSurface is : inputSurfaces)
-			is.init();
-
-		/* Initialize output surfaces, these do not perish with the EGL context but need init if
-		 *   they were created at a time no context existed.
-		 */
-		for (OutputSurface os : outputSurfaces)
-			os.init();
+		/* Initialize any surfaces we have. */
+		for (Object o : allSurfaces) {
+			if (o instanceof InputSurface)
+				((InputSurface) o).init();
+			/* OutputSurfaces do not perish with the EGL context but need init if they were created
+			 *   at a time no context existed.
+			 */
+			if (o instanceof OutputSurface)
+				((OutputSurface) o).init();
+		}
 	}
 
 	public void deinit() {
-		for (InputSurface is : inputSurfaces)
-			is.deinit();
+		for (Object o : allSurfaces) {
+			if (o instanceof InputSurface)
+				((InputSurface) o).deinit();
+			/* OutputSurfaces don't need deinit, they'll live until next init(). */
+		}
 		if (eglDisplay != EGL14.EGL_NO_DISPLAY) {
 			EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE,
 					EGL14.EGL_NO_CONTEXT);
@@ -456,15 +464,17 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		eglContext = EGL14.EGL_NO_CONTEXT;
 	}
 
-	public void release() { // TODO don't forget to call
-		/* Destroying the context will also release the EGL surfaces, but not Android's Surfaces. */
-		for (OutputSurface ts : outputSurfaces) {
-			ts.release();
-			outputSurfaces.remove(ts);
-		}
-		for (InputSurface is : inputSurfaces) {
-			is.release();
-			inputSurfaces.remove(is);
+	public void release() {
+		for (Object o : allSurfaces) {
+			if (o instanceof InputSurface) {
+				inputSurfaces.remove(o);
+				((InputSurface) o).release();
+			}
+			if (o instanceof OutputSurface) {
+				outputSurfaces.remove(o);
+				((OutputSurface) o).release();
+			}
+			allSurfaces.remove(o);
 		}
 		deinit();
 	}
