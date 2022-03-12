@@ -17,11 +17,9 @@ import be.ntmn.libinficam.InfiCam;
 public abstract class Palette {
 	public int name;
 
-	Palette(int name) {
-		this.name = name;
-	}
+	public Palette(int name) { this.name = name; }
 
-	static class Pixel {
+	private static class Pixel {
 		double r, g, b;
 
 		Pixel(double r, double g, double b) {
@@ -33,35 +31,35 @@ public abstract class Palette {
 
 	abstract Pixel func(double x);
 
-	static public Palette WhiteHot = new Palette(R.string.palette_whitehot) {
+	private static Palette WhiteHot = new Palette(R.string.palette_whitehot) {
 		@Override
 		public Pixel func(double x) {
 			return new Pixel(x, x, x);
 		}
 	};
 
-	static public Palette BlackHot = new Palette(R.string.palette_blackhot) {
+	private static Palette BlackHot = new Palette(R.string.palette_blackhot) {
 		@Override
 		public Pixel func(double x) {
 			return new Pixel(1 - x, 1 - x, 1 - x);
 		}
 	};
 
-	static public Palette Ironbow = new Palette(R.string.palette_ironbow) {
+	private static Palette Ironbow = new Palette(R.string.palette_ironbow) {
 		@Override
 		public Pixel func(double x) {
 			return new Pixel(sqrt(x), pow(x, 3), max(0.0, sin(2.0 * PI * x)));
 		}
 	};
 
-	static public Palette Rainbow = new Palette(R.string.palette_rainbow) {
+	private static Palette Rainbow = new Palette(R.string.palette_rainbow) {
 		@Override
 		Pixel func(double x) {
 			return hsvPixel((1 - x) * 360.0, 1, 1);
 		}
 	};
 
-	static public Palette Rainbow2 = new Palette(R.string.palette_rainbow2) {
+	private static Palette Rainbow2 = new Palette(R.string.palette_rainbow2) {
 		@Override
 		Pixel func(double x) {
 			return hsvPixel((1 - x) * 270.0, 1, 1);
@@ -72,7 +70,7 @@ public abstract class Palette {
 			WhiteHot, BlackHot, Ironbow, Rainbow, Rainbow2
 	};
 
-	Pixel hsvPixel(double h, double s, double v) {
+	private static Pixel hsvPixel(double h, double s, double v) {
 		double r, g, b;
 		double c = s * v;
 		double y = c * (1 - abs((h / 60.0) % 2 - 1));

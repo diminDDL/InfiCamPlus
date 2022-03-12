@@ -17,25 +17,25 @@ import androidx.annotation.RequiresApi;
 import be.ntmn.libinficam.InfiCam;
 
 public class Overlay {
-	Surface surface;
-	SurfaceTexture surfaceTexture;
-	Paint paint;
-	Paint paintOutline;
-	Paint paintTextOutline;
-	Paint paintPalette;
-	int width, height;
-	boolean rotate = false, mirror = false; /* Set by Settings. */
-	boolean showMin = false; /* Set by SettingsTherm. */
-	boolean showMax = false;
-	boolean showCenter = false;
+	private final Surface surface;
+	private final SurfaceTexture surfaceTexture;
+	private final Paint paint;
+	private final Paint paintOutline;
+	private final Paint paintTextOutline;
+	private final Paint paintPalette;
+	private int width, height;
+	private boolean rotate = false, mirror = false; /* Set by Settings. */
+	private boolean showMin = false; /* Set by SettingsTherm. */
+	private boolean showMax = false;
+	private boolean showCenter = false;
 
 	/* These sizes are in fractions of the total width of the bitmap drawn. */
-	float smarker = 0.015f; /* Marker size. */
-	float wmarker = 0.003f; /* How fat the markers are. */
-	float toff = 0.03f; /* How far to put the text away from marker. */
-	float tclearance = 0.005f; /* How far the text should stay away from screen edges. */
-	float textsize = 0.038f;
-	float woutline = 0.008f; /* Text outline thickness. */
+	private final float smarker = 0.015f; /* Marker size. */
+	private final float wmarker = 0.003f; /* How fat the markers are. */
+	private final float toff = 0.03f; /* How far to put the text away from marker. */
+	private final float tclearance = 0.005f; /* How far the text should stay away from edges. */
+	private final float textsize = 0.038f;
+	private final float woutline = 0.008f; /* Text outline thickness. */
 
 	public Overlay(SurfaceMuxer.InputSurface is, int w, int h) {
 		surface = is.getSurface();
@@ -88,7 +88,7 @@ public class Overlay {
 		surface.unlockCanvasAndPost(cvs);
 	}
 
-	void drawPalette(Canvas cvs, int x, int y, int w, int h, int[] palette) {
+	private void drawPalette(Canvas cvs, int x, int y, int w, int h, int[] palette) {
 		for (int i = 0; i < h; ++i) {
 			int col = palette[palette.length - 1 - i * palette.length / h];
 			paintPalette.setARGB(255, (col >> 0) & 0xFF, (col >> 8) & 0xFF, (col >> 16) & 0xFF);
@@ -96,7 +96,7 @@ public class Overlay {
 		}
 	}
 
-	void drawTPoint(Canvas cvs, InfiCam.FrameInfo fi, int tx, int ty, float temp) {
+	private void drawTPoint(Canvas cvs, InfiCam.FrameInfo fi, int tx, int ty, float temp) {
 		float x = (tx + 0.5f) * width / fi.width; // TODO maybe we can just set scale for the entire canvas
 		float y = (ty + 0.5f) * height / fi.height;
 
@@ -131,4 +131,10 @@ public class Overlay {
 		cvs.drawText(text, x + offX, y + offY, paintTextOutline);
 		cvs.drawText(text, x + offX, y + offY, paint);
 	}
+
+	public void setRotate(boolean rotate) { this.rotate = rotate; }
+	public void setMirror(boolean mirror) { this.mirror = mirror; }
+	public void setShowCenter(boolean showCenter) { this.showCenter = showCenter; }
+	public void setShowMax(boolean showMax) { this.showMax = showMax; }
+	public void setShowMin(boolean showMin) { this.showMin = showMin; }
 }

@@ -66,25 +66,27 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	public final static int IMODE_LINEAR = 1;
 	public final static int IMODE_BICUBIC = 2;
 
-	static final int EGL_RECORDABLE_ANDROID = 0x3142;
-	EGLDisplay eglDisplay = EGL14.EGL_NO_DISPLAY;
-	EGLContext eglContext = EGL14.EGL_NO_CONTEXT;
-	EGLConfig eglConfig;
-	FloatBuffer[][] pVertex = new FloatBuffer[2][2];
-	FloatBuffer pTexCoord;
-	int hProgram, hProgram_cubic;
-	public ArrayList<InputSurface> inputSurfaces = new ArrayList<>();
-	public ArrayList<OutputSurface> outputSurfaces = new ArrayList<>();
-	String vss, fss, fss_cubic;
+	// TODO maybe make so we can keep track of all surfaces? like even when not added here
+	public final ArrayList<InputSurface> inputSurfaces = new ArrayList<>();
+	public final ArrayList<OutputSurface> outputSurfaces = new ArrayList<>();
+
+	private static final int EGL_RECORDABLE_ANDROID = 0x3142;
+	private EGLDisplay eglDisplay = EGL14.EGL_NO_DISPLAY;
+	private EGLContext eglContext = EGL14.EGL_NO_CONTEXT;
+	private EGLConfig eglConfig;
+	private final FloatBuffer[][] pVertex = new FloatBuffer[2][2];
+	private FloatBuffer pTexCoord;
+	private int hProgram, hProgram_cubic;
+	private String vss, fss, fss_cubic;
 
 	public static class InputSurface {
-		SurfaceMuxer surfaceMuxer;
-		SurfaceTexture surfaceTexture;
-		Surface surface;
-		int[] textures = new int[1];
-		boolean initialized = false;
-		int imode, width, height;
-		boolean rotate = false, mirror = false;
+		private SurfaceMuxer surfaceMuxer;
+		private SurfaceTexture surfaceTexture;
+		private Surface surface;
+		private int[] textures = new int[1];
+		private boolean initialized = false;
+		private int imode, width, height;
+		private boolean rotate = false, mirror = false;
 
 		public InputSurface(SurfaceMuxer muxer, int imode) {
 			surfaceMuxer = muxer;
@@ -101,6 +103,9 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			width = w;
 			height = h;
 		}
+
+		public void setRotate(boolean rotate) { this.rotate = rotate; }
+		public void setMirror(boolean mirror) { this.mirror = mirror; }
 
 		public int getTexture() { return textures[0]; }
 		public SurfaceTexture getSurfaceTexture() { return surfaceTexture; }
@@ -162,11 +167,11 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	}
 
 	public static class OutputSurface {
-		SurfaceMuxer surfaceMuxer;
-		Surface surface;
-		boolean surfaceOwned;
-		EGLSurface eglSurface = EGL14.EGL_NO_SURFACE; /* EGLSurface is not bound to context. */
-		int width = 1, height = 1;
+		private SurfaceMuxer surfaceMuxer;
+		private Surface surface;
+		private boolean surfaceOwned;
+		private EGLSurface eglSurface = EGL14.EGL_NO_SURFACE; /* Not dependent on context. */
+		private int width = 1, height = 1;
 
 		public OutputSurface(SurfaceMuxer muxer, Surface surf, boolean release) {
 			surfaceMuxer = muxer;
@@ -235,7 +240,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		init();
 	}
 
-	void render(int w, int h) {
+	private void render(int w, int h) {
 		GLES20.glViewport(0, 0, w, h);
 
 		GLES20.glClearColor(0, 0, 0, 1);
@@ -286,7 +291,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		}
 	}
 
-	Bitmap getBitmap(int w, int h) {
+	public Bitmap getBitmap(int w, int h) {
 		Bitmap ret = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
 		ByteBuffer buf = ByteBuffer.allocateDirect(w * h * 4);
 		int[] attr = new int[]{
@@ -306,7 +311,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		return Bitmap.createBitmap(ret, 0, 0, w, h, matrix, false);
 	}
 
-	void checkEglError(String msg) {
+	private void checkEglError(String msg) {
 		int error;
 		if ((error = EGL14.eglGetError()) != EGL14.EGL_SUCCESS)
 			throw new RuntimeException(msg + ": EGL error: 0x" + Integer.toHexString(error));

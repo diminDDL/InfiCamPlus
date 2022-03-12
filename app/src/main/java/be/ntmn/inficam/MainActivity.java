@@ -22,38 +22,40 @@ import java.io.IOException;
 import be.ntmn.libinficam.InfiCam;
 
 public class MainActivity extends BaseActivity {
-	SurfaceView cameraView;
-	MessageView messageView;
-	UsbDevice device;
-	UsbDeviceConnection usbConnection;
-	boolean usbPermissionAsked = false, usbPermissionAcquired = false;
-	InfiCam infiCam = new InfiCam();
-	Overlay overlay;
-	SurfaceMuxer surfaceMuxer;
-	SurfaceMuxer.OutputSurface outputSurface;
-	SurfaceMuxer.OutputSurface recordSurface;
-	SurfaceMuxer.InputSurface inputSurface; /* InfiCam class writes to this. */
-	SurfaceMuxer.InputSurface overlaySurface; /* This is where we will draw annotations. */
-	SurfaceMuxer.InputSurface videoSurface; /* To draw video from the normal camera if enabled. */
-	InfiCam.FrameInfo lastFi;
-	float[] lastTemp;
-	final Object frameLock = new Object();
-	int picWidth = 1024, picHeight = 768;
-	int[] palette;
-	boolean takePic = false;
-	volatile boolean disconnecting = false;
-	SurfaceRecorder recorder = new SurfaceRecorder();
-	boolean recordAudio;
+	/* These are public for Settings things to access them. */
+	public final InfiCam infiCam = new InfiCam();
+	public Overlay overlay;
+	public SurfaceMuxer.InputSurface inputSurface; /* InfiCam class writes to this. */
+	public SurfaceMuxer.InputSurface overlaySurface; /* This is where we will draw annotations. */
 
-	ViewGroup dialogBackground;
-	SettingsMain settings;
-	SettingsTherm settingsTherm;
-	SettingsMeasure settingsMeasure;
-	ViewGroup.LayoutParams buttonsLeftLayout, buttonsRightLayout;
+	private SurfaceView cameraView;
+	private MessageView messageView;
+	private UsbDevice device;
+	private UsbDeviceConnection usbConnection;
+	private boolean usbPermissionAsked = false, usbPermissionAcquired = false;
+	private SurfaceMuxer surfaceMuxer;
+	private SurfaceMuxer.OutputSurface outputSurface;
+	private SurfaceMuxer.OutputSurface recordSurface;
+	private SurfaceMuxer.InputSurface videoSurface; /* To draw video from the normal camera. */
+	private InfiCam.FrameInfo lastFi;
+	private float[] lastTemp;
+	private final Object frameLock = new Object();
+	private int picWidth = 1024, picHeight = 768;
+	private int[] palette;
+	private boolean takePic = false;
+	private volatile boolean disconnecting = false;
+	private SurfaceRecorder recorder = new SurfaceRecorder();
+	private boolean recordAudio;
 
-	long shutterIntervalInitial; /* These are set by Settings class later. */
-	long shutterInterval; /* Xtherm does it 1 sec after connect and then every 380 sec. */
-	final Runnable timedShutter = new Runnable() {
+	private ViewGroup dialogBackground;
+	private SettingsMain settings;
+	private SettingsTherm settingsTherm;
+	private SettingsMeasure settingsMeasure;
+	private ViewGroup.LayoutParams buttonsLeftLayout, buttonsRightLayout;
+
+	private long shutterIntervalInitial; /* These are set by Settings class later. */
+	private long shutterInterval; /* Xtherm does it 1 sec after connect and then every 380 sec. */
+	private final Runnable timedShutter = new Runnable() {
 		@Override
 		public void run() {
 			infiCam.calibrate(); /* No harm when not connected. */
@@ -62,7 +64,7 @@ public class MainActivity extends BaseActivity {
 		}
 	};
 
-	USBMonitor usbMonitor = new USBMonitor() {
+	private USBMonitor usbMonitor = new USBMonitor() {
 		@Override
 		public void onDeviceFound(UsbDevice dev) {
 			if (device != null)
@@ -102,7 +104,7 @@ public class MainActivity extends BaseActivity {
 		}
 	};
 
-	SurfaceHolder.Callback surfaceHolderCallback = new SurfaceHolder.Callback() {
+	private SurfaceHolder.Callback surfaceHolderCallback = new SurfaceHolder.Callback() {
 		@Override
 		public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
 			outputSurface =
@@ -125,7 +127,7 @@ public class MainActivity extends BaseActivity {
 		}
 	};
 
-	NormalCamera normalCamera = new NormalCamera() {
+	private NormalCamera normalCamera = new NormalCamera() {
 		@Override
 		public void onStarted() {
 			videoSurface.init();
@@ -287,7 +289,7 @@ public class MainActivity extends BaseActivity {
 		normalCamera.start(this, videoSurface.getSurface());*/
 	}
 
-	public void onFrame() {
+	private void onFrame() {
 		/* We use the inputSurface for the listener because it has the most relevant timestamp. */
 		surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
 		/* At this point we are certain the frame and the lastFi and lastTemp are matched up with
@@ -318,7 +320,7 @@ public class MainActivity extends BaseActivity {
 		}
 	}
 
-	void openDialog(View dialog) {
+	private void openDialog(View dialog) {
 		FrameLayout dialogs = (FrameLayout) dialogBackground.findViewById(R.id.dialogs);
 		for (int i = 0; i < dialogs.getChildCount(); ++i)
 			dialogs.getChildAt(i).setVisibility(View.GONE);
@@ -326,7 +328,7 @@ public class MainActivity extends BaseActivity {
 		dialogBackground.setVisibility(View.VISIBLE);
 	}
 
-	void disconnect() {
+	private void disconnect() {
 		stopRecording();
 		synchronized (frameLock) { /* Make sure the frameLock thing doesn't deadlock. */
 			disconnecting = true;
@@ -341,7 +343,7 @@ public class MainActivity extends BaseActivity {
 		messageView.setMessage(R.string.msg_disconnected);
 	}
 
-	void toggleRecording() {
+	private void toggleRecording() {
 		if (recordSurface == null) {
 			askPermission(Manifest.permission.CAMERA, granted -> {
 				if (granted) {
@@ -362,7 +364,7 @@ public class MainActivity extends BaseActivity {
 	}
 
 	/* Request audio permission first when necessary! */
-	void startRecording(boolean recordAudio) {
+	private void startRecording(boolean recordAudio) {
 		try {
 			Surface rsurface = recorder.start(this, picWidth, picHeight, recordAudio);
 			recordSurface = new SurfaceMuxer.OutputSurface(surfaceMuxer, rsurface, false);
@@ -376,7 +378,7 @@ public class MainActivity extends BaseActivity {
 		}
 	}
 
-	void stopRecording() {
+	private void stopRecording() {
 		if (recordSurface != null) {
 			ImageButton buttonVideo = findViewById(R.id.buttonVideo);
 			buttonVideo.clearColorFilter();

@@ -13,17 +13,17 @@ import android.hardware.usb.UsbManager;
 import java.util.HashMap;
 
 public abstract class USBMonitor extends BroadcastReceiver {
-	static final String ACTION_USB_PERMISSION = "be.ntmn.inficam.USB_PERMISSION";
+	private static final String ACTION_USB_PERMISSION = "be.ntmn.inficam.USB_PERMISSION";
 
 	public interface ConnectCallback {
 		void onConnected(UsbDevice dev, UsbDeviceConnection conn);
 		void onPermissionDenied(UsbDevice dev);
 	}
 
-	Context ctx;
-	boolean registered = false;
-	UsbManager manager;
-	HashMap<UsbDevice, ConnectCallback> callbacks = new HashMap<>();
+	private Context ctx;
+	private boolean registered = false;
+	private UsbManager manager;
+	private HashMap<UsbDevice, ConnectCallback> callbacks = new HashMap<>();
 
 	public void start(Context ctx) { /* Recommended use is in onCreate()/onStart(). */
 		this.ctx = ctx;

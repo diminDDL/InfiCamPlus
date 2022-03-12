@@ -7,11 +7,11 @@ import android.view.View;
 import androidx.annotation.Nullable;
 
 public class MessageView extends androidx.appcompat.widget.AppCompatTextView {
-	final static long TIME_LONG = 2000;
-	final static long TIME_SHORT = 500;
-	String persistentMessage;
+	private final static long TIME_LONG = 2000;
+	private final static long TIME_SHORT = 500;
+	private String persistentMessage;
 
-	final Runnable _hideMessage = () -> {
+	private final Runnable _hideMessage = () -> {
 		if (persistentMessage != null)
 			setText(persistentMessage);
 		else setVisibility(View.INVISIBLE);
@@ -32,12 +32,12 @@ public class MessageView extends androidx.appcompat.widget.AppCompatTextView {
 		init();
 	}
 
-	void init() {
+	private void init() {
 		if (getVisibility() == VISIBLE)
 			persistentMessage = getText().toString();
 	}
 
-	void _showMessage(boolean preserve, long time) {
+	private void _showMessage(boolean preserve, long time) {
 		setVisibility(View.VISIBLE);
 		removeCallbacks(_hideMessage);
 		if (!preserve)

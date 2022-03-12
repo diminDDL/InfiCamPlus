@@ -6,7 +6,7 @@ import android.util.AttributeSet;
 import androidx.annotation.Nullable;
 
 public class SettingsTherm extends Settings {
-	static final String SP_NAME = "PREFS_THERM";
+	private static final String SP_NAME = "PREFS_THERM";
 
 	public SettingsTherm(Context context) {
 		super(context);
@@ -40,9 +40,9 @@ public class SettingsTherm extends Settings {
 		}
 	}
 
-	SettingPalette palette = new SettingPalette();
+	public SettingPalette palette = new SettingPalette();
 
-	Setting[] settings = {
+	private Setting[] settings = {
 		new SettingSliderFloat("emissivity", R.string.set_emissivity, 100, 0, 100, 1, 100) {
 			@Override
 			void onSet(float f) {

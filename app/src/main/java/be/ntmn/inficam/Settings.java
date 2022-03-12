@@ -40,8 +40,8 @@ public abstract class Settings extends LinearLayout {
 	}
 
 	abstract class SettingBool extends Setting {
-		boolean def;
-		CheckBox box;
+		private boolean def;
+		private CheckBox box;
 
 		SettingBool(String name, int res, boolean def) {
 			super(name, res);
@@ -81,9 +81,10 @@ public abstract class Settings extends LinearLayout {
 	}
 
 	abstract class SettingRadio extends Setting {
-		int def, current;
-		RadioGroup rg;
+		private int def;
+		private RadioGroup rg;
 		int[] items;
+		int current;
 
 		SettingRadio(String name, int res, int def, int[] items) {
 			super(name, res);
@@ -143,8 +144,8 @@ public abstract class Settings extends LinearLayout {
 	}
 
 	abstract class SettingSlider extends Setting {
-		int def, min, max, step;
-		Slider slider;
+		private int def, min, max, step;
+		private Slider slider;
 		TextView title;
 
 		SettingSlider(String name, int res, int def, int min, int max, int step) {
@@ -216,7 +217,7 @@ public abstract class Settings extends LinearLayout {
 	}
 
 	abstract class SettingSliderFloat extends SettingSlider {
-		int div;
+		private int div;
 
 		SettingSliderFloat(String name, int res, int def, int min, int max, int step, int div) {
 			super(name, res, def, min, max, step);
@@ -237,7 +238,7 @@ public abstract class Settings extends LinearLayout {
 	}
 
 	abstract class SettingButton extends Setting {
-		Button button;
+		private Button button;
 
 		SettingButton(int res) {
 			super(null, res);
@@ -275,7 +276,7 @@ public abstract class Settings extends LinearLayout {
 		super(context, attrs, defStyleAttr);
 	}
 
-	void init(MainActivity act) {
+	public void init(MainActivity act) {
 		this.act = act;
 		sp = act.getSharedPreferences(getSPName(), MODE_PRIVATE);
 		ed = sp.edit();
@@ -285,13 +286,13 @@ public abstract class Settings extends LinearLayout {
 			setting.init(this);
 	}
 
-	void load() {
+	public void load() {
 		Setting[] settings = getSettings();
 		for (Setting setting : settings)
 			setting.load();
 	}
 
-	void setDefaults() {
+	public void setDefaults() {
 		Setting[] settings = getSettings();
 		for (Setting setting : settings)
 			setting.setDefault();

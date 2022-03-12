@@ -6,7 +6,7 @@ import android.util.AttributeSet;
 import androidx.annotation.Nullable;
 
 public class SettingsMeasure extends Settings {
-	static final String SP_NAME = "PREFS_MEASURE";
+	private static final String SP_NAME = "PREFS_MEASURE";
 
 	public SettingsMeasure(Context context) {
 		super(context);
@@ -26,18 +26,18 @@ public class SettingsMeasure extends Settings {
 	@Override
 	public Setting[] getSettings() { return settings; }
 
-	Setting[] settings = {
+	private Setting[] settings = {
 			new SettingBool("showcenter", R.string.set_show_center, true) {
 				@Override
-				void onSet(boolean value) { act.overlay.showCenter = value; }
+				void onSet(boolean value) { act.overlay.setShowCenter(value); }
 			},
 			new SettingBool("showmax", R.string.set_show_max, true) {
 				@Override
-				void onSet(boolean value) { act.overlay.showMax = value; }
+				void onSet(boolean value) { act.overlay.setShowMax(value); }
 			},
 			new SettingBool("showmin", R.string.set_show_min, true) {
 				@Override
-				void onSet(boolean value) { act.overlay.showMin = value; }
+				void onSet(boolean value) { act.overlay.setShowMin(value); }
 			},
 			new SettingButton(R.string.set_defaults) {
 				@Override

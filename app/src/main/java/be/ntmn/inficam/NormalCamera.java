@@ -13,12 +13,11 @@ import androidx.annotation.NonNull;
 import java.util.Collections;
 
 public abstract class NormalCamera {
-	Context ctx;
-	CameraManager manager;
-	CameraDevice dev;
-	CaptureRequest.Builder req;
-	CameraCaptureSession session;
-	Surface surface;
+	private Context ctx;
+	private CameraDevice dev;
+	private CaptureRequest.Builder req;
+	private CameraCaptureSession session;
+	private Surface surface;
 	boolean started = false;
 
 	CameraDevice.StateCallback devCallbacks = new CameraDevice.StateCallback() {
@@ -74,7 +73,7 @@ public abstract class NormalCamera {
 		this.ctx = ctx;
 		surface = surf;
 		try {
-			manager = (CameraManager) ctx.getSystemService(Context.CAMERA_SERVICE);
+			CameraManager manager = (CameraManager) ctx.getSystemService(Context.CAMERA_SERVICE);
 			String cameraId = manager.getCameraIdList()[0];
 			manager.openCamera(cameraId, devCallbacks, null);
 		} catch (Exception e) {

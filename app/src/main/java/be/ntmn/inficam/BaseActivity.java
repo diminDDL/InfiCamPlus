@@ -17,13 +17,13 @@ import java.util.ArrayList;
  *   permissions.
  */
 public class BaseActivity extends AppCompatActivity {
-	public final Handler handler = new Handler();
-	ArrayList<PermissionCallback> permissionCallbacks = new ArrayList<>();
-	boolean fullscreen = false; /* If you want to change the default, look at Settings class. */
-	boolean hideNav = false;
-	final static long hideDelay = 2500;
+	final Handler handler = new Handler();
+	private ArrayList<PermissionCallback> permissionCallbacks = new ArrayList<>();
+	private boolean fullscreen = false; /* to change the default, look at Settings class. */
+	private boolean hideNav = false;
+	private final static long hideDelay = 2500;
 
-	interface PermissionCallback {
+	public interface PermissionCallback {
 		void onPermission(boolean granted);
 	}
 
@@ -51,12 +51,12 @@ public class BaseActivity extends AppCompatActivity {
 		super.onPause();
 	}
 
-	void deferHide() {
+	private void deferHide() {
 		handler.removeCallbacks(hideUI);
 		handler.postDelayed(hideUI, hideDelay);
 	}
 
-	final Runnable hideUI = () -> {
+	private final Runnable hideUI = () -> {
 		View dv = getWindow().getDecorView();
 		/* Flags to go properly fullscreen. */
 		int uiOptions = 0;

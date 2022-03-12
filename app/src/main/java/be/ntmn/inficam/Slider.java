@@ -13,11 +13,11 @@ import android.widget.SeekBar;
  *   option.
  */
 public class Slider extends androidx.appcompat.widget.AppCompatSeekBar {
-	final Rect rect = new Rect();
-	final Paint paint = new Paint();
-	int colorBg, colorAccent;
-	OnSeekBarChangeListener listener;
-	int min = 0, max = 100, step = 1;
+	private final Rect rect = new Rect();
+	private final Paint paint = new Paint();
+	private int colorBg, colorAccent;
+	private OnSeekBarChangeListener listener;
+	private int min = 0, max = 100, step = 1;
 
 	public Slider(Context context) {
 		super(context);

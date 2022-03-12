@@ -26,7 +26,7 @@ public class SettingsMain extends Settings {
 	@Override
 	public Setting[] getSettings() { return settings; }
 
-	Setting[] settings = {
+	private Setting[] settings = {
 		new SettingSliderInt("firstshutdelay", R.string.set_firstshutdelay, 1000, 0, 2000, 100) {
 			@Override
 			void onSet(int i) { act.setShutterIntervalInitial(i); }
@@ -42,15 +42,15 @@ public class SettingsMain extends Settings {
 		new SettingBool("rotate180", R.string.set_rotate180, false) {
 			@Override
 			void onSet(boolean value) {
-				act.inputSurface.rotate = value;
-				act.overlay.rotate = value;
+				act.inputSurface.setRotate(value);
+				act.overlay.setRotate(value);
 			}
 		},
 		new SettingBool("mirror", R.string.set_mirror, false) {
 			@Override
 			void onSet(boolean value) {
-				act.inputSurface.mirror = value;
-				act.overlay.mirror = value;
+				act.inputSurface.setMirror(value);
+				act.overlay.setMirror(value);
 			}
 		},
 		new SettingRadio("imode", R.string.set_imode, 2, new int[] {

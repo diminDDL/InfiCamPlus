@@ -25,34 +25,34 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class SurfaceRecorder implements Runnable {
-	static final String MUX_MIME_TYPE = "video/mp4";
-	static final String MUX_EXT = ".mp4";
-	static final String VID_MIME_TYPE = "video/avc"; /* H.264 */
-	static final int FRAME_RATE = 25;
-	static final int IFRAME_INTERVAL = 10; /* In seconds. */
-	static final float BITRATE = 1; /* In bits per pixel. */
-	static final int DEQUEUE_TIMEOUT = 5000; /* In microseconds. */
+	private static final String MUX_MIME_TYPE = "video/mp4";
+	private static final String MUX_EXT = ".mp4";
+	private static final String VID_MIME_TYPE = "video/avc"; /* H.264 */
+	private static final int FRAME_RATE = 25;
+	private static final int IFRAME_INTERVAL = 10; /* In seconds. */
+	private static final float BITRATE = 1; /* In bits per pixel. */
+	private static final int DEQUEUE_TIMEOUT = 5000; /* In microseconds. */
 
-	static final String SND_MIME_TYPE = "audio/mp4a-latm";
-	static final int SND_SAMPLERATE = 44100;
-	static final boolean SND_STEREO = false;
-	static final int SND_BITRATE = 128000;
+	private static final String SND_MIME_TYPE = "audio/mp4a-latm";
+	private static final int SND_SAMPLERATE = 44100;
+	private static final boolean SND_STEREO = false;
+	private static final int SND_BITRATE = 128000;
 
-	Surface inputSurface;
-	MediaCodec videoEncoder;
-	MediaCodec audioEncoder;
-	AudioRecord audioRecord;
-	int audioBufferSize;
-	MediaMuxer muxer;
-	int videoTrack, audioTrack;
-	MediaCodec.BufferInfo bufferInfo;
-	volatile boolean endSignal; /* Volatile is important because threading. */
-	boolean muxerStarted;
-	Thread thread;
+	private Surface inputSurface;
+	private MediaCodec videoEncoder;
+	private MediaCodec audioEncoder;
+	private AudioRecord audioRecord;
+	private int audioBufferSize;
+	private MediaMuxer muxer;
+	private int videoTrack, audioTrack;
+	private MediaCodec.BufferInfo bufferInfo;
+	private volatile boolean endSignal; /* Volatile is important because threading. */
+	private boolean muxerStarted;
+	private Thread thread;
 
 	/* If enabling audio, request audio permission first! */
 	@SuppressLint("MissingPermission")
-	Surface _start(Context ctx, int w, int h, boolean sound) throws IOException {
+	private Surface _start(Context ctx, int w, int h, boolean sound) throws IOException {
 		/* Deal with actually getting a file and opening the muxer. */
 		@SuppressLint("SimpleDateFormat")
 		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
