@@ -36,13 +36,22 @@ TODO
 	- 400 celcius range works quite badly because the float math falls apart below a certain temperature
 	- show current palette and range on the side
 	- show average temp somewhere?
+	- showing of normal camera also
+	- overlaying normal camera
 	- setting for resolution of pictures, video (first to the range showing thing and normal camera part, what
 	    if we want to record video/pic wider than just the thermal image, how will we go about that?)
 	- rarely but does happen the video gets stuck while camera is still connected (shutter commands still works)
-		why what how?
+	    why what how?
 	- if permission for usb temporary granted we get false usb permission denied messages (happened for me on pro1)
 	- connect when already running sometimes broken
+	- manual temperature range setting for the palettization
 	- indicate overrange rather than saying NaN
+	- more measurement modes
+	- gallery to check pictures and videos taken
+	- store thermometry data in videos and pictures
+	- allow to regenerate images and videos from thermometry data, measure from it
+	- show camera product and version info somewhere
+	- software zoom?
 
 Things i learned about the protocol these thermal cameras talk:
 	last 4 lines of the frame have parameters (note that the pointer math is in steps of 16 bytes because unsigned short)
