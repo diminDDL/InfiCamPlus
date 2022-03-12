@@ -77,6 +77,7 @@ public class MainActivity extends BaseActivity {
 					usbPermissionAcquired = true;
 					usbConnection = conn;
 					try {
+						disconnecting = false;
 						infiCam.connect(conn.getFileDescriptor());
 						/* Size is only important for cubic interpolation. */
 						inputSurface.setSize(infiCam.getWidth(), infiCam.getHeight());
