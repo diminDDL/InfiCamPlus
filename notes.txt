@@ -45,6 +45,7 @@ TODO
 	- if permission for usb temporary granted we get false usb permission denied messages (happened for me on pro1)
 	- connect when already running sometimes broken
 	- manual temperature range setting for the palettization
+	   * something to lock range at whatever auto put it, like AE-L ish thing
 	- deal with phone orientation (auto + allow user to choose, rotate markers etc)
 	- indicate overrange rather than saying NaN
 	- more measurement modes
