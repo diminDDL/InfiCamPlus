@@ -1,6 +1,5 @@
 package be.ntmn.inficam;
 
-import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -9,6 +8,7 @@ import android.content.IntentFilter;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
+import android.os.Build;
 
 import java.util.HashMap;
 
@@ -58,8 +58,10 @@ public abstract class USBMonitor extends BroadcastReceiver {
 	public void connect(UsbDevice dev, ConnectCallback cb) {
 		if (!manager.hasPermission(dev)) {
 			Intent intent = new Intent(ACTION_USB_PERMISSION);
-			@SuppressLint("UnspecifiedImmutableFlag")
-			PendingIntent pending = PendingIntent.getBroadcast(ctx, 0, intent, 0);
+			int flags = 0;
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+				flags |= PendingIntent.FLAG_MUTABLE;
+			PendingIntent pending = PendingIntent.getBroadcast(ctx, 0, intent, flags);
 			callbacks.put(dev, cb);
 			manager.requestPermission(dev, pending);
 		} else {
