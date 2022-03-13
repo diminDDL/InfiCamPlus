@@ -92,6 +92,7 @@ public class MainActivity extends BaseActivity {
 							messageView.showMessage(R.string.msg_connected);
 						} catch (Exception e) {
 							usbConnection.close();
+							usbConnection = null;
 							messageView.showMessage(getString(R.string.msg_connect_failed));
 						}
 					}
@@ -99,6 +100,11 @@ public class MainActivity extends BaseActivity {
 					@Override
 					public void onPermissionDenied(UsbDevice dev) {
 						messageView.showMessage(R.string.msg_permdenied_usb);
+					}
+
+					@Override
+					public void onFailed(UsbDevice dev) {
+						messageView.showMessage(getString(R.string.msg_connect_failed));
 					}
 				});
 			});

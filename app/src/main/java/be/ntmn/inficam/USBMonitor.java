@@ -18,6 +18,7 @@ public abstract class USBMonitor extends BroadcastReceiver {
 	public interface ConnectCallback {
 		void onConnected(UsbDevice dev, UsbDeviceConnection conn);
 		void onPermissionDenied(UsbDevice dev);
+		void onFailed(UsbDevice dev);
 	}
 
 	private Context ctx;
@@ -55,6 +56,13 @@ public abstract class USBMonitor extends BroadcastReceiver {
 			onDeviceFound(dev);
 	}
 
+	private void _connect(UsbDevice dev, ConnectCallback cb) {
+		UsbDeviceConnection conn = manager.openDevice(dev);
+		if (conn != null)
+			cb.onConnected(dev, conn);
+		else cb.onFailed(dev);
+	}
+
 	public void connect(UsbDevice dev, ConnectCallback cb) {
 		if (!manager.hasPermission(dev)) {
 			Intent intent = new Intent(ACTION_USB_PERMISSION);
@@ -64,10 +72,7 @@ public abstract class USBMonitor extends BroadcastReceiver {
 			PendingIntent pending = PendingIntent.getBroadcast(ctx, 0, intent, flags);
 			callbacks.put(dev, cb);
 			manager.requestPermission(dev, pending);
-		} else {
-			UsbDeviceConnection conn = manager.openDevice(dev);
-			cb.onConnected(dev, conn);
-		}
+		} else _connect(dev, cb);
 	}
 
 	@Override
@@ -85,8 +90,7 @@ public abstract class USBMonitor extends BroadcastReceiver {
 				if (cb == null)
 					return;
 				if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-					UsbDeviceConnection conn = manager.openDevice(dev);
-					cb.onConnected(dev, conn);
+					_connect(dev, cb);
 				} else cb.onPermissionDenied(dev);
 				break;
 		}
