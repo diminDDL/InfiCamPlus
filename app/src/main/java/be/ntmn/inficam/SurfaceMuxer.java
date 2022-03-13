@@ -250,7 +250,9 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		GLES20.glClearColor(0, 0, 0, 1);
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
-		for (InputSurface is : inputSurfaces) {
+		/* We use an oldschool loop because for (... : ...) causes an allocation to happen. */
+		for (int i = 0; i < inputSurfaces.size(); ++i) {
+			InputSurface is = inputSurfaces.get(i);
 			int program = (is.imode == IMODE_BICUBIC) ? hProgram_cubic : hProgram;
 			GLES20.glUseProgram(program);
 			if (program == hProgram_cubic) {
@@ -285,9 +287,13 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	public void onFrameAvailable(SurfaceTexture surfaceTexture) {
 		if (eglContext == EGL14.EGL_NO_CONTEXT)
 			return;
-		for (InputSurface is : inputSurfaces)
+		/* We use oldschool for loops because for (... : ...) causes an allocation to happen. */
+		for (int i = 0; i < inputSurfaces.size(); ++i) {
+			InputSurface is = inputSurfaces.get(i);
 			is.getSurfaceTexture().updateTexImage();
-		for (OutputSurface os : outputSurfaces) {
+		}
+		for (int i = 0; i < outputSurfaces.size(); ++i) {
+			OutputSurface os = outputSurfaces.get(i);
 			os.makeCurrent();
 			render(os.width, os.height);
 			os.setPresentationTime(surfaceTexture.getTimestamp());

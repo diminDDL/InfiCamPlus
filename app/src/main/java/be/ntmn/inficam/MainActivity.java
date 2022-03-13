@@ -170,12 +170,15 @@ public class MainActivity extends BaseActivity {
 	 *   we need our EGL context and EGL contexts are stuck to a particular thread.
 	 */
 	private final InfiCam.FrameCallback frameCallback = new InfiCam.FrameCallback() {
+		/* To avoid creating a new lambda object every frame we store one here. */
+		private final Runnable handleFrameRunnable = () -> handleFrame();
+
 		@Override
 		public void onFrame(InfiCam.FrameInfo fi, float[] temp) {
 			/* Note this is called from another thread. */
 			lastFi = fi; /* Save for taking picture and the likes. */
 			lastTemp = temp;
-			handler.post(() -> handleFrame());
+			handler.post(handleFrameRunnable);
 			/* Now we wait until the main thread has finished drawing the frame, so lastFi and
 			 *   lastTemp don't get overwritten before they've been used.
 			 */
