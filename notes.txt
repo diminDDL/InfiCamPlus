@@ -24,6 +24,29 @@ The versions of third party things in libinficam/src/main/jni dir:
 		again patched stream.c to fix a disconnect issue
 			again merged upstream, now identical to d3318ae72a2b916ae352ad0abbbfa2c0990f455e
 
+Quick description of what for the Java classes are:
+	- BaseActivity      the rug under which i swept the mess that is fullscreen mode and requesting
+	                      camera/file permissions, provides a handler that mainactivity uses too
+	- MainActivity      inherits BaseActivity, it's the main activity obviously, sticks most other
+	                      classes together into a usable app
+	- MessageView       a thing for showing messages on the screen, alike Androids Toast stuff
+	- NormalCamera      wrapper for using the visible light camera builtin to the phone
+	- Overlay           drawing temperature measurements on the thermal image etc
+	- Palette           generating palettes for the thermal image
+	- Settings          abstract class used to make the various settings windows
+	- SettingsMain      the main settings window
+	- SettingsMeasure   turn on/off measurements
+	- SettingsTherm     thermometry settings like emissivity, ambient temperature, etc
+	- Slider            improved SeekBar
+	- SurfaceMuxer      multiplexing for android Surface things (basically framebuffers) handles
+	                      scaling them and splitting the video between the screen and video file
+	                      output and the likes
+	- SurfaceRecorder   gives a Surface that can be drawn to by SurfaceMuxer to get a video file
+	                      written, optionally records audio too
+	- USBMonitor        tells us when USB devices are disconnected, wraps the permission requests
+	                      for USB devices
+	- Util              static functions that don't belong somewhere else
+
 Short description of the C++ classes in jni/InfiCam dir:
 	- UVCDevice     just a wrapper around libuvc, reason for it existing is that using libuvc with
 	    android gets pretty involved
