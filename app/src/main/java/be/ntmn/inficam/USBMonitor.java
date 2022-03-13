@@ -55,6 +55,19 @@ public abstract class USBMonitor extends BroadcastReceiver {
 			onDeviceFound(dev);
 	}
 
+	public void connect(UsbDevice dev, ConnectCallback cb) {
+		if (!manager.hasPermission(dev)) {
+			Intent intent = new Intent(ACTION_USB_PERMISSION);
+			@SuppressLint("UnspecifiedImmutableFlag")
+			PendingIntent pending = PendingIntent.getBroadcast(ctx, 0, intent, 0);
+			callbacks.put(dev, cb);
+			manager.requestPermission(dev, pending);
+		} else {
+			UsbDeviceConnection conn = manager.openDevice(dev);
+			cb.onConnected(dev, conn);
+		}
+	}
+
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		UsbDevice dev = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
@@ -74,19 +87,6 @@ public abstract class USBMonitor extends BroadcastReceiver {
 					cb.onConnected(dev, conn);
 				} else cb.onPermissionDenied(dev);
 				break;
-		}
-	}
-
-	public void connect(UsbDevice dev, ConnectCallback cb) {
-		if (!manager.hasPermission(dev)) {
-			Intent intent = new Intent(ACTION_USB_PERMISSION);
-			@SuppressLint("UnspecifiedImmutableFlag")
-			PendingIntent pending = PendingIntent.getBroadcast(ctx, 0, intent, 0);
-			callbacks.put(dev, cb);
-			manager.requestPermission(dev, pending);
-		} else {
-			UsbDeviceConnection conn = manager.openDevice(dev);
-			cb.onConnected(dev, conn);
 		}
 	}
 
