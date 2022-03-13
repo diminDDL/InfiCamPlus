@@ -41,6 +41,8 @@
 	<string name="set_show_min">Show min temperature</string>
 	<string name="set_show_max">Show max temperature</string>
 	<string name="set_show_center">Show center temperature</string>
+	<string name="set_show_palette">Show palette</string>
+
 	<string name="set_emissivity">Emissivity (%.2f)</string>
 	<string name="set_temp_reflected">Reflected temperature (%.1f°C)</string>
 	<string name="set_temp_ambient">Ambient temperature (%.1f°C)</string>
@@ -48,8 +50,8 @@
 	<string name="set_distance">Distance (%dm)</string>
 	<string name="set_correction">Correction (%.1f°C)</string>
 	<string name="set_range">Range</string>
-	<string name="set_range_120">-20 - 120°C</string>
-	<string name="set_range_400">120-400°C</string>
+	<string name="set_range_120">–20 – 120°C</string>
+	<string name="set_range_400">120 – 400°C</string>
 	<string name="set_palette">Palette</string>
 
 	<string name="imode_nearest">Nearest</string>

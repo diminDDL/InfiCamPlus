@@ -25,6 +25,7 @@ public class Overlay {
 	private boolean showMin = false; /* Set by SettingsTherm. */
 	private boolean showMax = false;
 	private boolean showCenter = false;
+	private boolean showPalette = false;
 
 	/* These sizes are in fractions of the total width of the bitmap drawn. */
 	private final float smarker = 0.015f; /* Marker size. */
@@ -33,6 +34,8 @@ public class Overlay {
 	private final float tclearance = 0.005f; /* How far the text should stay away from edges. */
 	private final float textsize = 0.038f;
 	private final float woutline = 0.008f; /* Text outline thickness. */
+	private final float pwidth = 0.038f; /* Palette preview width. */
+	private final float pclearance = 0.016f;
 
 	public Overlay(SurfaceMuxer.InputSurface is, int w, int h) {
 		surface = is.getSurface();
@@ -43,6 +46,7 @@ public class Overlay {
 		paint.setStrokeCap(Paint.Cap.ROUND);
 		paint.setStrokeJoin(Paint.Join.ROUND);
 		paintOutline = new Paint(paint);
+		paintOutline.setStyle(Paint.Style.STROKE);
 		paintTextOutline = new Paint(paint);
 		paintTextOutline.setColor(Color.BLACK);
 		paintTextOutline.setStyle(Paint.Style.STROKE);
@@ -60,6 +64,7 @@ public class Overlay {
 		paintTextOutline.setTextSize(textsize * w);
 	}
 
+	@SuppressLint("DefaultLocale")
 	public void draw(InfiCam.FrameInfo fi, float[] temp, int[] palette) {
 		Canvas cvs = surface.lockCanvas(null);
 
@@ -80,16 +85,31 @@ public class Overlay {
 			drawTPoint(cvs, fi, fi.max_x, fi.max_y, fi.max);
 		}
 
-		/*cvs.drawRect(cvs.getWidth() - 64, 36, cvs.getWidth() - 16, cvs.getHeight() - 36, paintOutline);
-		drawPalette(cvs, cvs.getWidth() - 60, 40, 40, cvs.getHeight() - 80, palette);*/
+		if (showPalette) {
+			float clear = pclearance * width;
+			float theight = -(paint.descent() + paint.ascent());
+			paintTextOutline.setTextAlign(Paint.Align.RIGHT);
+			paint.setTextAlign(Paint.Align.RIGHT);
+			paint.setColor(Color.WHITE);
+			String text = String.format("%.2f°C", fi.max);
+			cvs.drawText(text, width - clear, theight + clear, paintTextOutline);
+			cvs.drawText(text, width - clear, theight + clear, paint);
+			text = String.format("%.2f°C", fi.min);
+			cvs.drawText(text, width - clear, height - clear, paintTextOutline);
+			cvs.drawText(text, width - clear, height - clear, paint);
+			drawPalette(cvs, width - clear - pwidth * width, theight + clear * 2,
+					width - clear, height - theight - clear * 2, palette);
+		}
+
 		surface.unlockCanvasAndPost(cvs);
 	}
 
-	private void drawPalette(Canvas cvs, int x, int y, int w, int h, int[] palette) {
-		for (int i = 0; i < h; ++i) {
-			int col = palette[palette.length - 1 - i * palette.length / h];
+	private void drawPalette(Canvas cvs, float x1, float y1, float x2, float y2, int[] palette) {
+		cvs.drawRect(x1, y1, x2, y2, paintOutline);
+		for (int i = 0; i < y2 - y1; ++i) {
+			int col = palette[(int) (palette.length - 1 - i * palette.length / (y2 - y1))];
 			paintPalette.setARGB(255, (col >> 0) & 0xFF, (col >> 8) & 0xFF, (col >> 16) & 0xFF);
-			cvs.drawLine(x, y + i, x + w, y + i, paintPalette);
+			cvs.drawLine(x1, y1 + i, x2, y1 + i, paintPalette);
 		}
 	}
 
@@ -134,4 +154,5 @@ public class Overlay {
 	public void setShowCenter(boolean showCenter) { this.showCenter = showCenter; }
 	public void setShowMax(boolean showMax) { this.showMax = showMax; }
 	public void setShowMin(boolean showMin) { this.showMin = showMin; }
+	public void setShowPalette(boolean showPalette) { this.showPalette = showPalette; }
 }
