@@ -2,12 +2,15 @@ package be.ntmn.inficam;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
+import static java.lang.Math.round;
 
 import android.annotation.SuppressLint;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.view.Surface;
 
@@ -28,14 +31,24 @@ public class Overlay {
 	private boolean showPalette = false;
 
 	/* These sizes are in fractions of the total width of the bitmap drawn. */
-	private final float smarker = 0.015f; /* Marker size. */
-	private final float wmarker = 0.003f; /* How fat the markers are. */
-	private final float toff = 0.03f; /* How far to put the text away from marker. */
-	private final float tclearance = 0.005f; /* How far the text should stay away from edges. */
-	private final float textsize = 0.038f;
-	private final float woutline = 0.008f; /* Text outline thickness. */
-	private final float pwidth = 0.038f; /* Palette preview width. */
-	private final float pclearance = 0.016f;
+	private final static float smarker = 0.015f; /* Marker size. */
+	private final static  float wmarker = 0.003f; /* How fat the markers are. */
+	private final static float toff = 0.03f; /* How far to put the text away from marker. */
+	private final static float tclearance = 0.005f; /* How far the text should stay from edges. */
+	private final static float textsize = 0.038f;
+	private final static float woutline = 0.008f; /* Text outline thickness. */
+	private final static float pwidth = 0.038f; /* Palette preview width. */
+	private final static float pclearance = 0.016f;
+
+	private final StringBuilder sb = new StringBuilder();
+
+	private static class PaletteCache {
+		Bitmap bitmap;
+		int[] palette;
+		Rect rectSrc = new Rect(), rectTgt = new Rect(); /* Don't allocate each frame eh :). */
+	}
+
+	private final PaletteCache paletteCache = new PaletteCache();
 
 	public Overlay(SurfaceMuxer.InputSurface is, int w, int h) {
 		surface = is.getSurface();
@@ -85,32 +98,41 @@ public class Overlay {
 			drawTPoint(cvs, fi, fi.max_x, fi.max_y, fi.max);
 		}
 
-		if (showPalette) {
+		if (showPalette) { // TODO maybe we should draw the palette to a bitmap actually
 			float clear = pclearance * width;
 			float theight = -(paint.descent() + paint.ascent());
 			paintTextOutline.setTextAlign(Paint.Align.RIGHT);
 			paint.setTextAlign(Paint.Align.RIGHT);
 			paint.setColor(Color.WHITE);
-			String text = String.format("%.2f°C", fi.max);
-			cvs.drawText(text, width - clear, theight + clear, paintTextOutline);
-			cvs.drawText(text, width - clear, theight + clear, paint);
-			text = String.format("%.2f°C", fi.min);
-			cvs.drawText(text, width - clear, height - clear, paintTextOutline);
-			cvs.drawText(text, width - clear, height - clear, paint);
-			drawPalette(cvs, width - clear - pwidth * width, theight + clear * 2,
-					width - clear, height - theight - clear * 2, palette);
+			formatTemp(sb, fi.max);
+			cvs.drawText(sb, 0, sb.length(), width - clear, theight + clear, paintTextOutline);
+			cvs.drawText(sb, 0, sb.length(), width - clear, theight + clear, paint);
+			formatTemp(sb, fi.min);
+			cvs.drawText(sb, 0, sb.length(), width - clear, height - clear, paintTextOutline);
+			cvs.drawText(sb, 0, sb.length(), width - clear, height - clear, paint);
+			drawPalette(cvs, (int) (width - clear - pwidth * width), (int) (theight + clear * 2),
+					(int) (width - clear), (int) (height - theight - clear * 2), palette);
 		}
 
 		surface.unlockCanvasAndPost(cvs);
 	}
 
-	private void drawPalette(Canvas cvs, float x1, float y1, float x2, float y2, int[] palette) {
-		cvs.drawRect(x1, y1, x2, y2, paintOutline);
-		for (int i = 0; i < y2 - y1; ++i) {
-			int col = palette[(int) (palette.length - 1 - i * palette.length / (y2 - y1))];
-			paintPalette.setARGB(255, (col >> 0) & 0xFF, (col >> 8) & 0xFF, (col >> 16) & 0xFF);
-			cvs.drawLine(x1, y1 + i, x2, y1 + i, paintPalette);
+	private void drawPalette(Canvas cvs, int x1, int y1, int x2, int y2, int[] palette) {
+		if (paletteCache.palette != palette || paletteCache.rectSrc.bottom != y2 - y1) {
+			int height = y2 - y1;
+			paletteCache.bitmap = Bitmap.createBitmap(1, height, Bitmap.Config.ARGB_8888);
+			Canvas c = new Canvas(paletteCache.bitmap);
+			for (int i = 0; i < height; ++i) {
+				int col = palette[palette.length - 1 - i * palette.length / height];
+				paintPalette.setARGB(255, (col >> 0) & 0xFF, (col >> 8) & 0xFF, (col >> 16) & 0xFF);
+				c.drawPoint(0, i, paintPalette);
+			}
+			paletteCache.palette = palette;
+			paletteCache.rectSrc.set(0, 0, 1, height);
 		}
+		cvs.drawRect(x1, y1, x2, y2, paintOutline);
+		paletteCache.rectTgt.set(x1, y1, x2, y2);
+		cvs.drawBitmap(paletteCache.bitmap, paletteCache.rectSrc, paletteCache.rectTgt, paint);
 	}
 
 	private void drawTPoint(Canvas cvs, InfiCam.FrameInfo fi, int tx, int ty, float temp) {
@@ -131,11 +153,11 @@ public class Overlay {
 		cvs.drawLine(x - smarkerw, y, x + smarkerw, y, paint);
 		cvs.drawLine(x, y - smarkerw, x, y + smarkerw, paint);
 
-		@SuppressLint("DefaultLocale")
-		String text = String.format("%.2f°C", temp);
 		float offX = toff * width;
 		float offY = -(paint.descent() + paint.ascent()) / 2.0f;
-		if (paintTextOutline.measureText(text) + offX + tclearance * width < width - x) {
+		formatTemp(sb, temp);
+		if (paintTextOutline.measureText(sb, 0, sb.length()) + offX + tclearance * width <
+				width - x) {
 			paint.setTextAlign(Paint.Align.LEFT);
 			paintTextOutline.setTextAlign(Paint.Align.LEFT);
 		} else {
@@ -145,8 +167,8 @@ public class Overlay {
 		}
 		offY -= max(y + offY + paintTextOutline.descent() + tclearance * width - height, 0);
 		offY -= min(y + offY + paintTextOutline.ascent() - tclearance * width, 0);
-		cvs.drawText(text, x + offX, y + offY, paintTextOutline);
-		cvs.drawText(text, x + offX, y + offY, paint);
+		cvs.drawText(sb, 0, sb.length(), x + offX, y + offY, paintTextOutline);
+		cvs.drawText(sb, 0, sb.length(), x + offX, y + offY, paint);
 	}
 
 	public void setRotate(boolean rotate) { this.rotate = rotate; }
@@ -155,4 +177,10 @@ public class Overlay {
 	public void setShowMax(boolean showMax) { this.showMax = showMax; }
 	public void setShowMin(boolean showMin) { this.showMin = showMin; }
 	public void setShowPalette(boolean showPalette) { this.showPalette = showPalette; }
+
+	private static void formatTemp(StringBuilder sb, float temp) {
+		sb.setLength(0);
+		sb.append(round(temp * 100.0f) / 100.0f);
+		sb.append("°C");
+	}
 }
