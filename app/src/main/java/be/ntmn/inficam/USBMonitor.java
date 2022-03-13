@@ -58,7 +58,7 @@ public abstract class USBMonitor extends BroadcastReceiver {
 	public void connect(UsbDevice dev, ConnectCallback cb) {
 		if (!manager.hasPermission(dev)) {
 			Intent intent = new Intent(ACTION_USB_PERMISSION);
-			int flags = 0;
+			int flags = PendingIntent.FLAG_ONE_SHOT;
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
 				flags |= PendingIntent.FLAG_MUTABLE;
 			PendingIntent pending = PendingIntent.getBroadcast(ctx, 0, intent, flags);
