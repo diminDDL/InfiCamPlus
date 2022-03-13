@@ -25,7 +25,7 @@ public abstract class Settings extends LinearLayout {
 	SharedPreferences sp;
 	SharedPreferences.Editor ed;
 
-	static abstract class Setting {
+	public static abstract class Setting {
 		String name;
 		int res;
 
@@ -39,7 +39,7 @@ public abstract class Settings extends LinearLayout {
 		abstract void setDefault();
 	}
 
-	abstract class SettingBool extends Setting {
+	public abstract class SettingBool extends Setting {
 		private final boolean def;
 		private CheckBox box;
 
@@ -80,11 +80,11 @@ public abstract class Settings extends LinearLayout {
 		abstract void onSet(boolean value);
 	}
 
-	abstract class SettingRadio extends Setting {
+	public abstract class SettingRadio extends Setting {
 		private final int def;
 		private RadioGroup rg;
-		int[] items;
-		int current;
+		public int[] items;
+		public int current;
 
 		SettingRadio(String name, int res, int def, int[] items) {
 			super(name, res);
@@ -136,14 +136,14 @@ public abstract class Settings extends LinearLayout {
 			load();
 		}
 
-		void set(int i) {
+		public void set(int i) {
 			((RadioButton) rg.getChildAt(i + 1)).setChecked(true);
 		}
 
 		abstract void onSet(int value);
 	}
 
-	abstract class SettingSlider extends Setting {
+	public abstract class SettingSlider extends Setting {
 		private final int def, min, max, step;
 		private Slider slider;
 		TextView title;
@@ -205,7 +205,7 @@ public abstract class Settings extends LinearLayout {
 		abstract void onSet(int i);
 	}
 
-	abstract class SettingSliderInt extends SettingSlider {
+	public abstract class SettingSliderInt extends SettingSlider {
 		SettingSliderInt(String name, int res, int def, int min, int max, int step) {
 			super(name, res, def, min, max, step);
 		}
@@ -216,7 +216,7 @@ public abstract class Settings extends LinearLayout {
 		}
 	}
 
-	abstract class SettingSliderFloat extends SettingSlider {
+	public abstract class SettingSliderFloat extends SettingSlider {
 		private final int div;
 
 		SettingSliderFloat(String name, int res, int def, int min, int max, int step, int div) {
@@ -237,7 +237,7 @@ public abstract class Settings extends LinearLayout {
 		abstract void onSet(float f);
 	}
 
-	abstract class SettingButton extends Setting {
+	public abstract class SettingButton extends Setting {
 		SettingButton(int res) {
 			super(null, res);
 		}
@@ -261,6 +261,11 @@ public abstract class Settings extends LinearLayout {
 
 		abstract void onPress();
 	}
+
+	final SettingButton settingDefaults = new SettingButton(R.string.set_defaults) {
+		@Override
+		void onPress() { setDefaults(); }
+	};
 
 	public Settings(Context context) {
 		super(context);

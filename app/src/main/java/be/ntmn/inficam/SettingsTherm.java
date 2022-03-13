@@ -26,7 +26,7 @@ public class SettingsTherm extends Settings {
 	@Override
 	public Setting[] getSettings() { return settings; }
 
-	class SettingPalette extends SettingRadio {
+	public class SettingPalette extends SettingRadio {
 		SettingPalette() {
 			super("palette", R.string.set_palette, 2, new int[] {});
 			items = new int[Palette.palettes.length];
@@ -103,9 +103,6 @@ public class SettingsTherm extends Settings {
 			}
 		},
 		palette,
-		new SettingButton(R.string.set_defaults) {
-			@Override
-			void onPress() { setDefaults(); }
-		}
+		settingDefaults
 	};
 }

@@ -88,9 +88,6 @@ public class SettingsMain extends Settings {
 			@Override
 			void onSet(boolean value) { act.setSwapControls(value); }
 		},
-		new SettingButton(R.string.set_defaults) {
-			@Override
-			void onPress() { setDefaults(); }
-		}
+		settingDefaults
 	};
 }

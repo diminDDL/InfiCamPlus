@@ -39,9 +39,6 @@ public class SettingsMeasure extends Settings {
 				@Override
 				void onSet(boolean value) { act.overlay.setShowMin(value); }
 			},
-			new SettingButton(R.string.set_defaults) {
-				@Override
-				void onPress() { setDefaults(); }
-			}
+			settingDefaults
 	};
 }
