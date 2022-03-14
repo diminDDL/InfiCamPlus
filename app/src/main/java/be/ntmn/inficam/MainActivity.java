@@ -248,7 +248,7 @@ public class MainActivity extends BaseActivity {
 		/* Create and set up the InputSurface for annotations overlay. */
 		overlaySurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_NEAREST);
 		surfaceMuxer.inputSurfaces.add(overlaySurface);
-		overlay = new Overlay(overlaySurface, cameraView.getWidth(), cameraView.getHeight());
+		overlay = new Overlay(this, overlaySurface, cameraView.getWidth(), cameraView.getHeight());
 
 		/* We use it later. */
 		videoSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_LINEAR);

@@ -5,6 +5,7 @@ import static java.lang.Math.min;
 import static java.lang.Math.round;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -12,7 +13,10 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
+import android.graphics.drawable.Drawable;
 import android.view.Surface;
+
+import androidx.appcompat.content.res.AppCompatResources;
 
 import be.ntmn.libinficam.InfiCam;
 
@@ -23,6 +27,8 @@ public class Overlay {
 	private final Paint paintOutline;
 	private final Paint paintTextOutline;
 	private final Paint paintPalette;
+	private final Drawable lock;
+
 	private int width, height;
 	private boolean rotate = false, mirror = false; /* Set by Settings. */
 	private boolean showMin = false; /* Set by SettingsTherm. */
@@ -50,7 +56,7 @@ public class Overlay {
 
 	private final PaletteCache paletteCache = new PaletteCache();
 
-	public Overlay(SurfaceMuxer.InputSurface is, int w, int h) {
+	public Overlay(Context ctx, SurfaceMuxer.InputSurface is, int w, int h) {
 		surface = is.getSurface();
 		surfaceTexture = is.getSurfaceTexture();
 		paint = new Paint();
@@ -64,6 +70,7 @@ public class Overlay {
 		paintTextOutline.setColor(Color.BLACK);
 		paintTextOutline.setStyle(Paint.Style.STROKE);
 		setSize(w, h);
+		lock = AppCompatResources.getDrawable(ctx, R.drawable.ic_baseline_lock_24_2);
 	}
 
 	public void setSize(int w, int h) {
@@ -99,12 +106,26 @@ public class Overlay {
 		}
 
 		if (showPalette) { // TODO maybe we should draw the palette to a bitmap actually
-			float clear = pclearance * width;
-			float theight = -(paint.descent() + paint.ascent());
+			int clear = (int) (pclearance * width);
+			int theight = (int) -(paint.descent() + paint.ascent());
+			int isize = (int) (theight + woutline * width);
+			int iclear = (int) (clear - (woutline * width) / 2.0f);
 			paintTextOutline.setTextAlign(Paint.Align.RIGHT);
 			paint.setTextAlign(Paint.Align.RIGHT);
 			paint.setColor(Color.WHITE);
 			formatTemp(sb, Float.isNaN(rmax) ? fi.max : rmax);
+			if (!Float.isNaN(rmax)) {
+				int off = (int) paintTextOutline.measureText(sb, 0, sb.length());
+				lock.setBounds(width - clear - off - isize, iclear,
+						width - clear - off, iclear + isize);
+				lock.draw(cvs);
+			}
+			if (!Float.isNaN(rmin)) {
+				int off = (int) paintTextOutline.measureText(sb, 0, sb.length());
+				lock.setBounds(width - clear - off - isize, height - iclear - isize,
+						width - clear - off, height - iclear);
+				lock.draw(cvs);
+			}
 			cvs.drawText(sb, 0, sb.length(), width - clear, theight + clear, paintTextOutline);
 			cvs.drawText(sb, 0, sb.length(), width - clear, theight + clear, paint);
 			formatTemp(sb, Float.isNaN(rmin) ? fi.min : rmin);
