@@ -80,9 +80,9 @@ public class Overlay {
 		surfaceTexture.setDefaultBufferSize(w, h);
 	}
 
-	public void setRect(Rect vs) { /* Set the area of the actual video part overlaid to. */
+	public void setRect(int x1, int y1, int x2, int y2) { /* Set the area of thermal view. */
 		int w = vSize.width();
-		vSize.set(vs);
+		vSize.set(x1, y1, x2, y2);
 		paint.setStrokeWidth(wmarker * w);
 		paint.setTextSize(textsize * w);
 		paintOutline.setStrokeWidth(wmarker * w * 3);

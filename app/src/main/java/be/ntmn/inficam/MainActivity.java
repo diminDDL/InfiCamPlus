@@ -87,14 +87,9 @@ public class MainActivity extends BaseActivity {
 						usbConnection = conn;
 						disconnecting = false;
 						try {
-							final Rect r = new Rect();
 							infiCam.connect(conn.getFileDescriptor());
 							/* Size is only important for cubic interpolation. */
 							inputSurface.setSize(infiCam.getWidth(), infiCam.getHeight());
-							if (outputSurface != null) { // TODO just have a function to update all sizes
-								inputSurface.getRect(r, outputSurface);
-								overlay.setRect(r);
-							}
 							handler.removeCallbacks(timedShutter); /* Before stream starts! */
 							infiCam.startStream();
 							handler.postDelayed(timedShutter, shutterIntervalInitial);
@@ -136,11 +131,8 @@ public class MainActivity extends BaseActivity {
 
 		@Override
 		public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int w, int h) {
-			final Rect r = new Rect();
 			outputSurface.setSize(w, h);
 			overlay.setSize(w, h);
-			inputSurface.getRect(r, w, h);
-			overlay.setRect(r);
 			// TODO redraw more proper, perhaps also redraw when dirty (or do we only needa on resize?)
 			//   but maybe it's fiine already, hmm
 			surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
@@ -222,10 +214,7 @@ public class MainActivity extends BaseActivity {
 			 *   surface(s) come in at whatever resolution they are and are scaled by the muxer
 			 *   regardless, so we don't need to worry about those.
 			 */
-			final Rect r = new Rect();
 			overlay.setSize(picWidth, picHeight);
-			inputSurface.getRect(r, picWidth, picHeight);
-			overlay.setRect(r);
 			overlay.draw(lastFi, lastTemp, palette, rangeMin, rangeMax);
 			overlaySurface.getSurfaceTexture().updateTexImage();
 			Bitmap bitmap = surfaceMuxer.getBitmap(picWidth, picHeight);
@@ -258,20 +247,26 @@ public class MainActivity extends BaseActivity {
 				if (infiCam.getHeight() * w / infiCam.getWidth() > h)
 					sw = infiCam.getWidth() * h / infiCam.getHeight();
 				else sh = infiCam.getHeight() * w / infiCam.getWidth();
-				r.set(w / 2 - sw / 2, h / 2 - sh / 2, sw, sh);
-				r.right += r.left;
-				r.bottom += r.top;
+				r.set(w / 2 - sw / 2, h / 2 - sh / 2,
+						w / 2 - sw / 2 + sw, h / 2 - sh / 2 + sh);
 			}
 		};
 		surfaceMuxer.inputSurfaces.add(inputSurface);
-		//inputSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer);
 		infiCam.setSurface(inputSurface.getSurface());
 		cameraView.getHolder().addCallback(surfaceHolderCallback);
-		//infiCam.setPalette(Palette.Ironbow.getData()); /* SettingsTherm will set palette. */
 
 		/* Create and set up the InputSurface for annotations overlay. */
 		overlaySurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_NEAREST) {
-
+			@Override
+			public void beforeRender(int w, int h) {
+				super.beforeRender(w, h);
+				int sw = w, sh = h;
+				if (infiCam.getHeight() * w / infiCam.getWidth() > h)
+					sw = infiCam.getWidth() * h / infiCam.getHeight();
+				else sh = infiCam.getHeight() * w / infiCam.getWidth();
+				overlay.setRect(w / 2 - sw / 2, h / 2 - sh / 2,
+						w / 2 - sw / 2 + sw, h / 2 - sh / 2 + sh);
+			}
 		};
 		surfaceMuxer.inputSurfaces.add(overlaySurface);
 		overlay = new Overlay(this, overlaySurface, cameraView.getWidth(), cameraView.getHeight());

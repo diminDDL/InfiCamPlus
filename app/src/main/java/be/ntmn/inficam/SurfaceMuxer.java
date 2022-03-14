@@ -106,19 +106,20 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			height = h;
 		}
 
-		/* Override this to change the size. */
-		public void getRect(Rect r, int w, int h) { /* Git rekt lol. */
-			r.set(0, 0, w, h);
-		}
-
-		public void getRect(Rect r, OutputSurface os) { getRect(r, os.width, os.height); }
-
 		public void setRotate(boolean rotate) { this.rotate = rotate; }
 		public void setMirror(boolean mirror) { this.mirror = mirror; }
 
 		public int getTexture() { return textures[0]; }
 		public SurfaceTexture getSurfaceTexture() { return surfaceTexture; }
 		public Surface getSurface() { return surface; }
+
+		/* Override this to change the size. */
+		public void getRect(Rect r, int w, int h) { /* Git rekt lol. */
+			r.set(0, 0, w, h);
+		}
+
+		/* Override this to do stuff before rendering. */
+		public void beforeRender(int w, int h) { /* Empty. */ }
 
 		private void init() {
 			int filter = (imode != IMODE_NEAREST) ? GLES20.GL_LINEAR : GLES20.GL_NEAREST;
@@ -266,6 +267,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		for (int i = 0; i < inputSurfaces.size(); ++i) {
 			InputSurface is = inputSurfaces.get(i);
 
+			is.beforeRender(w, h);
 			is.getRect(outRect, w, h);
 			GLES20.glViewport(outRect.left, h - outRect.bottom, outRect.width(), outRect.height());
 
