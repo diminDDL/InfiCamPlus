@@ -138,7 +138,6 @@ public class MainActivity extends BaseActivity {
 		public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int w, int h) {
 			final Rect r = new Rect();
 			outputSurface.setSize(w, h);
-			overlaySurface.setSize(w, h);
 			overlay.setSize(w, h);
 			inputSurface.getRect(r, w, h);
 			overlay.setRect(r);
@@ -225,7 +224,6 @@ public class MainActivity extends BaseActivity {
 			 */
 			final Rect r = new Rect();
 			overlay.setSize(picWidth, picHeight);
-			overlaySurface.setSize(picWidth, picHeight);
 			inputSurface.getRect(r, picWidth, picHeight);
 			overlay.setRect(r);
 			overlay.draw(lastFi, lastTemp, palette, rangeMin, rangeMax);
@@ -253,8 +251,18 @@ public class MainActivity extends BaseActivity {
 		surfaceMuxer = new SurfaceMuxer(this);
 
 		/* Create and set up the InputSurface for thermal image, imode setting is not final. */
-		inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_NEAREST,
-				SurfaceMuxer.SMODE_FIT);
+		inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_NEAREST) {
+			@Override
+			public void getRect(Rect r, int w, int h) {
+				int sw = w, sh = h;
+				if (infiCam.getHeight() * w / infiCam.getWidth() > h)
+					sw = infiCam.getWidth() * h / infiCam.getHeight();
+				else sh = infiCam.getHeight() * w / infiCam.getWidth();
+				r.set(w / 2 - sw / 2, h / 2 - sh / 2, sw, sh);
+				r.right += r.left;
+				r.bottom += r.top;
+			}
+		};
 		surfaceMuxer.inputSurfaces.add(inputSurface);
 		//inputSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer);
 		infiCam.setSurface(inputSurface.getSurface());
@@ -262,14 +270,12 @@ public class MainActivity extends BaseActivity {
 		//infiCam.setPalette(Palette.Ironbow.getData()); /* SettingsTherm will set palette. */
 
 		/* Create and set up the InputSurface for annotations overlay. */
-		overlaySurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_NEAREST,
-				SurfaceMuxer.SMODE_FIT);
+		overlaySurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_NEAREST);
 		surfaceMuxer.inputSurfaces.add(overlaySurface);
 		overlay = new Overlay(this, overlaySurface, cameraView.getWidth(), cameraView.getHeight());
 
 		/* We use it later. */
-		videoSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_LINEAR,
-				SurfaceMuxer.SMODE_FIT);
+		videoSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_LINEAR);
 
 		/* This one will run every frame. */
 		infiCam.setFrameCallback(frameCallback);
@@ -281,7 +287,7 @@ public class MainActivity extends BaseActivity {
 				usbMonitor.scan();
 				return;
 			}
-			infiCam.calibrate();
+			//infiCam.calibrate();
 		});
 
 		ImageButton buttonShutter = findViewById(R.id.buttonShutter);

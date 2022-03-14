@@ -64,8 +64,6 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	public final static int IMODE_BICUBIC = 2;
 	public final static int IMODE_EDGE = 3; /* Not really an interpolation mode -_o_-. */
 
-	public final static int SMODE_FIT = 0;
-
 	public final ArrayList<InputSurface> inputSurfaces = new ArrayList<>();
 	public final ArrayList<OutputSurface> outputSurfaces = new ArrayList<>();
 	private final ArrayList<Object> allSurfaces = new ArrayList<>();
@@ -88,9 +86,10 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		private boolean initialized = false;
 		private int imode, width = 1, height = 1;
 		private boolean rotate = false, mirror = false;
-		private int smode;
+		private float scale_x = 1.0f, scale_y = 1.0f;
+		private float translate_x = 0.0f, translate_y = 0.0f;
 
-		public InputSurface(SurfaceMuxer muxer, int imode, int smode) {
+		public InputSurface(SurfaceMuxer muxer, int imode) {
 			surfaceMuxer = muxer;
 			this.imode = imode;
 			muxer.allSurfaces.add(this);
@@ -102,28 +101,14 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			init();
 		}
 
-		public void setSMode(int smode) {
-			this.smode = smode;
-			init();
-		}
-
-		public void setSize(int w, int h) {
+		public void setSize(int w, int h) { /* Size is only important for IMODE_CUBIC and _EDGE. */
 			width = w;
 			height = h;
 		}
 
+		/* Override this to change the size. */
 		public void getRect(Rect r, int w, int h) { /* Git rekt lol. */
-			if (smode == SMODE_FIT) {
-				int sw = w, sh = h;
-				if (height * w / width > h)
-					sw = width * h / height;
-				else sh = height * w / width;
-				r.set(w / 2 - sw / 2, h / 2 - sh / 2, sw, sh);
-				r.right += r.left;
-				r.bottom += r.top;
-			} else {
-				// TODO
-			}
+			r.set(0, 0, w, h);
 		}
 
 		public void getRect(Rect r, OutputSurface os) { getRect(r, os.width, os.height); }
@@ -306,9 +291,9 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 
 			int sc = GLES20.glGetUniformLocation(program, "scale");
-			GLES20.glUniform2f(sc, 1.0f, 1.0f);
+			GLES20.glUniform2f(sc, is.scale_x, is.scale_y);
 			int tr = GLES20.glGetUniformLocation(program, "translate");
-			GLES20.glUniform2f(tr, 0.0f, 0.0f);
+			GLES20.glUniform2f(tr, is.translate_x, is.translate_y);
 
 			//GLES20.glBlendColor(1, 1, 1, 0.1f);
 
