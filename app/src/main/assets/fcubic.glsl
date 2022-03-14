@@ -1,9 +1,9 @@
 #extension GL_OES_EGL_image_external : require
 
 precision mediump float;
+uniform samplerExternalOES sTexture;
 varying vec2 texCoord;
 uniform vec2 texSize;
-uniform samplerExternalOES sTexture;
 
 /* Uniform cubic B-spline basis functions. */
 vec4 cubic(float x) {

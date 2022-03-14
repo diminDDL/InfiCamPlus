@@ -339,9 +339,11 @@ public class MainActivity extends BaseActivity {
 		usbMonitor.scan();
 
 		// TODO
-		/*videoSurface.getSurfaceTexture().setDefaultBufferSize(1024, 768); // TODO don't hardcode, also what about aspect?
+		videoSurface.getSurfaceTexture().setDefaultBufferSize(1024, 768); // TODO don't hardcode, also what about aspect?
+		videoSurface.setSize(1024, 768); // TODO also don't hardcode this one
 		videoSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer); // TODO is it not needed? should we separately update tex images?
-		normalCamera.start(this, videoSurface.getSurface());*/
+		videoSurface.setIMode(SurfaceMuxer.IMODE_EDGE);
+		normalCamera.start(this, videoSurface.getSurface());
 	}
 
 	@Override

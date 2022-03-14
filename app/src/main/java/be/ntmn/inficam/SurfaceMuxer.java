@@ -32,7 +32,8 @@ import java.util.ArrayList;
  * - Create an instance of the SurfaceMuxer class.
  * - To get an input surface create a SurfaceMuxer.InputSurface instance, this is bound to the
  *     SurfaceMuxer instance you give the constructor.
- * - If you are going to use cubic interpolation, also call setSize() on the InputSurface.
+ * - If you are going to use cubic interpolation or edge detection, also call setSize() on the
+ *     InputSurface.
  * - Call getSurface() and/or getSurfaceTexture on that to get the actual input Surface and/or
  *     SurfaceTexture texture to draw to.
  * - Call setOnFrameAvailableListener(surfaceMuxer) on the SurfaceTexture from the InputSurface(s)
@@ -60,6 +61,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	public final static int IMODE_NEAREST = 0;
 	public final static int IMODE_LINEAR = 1;
 	public final static int IMODE_BICUBIC = 2;
+	public final static int IMODE_EDGE = 3; /* Not really an interpolation mode -_o_-. */
 
 	public final ArrayList<InputSurface> inputSurfaces = new ArrayList<>();
 	public final ArrayList<OutputSurface> outputSurfaces = new ArrayList<>();
@@ -71,8 +73,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	private EGLConfig eglConfig;
 	private final FloatBuffer[][] pVertex = new FloatBuffer[2][2];
 	private FloatBuffer pTexCoord;
-	private int hProgram, hProgram_cubic;
-	private final String vss, fss, fss_cubic;
+	private int hProgram, hProgram_cubic, hProgram_edge;
+	private final String vss, fss, fss_cubic, fss_edge;
 
 	public static class InputSurface {
 		private SurfaceMuxer surfaceMuxer;
@@ -95,7 +97,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			init();
 		}
 
-		public void setSize(int w, int h) { /* Only important for IMODE_BICUBIC. */
+		public void setSize(int w, int h) { /* Only important for IMODE_BICUBIC and _EDGE. */
 			width = w;
 			height = h;
 		}
@@ -237,6 +239,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			vss = Util.readStringAsset(ctx, "vshader.glsl");
 			fss = Util.readStringAsset(ctx, "fshader.glsl");
 			fss_cubic = Util.readStringAsset(ctx, "fcubic.glsl");
+			fss_edge = Util.readStringAsset(ctx, "fedge.glsl");
 		} catch (IOException e) {
 			/* Crash to inform the user I done did a stupid. */
 			throw new RuntimeException(e);
@@ -253,9 +256,13 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		/* We use an oldschool loop because for (... : ...) causes an allocation to happen. */
 		for (int i = 0; i < inputSurfaces.size(); ++i) {
 			InputSurface is = inputSurfaces.get(i);
-			int program = (is.imode == IMODE_BICUBIC) ? hProgram_cubic : hProgram;
+			int program = hProgram;
+			if (is.imode == IMODE_BICUBIC)
+				program = hProgram_cubic;
+			if (is.imode == IMODE_EDGE)
+				program = hProgram_edge;
 			GLES20.glUseProgram(program);
-			if (program == hProgram_cubic) {
+			if (program == hProgram_cubic || program == hProgram_edge) {
 				int isc = GLES20.glGetUniformLocation(program, "texSize");
 				GLES20.glUniform2f(isc, is.width, is.height);
 			}
@@ -427,6 +434,13 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		if (compiled[0] == 0)
 			throw new RuntimeException(GLES20.glGetShaderInfoLog(fshaderc));
 
+		int fshadere = GLES20.glCreateShader(GLES20.GL_FRAGMENT_SHADER);
+		GLES20.glShaderSource(fshadere, fss_edge);
+		GLES20.glCompileShader(fshadere);
+		GLES20.glGetShaderiv(fshadere, GLES20.GL_COMPILE_STATUS, compiled, 0);
+		if (compiled[0] == 0)
+			throw new RuntimeException(GLES20.glGetShaderInfoLog(fshadere));
+
 		/* Create the program. */
 		hProgram = GLES20.glCreateProgram();
 		GLES20.glAttachShader(hProgram, vshader);
@@ -436,9 +450,14 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		GLES20.glAttachShader(hProgram_cubic, vshader);
 		GLES20.glAttachShader(hProgram_cubic, fshaderc);
 		GLES20.glLinkProgram(hProgram_cubic);
+		hProgram_edge = GLES20.glCreateProgram();
+		GLES20.glAttachShader(hProgram_edge, vshader);
+		GLES20.glAttachShader(hProgram_edge, fshadere);
+		GLES20.glLinkProgram(hProgram_edge);
 		GLES20.glDeleteShader(vshader); /* They will still live until the program dies. */
 		GLES20.glDeleteShader(fshader);
 		GLES20.glDeleteShader(fshaderc);
+		GLES20.glDeleteShader(fshadere);
 
 		/* Initialize any surfaces we have. */
 		for (Object o : allSurfaces) {
