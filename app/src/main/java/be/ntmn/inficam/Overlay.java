@@ -104,7 +104,7 @@ public class Overlay {
 
 		cvs.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
-		if (showCenter) {
+		if (showCenter) { // TODO this is off by a pixel and we should check the other points too
 			paint.setColor(Color.rgb(255, 255, 0)); // Yellow.
 			drawTPoint(cvs, fi, fi.width / 2, fi.height / 2, fi.center);
 		}

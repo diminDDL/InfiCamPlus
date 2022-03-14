@@ -304,6 +304,12 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			int th = GLES20.glGetUniformLocation(program, "sTexture");
 			GLES20.glUniform1i(th, 0); /* Tells the shader what texture to use. */
 			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+
+			int sc = GLES20.glGetUniformLocation(program, "scale");
+			GLES20.glUniform2f(sc, 1.0f, 1.0f);
+			int tr = GLES20.glGetUniformLocation(program, "translate");
+			GLES20.glUniform2f(tr, 0.0f, 0.0f);
+
 			//GLES20.glBlendColor(1, 1, 1, 0.1f);
 
 			GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
