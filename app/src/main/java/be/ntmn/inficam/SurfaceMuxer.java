@@ -282,7 +282,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			InputSurface is = inputSurfaces.get(i);
 
 			is.getRect(outRect, w, h);
-			GLES20.glViewport(outRect.left, outRect.top, outRect.width(), outRect.height());
+			GLES20.glViewport(outRect.left, h - outRect.bottom, outRect.width(), outRect.height());
 
 			int program = hProgram;
 			if (is.imode == IMODE_BICUBIC)

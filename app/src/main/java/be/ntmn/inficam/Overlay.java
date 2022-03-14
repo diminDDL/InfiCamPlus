@@ -172,22 +172,27 @@ public class Overlay {
 		cvs.drawBitmap(paletteCache.bitmap, paletteCache.rectSrc, paletteCache.rectTgt, paint);
 	}
 
+	private float tpx(float p, InfiCam.FrameInfo fi) {
+		p = (p + 0.5f) * vSize.width() / fi.width;
+		if (rotate)
+			p = vSize.width() - p;
+		if (mirror)
+			p = vSize.width() - p;
+		return vSize.left + p;
+	}
+
+	private float tpy(float p, InfiCam.FrameInfo fi) {
+		p = (p + 0.5f) * vSize.height() / fi.height;
+		if (rotate)
+			p = vSize.height() - p;
+		return vSize.top + p;
+	}
+
 	private void drawTPoint(Canvas cvs, InfiCam.FrameInfo fi, int tx, int ty, float temp) {
-		float x = (tx + 0.5f) * vSize.width() / fi.width;
-		float y = (ty + 0.5f) * vSize.height() / fi.height;
-
-		if (rotate) {
-			x = vSize.width() - x;
-			y = vSize.height() - y;
-		}
-		if (mirror) {
-			x = vSize.width() - x;
-		}
-
-		float xm = vSize.left + x;
-		float ym = vSize.top + y;
-
+		float xm = tpx(tx, fi);
+		float ym = tpy(ty, fi);
 		float smarkerw = smarker * vSize.width();
+
 		cvs.drawLine(xm - smarkerw, ym, xm + smarkerw, ym, paintOutline);
 		cvs.drawLine(xm, ym - smarkerw, xm, ym + smarkerw, paintOutline);
 		cvs.drawLine(xm - smarkerw, ym, xm + smarkerw, ym, paint);
@@ -195,9 +200,9 @@ public class Overlay {
 
 		float offX = toff * vSize.width();
 		float offY = -(paint.descent() + paint.ascent()) / 2.0f;
+		float tclear = tclearance * vSize.width();
 		formatTemp(sb, temp);
-		if (paintTextOutline.measureText(sb, 0, sb.length()) + offX + tclearance * vSize.width() <
-				vSize.width() - x) {
+		if (paintTextOutline.measureText(sb, 0, sb.length()) + offX + tclear < vSize.right - xm) {
 			paint.setTextAlign(Paint.Align.LEFT);
 			paintTextOutline.setTextAlign(Paint.Align.LEFT);
 		} else {
@@ -205,9 +210,8 @@ public class Overlay {
 			paint.setTextAlign(Paint.Align.RIGHT);
 			paintTextOutline.setTextAlign(Paint.Align.RIGHT);
 		}
-		offY -= max(y + offY + paintTextOutline.descent() + tclearance * vSize.width() -
-				vSize.height(), 0);
-		offY -= min(y + offY + paintTextOutline.ascent() - tclearance * vSize.width(), 0);
+		offY -= max(ym + offY + paintTextOutline.descent() + tclear - vSize.bottom, 0);
+		offY -= min(ym + offY + paintTextOutline.ascent() - tclear - vSize.top, 0);
 
 		cvs.drawText(sb, 0, sb.length(), xm + offX, ym + offY, paintTextOutline);
 		cvs.drawText(sb, 0, sb.length(), xm + offX, ym + offY, paint);
