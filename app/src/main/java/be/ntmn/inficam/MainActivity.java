@@ -6,6 +6,7 @@ import static java.lang.Float.isNaN;
 import android.Manifest;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.Bundle;
@@ -86,9 +87,14 @@ public class MainActivity extends BaseActivity {
 						usbConnection = conn;
 						disconnecting = false;
 						try {
+							final Rect r = new Rect();
 							infiCam.connect(conn.getFileDescriptor());
 							/* Size is only important for cubic interpolation. */
 							inputSurface.setSize(infiCam.getWidth(), infiCam.getHeight());
+							if (outputSurface != null) {
+								inputSurface.getRect(r, outputSurface);
+								overlay.setRect(r);
+							}
 							handler.removeCallbacks(timedShutter); /* Before stream starts! */
 							infiCam.startStream();
 							handler.postDelayed(timedShutter, shutterIntervalInitial);
@@ -130,8 +136,12 @@ public class MainActivity extends BaseActivity {
 
 		@Override
 		public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int w, int h) {
+			final Rect r = new Rect();
 			outputSurface.setSize(w, h);
+			overlaySurface.setSize(w, h);
 			overlay.setSize(w, h);
+			inputSurface.getRect(r, w, h);
+			overlay.setRect(r);
 			// TODO redraw more proper, perhaps also redraw when dirty (or do we only needa on resize?)
 			//   but maybe it's fiine already, hmm
 			surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
@@ -213,12 +223,17 @@ public class MainActivity extends BaseActivity {
 			 *   surface(s) come in at whatever resolution they are and are scaled by the muxer
 			 *   regardless, so we don't need to worry about those.
 			 */
+			final Rect r = new Rect();
 			overlay.setSize(picWidth, picHeight);
+			overlaySurface.setSize(picWidth, picHeight);
+			inputSurface.getRect(r, picWidth, picHeight);
+			overlay.setRect(r);
 			overlay.draw(lastFi, lastTemp, palette, rangeMin, rangeMax);
 			overlaySurface.getSurfaceTexture().updateTexImage();
 			Bitmap bitmap = surfaceMuxer.getBitmap(picWidth, picHeight);
 			Util.writePNG(this, bitmap);
 			overlay.setSize(cameraView.getWidth(), cameraView.getHeight());
+			// TODO return all sizes to normal
 			takePic = false;
 			messageView.shortMessage(getString(R.string.msg_captured));
 		}
@@ -238,7 +253,8 @@ public class MainActivity extends BaseActivity {
 		surfaceMuxer = new SurfaceMuxer(this);
 
 		/* Create and set up the InputSurface for thermal image, imode setting is not final. */
-		inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_NEAREST);
+		inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_NEAREST,
+				SurfaceMuxer.SMODE_FIT);
 		surfaceMuxer.inputSurfaces.add(inputSurface);
 		//inputSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer);
 		infiCam.setSurface(inputSurface.getSurface());
@@ -246,12 +262,14 @@ public class MainActivity extends BaseActivity {
 		//infiCam.setPalette(Palette.Ironbow.getData()); /* SettingsTherm will set palette. */
 
 		/* Create and set up the InputSurface for annotations overlay. */
-		overlaySurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_NEAREST);
+		overlaySurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_NEAREST,
+				SurfaceMuxer.SMODE_FIT);
 		surfaceMuxer.inputSurfaces.add(overlaySurface);
 		overlay = new Overlay(this, overlaySurface, cameraView.getWidth(), cameraView.getHeight());
 
 		/* We use it later. */
-		videoSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_LINEAR);
+		videoSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_LINEAR,
+				SurfaceMuxer.SMODE_FIT);
 
 		/* This one will run every frame. */
 		infiCam.setFrameCallback(frameCallback);

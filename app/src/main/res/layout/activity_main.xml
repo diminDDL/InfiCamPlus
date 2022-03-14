@@ -61,7 +61,6 @@
 		android:layout_marginEnd="0dp"
 		android:layout_marginStart="0dp"
 		android:layout_marginTop="0dp"
-		app:layout_constraintDimensionRatio="4:3"
 		app:layout_constraintTop_toTopOf="parent"
 		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintEnd_toEndOf="parent"
@@ -82,6 +81,7 @@
 			android:paddingVertical="5dp"
 			android:paddingHorizontal="12dp"
 			android:background="@drawable/message_background" />
+
 	</FrameLayout>
 
 	<LinearLayout

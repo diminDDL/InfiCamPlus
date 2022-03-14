@@ -3,6 +3,7 @@ package be.ntmn.inficam;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
 import android.opengl.EGLConfig;
@@ -63,6 +64,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	public final static int IMODE_BICUBIC = 2;
 	public final static int IMODE_EDGE = 3; /* Not really an interpolation mode -_o_-. */
 
+	public final static int SMODE_FIT = 0;
+
 	public final ArrayList<InputSurface> inputSurfaces = new ArrayList<>();
 	public final ArrayList<OutputSurface> outputSurfaces = new ArrayList<>();
 	private final ArrayList<Object> allSurfaces = new ArrayList<>();
@@ -75,6 +78,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	private FloatBuffer pTexCoord;
 	private int hProgram, hProgram_cubic, hProgram_edge;
 	private final String vss, fss, fss_cubic, fss_edge;
+	private final Rect outRect = new Rect();
 
 	public static class InputSurface {
 		private SurfaceMuxer surfaceMuxer;
@@ -82,10 +86,11 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		private Surface surface;
 		private final int[] textures = new int[1];
 		private boolean initialized = false;
-		private int imode, width, height;
+		private int imode, width = 1, height = 1;
 		private boolean rotate = false, mirror = false;
+		private int smode;
 
-		public InputSurface(SurfaceMuxer muxer, int imode) {
+		public InputSurface(SurfaceMuxer muxer, int imode, int smode) {
 			surfaceMuxer = muxer;
 			this.imode = imode;
 			muxer.allSurfaces.add(this);
@@ -97,10 +102,31 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			init();
 		}
 
-		public void setSize(int w, int h) { /* Only important for IMODE_BICUBIC and _EDGE. */
+		public void setSMode(int smode) {
+			this.smode = smode;
+			init();
+		}
+
+		public void setSize(int w, int h) {
 			width = w;
 			height = h;
 		}
+
+		public void getRect(Rect r, int w, int h) { /* Git rekt lol. */
+			if (smode == SMODE_FIT) {
+				int sw = w, sh = h;
+				if (height * w / width > h)
+					sw = width * h / height;
+				else sh = height * w / width;
+				r.set(w / 2 - sw / 2, h / 2 - sh / 2, sw, sh);
+				r.right += r.left;
+				r.bottom += r.top;
+			} else {
+				// TODO
+			}
+		}
+
+		public void getRect(Rect r, OutputSurface os) { getRect(r, os.width, os.height); }
 
 		public void setRotate(boolean rotate) { this.rotate = rotate; }
 		public void setMirror(boolean mirror) { this.mirror = mirror; }
@@ -248,14 +274,16 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	}
 
 	private void render(int w, int h) {
-		GLES20.glViewport(0, 0, w, h);
-
 		GLES20.glClearColor(0, 0, 0, 1);
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
 		/* We use an oldschool loop because for (... : ...) causes an allocation to happen. */
 		for (int i = 0; i < inputSurfaces.size(); ++i) {
 			InputSurface is = inputSurfaces.get(i);
+
+			is.getRect(outRect, w, h);
+			GLES20.glViewport(outRect.left, outRect.top, outRect.width(), outRect.height());
+
 			int program = hProgram;
 			if (is.imode == IMODE_BICUBIC)
 				program = hProgram_cubic;

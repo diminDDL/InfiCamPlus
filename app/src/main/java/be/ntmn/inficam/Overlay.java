@@ -30,6 +30,7 @@ public class Overlay {
 	private final Drawable lock;
 
 	private int width, height;
+	private final Rect vSize = new Rect();
 	private boolean rotate = false, mirror = false; /* Set by Settings. */
 	private boolean showMin = false; /* Set by SettingsTherm. */
 	private boolean showMax = false;
@@ -77,6 +78,11 @@ public class Overlay {
 		width = w;
 		height = h;
 		surfaceTexture.setDefaultBufferSize(w, h);
+	}
+
+	public void setRect(Rect vs) { /* Set the area of the actual video part overlaid to. */
+		int w = vSize.width();
+		vSize.set(vs);
 		paint.setStrokeWidth(wmarker * w);
 		paint.setTextSize(textsize * w);
 		paintOutline.setStrokeWidth(wmarker * w * 3);
@@ -106,10 +112,10 @@ public class Overlay {
 		}
 
 		if (showPalette) { // TODO maybe we should draw the palette to a bitmap actually
-			int clear = (int) (pclearance * width);
+			int clear = (int) (pclearance * vSize.width());
 			int theight = (int) -(paint.descent() + paint.ascent());
-			int isize = (int) (theight + woutline * width);
-			int iclear = (int) (clear - (woutline * width) / 2.0f);
+			int isize = (int) (theight + woutline * vSize.width());
+			int iclear = (int) (clear - (woutline * vSize.width()) / 2.0f);
 			paintTextOutline.setTextAlign(Paint.Align.RIGHT);
 			paint.setTextAlign(Paint.Align.RIGHT);
 			paint.setColor(Color.WHITE);
@@ -126,13 +132,21 @@ public class Overlay {
 						width - clear - off, height - iclear);
 				lock.draw(cvs);
 			}
-			cvs.drawText(sb, 0, sb.length(), width - clear, theight + clear, paintTextOutline);
-			cvs.drawText(sb, 0, sb.length(), width - clear, theight + clear, paint);
+			cvs.drawText(sb, 0, sb.length(), vSize.right - clear, vSize.top + theight + clear,
+					paintTextOutline);
+			cvs.drawText(sb, 0, sb.length(), vSize.right - clear, vSize.top + theight + clear,
+					paint);
 			formatTemp(sb, Float.isNaN(rmin) ? fi.min : rmin);
-			cvs.drawText(sb, 0, sb.length(), width - clear, height - clear, paintTextOutline);
-			cvs.drawText(sb, 0, sb.length(), width - clear, height - clear, paint);
-			drawPalette(cvs, (int) (width - clear - pwidth * width), (int) (theight + clear * 2),
-					(int) (width - clear), (int) (height - theight - clear * 2), palette);
+			cvs.drawText(sb, 0, sb.length(), vSize.right - clear, vSize.bottom - clear,
+					paintTextOutline);
+			cvs.drawText(sb, 0, sb.length(), vSize.right - clear, vSize.bottom - clear,
+					paint);
+			drawPalette(cvs,
+					(int) (vSize.right - clear - pwidth * vSize.width()),
+					vSize.top + theight + clear * 2,
+					vSize.right - clear,
+					vSize.bottom - theight - clear * 2,
+					palette);
 		}
 
 		surface.unlockCanvasAndPost(cvs);
@@ -159,28 +173,31 @@ public class Overlay {
 	}
 
 	private void drawTPoint(Canvas cvs, InfiCam.FrameInfo fi, int tx, int ty, float temp) {
-		float x = (tx + 0.5f) * width / fi.width; // TODO maybe we can just set scale for the entire canvas
-		float y = (ty + 0.5f) * height / fi.height;
+		float x = (tx + 0.5f) * vSize.width() / fi.width;
+		float y = (ty + 0.5f) * vSize.height() / fi.height;
 
 		if (rotate) {
-			x = width - x;
-			y = height - y;
+			x = vSize.width() - x;
+			y = vSize.height() - y;
 		}
 		if (mirror) {
-			x = width - x;
+			x = vSize.width() - x;
 		}
 
-		float smarkerw = smarker * width;
-		cvs.drawLine(x - smarkerw, y, x + smarkerw, y, paintOutline);
-		cvs.drawLine(x, y - smarkerw, x, y + smarkerw, paintOutline);
-		cvs.drawLine(x - smarkerw, y, x + smarkerw, y, paint);
-		cvs.drawLine(x, y - smarkerw, x, y + smarkerw, paint);
+		float xm = vSize.left + x;
+		float ym = vSize.top + y;
 
-		float offX = toff * width;
+		float smarkerw = smarker * vSize.width();
+		cvs.drawLine(xm - smarkerw, ym, xm + smarkerw, ym, paintOutline);
+		cvs.drawLine(xm, ym - smarkerw, xm, ym + smarkerw, paintOutline);
+		cvs.drawLine(xm - smarkerw, ym, xm + smarkerw, ym, paint);
+		cvs.drawLine(xm, ym - smarkerw, xm, ym + smarkerw, paint);
+
+		float offX = toff * vSize.width();
 		float offY = -(paint.descent() + paint.ascent()) / 2.0f;
 		formatTemp(sb, temp);
-		if (paintTextOutline.measureText(sb, 0, sb.length()) + offX + tclearance * width <
-				width - x) {
+		if (paintTextOutline.measureText(sb, 0, sb.length()) + offX + tclearance * vSize.width() <
+				vSize.width() - x) {
 			paint.setTextAlign(Paint.Align.LEFT);
 			paintTextOutline.setTextAlign(Paint.Align.LEFT);
 		} else {
@@ -188,10 +205,12 @@ public class Overlay {
 			paint.setTextAlign(Paint.Align.RIGHT);
 			paintTextOutline.setTextAlign(Paint.Align.RIGHT);
 		}
-		offY -= max(y + offY + paintTextOutline.descent() + tclearance * width - height, 0);
-		offY -= min(y + offY + paintTextOutline.ascent() - tclearance * width, 0);
-		cvs.drawText(sb, 0, sb.length(), x + offX, y + offY, paintTextOutline);
-		cvs.drawText(sb, 0, sb.length(), x + offX, y + offY, paint);
+		offY -= max(y + offY + paintTextOutline.descent() + tclearance * vSize.width() -
+				vSize.height(), 0);
+		offY -= min(y + offY + paintTextOutline.ascent() - tclearance * vSize.width(), 0);
+
+		cvs.drawText(sb, 0, sb.length(), xm + offX, ym + offY, paintTextOutline);
+		cvs.drawText(sb, 0, sb.length(), xm + offX, ym + offY, paint);
 	}
 
 	public void setRotate(boolean rotate) { this.rotate = rotate; }
