@@ -124,31 +124,54 @@ public class Overlay {
 			int theight = (int) -(paint.descent() + paint.ascent());
 			int isize = (int) (theight + woutline * vSize.width());
 			int iclear = (int) (clear - (woutline * vSize.width()) / 2.0f);
-			paintTextOutline.setTextAlign(Paint.Align.RIGHT);
-			paint.setTextAlign(Paint.Align.RIGHT);
 			paint.setColor(Color.WHITE);
-			if (!Float.isNaN(rmax)) {
-				int off = (int) paintTextOutline.measureText(sb, 0, sb.length());
-				lock.setBounds(width - clear - off - isize, iclear,
-						width - clear - off, iclear + isize);
-				lock.draw(cvs);
+			if (true) {
+				formatTemp(sb, Float.isNaN(rmax) ? fi.max : rmax);
+				drawText(cvs, sb, vSize.right - clear, vSize.top + clear, false, true);
+				formatTemp(sb, Float.isNaN(rmin) ? fi.min : rmin);
+				drawText(cvs, sb, vSize.right - clear, vSize.bottom - clear, false, false);
+				drawPalette(cvs,
+						(int) (vSize.right - clear - pwidth * vSize.width()),
+						vSize.top + theight + clear * 2,
+						vSize.right - clear,
+						vSize.bottom - theight - clear * 2,
+						palette);
+				if (!Float.isNaN(rmax)) {
+					int off = (int) paintTextOutline.measureText(sb, 0, sb.length());
+					lock.setBounds(vSize.right - clear - off - isize, vSize.top + iclear,
+							vSize.right - clear - off, vSize.top + iclear + isize);
+					lock.draw(cvs);
+				}
+				if (!Float.isNaN(rmin)) {
+					int off = (int) paintTextOutline.measureText(sb, 0, sb.length());
+					lock.setBounds(vSize.right - clear - off - isize, vSize.bottom - iclear - isize,
+							vSize.right - clear - off, vSize.bottom - iclear);
+					lock.draw(cvs);
+				}
+			} else {
+				formatTemp(sb, Float.isNaN(rmax) ? fi.max : rmax);
+				drawText(cvs, sb, vSize.right + clear, vSize.top + clear, true, true);
+				formatTemp(sb, Float.isNaN(rmin) ? fi.min : rmin);
+				drawText(cvs, sb, vSize.right + clear, vSize.bottom - clear, true, false);
+				drawPalette(cvs,
+						vSize.right + clear,
+						vSize.top + theight + clear * 2,
+						(int) (vSize.right + clear + pwidth * vSize.width()),
+						vSize.bottom - theight - clear * 2,
+						palette);
+				if (!Float.isNaN(rmax)) {
+					int off = (int) paintTextOutline.measureText(sb, 0, sb.length());
+					lock.setBounds(vSize.right + clear + off, vSize.top + iclear,
+							vSize.right + clear + off + isize, vSize.top + iclear + isize);
+					lock.draw(cvs);
+				}
+				if (!Float.isNaN(rmin)) {
+					int off = (int) paintTextOutline.measureText(sb, 0, sb.length());
+					lock.setBounds(vSize.right + clear + off, vSize.bottom - iclear - isize,
+							vSize.right + clear + off + isize, vSize.bottom - iclear);
+					lock.draw(cvs);
+				}
 			}
-			if (!Float.isNaN(rmin)) {
-				int off = (int) paintTextOutline.measureText(sb, 0, sb.length());
-				lock.setBounds(width - clear - off - isize, height - iclear - isize,
-						width - clear - off, height - iclear);
-				lock.draw(cvs);
-			}
-			formatTemp(sb, Float.isNaN(rmax) ? fi.max : rmax);
-			drawText(cvs, sb, vSize.right - clear, vSize.top + clear, false, true);
-			formatTemp(sb, Float.isNaN(rmin) ? fi.min : rmin);
-			drawText(cvs, sb, vSize.right - clear, vSize.bottom - clear, false, false);
-			drawPalette(cvs,
-					(int) (vSize.right - clear - pwidth * vSize.width()),
-					vSize.top + theight + clear * 2,
-					vSize.right - clear,
-					vSize.bottom - theight - clear * 2,
-					palette);
 		}
 
 		surface.unlockCanvasAndPost(cvs);
@@ -203,20 +226,16 @@ public class Overlay {
 		float offX = toff * vSize.width();
 		float offY = -(paint.descent() + paint.ascent()) / 2.0f;
 		float tclear = tclearance * vSize.width();
-		formatTemp(sb, temp);
-		if (paintTextOutline.measureText(sb, 0, sb.length()) + offX + tclear < vSize.right - xm) {
-			paint.setTextAlign(Paint.Align.LEFT);
-			paintTextOutline.setTextAlign(Paint.Align.LEFT);
-		} else {
+		boolean la = true;
+		if (paintTextOutline.measureText(sb, 0, sb.length()) + offX + tclear > vSize.right - xm) {
 			offX = -offX;
-			paint.setTextAlign(Paint.Align.RIGHT);
-			paintTextOutline.setTextAlign(Paint.Align.RIGHT);
+			la = false;
 		}
 		offY -= max(ym + offY + paintTextOutline.descent() + tclear - vSize.bottom, 0);
 		offY -= min(ym + offY + paintTextOutline.ascent() - tclear - vSize.top, 0);
 
-		cvs.drawText(sb, 0, sb.length(), xm + offX, ym + offY, paintTextOutline);
-		cvs.drawText(sb, 0, sb.length(), xm + offX, ym + offY, paint);
+		formatTemp(sb, temp);
+		drawText(cvs, sb, xm + offX, ym + offY, la, false);
 	}
 
 	public void setRotate(boolean rotate) { this.rotate = rotate; }
