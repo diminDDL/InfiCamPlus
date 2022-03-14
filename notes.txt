@@ -74,7 +74,6 @@ TODO
 	- show camera product and version info somewhere
 	- option to save separate normal and thermal image side by side (what about video?)
 	- software zoom?
-	- recording video makes lots of allocations for no good reason
 
 Things i learned about the protocol these thermal cameras talk:
 	last 4 lines of the frame have parameters (note that the pointer math is in steps of 16 bytes because unsigned short)
