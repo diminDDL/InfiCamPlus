@@ -1,6 +1,8 @@
 This code is originally from https://github.com/saki4510t/UVCCamera/
 It was modified by infiray, and later by netman.
 And by now everything was rewritten by netman except libuvc_build/libuvc.mk xD
+Ghidra was really useful to figure out what's in libthermometry.so and XthermDLL.DLL and the fact
+  there are versions for many platforms also helped.
 
 A short what-is-what:
 	libinficam  - Has the native (C, C++) library stuff to talk to the camera and a JNI binding to
