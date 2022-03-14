@@ -90,6 +90,14 @@ public class Overlay {
 		paintTextOutline.setTextSize(textsize * w);
 	}
 
+	private void drawText(Canvas cvs, StringBuilder sb, float x, float y, boolean la, boolean ta) {
+		float theight = (int) -(paint.descent() + paint.ascent());
+		paint.setTextAlign(la ? Paint.Align.LEFT : Paint.Align.RIGHT);
+		paintTextOutline.setTextAlign(la ? Paint.Align.LEFT : Paint.Align.RIGHT);
+		cvs.drawText(sb, 0, sb.length(), x, y + (ta ? theight : 0), paintTextOutline);
+		cvs.drawText(sb, 0, sb.length(), x, y + (ta ? theight : 0), paint);
+	}
+
 	@SuppressLint("DefaultLocale")
 	public void draw(InfiCam.FrameInfo fi, float[] temp, int[] palette, float rmin, float rmax) {
 		Canvas cvs = surface.lockCanvas(null);
@@ -119,7 +127,6 @@ public class Overlay {
 			paintTextOutline.setTextAlign(Paint.Align.RIGHT);
 			paint.setTextAlign(Paint.Align.RIGHT);
 			paint.setColor(Color.WHITE);
-			formatTemp(sb, Float.isNaN(rmax) ? fi.max : rmax);
 			if (!Float.isNaN(rmax)) {
 				int off = (int) paintTextOutline.measureText(sb, 0, sb.length());
 				lock.setBounds(width - clear - off - isize, iclear,
@@ -132,15 +139,10 @@ public class Overlay {
 						width - clear - off, height - iclear);
 				lock.draw(cvs);
 			}
-			cvs.drawText(sb, 0, sb.length(), vSize.right - clear, vSize.top + theight + clear,
-					paintTextOutline);
-			cvs.drawText(sb, 0, sb.length(), vSize.right - clear, vSize.top + theight + clear,
-					paint);
+			formatTemp(sb, Float.isNaN(rmax) ? fi.max : rmax);
+			drawText(cvs, sb, vSize.right - clear, vSize.top + clear, false, true);
 			formatTemp(sb, Float.isNaN(rmin) ? fi.min : rmin);
-			cvs.drawText(sb, 0, sb.length(), vSize.right - clear, vSize.bottom - clear,
-					paintTextOutline);
-			cvs.drawText(sb, 0, sb.length(), vSize.right - clear, vSize.bottom - clear,
-					paint);
+			drawText(cvs, sb, vSize.right - clear, vSize.bottom - clear, false, false);
 			drawPalette(cvs,
 					(int) (vSize.right - clear - pwidth * vSize.width()),
 					vSize.top + theight + clear * 2,

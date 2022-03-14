@@ -91,7 +91,7 @@ public class MainActivity extends BaseActivity {
 							infiCam.connect(conn.getFileDescriptor());
 							/* Size is only important for cubic interpolation. */
 							inputSurface.setSize(infiCam.getWidth(), infiCam.getHeight());
-							if (outputSurface != null) {
+							if (outputSurface != null) { // TODO just have a function to update all sizes
 								inputSurface.getRect(r, outputSurface);
 								overlay.setRect(r);
 							}
