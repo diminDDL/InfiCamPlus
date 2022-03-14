@@ -21,8 +21,16 @@ class InfiCamJNI : public InfiCam {
 public:
 	JNIEnv *env;
 	jobject obj;
+	int jthread_stop = 0;
+	uint32_t *rgb;
+	float *temp;
+	uint16_t *raw;
+
+	/* Initialized elsewhere to avoid needing exceptions. */
+	pthread_t jthread;
+	pthread_mutex_t jthread_mutex;
+	pthread_cond_t jthread_cond;
 	ANativeWindow *window = NULL;
-	pthread_mutex_t window_mutex; /* Initialized elsewhere to avoid needing exceptions. */
 
 	InfiCamJNI(JNIEnv *env, jobject obj) {
 		this->env = env;
@@ -55,101 +63,148 @@ static void setFloatVar(JNIEnv *env, jobject obj, const char *name, jfloat value
 	env->SetFloatField(obj, nativeObjectPointerID, value);
 }
 
-/* Frame callback to draw to Android Surface and call a Java callback. */
-void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw, void *user_ptr) {
+/* Frame callback that notifies jthread (described later). */
+static void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw,
+						   void *user_ptr) {
 	InfiCamJNI *icj = (InfiCamJNI *) cam;
+	pthread_mutex_lock(&icj->jthread_mutex);
+	icj->rgb = rgb;
+	icj->temp = temp;
+	icj->raw = raw;
+	pthread_cond_broadcast(&icj->jthread_cond);
+	/* Now we wait for the other thread to finish and signal the same condition, this works
+	 *   because only threads that are currently waiting get signaled.
+	 */
+	while (pthread_cond_wait(&icj->jthread_cond, &icj->jthread_mutex));
+	pthread_mutex_unlock(&icj->jthread_mutex);
+}
 
-	/* Update the surface if we have one. */
-	pthread_mutex_lock(&icj->window_mutex);
-	if (icj->window != NULL) {
-		ANativeWindow_Buffer buffer;
-		if (ANativeWindow_lock(icj->window, &buffer, NULL) == 0) {
-			// source = frame data, destination = Surface(ANativeWindow)
-			const uint8_t *src = (uint8_t *) rgb;
-			const int src_w = cam->infi.width * 4;
-			const int dst_w = buffer.width * 4;
-			const int dst_step = buffer.stride * 4;
-
-			// set w and h to be the smallest of the two rectangles
-			const int w = src_w < dst_w ? src_w : dst_w;
-			const int h = cam->infi.height < buffer.height ? cam->infi.height : buffer.height;
-
-			// transfer from frame data to the Surface
-			uint8_t *dst = (uint8_t *) buffer.bits;
-			for (int i = 0; i < h; ++i) {
-				memcpy(dst, src, w);
-				dst += dst_step;
-				src += src_w;
-			}
-
-			ANativeWindow_unlockAndPost(icj->window);
+/* This thread will attach to the JVM and draw frames to an Android surface, then call a Java
+ *   callback, the reason we need this is because the callback from libuvc doesn't allow us to do
+ *   something at the end of the thread that calls and we need to detach the thread from the JVM
+ *   when we are done.
+ */
+static void *jthread_run(void *a) {
+	InfiCamJNI *icj = (InfiCamJNI *) a;
+	JNIEnv *env;
+	javaVM->AttachCurrentThread(&env, NULL);
+	pthread_mutex_lock(&icj->jthread_mutex);
+	while (1) {
+		while (!icj->jthread_stop && pthread_cond_wait(&icj->jthread_cond, &icj->jthread_mutex));
+		if (icj->jthread_stop) {
+			pthread_mutex_unlock(&icj->jthread_mutex);
+			break;
 		}
+
+		/* Update the surface if we have one. */
+		if (icj->window != NULL) {
+			ANativeWindow_Buffer buffer;
+			if (ANativeWindow_lock(icj->window, &buffer, NULL) == 0) {
+				const uint8_t *src = (uint8_t *) icj->rgb;
+				const int src_w = icj->infi.width * 4;
+				const int dst_w = buffer.width * 4;
+				const int dst_step = buffer.stride * 4;
+
+				/* Set w and h to be the smallest of the two rectangles. */
+				const int w = src_w < dst_w ? src_w : dst_w;
+				const int h = icj->infi.height < buffer.height ? icj->infi.height : buffer.height;
+
+				/* Transfer from frame data to the Surface */
+				uint8_t *dst = (uint8_t *) buffer.bits;
+				for (int i = 0; i < h; ++i) {
+					memcpy(dst, src, w);
+					dst += dst_step;
+					src += src_w;
+				}
+
+				ANativeWindow_unlockAndPost(icj->window);
+			}
+		}
+
+		/* Fill the FrameInfo struct. */
+		jclass cls = env->GetObjectClass(icj->obj);
+		jfieldID fi_id = env->GetFieldID(cls, "frameInfo", "L" FRAMEINFO_TYPE ";");
+		jobject fi = env->GetObjectField(icj->obj, fi_id);
+
+		setFloatVar(env, fi, "max", icj->infi.temp(icj->infi.temp_max));
+		setIntVar(env, fi, "max_x", icj->infi.temp_max_x);
+		setIntVar(env, fi, "max_y", icj->infi.temp_max_y);
+		setFloatVar(env, fi, "min", icj->infi.temp(icj->infi.temp_min));
+		setIntVar(env, fi, "min_x", icj->infi.temp_min_x);
+		setIntVar(env, fi, "min_y", icj->infi.temp_min_y);
+		setFloatVar(env, fi, "center", icj->infi.temp(icj->infi.temp_center));
+		setFloatVar(env, fi, "avg", icj->infi.temp(icj->infi.temp_avg));
+
+		setIntVar(env, fi, "width", icj->infi.width);
+		setIntVar(env, fi, "height", icj->infi.height);
+
+		setFloatVar(env, fi, "correction", icj->infi.correction);
+		setFloatVar(env, fi, "temp_reflected", icj->infi.temp_reflected);
+		setFloatVar(env, fi, "temp_air", icj->infi.temp_air);
+		setFloatVar(env, fi, "humidity", icj->infi.humidity);
+		setFloatVar(env, fi, "emissivity", icj->infi.emissivity);
+		setFloatVar(env, fi, "distance", icj->infi.distance);
+
+		/* Make a Java array from the temperature array. */
+		size_t temp_len = icj->infi.width * icj->infi.height;
+		jfieldID jtemp_id = env->GetFieldID(cls, "temp", "[F");
+		jfloatArray jtemp = (jfloatArray) env->GetObjectField(icj->obj, jtemp_id);
+		if (!jtemp || env->GetArrayLength(jtemp) != temp_len) {
+			jtemp = env->NewFloatArray(temp_len);
+			env->SetObjectField(icj->obj, jtemp_id, jtemp);
+		}
+		env->SetFloatArrayRegion(jtemp, 0, temp_len, icj->temp);
+
+		/* Call the callback. */
+		jmethodID mid = env->GetMethodID(cls, "frameCallback", "(L" FRAMEINFO_TYPE ";[F)V");
+		env->CallVoidMethod(icj->obj, mid, fi, jtemp);
+
+		/* Clean up. */
+		env->DeleteLocalRef(jtemp);
+		env->DeleteLocalRef(fi);
+
+		/* Tell the callback's thread we're done. */
+		pthread_cond_broadcast(&icj->jthread_cond);
 	}
-	pthread_mutex_unlock(&icj->window_mutex);
-
-	/* Attach thread to the JVM. */
-	JNIEnv *cenv;
-	javaVM->AttachCurrentThread(&cenv, NULL);
-
-	/* Fill the FrameInfo struct. */
-	jclass cls = cenv->GetObjectClass(icj->obj);
-	jfieldID fi_id = cenv->GetFieldID(cls, "frameInfo", "L" FRAMEINFO_TYPE ";");
-	jobject fi = cenv->GetObjectField(icj->obj, fi_id);
-
-	setFloatVar(cenv, fi, "max", icj->infi.temp(icj->infi.temp_max));
-	setIntVar(cenv, fi, "max_x", icj->infi.temp_max_x);
-	setIntVar(cenv, fi, "max_y", icj->infi.temp_max_y);
-	setFloatVar(cenv, fi, "min", icj->infi.temp(icj->infi.temp_min));
-	setIntVar(cenv, fi, "min_x", icj->infi.temp_min_x);
-	setIntVar(cenv, fi, "min_y", icj->infi.temp_min_y);
-	setFloatVar(cenv, fi, "center", icj->infi.temp(icj->infi.temp_center));
-	setFloatVar(cenv, fi, "avg", icj->infi.temp(icj->infi.temp_avg));
-
-	setIntVar(cenv, fi, "width", icj->infi.width);
-	setIntVar(cenv, fi, "height", icj->infi.height);
-
-	setFloatVar(cenv, fi, "correction", icj->infi.correction);
-	setFloatVar(cenv, fi, "temp_reflected", icj->infi.temp_reflected);
-	setFloatVar(cenv, fi, "temp_air", icj->infi.temp_air);
-	setFloatVar(cenv, fi, "humidity", icj->infi.humidity);
-	setFloatVar(cenv, fi, "emissivity", icj->infi.emissivity);
-	setFloatVar(cenv, fi, "distance", icj->infi.distance);
-
-	/* Make a Java array from the temperature array. */
-	size_t temp_len = icj->infi.width * icj->infi.height;
-	jfieldID jtemp_id = cenv->GetFieldID(cls, "temp", "[F");
-	jfloatArray jtemp = (jfloatArray) cenv->GetObjectField(icj->obj, jtemp_id);
-	if (!jtemp || cenv->GetArrayLength(jtemp) != temp_len) {
-		jtemp = cenv->NewFloatArray(temp_len);
-		cenv->SetObjectField(icj->obj, jtemp_id, jtemp);
-	}
-	cenv->SetFloatArrayRegion(jtemp, 0, temp_len, temp);
-
-	/* Call the callback. */
-	jmethodID mid = cenv->GetMethodID(cls, "frameCallback", "(L" FRAMEINFO_TYPE ";[F)V");
-	cenv->CallVoidMethod(icj->obj, mid, fi, jtemp);
-
-	/* Clean up and detach. */
-	cenv->DeleteLocalRef(jtemp);
-	cenv->DeleteLocalRef(fi);
+	pthread_mutex_unlock(&icj->jthread_mutex);
 	javaVM->DetachCurrentThread();
+	return NULL;
 }
 
 extern "C" {
 
 JNIEXPORT jlong Java_be_ntmn_libinficam_InfiCam_nativeNew(JNIEnv *env, jclass cls, jobject self) {
 	InfiCamJNI *icj = new InfiCamJNI(env, self);
-	if (pthread_mutex_init(&icj->window_mutex, NULL)) {
+	/* Make sure the mutexes etc are initialized before starting the thread. */
+	if (pthread_mutex_init(&icj->jthread_mutex, NULL)) {
 		delete icj;
 		return 0;
+	}
+	if (pthread_cond_init(&icj->jthread_cond, NULL)) {
+		pthread_mutex_destroy(&icj->jthread_mutex);
+		delete icj;
+		return 1;
+	}
+	if (pthread_create(&icj->jthread, NULL, jthread_run, (void *) icj)) {
+		pthread_mutex_destroy(&icj->jthread_mutex);
+		pthread_cond_destroy(&icj->jthread_cond);
+		delete icj;
+		return 2;
 	}
 	return (jlong) icj;
 }
 
 JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_nativeDelete(JNIEnv *env, jclass cls, jlong ptr) {
 	InfiCamJNI *icj = (InfiCamJNI *) ptr;
+	icj->disconnect(); /* Make sure we are disconnected, the callbacks can't come. */
+	pthread_mutex_lock(&icj->jthread_mutex);
+	icj->jthread_stop = 1;
+	pthread_cond_broadcast(&icj->jthread_cond);
+	pthread_mutex_unlock(&icj->jthread_mutex);
+	pthread_join(icj->jthread, NULL);
+	pthread_cond_destroy(&icj->jthread_cond);
+	pthread_mutex_destroy(&icj->jthread_mutex);
 	ANativeWindow *window = icj->window;
-	pthread_mutex_destroy(&icj->window_mutex);
 	delete icj; /* Delete also disconnects. */
 	if (window != NULL) /* No need to lock, callback isn't called after disconnect. */
 		ANativeWindow_release(window);
@@ -158,13 +213,13 @@ JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_nativeDelete(JNIEnv *env, jclass 
 JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeConnect(JNIEnv *env, jobject self, jint fd) {
 	InfiCamJNI *icj = getObject(env, self);
 	int ret = icj->connect(fd);
-	pthread_mutex_lock(&icj->window_mutex);
+	pthread_mutex_lock(&icj->jthread_mutex);
 	if (icj->window != NULL) { /* Connect means the size may have changed. */
 		if (ANativeWindow_setBuffersGeometry(
 				icj->window, icj->infi.width, icj->infi.height, WINDOW_FORMAT_RGBX_8888))
 			return 1;
 	}
-	pthread_mutex_unlock(&icj->window_mutex);
+	pthread_mutex_unlock(&icj->jthread_mutex);
 	return ret;
 }
 
@@ -188,7 +243,7 @@ JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_stopStream(JNIEnv *env, jobject s
 JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeSetSurface(JNIEnv *env, jobject self,
 																jobject surface) {
 	InfiCamJNI *icj = getObject(env, self);
-	pthread_mutex_lock(&icj->window_mutex);
+	pthread_mutex_lock(&icj->jthread_mutex);
 
 	/* Remove surface if we had one. */
 	if (icj->window != NULL) {
@@ -212,7 +267,7 @@ JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeSetSurface(JNIEnv *env, job
 		}
 	}
 
-	pthread_mutex_unlock(&icj->window_mutex);
+	pthread_mutex_unlock(&icj->jthread_mutex);
 	return 0;
 }
 

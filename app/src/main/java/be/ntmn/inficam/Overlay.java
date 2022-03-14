@@ -118,6 +118,8 @@ public class Overlay {
 	}
 
 	private void drawPalette(Canvas cvs, int x1, int y1, int x2, int y2, int[] palette) {
+		if (y2 - y1 <= 0)
+			return;
 		if (paletteCache.palette != palette || paletteCache.rectSrc.bottom != y2 - y1) {
 			int height = y2 - y1;
 			paletteCache.bitmap = Bitmap.createBitmap(1, height, Bitmap.Config.ARGB_8888);
