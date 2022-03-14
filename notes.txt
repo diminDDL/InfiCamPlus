@@ -64,7 +64,6 @@ TODO
 	- setting for resolution of pictures, video (first to the range showing thing and normal camera part, what
 	    if we want to record video/pic wider than just the thermal image, how will we go about that?)
 	- manual temperature range setting for the palettization
-	   * something to lock range at whatever auto put it, like AE-L ish thing
 	- deal with phone orientation (auto + allow user to choose, rotate markers etc)
 	- indicate overrange rather than saying NaN
 	- more measurement modes
