@@ -270,7 +270,9 @@ public class MainActivity extends BaseActivity {
 		//infiCam.setPalette(Palette.Ironbow.getData()); /* SettingsTherm will set palette. */
 
 		/* Create and set up the InputSurface for annotations overlay. */
-		overlaySurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_NEAREST);
+		overlaySurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_NEAREST) {
+
+		};
 		surfaceMuxer.inputSurfaces.add(overlaySurface);
 		overlay = new Overlay(this, overlaySurface, cameraView.getWidth(), cameraView.getHeight());
 
