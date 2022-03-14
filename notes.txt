@@ -63,6 +63,7 @@ TODO
 	- show average temp somewhere?
 	- showing of normal camera also (and allow choosing which one, rotation)
 	- overlaying normal camera
+	- scale the overlay for video
 	- setting for resolution of pictures, video (first to the range showing thing and normal camera part, what
 	    if we want to record video/pic wider than just the thermal image, how will we go about that?)
 	- manual temperature range setting for the palettization

@@ -125,7 +125,7 @@ public class Overlay {
 			int isize = (int) (theight + woutline * vSize.width());
 			int iclear = (int) (clear - (woutline * vSize.width()) / 2.0f);
 			paint.setColor(Color.WHITE);
-			if (true) {
+			if (false) {
 				formatTemp(sb, Float.isNaN(rmax) ? fi.max : rmax);
 				drawText(cvs, sb, vSize.right - clear, vSize.top + clear, false, true);
 				formatTemp(sb, Float.isNaN(rmin) ? fi.min : rmin);
