@@ -181,8 +181,12 @@ public class Overlay {
 	public void setShowPalette(boolean showPalette) { this.showPalette = showPalette; }
 
 	private static void formatTemp(StringBuilder sb, float temp) {
+		int t = round(temp * 100.0f);
 		sb.setLength(0);
-		sb.append(round(temp * 100.0f) / 100.0f);
+		sb.append(t / 100);
+		sb.append(".");
+		sb.append((t / 10) % 10);
+		sb.append(t % 10);
 		sb.append("°C");
 	}
 }
