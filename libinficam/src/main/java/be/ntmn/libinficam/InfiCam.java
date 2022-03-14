@@ -134,4 +134,6 @@ public class InfiCam {
 		if (nativeSetPalette(palette) != 0)
 			throw new IllegalArgumentException();
 	}
+
+	public native void lockRange(float min, float max);
 }

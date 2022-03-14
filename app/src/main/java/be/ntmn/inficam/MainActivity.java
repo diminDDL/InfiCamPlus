@@ -1,5 +1,8 @@
 package be.ntmn.inficam;
 
+import static java.lang.Float.NaN;
+import static java.lang.Float.isNaN;
+
 import android.Manifest;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -45,6 +48,7 @@ public class MainActivity extends BaseActivity {
 	private volatile boolean disconnecting = false;
 	private final SurfaceRecorder recorder = new SurfaceRecorder();
 	private boolean recordAudio;
+	private float rangeMin = NaN, rangeMax = NaN;
 
 	private ViewGroup dialogBackground;
 	private SettingsMain settings;
@@ -202,7 +206,7 @@ public class MainActivity extends BaseActivity {
 		 *   what's in the SurfaceTexture buffers after the updateTexImage() calls surfaceMuxer
 		 *   should have done.
 		 */
-		overlay.draw(lastFi, lastTemp, palette);
+		overlay.draw(lastFi, lastTemp, palette, rangeMin, rangeMax);
 		if (takePic) {
 			/* For taking picture, we substitute in another overlay surface so that we can draw
 			 *   it at the exact resolution the image is saved, to make it look nice. The video
@@ -210,7 +214,7 @@ public class MainActivity extends BaseActivity {
 			 *   regardless, so we don't need to worry about those.
 			 */
 			overlay.setSize(picWidth, picHeight);
-			overlay.draw(lastFi, lastTemp, palette);
+			overlay.draw(lastFi, lastTemp, palette, rangeMin, rangeMax);
 			overlaySurface.getSurfaceTexture().updateTexImage();
 			Bitmap bitmap = surfaceMuxer.getBitmap(picWidth, picHeight);
 			Util.writePNG(this, bitmap);
@@ -276,6 +280,22 @@ public class MainActivity extends BaseActivity {
 			settingsTherm.palette.set((settingsTherm.palette.current + 1) %
 					settingsTherm.palette.items.length);
 			messageView.showMessage(Palette.palettes[settingsTherm.palette.current].name);
+		});
+
+		ImageButton buttonLock = findViewById(R.id.buttonLock);
+		buttonLock.setOnClickListener(view -> {
+			synchronized (frameLock) {
+				if (isNaN(rangeMin) && isNaN(rangeMax)) {
+					rangeMin = lastFi.min;
+					rangeMax = lastFi.max;
+					infiCam.lockRange(rangeMin, rangeMax);
+					buttonLock.setImageResource(R.drawable.ic_baseline_lock_24);
+				} else {
+					rangeMin = rangeMax = NaN;
+					infiCam.lockRange(NaN, NaN);
+					buttonLock.setImageResource(R.drawable.ic_baseline_lock_open_24);
+				}
+			}
 		});
 
 		ImageButton buttonVideo = findViewById(R.id.buttonVideo);

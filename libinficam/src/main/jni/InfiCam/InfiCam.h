@@ -4,6 +4,7 @@
 #include "UVCDevice.h"
 #include "InfiFrame.h"
 #include <cstdint>
+#include <cmath> /* NAN */
 #include <pthread.h>
 
 /* This one is for actually interacting with the thermal camera, wraps UVCDevice and InfiFrame.
@@ -26,6 +27,7 @@ class InfiCam {
 	pthread_mutex_t frame_callback_mutex;
 	int connected = 0, streaming = 0, table_invalid;
 	int range = 120;
+	float min = NAN, max = NAN; /* Range for palettization. */
 
 	static const int CMD_SHUTTER = 0x8000;
 	static const int CMD_MODE_TEMP = 0x8004;
@@ -94,6 +96,9 @@ public:
 	void calibrate();
 
 	void set_palette(uint32_t *palette); /* Length must be palette_len. */
+
+	/* Lock range for palettization scaling, NAN means no lock. */
+	void lock_range(float min, float max);
 };
 
 #endif /* __INFICAM_H__ */

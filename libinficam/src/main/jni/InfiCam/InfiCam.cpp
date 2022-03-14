@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include <cstdlib> /* NULL */
 #include <cstring> /* memcpy() */
+#include <cmath> /* isnan() */
 
 void InfiCam::uvc_callback(uvc_frame_t *frame, void *user_ptr) {
 	InfiCam *p = (InfiCam *) user_ptr;
@@ -19,7 +20,9 @@ void InfiCam::uvc_callback(uvc_frame_t *frame, void *user_ptr) {
 		p->table_invalid = 0;
 	} else p->infi.update((uint16_t *) frame->data);
 	p->infi.temp((uint16_t *) frame->data, p->frame_temp);
-	p->infi.palette_appy(p->frame_temp, p->frame_rgb);
+	p->infi.palette_appy(p->frame_temp, p->frame_rgb,
+						 isnan(p->min) ? p->infi.temp(p->infi.temp_min) : p->min,
+						 isnan(p->max) ? p->infi.temp(p->infi.temp_max) : p->max);
 
 	/* Unlock before the callback so if it decides to call a function that locks the this callback
 	 *   we don't end up in a deadlock.
@@ -202,4 +205,9 @@ void InfiCam::set_palette(uint32_t *palette) {
 	memcpy(infi.palette, palette, palette_len * sizeof(uint32_t));
 	if (streaming)
 		pthread_mutex_unlock(&frame_callback_mutex);
+}
+
+void InfiCam::lock_range(float min, float max) {
+	this->min = min;
+	this->max = max;
 }

@@ -361,4 +361,10 @@ JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeSetPalette(JNIEnv *env, job
 	return 0;
 }
 
+JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_lockRange(JNIEnv *env, jobject self, jfloat min,
+														 jfloat max) {
+	InfiCamJNI *icj = getObject(env, self);
+	icj->lock_range(min, max);
+}
+
 } /* extern "C" */

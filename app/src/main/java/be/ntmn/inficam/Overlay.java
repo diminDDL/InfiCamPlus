@@ -78,7 +78,7 @@ public class Overlay {
 	}
 
 	@SuppressLint("DefaultLocale")
-	public void draw(InfiCam.FrameInfo fi, float[] temp, int[] palette) {
+	public void draw(InfiCam.FrameInfo fi, float[] temp, int[] palette, float rmin, float rmax) {
 		Canvas cvs = surface.lockCanvas(null);
 
 		cvs.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
@@ -104,10 +104,10 @@ public class Overlay {
 			paintTextOutline.setTextAlign(Paint.Align.RIGHT);
 			paint.setTextAlign(Paint.Align.RIGHT);
 			paint.setColor(Color.WHITE);
-			formatTemp(sb, fi.max);
+			formatTemp(sb, Float.isNaN(rmax) ? fi.max : rmax);
 			cvs.drawText(sb, 0, sb.length(), width - clear, theight + clear, paintTextOutline);
 			cvs.drawText(sb, 0, sb.length(), width - clear, theight + clear, paint);
-			formatTemp(sb, fi.min);
+			formatTemp(sb, Float.isNaN(rmin) ? fi.min : rmin);
 			cvs.drawText(sb, 0, sb.length(), width - clear, height - clear, paintTextOutline);
 			cvs.drawText(sb, 0, sb.length(), width - clear, height - clear, paint);
 			drawPalette(cvs, (int) (width - clear - pwidth * width), (int) (theight + clear * 2),

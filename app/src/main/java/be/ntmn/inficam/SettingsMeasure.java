@@ -39,7 +39,7 @@ public class SettingsMeasure extends Settings {
 				@Override
 				void onSet(boolean value) { act.overlay.setShowMin(value); }
 			},
-			new SettingBool("showpalette", R.string.set_show_palette, false) {
+			new SettingBool("showpalette", R.string.set_show_palette, true) {
 				@Override
 				void onSet(boolean value) { act.overlay.setShowPalette(value); }
 			},
