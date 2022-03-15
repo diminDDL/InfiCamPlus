@@ -43,14 +43,14 @@ public class SettingsMain extends Settings {
 			@Override
 			void onSet(boolean value) {
 				act.inputSurface.setRotate(value);
-				act.overlay.setRotate(value);
+				act.outScreen.overlay.setRotate(value); // TODO
 			}
 		},
 		new SettingBool("mirror", R.string.set_mirror, false) {
 			@Override
 			void onSet(boolean value) {
 				act.inputSurface.setMirror(value);
-				act.overlay.setMirror(value);
+				act.outScreen.overlay.setMirror(value); // TODO
 			}
 		},
 		new SettingRadio("imode", R.string.set_imode, 2, new int[] {

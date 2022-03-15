@@ -308,6 +308,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		if (eglContext == EGL14.EGL_NO_CONTEXT)
 			return;
 		/* We use oldschool for loops because for (... : ...) causes an allocation to happen. */
+		EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, eglContext);
 		for (int i = 0; i < inputSurfaces.size(); ++i) {
 			InputSurface is = inputSurfaces.get(i);
 			is.getSurfaceTexture().updateTexImage();

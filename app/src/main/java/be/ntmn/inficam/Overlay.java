@@ -4,7 +4,6 @@ import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.lang.Math.round;
-import static java.lang.Math.signum;
 
 import android.annotation.SuppressLint;
 import android.content.Context;

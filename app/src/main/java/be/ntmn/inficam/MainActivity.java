@@ -28,9 +28,9 @@ import be.ntmn.libinficam.InfiCam;
 public class MainActivity extends BaseActivity {
 	/* These are public for Settings things to access them. */
 	public final InfiCam infiCam = new InfiCam();
-	public Overlay overlay;
-	public SurfaceMuxer.InputSurface inputSurface; /* InfiCam class writes to this. */
-	public SurfaceMuxer.InputSurface overlaySurface; /* This is where we will draw annotations. */
+	public SurfaceMuxer.InputSurface inputSurface; /* Input surface for the thermal image. */
+
+	public OverlayMuxer outScreen, outVideo; // TODO should be private i guess
 
 	private SurfaceView cameraView;
 	private MessageView messageView;
@@ -90,6 +90,7 @@ public class MainActivity extends BaseActivity {
 							infiCam.connect(conn.getFileDescriptor());
 							/* Size is only important for cubic interpolation. */
 							inputSurface.setSize(infiCam.getWidth(), infiCam.getHeight());
+							// TODO input size for overlaymuxer
 							handler.removeCallbacks(timedShutter); /* Before stream starts! */
 							infiCam.startStream();
 							handler.postDelayed(timedShutter, shutterIntervalInitial);
@@ -124,21 +125,17 @@ public class MainActivity extends BaseActivity {
 	private final SurfaceHolder.Callback surfaceHolderCallback = new SurfaceHolder.Callback() {
 		@Override
 		public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
-			outputSurface =
-					new SurfaceMuxer.OutputSurface(surfaceMuxer, surfaceHolder.getSurface(), false);
-			surfaceMuxer.outputSurfaces.add(outputSurface);
+			outScreen.setOutputSurface(surfaceHolder.getSurface());
 		}
 
 		@Override
 		public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int w, int h) {
-			outputSurface.setSize(w, h);
-			overlay.setSize(w, h);
+			outScreen.setSize(w, h);
 		}
 
 		@Override
 		public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
-			surfaceMuxer.outputSurfaces.remove(outputSurface);
-			outputSurface.release();
+			outScreen.releaseOutputSurface();
 		}
 	};
 
@@ -180,6 +177,8 @@ public class MainActivity extends BaseActivity {
 			synchronized (frameLock) { /* Note this is called from another thread. */
 				lastFi = fi; /* Save for taking picture and the likes. */
 				lastTemp = temp;
+				outScreen.lastFi = fi;
+				outScreen.lastTemp = temp;
 				handler.post(handleFrameRunnable);
 				if (disconnecting)
 					return;
@@ -212,7 +211,8 @@ public class MainActivity extends BaseActivity {
 				 *   surface(s) come in at whatever resolution they are and are scaled by the muxer
 				 *   regardless, so we don't need to worry about those.
 				 */
-				overlay.setSize(picWidth, picHeight);
+
+	/*			overlay.setSize(picWidth, picHeight);
 				overlaySurface.beforeRender(picWidth, picHeight);
 				overlay.draw(lastFi, lastTemp, palette, rangeMin, rangeMax);
 				overlaySurface.getSurfaceTexture().updateTexImage();
@@ -220,7 +220,7 @@ public class MainActivity extends BaseActivity {
 				Util.writePNG(this, bitmap);
 				overlay.setSize(cameraView.getWidth(), cameraView.getHeight());
 				takePic = false;
-				messageView.shortMessage(getString(R.string.msg_captured));
+				messageView.shortMessage(getString(R.string.msg_captured));*/ // TODO
 			}
 
 			/* Now we allow another frame to come in */
@@ -252,24 +252,11 @@ public class MainActivity extends BaseActivity {
 		infiCam.setSurface(inputSurface.getSurface());
 		cameraView.getHolder().addCallback(surfaceHolderCallback);
 
-		/* Create and set up the InputSurface for annotations overlay. */
-		overlaySurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_NEAREST) {
-			@Override
-			public void beforeRender(int w, int h) {
-				super.beforeRender(w, h);
-				int sw = w, sh = h;
-				if (infiCam.getHeight() * w / infiCam.getWidth() > h)
-					sw = infiCam.getWidth() * h / infiCam.getHeight();
-				else sh = infiCam.getHeight() * w / infiCam.getWidth();
-				overlay.setRect(w / 2 - sw / 2, h / 2 - sh / 2,
-						w / 2 - sw / 2 + sw, h / 2 - sh / 2 + sh);
-				overlay.setSize(w, h); // TODO this is shit
-				overlay.draw(lastFi, lastTemp, palette, rangeMin, rangeMax);
-				overlaySurface.getSurfaceTexture().updateTexImage();
-			}
-		};
-		surfaceMuxer.inputSurfaces.add(overlaySurface);
-		overlay = new Overlay(this, overlaySurface, cameraView.getWidth(), cameraView.getHeight());
+		/* Create and set up the OverlayMuxers. */
+		outScreen = new OverlayMuxer(this, cameraView.getWidth(), cameraView.getHeight());
+		SurfaceMuxer.OutputSurface os = new SurfaceMuxer.OutputSurface(surfaceMuxer, outScreen.inputSurface.getSurface(), false);
+		outScreen.inputSurface.getSurfaceTexture().setOnFrameAvailableListener(outScreen);
+		surfaceMuxer.outputSurfaces.add(os);
 
 		/* We use it later. */
 		videoSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_LINEAR);
@@ -371,10 +358,12 @@ public class MainActivity extends BaseActivity {
 	protected void onResume() {
 		super.onResume();
 		surfaceMuxer.init();
+		outScreen.muxer.init();
 	}
 
 	@Override
 	protected void onPause() {
+		outScreen.muxer.deinit();
 		surfaceMuxer.deinit();
 		super.onPause();
 	}
