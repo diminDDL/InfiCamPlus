@@ -27,15 +27,15 @@ import be.ntmn.libinficam.InfiCam;
 public class MainActivity extends BaseActivity {
 	/* These are public for Settings things to access them. */
 	public final InfiCam infiCam = new InfiCam();
-	public SurfaceMuxer.InputSurface inputSurface; /* Input surface for the thermal image. */
 
+	private SurfaceMuxer surfaceMuxer;
+	private SurfaceMuxer.InputSurface inputSurface; /* Input surface for the thermal image. */
+	private SurfaceMuxer.InputSurface videoSurface; /* To draw video from the normal camera. */
 	private OverlayMuxer outScreen, outRecord;
 	private final Overlay.Data overlayData = new Overlay.Data();
 
 	private UsbDevice device;
 	private UsbDeviceConnection usbConnection;
-	private SurfaceMuxer surfaceMuxer;
-	private SurfaceMuxer.InputSurface videoSurface; /* To draw video from the normal camera. */
 	private final Object frameLock = new Object();
 	private int picWidth = 1024, picHeight = 768;
 	private boolean takePic = false;
@@ -205,7 +205,11 @@ public class MainActivity extends BaseActivity {
 				 *   regardless, so we don't need to worry about those.
 				 */
 
-	/*			overlay.setSize(picWidth, picHeight);
+				/*final Rect r = new Rect();
+				inputSurface.getRect(r, picWidth, picHeight);
+				outScreen.setSize(picWidth, picHeight);
+				outScreen.setRect(r);
+				overlay.setSize(picWidth, picHeight);
 				overlaySurface.beforeRender(picWidth, picHeight);
 				overlay.draw(lastFi, lastTemp, palette, rangeMin, rangeMax);
 				overlaySurface.getSurfaceTexture().updateTexImage();
@@ -350,14 +354,16 @@ public class MainActivity extends BaseActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+		outScreen.init();
+		outRecord.init();
 		surfaceMuxer.init();
-		outScreen.muxer.init();
 	}
 
 	@Override
 	protected void onPause() {
-		outScreen.muxer.deinit();
 		surfaceMuxer.deinit();
+		outScreen.deinit();
+		outRecord.deinit();
 		super.onPause();
 	}
 
@@ -422,8 +428,8 @@ public class MainActivity extends BaseActivity {
 	private void startRecording(boolean recordAudio) {
 		try {
 			final Rect r = new Rect();
-			outRecord.setSize(picWidth, picHeight);
 			inputSurface.getRect(r, picWidth, picHeight);
+			outRecord.setSize(picWidth, picHeight);
 			outRecord.setRect(r);
 			Surface rsurface = recorder.start(this, picWidth, picHeight, recordAudio);
 			outRecord.setOutputSurface(rsurface);
@@ -496,12 +502,14 @@ public class MainActivity extends BaseActivity {
 	public void setRotate(boolean value) {
 		synchronized (frameLock) {
 			overlayData.rotate = value;
+			inputSurface.setRotate(value);
 		}
 	}
 
 	public void setMirror(boolean value) {
 		synchronized (frameLock) {
 			overlayData.mirror = value;
+			inputSurface.setMirror(value);
 		}
 	}
 

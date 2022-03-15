@@ -41,17 +41,11 @@ public class SettingsMain extends Settings {
 		},
 		new SettingBool("rotate180", R.string.set_rotate180, false) {
 			@Override
-			void onSet(boolean value) {
-				act.inputSurface.setRotate(value);
-				act.setRotate(value);
-			}
+			void onSet(boolean value) { act.setRotate(value); }
 		},
 		new SettingBool("mirror", R.string.set_mirror, false) {
 			@Override
-			void onSet(boolean value) {
-				act.inputSurface.setMirror(value);
-				act.setMirror(value);
-			}
+			void onSet(boolean value) { act.setMirror(value); }
 		},
 		new SettingRadio("imode", R.string.set_imode, 2, new int[] {
 				R.string.imode_nearest,

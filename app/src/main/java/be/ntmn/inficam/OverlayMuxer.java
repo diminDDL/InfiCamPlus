@@ -8,14 +8,14 @@ import android.view.Surface;
 import be.ntmn.libinficam.InfiCam;
 
 public class OverlayMuxer implements SurfaceTexture.OnFrameAvailableListener {
-	public SurfaceMuxer muxer; // TODO should probably be private
+	private final SurfaceMuxer muxer;
 	private SurfaceMuxer.OutputSurface inputOs;
 	private final SurfaceMuxer.InputSurface inputIs;
 	private final SurfaceMuxer.InputSurface overlaySurface;
 	private int width, height;
 	private final Rect rect = new Rect(0, 0, 1, 1); /* Where the image to be overlaid on is. */
 	private final Overlay.Data data;
-	public Overlay overlay; // TODO should probably be private
+	private final Overlay overlay;
 
 	public OverlayMuxer(Context ctx, Overlay.Data d) {
 		muxer = new SurfaceMuxer(ctx);
@@ -27,6 +27,9 @@ public class OverlayMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		muxer.inputSurfaces.add(overlaySurface);
 		data = d;
 	}
+
+	public void init() { muxer.init(); }
+	public void deinit() { muxer.deinit(); }
 
 	public void setSize(int w, int h) {
 		inputIs.getSurfaceTexture().setDefaultBufferSize(w, h);
