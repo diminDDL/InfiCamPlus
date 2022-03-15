@@ -96,7 +96,8 @@ public class MainActivity extends BaseActivity {
 							infiCam.startStream();
 							handler.postDelayed(timedShutter, shutterIntervalInitial);
 							messageView.clearMessage();
-							messageView.showMessage(R.string.msg_connected);
+							messageView.showMessage(getString(R.string.msg_connected,
+									dev.getProductName()));
 						} catch (Exception e) {
 							usbConnection.close();
 							usbConnection = null;
