@@ -254,9 +254,7 @@ public class MainActivity extends BaseActivity {
 
 		/* Create and set up the OverlayMuxers. */
 		outScreen = new OverlayMuxer(this, cameraView.getWidth(), cameraView.getHeight());
-		SurfaceMuxer.OutputSurface os = new SurfaceMuxer.OutputSurface(surfaceMuxer, outScreen.inputSurface.getSurface(), false);
-		outScreen.inputSurface.getSurfaceTexture().setOnFrameAvailableListener(outScreen);
-		surfaceMuxer.outputSurfaces.add(os);
+		outScreen.attachInput(surfaceMuxer);
 
 		/* We use it later. */
 		videoSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_LINEAR);
@@ -499,6 +497,7 @@ public class MainActivity extends BaseActivity {
 
 	public void setPalette(int[] data) {
 		palette = data;
+		outScreen.palette = data;
 		infiCam.setPalette(data);
 	}
 }

@@ -504,7 +504,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	}
 
 	public void release() {
-		for (Object o : allSurfaces) {
+		while (allSurfaces.size() > 0) {
+			Object o = allSurfaces.get(0);
 			if (o instanceof InputSurface) {
 				inputSurfaces.remove(o);
 				((InputSurface) o).release();
