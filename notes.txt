@@ -79,10 +79,6 @@ TODO
 	- show camera product and version info somewhere (perhaps when scroll down in settings)
 	- option to save separate normal and thermal image side by side (what about video?)
 	- software zoom?
-	- option to show battery level when fullscreen
-		BatteryManager bm = (BatteryManager) context.getSystemService(BATTERY_SERVICE);
-		int batLevel = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
-		also BATTERY_PROPERTY_STATUS -> BATTERY_STATUS_*
 
 Things i learned about the protocol these thermal cameras talk:
 	last 4 lines of the frame have parameters (note that the pointer math is in steps of 16 bytes because unsigned short)
