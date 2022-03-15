@@ -118,9 +118,6 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			r.set(0, 0, w, h);
 		}
 
-		/* Override this to do stuff before rendering. */
-		public void beforeRender(int w, int h) { /* Empty. */ }
-
 		private void init() {
 			int filter = (imode != IMODE_NEAREST) ? GLES20.GL_LINEAR : GLES20.GL_NEAREST;
 			if (surfaceMuxer == null || surfaceMuxer.eglDisplay == EGL14.EGL_NO_DISPLAY)
@@ -267,7 +264,6 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		for (int i = 0; i < inputSurfaces.size(); ++i) {
 			InputSurface is = inputSurfaces.get(i);
 
-			is.beforeRender(w, h);
 			is.getRect(outRect, w, h);
 			GLES20.glViewport(outRect.left, h - outRect.bottom, outRect.width(), outRect.height());
 

@@ -4,7 +4,6 @@ import static java.lang.Float.NaN;
 import static java.lang.Float.isNaN;
 
 import android.Manifest;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.hardware.usb.UsbDevice;
@@ -30,27 +29,21 @@ public class MainActivity extends BaseActivity {
 	public final InfiCam infiCam = new InfiCam();
 	public SurfaceMuxer.InputSurface inputSurface; /* Input surface for the thermal image. */
 
-	public OverlayMuxer outScreen, outVideo; // TODO should be private i guess
+	private OverlayMuxer outScreen, outRecord;
+	private final Overlay.Data overlayData = new Overlay.Data();
 
-	private SurfaceView cameraView;
-	private MessageView messageView;
 	private UsbDevice device;
 	private UsbDeviceConnection usbConnection;
 	private SurfaceMuxer surfaceMuxer;
-	private SurfaceMuxer.OutputSurface outputSurface;
-	private SurfaceMuxer.OutputSurface recordSurface;
 	private SurfaceMuxer.InputSurface videoSurface; /* To draw video from the normal camera. */
-	private InfiCam.FrameInfo lastFi;
-	private float[] lastTemp;
 	private final Object frameLock = new Object();
-	private int picWidth = 1424, picHeight = 768;
-	private int[] palette;
+	private int picWidth = 1024, picHeight = 768;
 	private boolean takePic = false;
 	private volatile boolean disconnecting = false;
 	private final SurfaceRecorder recorder = new SurfaceRecorder();
 	private boolean recordAudio;
-	private float rangeMin = NaN, rangeMax = NaN;
 
+	private MessageView messageView;
 	private ViewGroup dialogBackground;
 	private SettingsMain settings;
 	private SettingsTherm settingsTherm;
@@ -90,7 +83,6 @@ public class MainActivity extends BaseActivity {
 							infiCam.connect(conn.getFileDescriptor());
 							/* Size is only important for cubic interpolation. */
 							inputSurface.setSize(infiCam.getWidth(), infiCam.getHeight());
-							// TODO input size for overlaymuxer
 							handler.removeCallbacks(timedShutter); /* Before stream starts! */
 							infiCam.startStream();
 							handler.postDelayed(timedShutter, shutterIntervalInitial);
@@ -130,12 +122,15 @@ public class MainActivity extends BaseActivity {
 
 		@Override
 		public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int w, int h) {
+			final Rect r = new Rect();
+			inputSurface.getRect(r, w, h);
 			outScreen.setSize(w, h);
+			outScreen.setRect(r);
 		}
 
 		@Override
 		public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
-			outScreen.releaseOutputSurface();
+			outScreen.setOutputSurface(null);
 		}
 	};
 
@@ -158,10 +153,10 @@ public class MainActivity extends BaseActivity {
 	};
 
 	/* The way this works is that first the thermal image on inputSurface gets written, then
-	 *   the frame callback runs, we copy over the info to lastFi and lastTemp, ask
-	 *   handleFrame() to be called on the main thread and then we hold off on returning from
-	 *   the callback until that frame and the matching lastFi and lastTemp have been dealt
-	 *   with, after which the frameLock should be notified.
+	 *   the frame callback runs, we copy over the info to overlayData, ask handleFrame() to be
+	 *   called on the main thread and then we hold off on returning from the callback until that
+	 *   frame and the matching lastFi and lastTemp have been dealt with, after which the frameLock
+	 *   should be notified.
 	 * The point of it is to make sure we have a matching lastFi and lastTemp with the last
 	 *   frame that don't get overwritten by the next run of this callback. The contents of the
 	 *   inputSurface texture etc are less of a concern since they don't get updated until
@@ -175,10 +170,8 @@ public class MainActivity extends BaseActivity {
 		@Override
 		public void onFrame(InfiCam.FrameInfo fi, float[] temp) {
 			synchronized (frameLock) { /* Note this is called from another thread. */
-				lastFi = fi; /* Save for taking picture and the likes. */
-				lastTemp = temp;
-				outScreen.lastFi = fi;
-				outScreen.lastTemp = temp;
+				overlayData.fi = fi;
+				overlayData.temp = temp;
 				handler.post(handleFrameRunnable);
 				if (disconnecting)
 					return;
@@ -232,7 +225,7 @@ public class MainActivity extends BaseActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		cameraView = findViewById(R.id.cameraView);
+		SurfaceView cameraView = findViewById(R.id.cameraView);
 		messageView = findViewById(R.id.message);
 		surfaceMuxer = new SurfaceMuxer(this);
 
@@ -253,8 +246,10 @@ public class MainActivity extends BaseActivity {
 		cameraView.getHolder().addCallback(surfaceHolderCallback);
 
 		/* Create and set up the OverlayMuxers. */
-		outScreen = new OverlayMuxer(this, cameraView.getWidth(), cameraView.getHeight());
+		outScreen = new OverlayMuxer(this, overlayData);
 		outScreen.attachInput(surfaceMuxer);
+		outRecord = new OverlayMuxer(this, overlayData);
+		outRecord.attachInput(surfaceMuxer);
 
 		/* We use it later. */
 		videoSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_LINEAR);
@@ -291,13 +286,13 @@ public class MainActivity extends BaseActivity {
 		ImageButton buttonLock = findViewById(R.id.buttonLock);
 		buttonLock.setOnClickListener(view -> {
 			synchronized (frameLock) {
-				if (isNaN(rangeMin) && isNaN(rangeMax)) {
-					rangeMin = lastFi.min;
-					rangeMax = lastFi.max;
-					infiCam.lockRange(rangeMin, rangeMax);
+				if (isNaN(overlayData.rangeMin) && isNaN(overlayData.rangeMax)) {
+					overlayData.rangeMin = overlayData.fi.min;
+					overlayData.rangeMax = overlayData.fi.max;
+					infiCam.lockRange(overlayData.rangeMin, overlayData.rangeMax);
 					buttonLock.setImageResource(R.drawable.ic_baseline_lock_24);
 				} else {
-					rangeMin = rangeMax = NaN;
+					overlayData.rangeMin = overlayData.rangeMax = NaN;
 					infiCam.lockRange(NaN, NaN);
 					buttonLock.setImageResource(R.drawable.ic_baseline_lock_open_24);
 				}
@@ -404,7 +399,7 @@ public class MainActivity extends BaseActivity {
 	}
 
 	private void toggleRecording() {
-		if (recordSurface == null) {
+		if (!recorder.isRecording()) {
 			askPermission(Manifest.permission.CAMERA, granted -> {
 				if (granted) {
 					if (!recordAudio) {
@@ -426,10 +421,12 @@ public class MainActivity extends BaseActivity {
 	/* Request audio permission first when necessary! */
 	private void startRecording(boolean recordAudio) {
 		try {
+			final Rect r = new Rect();
+			outRecord.setSize(picWidth, picHeight);
+			inputSurface.getRect(r, picWidth, picHeight);
+			outRecord.setRect(r);
 			Surface rsurface = recorder.start(this, picWidth, picHeight, recordAudio);
-			recordSurface = new SurfaceMuxer.OutputSurface(surfaceMuxer, rsurface, false);
-			recordSurface.setSize(picWidth, picHeight);
-			surfaceMuxer.outputSurfaces.add(recordSurface);
+			outRecord.setOutputSurface(rsurface);
 			ImageButton buttonVideo = findViewById(R.id.buttonVideo);
 			buttonVideo.setColorFilter(Color.RED);
 		} catch (IOException e) {
@@ -439,14 +436,10 @@ public class MainActivity extends BaseActivity {
 	}
 
 	private void stopRecording() {
-		if (recordSurface != null) {
-			ImageButton buttonVideo = findViewById(R.id.buttonVideo);
-			buttonVideo.clearColorFilter();
-			recorder.stop();
-			surfaceMuxer.outputSurfaces.remove(recordSurface);
-			recordSurface.release();
-			recordSurface = null;
-		}
+		ImageButton buttonVideo = findViewById(R.id.buttonVideo);
+		buttonVideo.clearColorFilter();
+		recorder.stop();
+		outRecord.setOutputSurface(null);
 	}
 
 	/*
@@ -496,8 +489,43 @@ public class MainActivity extends BaseActivity {
 	}
 
 	public void setPalette(int[] data) {
-		palette = data;
-		outScreen.palette = data;
+		overlayData.palette = data;
 		infiCam.setPalette(data);
+	}
+
+	public void setRotate(boolean value) {
+		synchronized (frameLock) {
+			overlayData.rotate = value;
+		}
+	}
+
+	public void setMirror(boolean value) {
+		synchronized (frameLock) {
+			overlayData.mirror = value;
+		}
+	}
+
+	public void setShowCenter(boolean value) {
+		synchronized (frameLock) {
+			overlayData.showCenter = value;
+		}
+	}
+
+	public void setShowMax(boolean value) {
+		synchronized (frameLock) {
+			overlayData.showMax = value;
+		}
+	}
+
+	public void setShowMin(boolean value) {
+		synchronized (frameLock) {
+			overlayData.showMin = value;
+		}
+	}
+
+	public void setShowPalette(boolean value) {
+		synchronized (frameLock) {
+			overlayData.showPalette = value;
+		}
 	}
 }

@@ -250,4 +250,8 @@ public class SurfaceRecorder implements Runnable {
 			}
 		}
 	}
+
+	public boolean isRecording() {
+		return thread != null;
+	}
 }
