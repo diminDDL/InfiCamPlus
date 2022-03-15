@@ -21,8 +21,7 @@ import androidx.appcompat.content.res.AppCompatResources;
 import be.ntmn.libinficam.InfiCam;
 
 public class Overlay {
-	private final Surface surface;
-	private final SurfaceTexture surfaceTexture;
+	private final SurfaceMuxer.InputSurface surface;
 	private final Paint paint;
 	private final Paint paintOutline;
 	private final Paint paintTextOutline;
@@ -58,8 +57,7 @@ public class Overlay {
 	private final PaletteCache paletteCache = new PaletteCache();
 
 	public Overlay(Context ctx, SurfaceMuxer.InputSurface is, int w, int h) {
-		surface = is.getSurface();
-		surfaceTexture = is.getSurfaceTexture();
+		surface = is;
 		paint = new Paint();
 		paintPalette = new Paint();
 		paint.setAntiAlias(true);
@@ -77,11 +75,12 @@ public class Overlay {
 	public void setSize(int w, int h) {
 		width = w;
 		height = h;
-		surfaceTexture.setDefaultBufferSize(w, h);
+		surface.getSurfaceTexture().setDefaultBufferSize(w, h);
+		surface.setSize(w, h);
 	}
 
 	public void setRect(int x1, int y1, int x2, int y2) { /* Set the area of thermal view. */
-		int w = vSize.width();
+		int w = x2 - x1;
 		vSize.set(x1, y1, x2, y2);
 		paint.setStrokeWidth(wmarker * w);
 		paint.setTextSize(textsize * w);
@@ -100,7 +99,7 @@ public class Overlay {
 
 	@SuppressLint("DefaultLocale")
 	public void draw(InfiCam.FrameInfo fi, float[] temp, int[] palette, float rmin, float rmax) {
-		Canvas cvs = surface.lockCanvas(null);
+		Canvas cvs = surface.getSurface().lockCanvas(null);
 
 		cvs.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
@@ -174,7 +173,7 @@ public class Overlay {
 			}
 		}
 
-		surface.unlockCanvasAndPost(cvs);
+		surface.getSurface().unlockCanvasAndPost(cvs);
 	}
 
 	private void drawPalette(Canvas cvs, int x1, int y1, int x2, int y2, int[] palette) {

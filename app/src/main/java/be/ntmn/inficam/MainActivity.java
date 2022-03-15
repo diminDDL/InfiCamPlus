@@ -11,10 +11,10 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.Bundle;
 import android.view.Surface;
-import android.view.ViewGroup;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -43,7 +43,7 @@ public class MainActivity extends BaseActivity {
 	private InfiCam.FrameInfo lastFi;
 	private float[] lastTemp;
 	private final Object frameLock = new Object();
-	private int picWidth = 1024, picHeight = 768;
+	private int picWidth = 1424, picHeight = 768;
 	private int[] palette;
 	private boolean takePic = false;
 	private volatile boolean disconnecting = false;
@@ -202,9 +202,10 @@ public class MainActivity extends BaseActivity {
 			 *   meaning what's in the SurfaceTexture buffers after the updateTexImage() calls
 			 *   surfaceMuxer should have done.
 			 */
-			overlay.draw(lastFi, lastTemp, palette, rangeMin, rangeMax);
+
 			/* We use the inputSurface because it has the most relevant timestamp. */
 			surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
+
 			if (takePic) {
 				/* For taking picture, we substitute in another overlay surface so that we can draw
 				 *   it at the exact resolution the image is saved, to make it look nice. The video
@@ -262,6 +263,9 @@ public class MainActivity extends BaseActivity {
 				else sh = infiCam.getHeight() * w / infiCam.getWidth();
 				overlay.setRect(w / 2 - sw / 2, h / 2 - sh / 2,
 						w / 2 - sw / 2 + sw, h / 2 - sh / 2 + sh);
+				overlay.setSize(w, h); // TODO this is shit
+				overlay.draw(lastFi, lastTemp, palette, rangeMin, rangeMax);
+				overlaySurface.getSurfaceTexture().updateTexImage();
 			}
 		};
 		surfaceMuxer.inputSurfaces.add(overlaySurface);
@@ -390,7 +394,7 @@ public class MainActivity extends BaseActivity {
 	}
 
 	private void openDialog(View dialog) {
-		FrameLayout dialogs = (FrameLayout) dialogBackground.findViewById(R.id.dialogs);
+		FrameLayout dialogs = dialogBackground.findViewById(R.id.dialogs);
 		for (int i = 0; i < dialogs.getChildCount(); ++i)
 			dialogs.getChildAt(i).setVisibility(View.GONE);
 		dialog.setVisibility(View.VISIBLE);
