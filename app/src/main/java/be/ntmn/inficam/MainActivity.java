@@ -190,29 +190,26 @@ public class MainActivity extends BaseActivity {
 
 	private void handleFrame() {
 		synchronized (frameLock) {
-			/* At this point we are certain the frame and the lastFi and lastTemp are matched up
-			 *   with eachother, so now we can do stuff like taking a screenshot, "the frame" here
+			/* At this point we are certain the frame and the overlayData are matched up with
+			 *   eachother, so now we can do stuff like taking a picture, "the frame" here
 			 *   meaning what's in the SurfaceTexture buffers after the updateTexImage() calls
-			 *   surfaceMuxer should have done.
+			 *   surfaceMuxer should do.
 			 */
-
 			if (takePic) {
 				final Rect r = new Rect();
 				inputSurface.getRect(r, picWidth, picHeight);
 				outPicture.setSize(picWidth, picHeight);
 				outPicture.setRect(r);
 				outPicture.attachInput(surfaceMuxer);
-			}
-
-			/* We use the inputSurface because it has the most relevant timestamp. */
-			surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
-
-			if (takePic) {
+				surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
 				Bitmap bitmap = outPicture.getBitmap();
 				Util.writePNG(this, bitmap);
 				outPicture.attachInput(null);
 				takePic = false;
 				messageView.shortMessage(getString(R.string.msg_captured));
+			} else {
+				/* We use the inputSurface because it has the most relevant timestamp. */
+				surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
 			}
 
 			/* Now we allow another frame to come in */
