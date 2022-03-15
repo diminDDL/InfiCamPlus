@@ -6,6 +6,9 @@ import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.view.Surface;
 
+/* Wrapper to combine an Overlay with a SurfaceMuxer because we want one for each output stream so
+ *   we can have the overlay match the output resolution exactly.
+ */
 public class OverlayMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	private final SurfaceMuxer muxer;
 	private SurfaceMuxer.OutputSurface inputOs;
