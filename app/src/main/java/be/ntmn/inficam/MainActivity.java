@@ -180,16 +180,15 @@ public class MainActivity extends BaseActivity {
 
 		@Override
 		public void onFrame(InfiCam.FrameInfo fi, float[] temp) {
-			/* Note this is called from another thread. */
-			lastFi = fi; /* Save for taking picture and the likes. */
-			lastTemp = temp;
-			handler.post(handleFrameRunnable);
-			/* Now we wait until the main thread has finished drawing the frame, so lastFi and
-			 *   lastTemp don't get overwritten before they've been used.
-			 */
-			synchronized (frameLock) {
+			synchronized (frameLock) { /* Note this is called from another thread. */
+				lastFi = fi; /* Save for taking picture and the likes. */
+				lastTemp = temp;
+				handler.post(handleFrameRunnable);
 				if (disconnecting)
 					return;
+				/* Now we wait until the main thread has finished drawing the frame, so lastFi and
+				 *   lastTemp don't get overwritten before they've been used.
+				 */
 				try {
 					frameLock.wait();
 				} catch (Exception e) {
@@ -200,33 +199,33 @@ public class MainActivity extends BaseActivity {
 	};
 
 	private void handleFrame() {
-		/* We use the inputSurface for the listener because it has the most relevant timestamp. */
-		surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
-		/* At this point we are certain the frame and the lastFi and lastTemp are matched up with
-		 *   eachother, so now we can do stuff like taking a screenshot, "the frame" here meaning
-		 *   what's in the SurfaceTexture buffers after the updateTexImage() calls surfaceMuxer
-		 *   should have done.
-		 */
-		overlay.draw(lastFi, lastTemp, palette, rangeMin, rangeMax);
-		if (takePic) {
-			/* For taking picture, we substitute in another overlay surface so that we can draw
-			 *   it at the exact resolution the image is saved, to make it look nice. The video
-			 *   surface(s) come in at whatever resolution they are and are scaled by the muxer
-			 *   regardless, so we don't need to worry about those.
-			 */
-			overlay.setSize(picWidth, picHeight);
-			overlay.draw(lastFi, lastTemp, palette, rangeMin, rangeMax);
-			overlaySurface.getSurfaceTexture().updateTexImage();
-			Bitmap bitmap = surfaceMuxer.getBitmap(picWidth, picHeight);
-			Util.writePNG(this, bitmap);
-			overlay.setSize(cameraView.getWidth(), cameraView.getHeight());
-			// TODO return all sizes to normal
-			takePic = false;
-			messageView.shortMessage(getString(R.string.msg_captured));
-		}
-
-		/* Now we allow another frame to come in */
 		synchronized (frameLock) {
+			/* At this point we are certain the frame and the lastFi and lastTemp are matched up
+			 *   with eachother, so now we can do stuff like taking a screenshot, "the frame" here
+			 *   meaning what's in the SurfaceTexture buffers after the updateTexImage() calls
+			 *   surfaceMuxer should have done.
+			 */
+			overlay.draw(lastFi, lastTemp, palette, rangeMin, rangeMax);
+			/* We use the inputSurface because it has the most relevant timestamp. */
+			surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
+			if (takePic) {
+				/* For taking picture, we substitute in another overlay surface so that we can draw
+				 *   it at the exact resolution the image is saved, to make it look nice. The video
+				 *   surface(s) come in at whatever resolution they are and are scaled by the muxer
+				 *   regardless, so we don't need to worry about those.
+				 */
+				overlay.setSize(picWidth, picHeight);
+				overlaySurface.beforeRender(picWidth, picHeight);
+				overlay.draw(lastFi, lastTemp, palette, rangeMin, rangeMax);
+				overlaySurface.getSurfaceTexture().updateTexImage();
+				Bitmap bitmap = surfaceMuxer.getBitmap(picWidth, picHeight);
+				Util.writePNG(this, bitmap);
+				overlay.setSize(cameraView.getWidth(), cameraView.getHeight());
+				takePic = false;
+				messageView.shortMessage(getString(R.string.msg_captured));
+			}
+
+			/* Now we allow another frame to come in */
 			frameLock.notify();
 		}
 	}
