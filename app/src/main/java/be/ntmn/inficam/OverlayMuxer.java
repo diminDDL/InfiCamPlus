@@ -1,11 +1,10 @@
 package be.ntmn.inficam;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.view.Surface;
-
-import be.ntmn.libinficam.InfiCam;
 
 public class OverlayMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	private final SurfaceMuxer muxer;
@@ -43,6 +42,11 @@ public class OverlayMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		height = h;
 	}
 
+	public void setRect(Rect rect) {
+		this.rect.set(rect);
+		overlay.setRect(rect);
+	}
+
 	public void attachInput(SurfaceMuxer im) {
 		if (inputOs != null)
 			inputOs.release();
@@ -70,9 +74,8 @@ public class OverlayMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		muxer.onFrameAvailable(surfaceTexture);
 	}
 
-	public void setRect(Rect rect) {
-		this.rect.set(rect);
-		overlay.setRect(rect);
+	public Bitmap getBitmap() {
+		return muxer.getBitmap(width, height);
 	}
 
 	public void release() {

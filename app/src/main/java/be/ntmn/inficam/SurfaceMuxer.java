@@ -21,6 +21,8 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 
+import javax.microedition.khronos.opengles.GL;
+
 /* SurfaceMuxer
  *
  * Our native code can't write directly to the Surface that we can get from a MediaCodec or
@@ -206,12 +208,17 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 					eglSurface != EGL14.EGL_NO_SURFACE) {
 				EGL14.eglDestroySurface(surfaceMuxer.eglDisplay, eglSurface);
 				eglSurface = EGL14.EGL_NO_SURFACE;
+				/* setDefaultBufferSize() requires destroying surface and making it non-current. */
+				EGL14.eglMakeCurrent(surfaceMuxer.eglDisplay, EGL14.EGL_NO_SURFACE,
+						EGL14.EGL_NO_SURFACE, surfaceMuxer.eglContext);
 			}
 		}
 
 		public void setSize(int w, int h) {
 			width = w;
 			height = h;
+			deinit(); /* In case setDefaultBufferSize() happened, this is important. */
+			init();
 		}
 
 		public void makeCurrent() {

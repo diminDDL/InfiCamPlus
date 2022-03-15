@@ -4,6 +4,7 @@ import static java.lang.Float.NaN;
 import static java.lang.Float.isNaN;
 
 import android.Manifest;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.hardware.usb.UsbDevice;
@@ -31,7 +32,7 @@ public class MainActivity extends BaseActivity {
 	private SurfaceMuxer surfaceMuxer;
 	private SurfaceMuxer.InputSurface inputSurface; /* Input surface for the thermal image. */
 	private SurfaceMuxer.InputSurface videoSurface; /* To draw video from the normal camera. */
-	private OverlayMuxer outScreen, outRecord;
+	private OverlayMuxer outScreen, outRecord, outPicture;
 	private final Overlay.Data overlayData = new Overlay.Data();
 
 	private UsbDevice device;
@@ -195,29 +196,23 @@ public class MainActivity extends BaseActivity {
 			 *   surfaceMuxer should have done.
 			 */
 
+			if (takePic) {
+				final Rect r = new Rect();
+				inputSurface.getRect(r, picWidth, picHeight);
+				outPicture.setSize(picWidth, picHeight);
+				outPicture.setRect(r);
+				outPicture.attachInput(surfaceMuxer);
+			}
+
 			/* We use the inputSurface because it has the most relevant timestamp. */
 			surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
 
 			if (takePic) {
-				/* For taking picture, we substitute in another overlay surface so that we can draw
-				 *   it at the exact resolution the image is saved, to make it look nice. The video
-				 *   surface(s) come in at whatever resolution they are and are scaled by the muxer
-				 *   regardless, so we don't need to worry about those.
-				 */
-
-				/*final Rect r = new Rect();
-				inputSurface.getRect(r, picWidth, picHeight);
-				outScreen.setSize(picWidth, picHeight);
-				outScreen.setRect(r);
-				overlay.setSize(picWidth, picHeight);
-				overlaySurface.beforeRender(picWidth, picHeight);
-				overlay.draw(lastFi, lastTemp, palette, rangeMin, rangeMax);
-				overlaySurface.getSurfaceTexture().updateTexImage();
-				Bitmap bitmap = surfaceMuxer.getBitmap(picWidth, picHeight);
+				Bitmap bitmap = outPicture.getBitmap();
 				Util.writePNG(this, bitmap);
-				overlay.setSize(cameraView.getWidth(), cameraView.getHeight());
+				outPicture.attachInput(null);
 				takePic = false;
-				messageView.shortMessage(getString(R.string.msg_captured));*/ // TODO
+				messageView.shortMessage(getString(R.string.msg_captured));
 			}
 
 			/* Now we allow another frame to come in */
@@ -253,7 +248,7 @@ public class MainActivity extends BaseActivity {
 		outScreen = new OverlayMuxer(this, overlayData);
 		outScreen.attachInput(surfaceMuxer);
 		outRecord = new OverlayMuxer(this, overlayData);
-		outRecord.attachInput(surfaceMuxer);
+		outPicture = new OverlayMuxer(this, overlayData);
 
 		/* We use it later. */
 		videoSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_LINEAR);
@@ -354,16 +349,18 @@ public class MainActivity extends BaseActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+		surfaceMuxer.init();
 		outScreen.init();
 		outRecord.init();
-		surfaceMuxer.init();
+		outPicture.init();
 	}
 
 	@Override
 	protected void onPause() {
-		surfaceMuxer.deinit();
 		outScreen.deinit();
 		outRecord.deinit();
+		outPicture.deinit();
+		surfaceMuxer.deinit();
 		super.onPause();
 	}
 
@@ -377,6 +374,7 @@ public class MainActivity extends BaseActivity {
 
 	@Override
 	protected void onDestroy() {
+		outScreen.release();
 		surfaceMuxer.release();
 		super.onDestroy();
 	}
@@ -431,6 +429,7 @@ public class MainActivity extends BaseActivity {
 			inputSurface.getRect(r, picWidth, picHeight);
 			outRecord.setSize(picWidth, picHeight);
 			outRecord.setRect(r);
+			outRecord.attachInput(surfaceMuxer);
 			Surface rsurface = recorder.start(this, picWidth, picHeight, recordAudio);
 			outRecord.setOutputSurface(rsurface);
 			ImageButton buttonVideo = findViewById(R.id.buttonVideo);
@@ -446,6 +445,7 @@ public class MainActivity extends BaseActivity {
 		buttonVideo.clearColorFilter();
 		recorder.stop();
 		outRecord.setOutputSurface(null);
+		outRecord.attachInput(null);
 	}
 
 	/*
