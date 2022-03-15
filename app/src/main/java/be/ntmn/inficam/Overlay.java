@@ -1,8 +1,10 @@
 package be.ntmn.inficam;
 
+import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.lang.Math.round;
+import static java.lang.Math.signum;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -12,9 +14,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
-import android.graphics.SurfaceTexture;
 import android.graphics.drawable.Drawable;
-import android.view.Surface;
 
 import androidx.appcompat.content.res.AppCompatResources;
 
@@ -245,8 +245,17 @@ public class Overlay {
 	public void setShowPalette(boolean showPalette) { this.showPalette = showPalette; }
 
 	private static void formatTemp(StringBuilder sb, float temp) {
-		int t = round(temp * 100.0f);
+		int t = abs(round(temp * 100.0f));
 		sb.setLength(0);
+		if (Float.isNaN(temp)) {
+			sb.append("Low");
+			return;
+		} else if (Float.isInfinite(temp)) {
+			sb.append("High");
+			return;
+		}
+		if (temp < 0)
+			sb.append("-");
 		sb.append(t / 100);
 		sb.append(".");
 		sb.append((t / 10) % 10);
