@@ -37,6 +37,7 @@
 	<string name="set_rotate180">Turn image upside down</string>
 	<string name="set_mirror">Mirror image</string>
 	<string name="set_swap_controls">Swap left and right buttons</string>
+	<string name="set_show_bat_level">Show battery level</string>
 	<string name="set_defaults">Reset to defaults</string>
 
 	<string name="set_show_min">Show min temperature</string>
@@ -64,4 +65,7 @@
 	<string name="palette_ironbow">Ironbow</string>
 	<string name="palette_rainbow">Rainbow</string>
 	<string name="palette_rainbow2">Rainbow 2</string>
+
+	<string name="batlevel">&#128267;%d%%</string>
+	<string name="batlevel_charging">&#9889;%d%%</string>
 </resources>

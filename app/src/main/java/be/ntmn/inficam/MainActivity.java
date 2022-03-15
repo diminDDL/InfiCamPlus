@@ -2,13 +2,19 @@ package be.ntmn.inficam;
 
 import static java.lang.Float.NaN;
 import static java.lang.Float.isNaN;
+import static java.lang.Math.round;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
+import android.os.BatteryManager;
 import android.os.Bundle;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -18,6 +24,7 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
@@ -298,6 +305,15 @@ public class MainActivity extends BaseActivity {
 		ImageButton buttonVideo = findViewById(R.id.buttonVideo);
 		buttonVideo.setOnClickListener(view -> toggleRecording());
 
+		IntentFilter batIFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+		Intent batteryStatus = registerReceiver(new BroadcastReceiver() {
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				updateBatLevel(intent);
+			}
+		}, batIFilter);
+		updateBatLevel(batteryStatus);
+
 		dialogBackground = findViewById(R.id.dialogBackground);
 		dialogBackground.setOnClickListener(view -> dialogBackground.setVisibility(View.GONE));
 		settings = findViewById(R.id.settings);
@@ -445,6 +461,17 @@ public class MainActivity extends BaseActivity {
 		outRecord.attachInput(null);
 	}
 
+	public void updateBatLevel(Intent batteryStatus) {
+		int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+		boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+				status == BatteryManager.BATTERY_STATUS_FULL;
+		int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+		int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+		TextView batLevel = findViewById(R.id.batLevel);
+		batLevel.setText(getString(isCharging ? R.string.batlevel_charging : R.string.batlevel,
+				(int) round(level * 100 / (float) scale)));
+	}
+
 	/*
 	 * Following are routines called by the settings class.
 	 */
@@ -489,6 +516,11 @@ public class MainActivity extends BaseActivity {
 			left.setLayoutParams(buttonsLeftLayout);
 			right.setLayoutParams(buttonsRightLayout);
 		}
+	}
+
+	public void setShowBatLevel(boolean value) {
+		TextView batLevel = findViewById(R.id.batLevel);
+		batLevel.setVisibility(value ? View.VISIBLE : View.GONE);
 	}
 
 	public void setPalette(int[] data) {
