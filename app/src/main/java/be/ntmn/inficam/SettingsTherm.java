@@ -7,6 +7,7 @@ import androidx.annotation.Nullable;
 
 public class SettingsTherm extends Settings {
 	private static final String SP_NAME = "PREFS_THERM";
+	private static final int name = R.string.dialog_set_therm;
 
 	public SettingsTherm(Context context) {
 		super(context);
@@ -22,6 +23,9 @@ public class SettingsTherm extends Settings {
 
 	@Override
 	public String getSPName() { return SP_NAME; }
+
+	@Override
+	public int getName() { return name; }
 
 	@Override
 	public Setting[] getSettings() { return settings; }

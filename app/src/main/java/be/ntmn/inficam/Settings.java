@@ -303,4 +303,5 @@ public abstract class Settings extends LinearLayout {
 
 	public abstract Setting[] getSettings();
 	public abstract String getSPName(); /* Name for "shared preferences file". */
+	public abstract int getName();
 }

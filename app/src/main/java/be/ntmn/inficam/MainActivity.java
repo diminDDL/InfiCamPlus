@@ -326,13 +326,13 @@ public class MainActivity extends BaseActivity {
 		settingsMeasure.init(this);
 
 		ImageButton buttonSettings = findViewById(R.id.buttonSettings);
-		buttonSettings.setOnClickListener(view -> openDialog(settings));
+		buttonSettings.setOnClickListener(view -> showSettings(settings));
 
 		ImageButton buttonSettingsTherm = findViewById(R.id.buttonSettingsTherm);
-		buttonSettingsTherm.setOnClickListener(view -> openDialog(settingsTherm));
+		buttonSettingsTherm.setOnClickListener(view -> showSettings(settingsTherm));
 
 		ImageButton buttonSettingsMeasure = findViewById(R.id.buttonSettingsMeasure);
-		buttonSettingsMeasure.setOnClickListener(view -> openDialog(settingsMeasure));
+		buttonSettingsMeasure.setOnClickListener(view -> showSettings(settingsMeasure));
 
 		LinearLayout left = findViewById(R.id.buttonsLeft);
 		LinearLayout right = findViewById(R.id.buttonsRight);
@@ -394,12 +394,14 @@ public class MainActivity extends BaseActivity {
 		super.onDestroy();
 	}
 
-	private void openDialog(View dialog) {
+	private void showSettings(Settings settings) {
 		FrameLayout dialogs = dialogBackground.findViewById(R.id.dialogs);
 		for (int i = 0; i < dialogs.getChildCount(); ++i)
 			dialogs.getChildAt(i).setVisibility(View.GONE);
-		dialog.setVisibility(View.VISIBLE);
+		settings.setVisibility(View.VISIBLE);
 		dialogBackground.setVisibility(View.VISIBLE);
+		TextView title = findViewById(R.id.dialogTitle);
+		title.setText(settings.getName());
 	}
 
 	private void disconnect() {

@@ -7,6 +7,7 @@ import androidx.annotation.Nullable;
 
 public class SettingsMeasure extends Settings {
 	private static final String SP_NAME = "PREFS_MEASURE";
+	private static final int name = R.string.dialog_set_measure;
 
 	public SettingsMeasure(Context context) {
 		super(context);
@@ -22,6 +23,9 @@ public class SettingsMeasure extends Settings {
 
 	@Override
 	public String getSPName() { return SP_NAME; }
+
+	@Override
+	public int getName() { return name; }
 
 	@Override
 	public Setting[] getSettings() { return settings; }

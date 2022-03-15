@@ -6,7 +6,8 @@ import android.util.AttributeSet;
 import androidx.annotation.Nullable;
 
 public class SettingsMain extends Settings {
-	static final String SP_NAME = "PREFS";
+	private static final String SP_NAME = "PREFS";
+	private static final int name = R.string.dialog_set_main;
 
 	public SettingsMain(Context context) {
 		super(context);
@@ -22,6 +23,9 @@ public class SettingsMain extends Settings {
 
 	@Override
 	public String getSPName() { return SP_NAME; }
+
+	@Override
+	public int getName() { return name; }
 
 	@Override
 	public Setting[] getSettings() { return settings; }
