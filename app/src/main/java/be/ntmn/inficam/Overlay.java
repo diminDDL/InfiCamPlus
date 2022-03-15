@@ -48,7 +48,7 @@ public class Overlay {
 	private final static  float wmarker = 0.003f; /* How fat the markers are. */
 	private final static float toff = 0.03f; /* How far to put the text away from marker. */
 	private final static float tclearance = 0.005f; /* How far the text should stay from edges. */
-	private final static float textsize = 0.038f;
+	private final static float textsize = 0.035f;
 	private final static float woutline = 0.008f; /* Text outline thickness. */
 	private final static float pwidth = 0.038f; /* Palette preview width. */
 	private final static float pclearance = 0.016f;

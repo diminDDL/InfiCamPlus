@@ -26,6 +26,49 @@ public class SettingsMain extends Settings {
 	@Override
 	public Setting[] getSettings() { return settings; }
 
+	private abstract class SettingResolution extends SettingRadio {
+		SettingResolution(String name, int res) {
+			super(name, res, 6, new int[] {
+					R.string.picres_320,
+					R.string.picres_640,
+					R.string.picres_800,
+					R.string.picres_1024,
+					R.string.picres_1600,
+					R.string.picres_720w,
+					R.string.picres_1080w,
+			});
+		}
+
+		@Override
+		void onSet(int value) {
+			switch (value) {
+				case 0:
+					onSetRes(320, 240);
+					break;
+				case 1:
+					onSetRes(640, 480);
+					break;
+				case 2:
+					onSetRes(800, 600);
+					break;
+				case 3:
+					onSetRes(1024, 768);
+					break;
+				case 4:
+					onSetRes(1600, 1200);
+					break;
+				case 5:
+					onSetRes(1280, 720);
+					break;
+				case 6:
+					onSetRes(1920, 1080);
+					break;
+			}
+		}
+
+		abstract void onSetRes(int w, int h);
+	}
+
 	private final Setting[] settings = {
 		new SettingSliderInt("firstshutdelay", R.string.set_firstshutdelay, 1000, 0, 2000, 100) {
 			@Override
@@ -85,6 +128,18 @@ public class SettingsMain extends Settings {
 		new SettingBool("swap_controls", R.string.set_swap_controls, false) {
 			@Override
 			void onSet(boolean value) { act.setSwapControls(value); }
+		},
+		new SettingResolution("pic_res", R.string.set_pic_res) {
+			@Override
+			void onSetRes(int w, int h) {
+				act.setPicSize(w, h);
+			}
+		},
+		new SettingResolution("vid_res", R.string.set_vid_res) {
+			@Override
+			void onSetRes(int w, int h) {
+				act.setVidSize(w, h);
+			}
 		},
 		settingDefaults
 	};

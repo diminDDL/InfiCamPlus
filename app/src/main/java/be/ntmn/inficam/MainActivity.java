@@ -46,6 +46,7 @@ public class MainActivity extends BaseActivity {
 	private UsbDeviceConnection usbConnection;
 	private final Object frameLock = new Object();
 	private int picWidth = 1024, picHeight = 768;
+	private int vidWidth = 1024, vidHeight = 768;
 	private boolean takePic = false;
 	private volatile boolean disconnecting = false;
 	private final SurfaceRecorder recorder = new SurfaceRecorder();
@@ -439,11 +440,11 @@ public class MainActivity extends BaseActivity {
 	private void startRecording(boolean recordAudio) {
 		try {
 			final Rect r = new Rect();
-			inputSurface.getRect(r, picWidth, picHeight);
-			outRecord.setSize(picWidth, picHeight);
+			inputSurface.getRect(r, vidWidth, vidHeight);
+			outRecord.setSize(vidWidth, vidHeight);
 			outRecord.setRect(r);
 			outRecord.attachInput(surfaceMuxer);
-			Surface rsurface = recorder.start(this, picWidth, picHeight, recordAudio);
+			Surface rsurface = recorder.start(this, vidWidth, vidHeight, recordAudio);
 			outRecord.setOutputSurface(rsurface);
 			ImageButton buttonVideo = findViewById(R.id.buttonVideo);
 			buttonVideo.setColorFilter(Color.RED);
@@ -564,5 +565,15 @@ public class MainActivity extends BaseActivity {
 		synchronized (frameLock) {
 			overlayData.showPalette = value;
 		}
+	}
+
+	public void setPicSize(int w, int h) {
+		picWidth = w; /* No need to sync, only used on UI thread. */
+		picHeight = h;
+	}
+
+	public void setVidSize(int w, int h) {
+		vidWidth = w;
+		vidHeight = h;
 	}
 }
