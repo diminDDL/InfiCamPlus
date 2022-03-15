@@ -133,9 +133,6 @@ public class MainActivity extends BaseActivity {
 		public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int w, int h) {
 			outputSurface.setSize(w, h);
 			overlay.setSize(w, h);
-			// TODO redraw more proper, perhaps also redraw when dirty (or do we only needa on resize?)
-			//   but maybe it's fiine already, hmm
-			surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
 		}
 
 		@Override
