@@ -62,7 +62,6 @@ Short description of the C++ classes in jni/InfiCam dir:
 TODO
 	- make sure there is space to show palette thing on the side (including lock icons!)
 		* for video we can just give sizes that are big enough as option
-	- double check that the measured numbers match the shown/captured frames
 	- show average temp somewhere?
 	- showing of normal camera also (and allow choosing which one, rotation)
 	- overlaying normal camera (with edge detect)
