@@ -75,7 +75,6 @@ TODO
 	- show camera product and version info somewhere (perhaps when scroll down in settings)
 	- option to save separate normal and thermal image side by side (what about video?)
 	- software zoom?
-	- sometimes saved videos are broken, why and when?
 	- proper ironbow palette (real ones get lighter after they go yellow)
 
 Notes about the current implentation for end users:
