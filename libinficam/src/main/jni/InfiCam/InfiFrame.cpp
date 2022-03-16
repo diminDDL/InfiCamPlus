@@ -125,8 +125,11 @@ void InfiFrame::update(uint16_t *frame) {
 }
 
 float InfiFrame::temp_single(uint16_t x) {
-	float wtot = powf(sqrtf(((float) (x - table_offset) * cal_d + cal_c) / cal_01 + cal_b) -
-					  cal_a + zeroc, 4);
+	/* Temperatures below what we can calculate result in sqrt of a negative number, the absolute
+	 *   lowest temperature we can calculate is the one we get if we set n to 0.
+	 */
+	float n = sqrtf(((float) (x - table_offset) * cal_d + cal_c) / cal_01 + cal_b);
+	float wtot = powf((isfinite(n) ? n : 0.0) - cal_a + zeroc, 4);
 	float ttot = powf((wtot - numerator_sub) / denominator, 0.25) - zeroc;
 	return ttot + (distance_adjusted * 0.85 - 1.125) * (ttot - temp_air) / 100.0 + correction;
 }
@@ -198,8 +201,6 @@ void InfiFrame::palette_appy(float *input, uint32_t *output, float min, float ma
 }
 
 void InfiFrame::palette_appy(float *input, uint32_t *output, size_t len, float min, float max) {
-	if (isnanf(min) || min < -20.0) // TODO this isn't great
-		min = -20.0;
 	for (size_t i = 0; i < len; ++i) {
 		float frac = (fminf(fmaxf(input[i], min), max) - min) / (max - min);
 		output[i] = palette[((int) roundf(frac * (float) palette_mask)) & palette_mask];

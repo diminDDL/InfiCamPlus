@@ -70,7 +70,6 @@ TODO
 	- manual temperature range setting for the palettization
 		* maybe enter as center + span rather than min + max?
 	- deal with phone orientation (auto + allow user to choose, rotate markers etc)
-	- indicate overrange rather than saying NaN (now says Low, but does it do High?)
 	- more measurement modes
 	- gallery to check pictures and videos taken
 	- store thermometry data in videos and pictures
@@ -78,6 +77,8 @@ TODO
 	- show camera product and version info somewhere (perhaps when scroll down in settings)
 	- option to save separate normal and thermal image side by side (what about video?)
 	- software zoom?
+	- occasionally video gets stock on black until go out of fullscreen mode, why?
+	- sometimes saved videos are broken, why and when?
 
 Things i learned about the protocol these thermal cameras talk:
 	last 4 lines of the frame have parameters (note that the pointer math is in steps of 16 bytes because unsigned short)

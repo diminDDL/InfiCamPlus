@@ -246,11 +246,8 @@ public class Overlay {
 	private static void formatTemp(StringBuilder sb, float temp) {
 		int t = abs(round(temp * 100.0f));
 		sb.setLength(0);
-		if (Float.isNaN(temp)) {
-			sb.append("Low");
-			return;
-		} else if (Float.isInfinite(temp)) {
-			sb.append("High");
+		if (Float.isNaN(temp) || Float.isInfinite(temp)) {
+			sb.append("NaN");
 			return;
 		}
 		if (temp < 0)
