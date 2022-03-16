@@ -359,6 +359,7 @@ public class MainActivity extends BaseActivity {
 		videoSurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer); // TODO is it not needed? should we separately update tex images?
 		videoSurface.setIMode(SurfaceMuxer.IMODE_EDGE);
 		normalCamera.start(this, videoSurface.getSurface());*/
+		//inputSurface.setScale(2.0f, 2.0f); // TODO
 	}
 
 	@Override

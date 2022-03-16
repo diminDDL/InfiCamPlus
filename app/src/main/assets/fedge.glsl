@@ -1,6 +1,6 @@
 #extension GL_OES_EGL_image_external : require
 
-precision mediump float;
+precision highp float;
 uniform samplerExternalOES sTexture;
 varying vec2 texCoord;
 uniform vec2 texSize;

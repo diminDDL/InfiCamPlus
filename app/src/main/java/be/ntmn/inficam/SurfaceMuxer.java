@@ -108,6 +108,11 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			sharpening = s;
 		}
 
+		public void setScale(float x, float y) {
+			scale_x = x;
+			scale_y = y;
+		}
+
 		public void setSize(int w, int h) { /* Size is only important for IMODE_CUBIC and _EDGE. */
 			width = w;
 			height = h;
