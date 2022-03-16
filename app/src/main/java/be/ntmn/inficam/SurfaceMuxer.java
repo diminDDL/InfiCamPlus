@@ -90,6 +90,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		private boolean rotate = false, mirror = false;
 		private float scale_x = 1.0f, scale_y = 1.0f;
 		private float translate_x = 0.0f, translate_y = 0.0f;
+		private float sharpening = 0.0f;
 
 		public InputSurface(SurfaceMuxer muxer, int imode) {
 			surfaceMuxer = muxer;
@@ -101,6 +102,10 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		public void setIMode(int imode) {
 			this.imode = imode;
 			init();
+		}
+
+		public void setSharpening(float s) {
+			sharpening = s;
 		}
 
 		public void setSize(int w, int h) { /* Size is only important for IMODE_CUBIC and _EDGE. */
@@ -280,10 +285,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			if (is.imode == IMODE_EDGE)
 				program = hProgram_edge;
 			GLES20.glUseProgram(program);
-			if (program == hProgram_cubic || program == hProgram_edge) {
-				int isc = GLES20.glGetUniformLocation(program, "texSize");
-				GLES20.glUniform2f(isc, is.width, is.height);
-			}
+			int isc = GLES20.glGetUniformLocation(program, "texSize");
+			GLES20.glUniform2f(isc, is.width, is.height);
 			int ph = GLES20.glGetAttribLocation(program, "vPosition");
 			GLES20.glVertexAttribPointer(ph, 2, GLES20.GL_FLOAT, false, 4 * 2,
 					pVertex[is.rotate ? 1 : 0][is.mirror ? 1 : 0]);
@@ -298,6 +301,9 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			GLES20.glUniform2f(sc, is.scale_x, is.scale_y);
 			int tr = GLES20.glGetUniformLocation(program, "translate");
 			GLES20.glUniform2f(tr, is.translate_x, is.translate_y);
+
+			int sh = GLES20.glGetUniformLocation(program, "sharpening");
+			GLES20.glUniform1f(sh, is.sharpening);
 
 			GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 			GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, is.getTexture());

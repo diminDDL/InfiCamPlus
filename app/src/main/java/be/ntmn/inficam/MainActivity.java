@@ -495,6 +495,10 @@ public class MainActivity extends BaseActivity {
 		inputSurface.setIMode(value);
 	}
 
+	public void setSharpening(float value) {
+		inputSurface.setSharpening(value);
+	}
+
 	public void setRecordAudio(boolean value) {
 		recordAudio = value;
 	}

@@ -109,6 +109,10 @@ public class SettingsMain extends Settings {
 				act.setIMode(imodes[value]);
 			}
 		},
+		new SettingSliderFloat("sharpening", R.string.set_sharpening, 50, 0, 100, 5, 100) {
+			@Override
+			void onSet(float f) { act.setSharpening(f); }
+		},
 		new SettingBool("recordaudio", R.string.set_recordaudio, true) {
 			@Override
 			void onSet(boolean value) { act.setRecordAudio(value); }
