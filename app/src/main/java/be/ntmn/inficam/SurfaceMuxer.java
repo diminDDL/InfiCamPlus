@@ -33,8 +33,8 @@ import java.util.ArrayList;
  * - Create an instance of the SurfaceMuxer class.
  * - To get an input surface create a SurfaceMuxer.InputSurface instance, this is bound to the
  *     SurfaceMuxer instance you give the constructor.
- * - If you are going to use cubic interpolation or edge detection, also call setSize() on the
- *     InputSurface.
+ * - If you are going to use nearest neighbor or cubic interpolation, edge detection or sharpening
+ *     on it also call setSize() on the InputSurface.
  * - Call getSurface() and/or getSurfaceTexture on that to get the actual input Surface and/or
  *     SurfaceTexture texture to draw to.
  * - Call setOnFrameAvailableListener(surfaceMuxer) on the SurfaceTexture from the InputSurface(s)
@@ -110,7 +110,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			scale_y = y;
 		}
 
-		public void setSize(int w, int h) { /* Size is only important for IMODE_CUBIC and _EDGE. */
+		/* Size is only important for IMODE_NEAREST, IMODE_CUBIC and _EDGE. */
+		public void setSize(int w, int h) {
 			width = w;
 			height = h;
 		}
