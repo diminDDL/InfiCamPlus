@@ -25,6 +25,7 @@
 		android:orientation="vertical"
 		android:elevation="10dp"
 		android:id="@+id/buttonsLeft"
+		android:gravity="start"
 		app:layout_constraintTop_toTopOf="parent"
 		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintStart_toStartOf="parent">
@@ -99,6 +100,7 @@
 		android:orientation="vertical"
 		android:elevation="10dp"
 		android:id="@+id/buttonsRight"
+		android:gravity="end"
 		app:layout_constraintTop_toTopOf="parent"
 		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintEnd_toEndOf="parent">

@@ -18,6 +18,7 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.BatteryManager;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -523,9 +524,13 @@ public class MainActivity extends BaseActivity {
 		if (value) {
 			left.setLayoutParams(buttonsRightLayout);
 			right.setLayoutParams(buttonsLeftLayout);
+			left.setGravity(Gravity.END);
+			right.setGravity(Gravity.START);
 		} else {
 			left.setLayoutParams(buttonsLeftLayout);
 			right.setLayoutParams(buttonsRightLayout);
+			left.setGravity(Gravity.START);
+			right.setGravity(Gravity.END);
 		}
 	}
 
