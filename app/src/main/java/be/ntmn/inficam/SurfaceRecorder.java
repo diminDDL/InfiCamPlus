@@ -152,28 +152,27 @@ public class SurfaceRecorder implements Runnable {
 		if (videoEncoder != null) {
 			videoEncoder.stop();
 			videoEncoder.release();
-			videoEncoder = null;
 		}
+		videoEncoder = null;
 		if (audioRecord != null) {
 			audioRecord.stop();
 			audioRecord.release();
-			audioRecord = null;
 		}
+		audioRecord = null;
 		if (audioEncoder != null) {
 			audioEncoder.stop();
 			audioEncoder.release();
-			audioEncoder = null;
 		}
-		if (muxer != null) {
+		audioEncoder = null;
+		if (muxerStarted)
 			muxer.stop();
-			muxer.release();
-			muxer = null;
-		}
-		if (inputSurface != null) {
-			inputSurface.release();
-			inputSurface = null;
-		}
 		muxerStarted = false;
+		if (muxer != null)
+			muxer.release();
+		muxer = null;
+		if (inputSurface != null)
+			inputSurface.release();
+		inputSurface = null;
 		audioTrack = -1;
 		videoTrack = -1;
 	}
@@ -205,7 +204,9 @@ public class SurfaceRecorder implements Runnable {
 				videoEncoder.releaseOutputBuffer(encoderStatus, false);
 				if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0)
 					vidDone = true;
-			} /* Most likely MediaCodec.INFO_TRY_AGAIN_LATER. */
+			} else if (stop) { /* Most likely MediaCodec.INFO_TRY_AGAIN_LATER. */
+				vidDone = true;
+			}
 
 			if (audioEncoder != null) {
 				/* Shovel audio from the recorder to the encoder. */
@@ -240,7 +241,9 @@ public class SurfaceRecorder implements Runnable {
 					audioEncoder.releaseOutputBuffer(encoderStatus, false);
 					if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0)
 						sndDone = true;
-				} /* Most likely MediaCodec.INFO_TRY_AGAIN_LATER. */
+				} else if (stop) { /* Most likely MediaCodec.INFO_TRY_AGAIN_LATER. */
+					sndDone = true;
+				}
 			}
 
 			if (endSignal) {

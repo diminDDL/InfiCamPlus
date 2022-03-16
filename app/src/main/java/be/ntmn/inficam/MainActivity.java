@@ -422,7 +422,7 @@ public class MainActivity extends BaseActivity {
 	}
 
 	private void toggleRecording() {
-		if (!recorder.isRecording()) {
+		if (!recorder.isRecording() && usbConnection != null) {
 			askPermission(Manifest.permission.CAMERA, granted -> {
 				if (granted) {
 					if (!recordAudio) {
