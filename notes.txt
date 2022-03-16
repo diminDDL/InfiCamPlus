@@ -253,15 +253,16 @@ On the stackoverflow that inspired the cubic interpolation shader (
 To test the interpolation i slapped this into onCreate()
 	// We may need setSize on the InputSurface() if we do this again
 	// TODO this is just test for interpolation
-	/*SurfaceMuxer.InputSurface test = new SurfaceMuxer.InputSurface(surfaceMuxer, true);
-	test.getSurfaceTexture().setDefaultBufferSize(8, 6);
-	Canvas tcvs = test.getSurface().lockCanvas(null);
-	Paint p = new Paint();
-	tcvs.drawColor(Color.YELLOW);
-	p.setColor(Color.BLUE);
-	tcvs.drawLine(0, 6, 8, 0, p);
-	p.setColor(Color.RED);
-	tcvs.drawLine(0, 0, 8, 6, p);
-	test.getSurface().unlockCanvasAndPost(tcvs);
-	surfaceMuxer.inputSurfaces.add(test);
-	surfaceMuxer.onFrameAvailable(test.getSurfaceTexture());*/
+	/*SurfaceMuxer.InputSurface test = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_NEAREST);
+      test.getSurfaceTexture().setDefaultBufferSize(8, 6);
+      test.setSize(8, 6);
+      Canvas tcvs = test.getSurface().lockCanvas(null);
+      Paint p = new Paint();
+      tcvs.drawColor(Color.YELLOW);
+      p.setColor(Color.BLUE);
+      tcvs.drawLine(0, 6, 8, 0, p);
+      p.setColor(Color.RED);
+      tcvs.drawLine(0, 0, 8, 6, p);
+      test.getSurface().unlockCanvasAndPost(tcvs);
+      surfaceMuxer.inputSurfaces.add(test);
+      //surfaceMuxer.onFrameAvailable(test.getSurfaceTexture());*/

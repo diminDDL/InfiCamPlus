@@ -21,9 +21,9 @@ public class OverlayMuxer implements SurfaceTexture.OnFrameAvailableListener {
 
 	public OverlayMuxer(Context ctx, Overlay.Data d) {
 		muxer = new SurfaceMuxer(ctx);
-		inputIs = new SurfaceMuxer.InputSurface(muxer, SurfaceMuxer.IMODE_NEAREST);
+		inputIs = new SurfaceMuxer.InputSurface(muxer, SurfaceMuxer.IMODE_LINEAR);
 		inputIs.getSurfaceTexture().setOnFrameAvailableListener(this);
-		overlaySurface = new SurfaceMuxer.InputSurface(muxer, SurfaceMuxer.IMODE_NEAREST);
+		overlaySurface = new SurfaceMuxer.InputSurface(muxer, SurfaceMuxer.IMODE_LINEAR);
 		overlay = new Overlay(ctx, overlaySurface);
 		muxer.inputSurfaces.add(inputIs);
 		muxer.inputSurfaces.add(overlaySurface);

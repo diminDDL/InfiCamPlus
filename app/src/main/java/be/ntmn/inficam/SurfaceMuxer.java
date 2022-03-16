@@ -21,8 +21,6 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 
-import javax.microedition.khronos.opengles.GL;
-
 /* SurfaceMuxer
  *
  * Our native code can't write directly to the Surface that we can get from a MediaCodec or
@@ -76,8 +74,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	private EGLConfig eglConfig;
 	private final FloatBuffer[][] pVertex = new FloatBuffer[2][2];
 	private FloatBuffer pTexCoord;
-	private int hProgram, hProgram_cubic, hProgram_edge;
-	private final String vss, fss, fss_cubic, fss_edge;
+	private int hProgram_nearest, hProgram_linear, hProgram_cubic, hProgram_edge;
+	private final String vss, fss_nearest, fss_linear, fss_cubic, fss_edge;
 	private final Rect outRect = new Rect();
 
 	public static class InputSurface {
@@ -101,7 +99,6 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 
 		public void setIMode(int imode) {
 			this.imode = imode;
-			init();
 		}
 
 		public void setSharpening(float s) {
@@ -131,7 +128,6 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		}
 
 		private void init() {
-			int filter = (imode != IMODE_NEAREST) ? GLES20.GL_LINEAR : GLES20.GL_NEAREST;
 			if (surfaceMuxer == null || surfaceMuxer.eglDisplay == EGL14.EGL_NO_DISPLAY)
 				return;
 			deinit();
@@ -146,9 +142,9 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T,
 					GLES20.GL_CLAMP_TO_EDGE);
 			GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER,
-					filter);
+					GLES20.GL_LINEAR);
 			GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER,
-					filter);
+					GLES20.GL_LINEAR);
 			if (surfaceTexture == null) {
 				surfaceTexture = new SurfaceTexture(textures[0]);
 				surface = new Surface(surfaceTexture);
@@ -263,7 +259,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	public SurfaceMuxer(Context ctx) {
 		try {
 			vss = Util.readStringAsset(ctx, "vshader.glsl");
-			fss = Util.readStringAsset(ctx, "fshader.glsl");
+			fss_nearest = Util.readStringAsset(ctx, "fnearest.glsl");
+			fss_linear = Util.readStringAsset(ctx, "flinear.glsl");
 			fss_cubic = Util.readStringAsset(ctx, "fcubic.glsl");
 			fss_edge = Util.readStringAsset(ctx, "fedge.glsl");
 		} catch (IOException e) {
@@ -284,7 +281,9 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			is.getRect(outRect, w, h);
 			GLES20.glViewport(outRect.left, h - outRect.bottom, outRect.width(), outRect.height());
 
-			int program = hProgram;
+			int program = hProgram_nearest;
+			if (is.imode == IMODE_LINEAR)
+				program = hProgram_linear;
 			if (is.imode == IMODE_BICUBIC)
 				program = hProgram_cubic;
 			if (is.imode == IMODE_EDGE)
@@ -448,12 +447,19 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		if (compiled[0] == 0)
 			throw new RuntimeException(GLES20.glGetShaderInfoLog(vshader));
 
-		int fshader = GLES20.glCreateShader(GLES20.GL_FRAGMENT_SHADER);
-		GLES20.glShaderSource(fshader, fss);
-		GLES20.glCompileShader(fshader);
-		GLES20.glGetShaderiv(fshader, GLES20.GL_COMPILE_STATUS, compiled, 0);
+		int fshadern = GLES20.glCreateShader(GLES20.GL_FRAGMENT_SHADER);
+		GLES20.glShaderSource(fshadern, fss_nearest);
+		GLES20.glCompileShader(fshadern);
+		GLES20.glGetShaderiv(fshadern, GLES20.GL_COMPILE_STATUS, compiled, 0);
 		if (compiled[0] == 0)
-			throw new RuntimeException(GLES20.glGetShaderInfoLog(fshader));
+			throw new RuntimeException(GLES20.glGetShaderInfoLog(fshadern));
+
+		int fshaderl = GLES20.glCreateShader(GLES20.GL_FRAGMENT_SHADER);
+		GLES20.glShaderSource(fshaderl, fss_linear);
+		GLES20.glCompileShader(fshaderl);
+		GLES20.glGetShaderiv(fshaderl, GLES20.GL_COMPILE_STATUS, compiled, 0);
+		if (compiled[0] == 0)
+			throw new RuntimeException(GLES20.glGetShaderInfoLog(fshaderl));
 
 		int fshaderc = GLES20.glCreateShader(GLES20.GL_FRAGMENT_SHADER);
 		GLES20.glShaderSource(fshaderc, fss_cubic);
@@ -470,10 +476,14 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			throw new RuntimeException(GLES20.glGetShaderInfoLog(fshadere));
 
 		/* Create the program. */
-		hProgram = GLES20.glCreateProgram();
-		GLES20.glAttachShader(hProgram, vshader);
-		GLES20.glAttachShader(hProgram, fshader);
-		GLES20.glLinkProgram(hProgram);
+		hProgram_nearest = GLES20.glCreateProgram();
+		GLES20.glAttachShader(hProgram_nearest, vshader);
+		GLES20.glAttachShader(hProgram_nearest, fshadern);
+		GLES20.glLinkProgram(hProgram_nearest);
+		hProgram_linear = GLES20.glCreateProgram();
+		GLES20.glAttachShader(hProgram_linear, vshader);
+		GLES20.glAttachShader(hProgram_linear, fshaderl);
+		GLES20.glLinkProgram(hProgram_linear);
 		hProgram_cubic = GLES20.glCreateProgram();
 		GLES20.glAttachShader(hProgram_cubic, vshader);
 		GLES20.glAttachShader(hProgram_cubic, fshaderc);
@@ -483,7 +493,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		GLES20.glAttachShader(hProgram_edge, fshadere);
 		GLES20.glLinkProgram(hProgram_edge);
 		GLES20.glDeleteShader(vshader); /* They will still live until the program dies. */
-		GLES20.glDeleteShader(fshader);
+		GLES20.glDeleteShader(fshadern);
+		GLES20.glDeleteShader(fshaderl);
 		GLES20.glDeleteShader(fshaderc);
 		GLES20.glDeleteShader(fshadere);
 

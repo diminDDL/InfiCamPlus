@@ -4,6 +4,7 @@ precision highp float;
 uniform samplerExternalOES sTexture;
 varying vec2 texCoord;
 uniform vec2 texSize;
+uniform float sharpening; /* Not used here. */
 
 void main(void) {
 	vec2 ts = 1.0 / texSize;
