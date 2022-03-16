@@ -76,7 +76,6 @@ TODO
 	- show camera product and version info somewhere (perhaps when scroll down in settings)
 	- option to save separate normal and thermal image side by side (what about video?)
 	- software zoom?
-	- occasionally video gets stock on black until go out of fullscreen mode, why?
 	- sometimes saved videos are broken, why and when?
 	- proper ironbow palette (real ones get lighter after they go yellow)
 

@@ -240,9 +240,12 @@ public class MainActivity extends BaseActivity {
 			@Override
 			public void getRect(Rect r, int w, int h) {
 				int sw = w, sh = h;
-				if (infiCam.getHeight() * w / infiCam.getWidth() > h)
-					sw = infiCam.getWidth() * h / infiCam.getHeight();
-				else sh = infiCam.getHeight() * w / infiCam.getWidth();
+				/* Make size 4:3 aspect ratio for the thermal image, I'd check the actual camera
+				 *   dimensions but this function gets used before the camera is connected.
+				 */
+				if (3 * w / 4 > h)
+					sw = 4 * h / 3;
+				else sh = 3 * w / 4;
 				r.set(w / 2 - sw / 2, h / 2 - sh / 2,
 						w / 2 - sw / 2 + sw, h / 2 - sh / 2 + sh);
 			}
