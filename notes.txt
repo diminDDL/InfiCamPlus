@@ -78,6 +78,7 @@ TODO
 	- software zoom?
 	- occasionally video gets stock on black until go out of fullscreen mode, why?
 	- sometimes saved videos are broken, why and when?
+	- proper ironbow palette (real ones get lighter after they go yellow)
 
 Notes about the current implentation for end users:
 	400c mode looks a bit quirky before a few calibration cycles, while it doesn't on xtherm
@@ -87,6 +88,11 @@ Notes about the current implentation for end users:
 	  where temperatures can not be calculated, but if we want to make it visible we have to scale
 	  the palette beyond what we can slap a number in celcius on, and I don't see a sensible way to
 	  present this to the user hence I'll leave this as it is.
+	targetSdkVersion has to be <= 27 or lower for the app to work on some Android 10 devices and
+	  there isn't anything much we can do about that, it can be higher for other devices. It
+	  is because of the following bug in Android itself:
+	    https://issuetracker.google.com/issues/145082934
+	    https://issuetracker.google.com/issues/139087809
 
 Things i learned about the protocol these thermal cameras talk:
 	last 4 lines of the frame have parameters (note that the pointer math is in steps of 16 bytes because unsigned short)

@@ -5,7 +5,8 @@ android {
 
 	defaultConfig {
 		minSdkVersion 14
-		targetSdkVersion 32
+		//noinspection ExpiredTargetSdkVersion
+		targetSdkVersion 27
 
 		ndk {
 			moduleName "libinficam"
@@ -33,5 +34,9 @@ android {
 		ndkBuild {
 			path file('src/main/jni/Android.mk')
 		}
+	}
+
+	lintOptions {
+		checkReleaseBuilds false
 	}
 }

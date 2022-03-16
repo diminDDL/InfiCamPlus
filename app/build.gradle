@@ -7,10 +7,16 @@ android {
 
 	defaultConfig {
 		applicationId "be.ntmn.inficam"
-		minSdk 21
-		targetSdk 32
+		minSdkVersion 21
 		versionCode 1
 		versionName "1.0"
+
+		/* We need targetSdkVersion <= 27 for some Android 10 devices to work:
+		 *   https://issuetracker.google.com/issues/145082934
+		 *   https://issuetracker.google.com/issues/139087809
+		 */
+		//noinspection ExpiredTargetSdkVersion
+		targetSdkVersion 27
 	}
 
 	buildTypes {
@@ -23,6 +29,11 @@ android {
 	compileOptions {
 		sourceCompatibility JavaVersion.VERSION_1_8
 		targetCompatibility JavaVersion.VERSION_1_8
+	}
+
+	lintOptions {
+		/* Needed to build releases with low targetSdkVersion */
+		checkReleaseBuilds false
 	}
 }
 
