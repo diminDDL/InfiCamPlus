@@ -60,7 +60,6 @@ Short description of the C++ classes in jni/InfiCam dir:
 	- InfiCamJNI    whatever garbage is needed to glue InfiCam class to the Java end
 
 TODO
-	- 400 celcius range works quite badly because the float math falls apart below a certain temperature
 	- make sure there is space to show palette thing on the side (including lock icons!)
 	- double check that the measured numbers match the shown/captured frames
 		* for video we can just give sizes that are big enough as option
