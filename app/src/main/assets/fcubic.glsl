@@ -4,6 +4,7 @@ precision mediump float;
 uniform samplerExternalOES sTexture;
 varying vec2 texCoord;
 uniform vec2 texSize;
+uniform float sharpening;
 
 /* Uniform cubic B-spline basis functions. */
 vec4 cubic(float x) {
@@ -15,6 +16,17 @@ vec4 cubic(float x) {
 		-3.0 * x3 + 3.0 * x2 + 3.0 * x + 1.0,
 		x3
 	) / 6.0;
+}
+
+vec4 sharpen(vec2 texCoord) {
+	vec2 ts = 1.0 / texSize;
+	vec4 px = texture2D(sTexture, texCoord);
+	vec4 spx = px * 5.0;
+	spx -= texture2D(sTexture, texCoord + vec2(0.0, -ts.y));
+	spx -= texture2D(sTexture, texCoord + vec2(0.0, ts.y));
+	spx -= texture2D(sTexture, texCoord + vec2(-ts.x, 0));
+	spx -= texture2D(sTexture, texCoord + vec2(ts.x, 0));
+	return mix(px, spx, sharpening);
 }
 
 /* Do 4x4 cubic interpolation with remarkably few lookups by abusing the linear interpolation done
@@ -43,10 +55,18 @@ void main(void) {
 	vec4 pos = c + vec4(xc.y, xc.w, yc.y, yc.w) / s - 0.5;
 
 	/* Sample the 4 already linearly interpolated points. */
-	vec4 s0 = texture2D(sTexture, vec2(pos.x, pos.z) / texSize);
-	vec4 s1 = texture2D(sTexture, vec2(pos.y, pos.z) / texSize);
-	vec4 s2 = texture2D(sTexture, vec2(pos.x, pos.w) / texSize);
-	vec4 s3 = texture2D(sTexture, vec2(pos.y, pos.w) / texSize);
+	vec4 s0, s1, s2, s3;
+	if (sharpening > 0.0) {
+		s0 = sharpen(vec2(pos.x, pos.z) / texSize);
+		s1 = sharpen(vec2(pos.y, pos.z) / texSize);
+		s2 = sharpen(vec2(pos.x, pos.w) / texSize);
+		s3 = sharpen(vec2(pos.y, pos.w) / texSize);
+	} else {
+		s0 = texture2D(sTexture, vec2(pos.x, pos.z) / texSize);
+		s1 = texture2D(sTexture, vec2(pos.y, pos.z) / texSize);
+		s2 = texture2D(sTexture, vec2(pos.x, pos.w) / texSize);
+		s3 = texture2D(sTexture, vec2(pos.y, pos.w) / texSize);
+	}
 
 	/* Get weights per row/column. */
 	float sx = s.x / (s.x + s.y);
