@@ -66,7 +66,7 @@ TODO
 		* for video we can just give sizes that are big enough as option
 	- show average temp somewhere?
 	- showing of normal camera also (and allow choosing which one, rotation)
-	- overlaying normal camera
+	- overlaying normal camera (with edge detect)
 	- manual temperature range setting for the palettization
 		* maybe enter as center + span rather than min + max?
 	- deal with phone orientation (auto + allow user to choose, rotate markers etc)
