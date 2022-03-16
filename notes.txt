@@ -79,6 +79,15 @@ TODO
 	- occasionally video gets stock on black until go out of fullscreen mode, why?
 	- sometimes saved videos are broken, why and when?
 
+Notes about the current implentation for end users:
+	400c mode looks a bit quirky before a few calibration cycles, while it doesn't on xtherm
+	  the reason is that xtherm just scales the palette to the raw input data linearly but inficam
+	  first calculates the temperatures puts the palette on those, and below a certain point the
+	  temperatures can't be calculated at all. There still is some image information in the parts
+	  where temperatures can not be calculated, but if we want to make it visible we have to scale
+	  the palette beyond what we can slap a number in celcius on, and I don't see a sensible way to
+	  present this to the user hence I'll leave this as it is.
+
 Things i learned about the protocol these thermal cameras talk:
 	last 4 lines of the frame have parameters (note that the pointer math is in steps of 16 bytes because unsigned short)
 		unsigned short *fourLinePara = orgData + requestWidth * (requestHeight - 4);
