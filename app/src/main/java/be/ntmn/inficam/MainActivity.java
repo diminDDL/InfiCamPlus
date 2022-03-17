@@ -2,6 +2,7 @@ package be.ntmn.inficam;
 
 import static java.lang.Float.NaN;
 import static java.lang.Float.isNaN;
+import static java.lang.Math.abs;
 import static java.lang.Math.round;
 
 import android.Manifest;
@@ -33,9 +34,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
-import com.google.android.material.slider.RangeSlider;
-
 import java.io.IOException;
+import java.util.List;
 
 import be.ntmn.libinficam.InfiCam;
 
@@ -67,6 +67,7 @@ public class MainActivity extends BaseActivity {
 	private SettingsMeasure settingsMeasure;
 	private LinearLayout buttonsLeft, buttonsRight;
 	private ConstraintLayout.LayoutParams buttonsLeftLayout, buttonsRightLayout;
+	private SliderDouble rangeSlider;
 	private boolean rotate = false;
 	private int orientation = 0;
 	private boolean swapControls = false;
@@ -348,12 +349,32 @@ public class MainActivity extends BaseActivity {
 					overlayData.rangeMax = overlayData.fi.max;
 					infiCam.lockRange(overlayData.rangeMin, overlayData.rangeMax);
 					buttonLock.setImageResource(R.drawable.ic_baseline_lock_24);
+					rangeSlider.setVisibility(View.VISIBLE);
+					rangeSlider.setValues(overlayData.rangeMin, overlayData.rangeMax);
 				} else {
 					overlayData.rangeMin = overlayData.rangeMax = NaN;
 					infiCam.lockRange(NaN, NaN);
 					buttonLock.setImageResource(R.drawable.ic_baseline_lock_open_24);
+					rangeSlider.setVisibility(View.GONE);
 				}
 			}
+		});
+
+		rangeSlider = findViewById(R.id.rangeSlider);
+		rangeSlider.setValueFrom(-20.0f); // TODO grow the range if necessary, 400c range
+		rangeSlider.setValueTo(120.0f);
+		rangeSlider.setStepSize(1.0f);
+		rangeSlider.addOnChangeListener((slider, value, fromUser) -> {
+			List<Float> v = rangeSlider.getValuesCorrected();
+			if (v.size() < 2 || !fromUser)
+				return;
+			float min = v.get(1);
+			float max = v.get(0);
+			if (abs(overlayData.rangeMin - min) >= 1.0f)
+				overlayData.rangeMin = min;
+			if (abs(overlayData.rangeMax - max) >= 1.0f)
+				overlayData.rangeMax = max;
+			infiCam.lockRange(overlayData.rangeMin, overlayData.rangeMax);
 		});
 
 		ImageButton buttonVideo = findViewById(R.id.buttonVideo);
@@ -381,9 +402,6 @@ public class MainActivity extends BaseActivity {
 		buttonsRight = findViewById(R.id.buttonsRight);
 		buttonsLeftLayout = (ConstraintLayout.LayoutParams) buttonsLeft.getLayoutParams();
 		buttonsRightLayout = (ConstraintLayout.LayoutParams) buttonsRight.getLayoutParams();
-
-		RangeSlider rangeSlider = findViewById(R.id.rangeSlider);
-		rangeSlider.setValues(0.5f, 0.5f);
 	}
 
 	@Override

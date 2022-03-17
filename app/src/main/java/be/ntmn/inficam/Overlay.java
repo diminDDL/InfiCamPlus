@@ -125,22 +125,22 @@ public class Overlay {
 			int iclear = (int) (clear - (woutline * vRect.width()) / 2.0f);
 			paint.setColor(Color.WHITE);
 			if (width <= vRect.width()) {
-				formatTemp(sb, Float.isNaN(d.rangeMax) ? d.fi.max : d.rangeMax);
-				drawText(cvs, sb, vRect.right - clear, vRect.top + clear, false, true);
-				formatTemp(sb, Float.isNaN(d.rangeMin) ? d.fi.min : d.rangeMin);
-				drawText(cvs, sb, vRect.right - clear, vRect.bottom - clear, false, false);
 				drawPalette(cvs,
 						(int) (vRect.right - clear - pwidth * vRect.width()),
 						vRect.top + theight + clear * 2,
 						vRect.right - clear,
 						vRect.bottom - theight - clear * 2,
 						d.palette);
+				formatTemp(sb, Float.isNaN(d.rangeMax) ? d.fi.max : d.rangeMax);
+				drawText(cvs, sb, vRect.right - clear, vRect.top + clear, false, true);
 				if (!Float.isNaN(d.rangeMax)) {
 					int off = (int) paintTextOutline.measureText(sb, 0, sb.length());
 					lock.setBounds(vRect.right - clear - off - isize, vRect.top + iclear,
 							vRect.right - clear - off, vRect.top + iclear + isize);
 					lock.draw(cvs);
 				}
+				formatTemp(sb, Float.isNaN(d.rangeMin) ? d.fi.min : d.rangeMin);
+				drawText(cvs, sb, vRect.right - clear, vRect.bottom - clear, false, false);
 				if (!Float.isNaN(d.rangeMin)) {
 					int off = (int) paintTextOutline.measureText(sb, 0, sb.length());
 					lock.setBounds(vRect.right - clear - off - isize, vRect.bottom - iclear - isize,
