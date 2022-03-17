@@ -78,6 +78,7 @@ TODO ui stuff
 	- gallery to check pictures and videos taken
 	- show camera product and version info somewhere (perhaps when scroll down in settings)
 	- zooming the thermal image?
+	- choose which palettes are allowed for the next palette button
 
 TODO thermal camera things
 	- more measurement modes

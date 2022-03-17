@@ -33,6 +33,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
+import com.google.android.material.slider.RangeSlider;
+
 import java.io.IOException;
 
 import be.ntmn.libinficam.InfiCam;
@@ -339,6 +341,8 @@ public class MainActivity extends BaseActivity {
 		ImageButton buttonLock = findViewById(R.id.buttonLock);
 		buttonLock.setOnClickListener(view -> {
 			synchronized (frameLock) {
+				if (overlayData.fi == null)
+					return;
 				if (isNaN(overlayData.rangeMin) && isNaN(overlayData.rangeMax)) {
 					overlayData.rangeMin = overlayData.fi.min;
 					overlayData.rangeMax = overlayData.fi.max;
@@ -377,6 +381,9 @@ public class MainActivity extends BaseActivity {
 		buttonsRight = findViewById(R.id.buttonsRight);
 		buttonsLeftLayout = (ConstraintLayout.LayoutParams) buttonsLeft.getLayoutParams();
 		buttonsRightLayout = (ConstraintLayout.LayoutParams) buttonsRight.getLayoutParams();
+
+		RangeSlider rangeSlider = findViewById(R.id.rangeSlider);
+		rangeSlider.setValues(0.5f, 1.0f);
 	}
 
 	@Override
