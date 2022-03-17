@@ -45,6 +45,9 @@ public class OverlayMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		height = h;
 	}
 
+	public int getWidth() { return width; }
+	public int getHeight() { return height; }
+
 	public void setRect(Rect rect) {
 		this.rect.set(rect);
 		overlay.setRect(rect);

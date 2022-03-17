@@ -519,6 +519,9 @@ public class MainActivity extends BaseActivity {
 				overlayData.rotate = rotate;
 				inputSurface.setRotate(rotate);
 			}
+			final Rect r = new Rect(); /* If we're recording we update the rect for that. */
+			inputSurface.getRect(r, outRecord.getWidth(), outRecord.getHeight());
+			outRecord.setRect(r);
 		}
 	}
 
