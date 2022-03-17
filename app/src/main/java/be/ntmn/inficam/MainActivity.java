@@ -5,6 +5,7 @@ import static java.lang.Float.isNaN;
 import static java.lang.Math.round;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -365,6 +366,7 @@ public class MainActivity extends BaseActivity {
 		*/
 		updateOrientation();
 		orientationListener = new OrientationEventListener(this) {
+			@SuppressLint("SourceLockedOrientationActivity")
 			@Override
 			public void onOrientationChanged(int i) {
 				if (i == ORIENTATION_UNKNOWN)
@@ -507,6 +509,9 @@ public class MainActivity extends BaseActivity {
 			}
 		}
 		synchronized (frameLock) {
+			if (orientation == 90)
+				overlayData.rotate90 = true;
+			else overlayData.rotate90 = false;
 			if (orientation == 180) {
 				overlayData.rotate = !rotate;
 				inputSurface.setRotate(!rotate);

@@ -26,7 +26,7 @@ public class Overlay {
 		public float[] temp;
 		public int[] palette;
 		public float rangeMin = NaN, rangeMax = NaN;
-		public boolean rotate = false, mirror = false; /* Set by Settings. */
+		public boolean rotate = false, mirror = false, rotate90 = false; /* Set by Settings. */
 		public boolean showMin = false; /* Set by SettingsTherm. */
 		public boolean showMax = false;
 		public boolean showCenter = false;
@@ -106,7 +106,6 @@ public class Overlay {
 	@SuppressLint("DefaultLocale")
 	public void draw(Data d) {
 		Canvas cvs = surface.getSurface().lockCanvas(null);
-
 		cvs.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
 		if (d.showCenter) { // TODO this is off by a pixel and we should check the other points too
@@ -202,25 +201,25 @@ public class Overlay {
 		cvs.drawBitmap(paletteCache.bitmap, paletteCache.rectSrc, paletteCache.rectTgt, paint);
 	}
 
-	private float tpx(float p, Data d) {
-		p = (p + 0.5f) * vRect.width() / d.fi.width;
-		if (d.rotate)
-			p = vRect.width() - p;
-		if (d.mirror)
-			p = vRect.width() - p;
-		return vRect.left + p;
-	}
-
-	private float tpy(float p, Data d) {
-		p = (p + 0.5f) * vRect.height() / d.fi.height;
-		if (d.rotate)
-			p = vRect.height() - p;
-		return vRect.top + p;
-	}
-
 	private void drawTPoint(Canvas cvs, Data d, int tx, int ty, float temp) {
-		float xm = tpx(tx, d);
-		float ym = tpy(ty, d);
+		if (d.rotate90) {
+			int tmp = tx;
+			tx = d.fi.height - ty - 1;
+			ty = tmp;
+		}
+
+		float xm = (tx + 0.5f) * vRect.width() / (d.rotate90 ? d.fi.height : d.fi.width);
+		if (d.rotate)
+			xm = vRect.width() - xm;
+		if (d.mirror)
+			xm = vRect.width() - xm;
+		xm += vRect.left;
+
+		float ym = (ty + 0.5f) * vRect.height() / (d.rotate90 ? d.fi.width : d.fi.height);
+		if (d.rotate)
+			ym = vRect.height() - ym;
+		ym += vRect.top;
+
 		float smarkerw = smarker * vRect.width();
 
 		cvs.drawLine(xm - smarkerw, ym, xm + smarkerw, ym, paintOutline);
