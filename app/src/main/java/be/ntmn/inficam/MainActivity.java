@@ -9,6 +9,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
@@ -28,6 +29,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import java.io.IOException;
 
@@ -58,7 +60,8 @@ public class MainActivity extends BaseActivity {
 	private SettingsMain settings;
 	private SettingsTherm settingsTherm;
 	private SettingsMeasure settingsMeasure;
-	private ViewGroup.LayoutParams buttonsLeftLayout, buttonsRightLayout;
+	private ConstraintLayout.LayoutParams buttonsLeftLayout, buttonsRightLayout;
+	private boolean swapControls = false;
 
 	private long shutterIntervalInitial; /* These are set by Settings class later. */
 	private long shutterInterval; /* Xtherm does it 1 sec after connect and then every 380 sec. */
@@ -345,8 +348,8 @@ public class MainActivity extends BaseActivity {
 
 		LinearLayout left = findViewById(R.id.buttonsLeft);
 		LinearLayout right = findViewById(R.id.buttonsRight);
-		buttonsLeftLayout = left.getLayoutParams();
-		buttonsRightLayout = right.getLayoutParams();
+		buttonsLeftLayout = (ConstraintLayout.LayoutParams) left.getLayoutParams();
+		buttonsRightLayout = (ConstraintLayout.LayoutParams) right.getLayoutParams();
 	}
 
 	@Override
@@ -402,6 +405,61 @@ public class MainActivity extends BaseActivity {
 		outScreen.release();
 		surfaceMuxer.release();
 		super.onDestroy();
+	}
+
+	@Override
+	public void onConfigurationChanged(@NonNull Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
+		LinearLayout left = findViewById(R.id.buttonsLeft);
+		LinearLayout right = findViewById(R.id.buttonsRight);
+		if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+			left.setOrientation(LinearLayout.HORIZONTAL);
+			right.setOrientation(LinearLayout.HORIZONTAL);
+			buttonsLeftLayout.width = ViewGroup.LayoutParams.MATCH_PARENT;
+			buttonsLeftLayout.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+			buttonsLeftLayout.topToTop = ConstraintLayout.LayoutParams.UNSET;
+			buttonsLeftLayout.bottomToBottom = R.id.mainLayout;
+			buttonsLeftLayout.leftToLeft = R.id.mainLayout;
+			buttonsLeftLayout.rightToRight = R.id.mainLayout;
+			buttonsRightLayout.width = ViewGroup.LayoutParams.MATCH_PARENT;
+			buttonsRightLayout.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+			buttonsRightLayout.topToTop = R.id.mainLayout;
+			buttonsRightLayout.bottomToBottom = ConstraintLayout.LayoutParams.UNSET;
+			buttonsRightLayout.leftToLeft = R.id.mainLayout;
+			buttonsRightLayout.rightToRight = R.id.mainLayout;
+			left.setLayoutParams(buttonsLeftLayout);
+			right.setLayoutParams(buttonsRightLayout);
+			left.setLayoutParams(buttonsLeftLayout);
+			right.setLayoutParams(buttonsRightLayout);
+			left.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
+			right.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
+		} else {
+			left.setOrientation(LinearLayout.VERTICAL);
+			right.setOrientation(LinearLayout.VERTICAL);
+			buttonsLeftLayout.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+			buttonsLeftLayout.height = ViewGroup.LayoutParams.MATCH_PARENT;
+			buttonsLeftLayout.topToTop = ConstraintLayout.LayoutParams.UNSET;
+			buttonsLeftLayout.bottomToBottom = R.id.mainLayout;
+			buttonsLeftLayout.leftToLeft = R.id.mainLayout;
+			buttonsLeftLayout.rightToRight = R.id.mainLayout;
+			buttonsRightLayout.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+			buttonsRightLayout.height = ViewGroup.LayoutParams.MATCH_PARENT;
+			buttonsRightLayout.topToTop = R.id.mainLayout;
+			buttonsRightLayout.bottomToBottom = ConstraintLayout.LayoutParams.UNSET;
+			buttonsRightLayout.leftToLeft = R.id.mainLayout;
+			buttonsRightLayout.rightToRight = R.id.mainLayout;
+			if (swapControls) {
+				left.setLayoutParams(buttonsRightLayout);
+				right.setLayoutParams(buttonsLeftLayout);
+				left.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
+				right.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+			} else {
+				left.setLayoutParams(buttonsLeftLayout);
+				right.setLayoutParams(buttonsRightLayout);
+				left.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+				right.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
+			}
+		}
 	}
 
 	private void showSettings(Settings settings) {
@@ -525,6 +583,8 @@ public class MainActivity extends BaseActivity {
 	}
 
 	public void setSwapControls(boolean value) {
+		swapControls = value;
+		// TODO what if portrait?
 		LinearLayout left = findViewById(R.id.buttonsLeft);
 		LinearLayout right = findViewById(R.id.buttonsRight);
 		if (value) {

@@ -4,7 +4,7 @@
 	xmlns:app="http://schemas.android.com/apk/res-auto"
 	xmlns:tools="http://schemas.android.com/tools"
 	tools:context=".MainActivity"
-	android:id="@+id/constraintLayout"
+	android:id="@+id/mainLayout"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
 	android:background="@color/black" >
@@ -19,14 +19,13 @@
 		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintStart_toStartOf="parent" />
 
-	<!-- elevation is like z-order -->
+	<!-- Elevation is like z-order. -->
 	<LinearLayout
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:orientation="vertical"
 		android:elevation="10dp"
 		android:id="@+id/buttonsLeft"
-		android:gravity="start"
 		app:layout_constraintTop_toTopOf="parent"
 		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintStart_toStartOf="parent">
@@ -101,7 +100,6 @@
 		android:orientation="vertical"
 		android:elevation="10dp"
 		android:id="@+id/buttonsRight"
-		android:gravity="end"
 		app:layout_constraintTop_toTopOf="parent"
 		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintEnd_toEndOf="parent">
