@@ -2,6 +2,7 @@ package be.ntmn.inficam;
 
 import static java.lang.Float.NaN;
 import static java.lang.Float.isNaN;
+import static java.lang.Math.abs;
 import static java.lang.Math.round;
 
 import android.Manifest;
@@ -14,10 +15,12 @@ import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.hardware.SensorManager;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.BatteryManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.OrientationEventListener;
 import android.view.Surface;
@@ -25,6 +28,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -378,17 +382,24 @@ public class MainActivity extends BaseActivity {
 			public void onOrientationChanged(int i) {
 				if (i == ORIENTATION_UNKNOWN || !autoOrientation)
 					return;
+
+				int rotation = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRotation();
+				Log.e("test", "rotation = " + rotation);
+
 				int newOrientation;
 				if (i < 45)
 					newOrientation = 90;
 				else if (i < 180)
 					newOrientation = 180;
-				else if (i < 315)
+				else if (i <= 315)
 					newOrientation = 0;
-				else /* if (i < 315) */
+				else /* if (i > 315) */
 					newOrientation = 90;
-				if (newOrientation != orientation)
-					updateOrientation(newOrientation);
+				Log.e("rot", "i = " + i);
+				/* Check how far off 45/90/180 degrees we are, for hysteresis window. */
+				int dst = abs((i + 90) - round((i + 90) / 135.0f) * 135);
+				if (newOrientation != orientation && dst > 5)
+					updateOrientation(newOrientation, true);
 			}
 		};
 	}
@@ -458,19 +469,21 @@ public class MainActivity extends BaseActivity {
 	}
 
 	@SuppressLint("SourceLockedOrientationActivity")
-	private void updateOrientation(int orientation) {
+	private void updateOrientation(int orientation, boolean set) {
 		this.orientation = orientation;
-		switch (orientation) {
-			case 0:
-				setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-				break;
-			case 90:
-				setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-				break;
-			case 180:
-				setRequestedOrientation(
-						ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE);
-				break;
+		if (set) {
+			switch (orientation) {
+				case 0:
+					setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+					break;
+				case 90:
+					setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+					break;
+				case 180:
+					setRequestedOrientation(
+							ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE);
+					break;
+			}
 		}
 		if (orientation == 90) {
 			inputSurface.setRotate90(true);
@@ -661,7 +674,7 @@ public class MainActivity extends BaseActivity {
 
 	public void setSwapControls(boolean value) {
 		swapControls = value;
-		updateOrientation(orientation);
+		updateOrientation(orientation, false);
 	}
 
 	public void setShowBatLevel(boolean value) {
@@ -676,7 +689,7 @@ public class MainActivity extends BaseActivity {
 
 	public void setRotate(boolean value) {
 		rotate = value;
-		updateOrientation(orientation);
+		updateOrientation(orientation, false);
 	}
 
 	public void setMirror(boolean value) {
@@ -724,7 +737,12 @@ public class MainActivity extends BaseActivity {
 		if (i != ORIENTATION_AUTO) {
 			orientation = i;
 			autoOrientation = false;
-		} else autoOrientation = true;
-		updateOrientation(orientation);
+			updateOrientation(orientation, true);
+		} else {
+			autoOrientation = true;
+			int rotation = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRotation();
+			Log.e("test", "rotation = " + rotation);
+			updateOrientation(orientation, false);
+		}
 	}
 }

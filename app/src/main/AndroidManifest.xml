@@ -33,7 +33,6 @@
 			android:launchMode="singleTop"
 			android:directBootAware="true"
 			android:configChanges="keyboardHidden|orientation|screenSize"
-			android:screenOrientation="landscape"
 			tools:targetApi="n">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
