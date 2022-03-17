@@ -374,7 +374,6 @@ public class MainActivity extends BaseActivity {
 		* SettingsMain will call updateOrientation() so we don't need to worry about that part now.
 		*/
 		orientationListener = new OrientationEventListener(this) {
-			@SuppressLint("SourceLockedOrientationActivity")
 			@Override
 			public void onOrientationChanged(int i) {
 				if (i == ORIENTATION_UNKNOWN || !autoOrientation)
@@ -449,6 +448,13 @@ public class MainActivity extends BaseActivity {
 		outScreen.release();
 		surfaceMuxer.release();
 		super.onDestroy();
+	}
+
+	@Override
+	public void onBackPressed() {
+		if (dialogBackground.getVisibility() == View.VISIBLE)
+			dialogBackground.setVisibility(View.GONE);
+		else super.onBackPressed();
 	}
 
 	@SuppressLint("SourceLockedOrientationActivity")
