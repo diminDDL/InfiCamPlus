@@ -32,8 +32,7 @@
 			android:exported="true"
 			android:launchMode="singleTop"
 			android:directBootAware="true"
-
-			android:configChanges="keyboardHidden|orientation"
+			android:configChanges="keyboardHidden|orientation|screenSize"
 			tools:targetApi="n">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
