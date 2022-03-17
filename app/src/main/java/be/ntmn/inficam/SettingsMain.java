@@ -1,6 +1,7 @@
 package be.ntmn.inficam;
 
 import android.content.Context;
+import android.content.pm.ActivityInfo;
 import android.util.AttributeSet;
 
 import androidx.annotation.Nullable;
@@ -157,7 +158,12 @@ public class SettingsMain extends Settings {
 			}) {
 			@Override
 			void onSet(int value) {
-				act.setOrientation(new int[] { MainActivity.ORIENTATION_AUTO, 0, 90, 180 }[value]);
+				act.setOrientation(new int[] {
+						ActivityInfo.SCREEN_ORIENTATION_FULL_USER,
+						ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE,
+						ActivityInfo.SCREEN_ORIENTATION_PORTRAIT,
+						ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE
+					}[value]);
 			}
 		},
 		settingDefaults

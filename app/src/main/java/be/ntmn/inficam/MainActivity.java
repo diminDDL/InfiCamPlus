@@ -2,7 +2,6 @@ package be.ntmn.inficam;
 
 import static java.lang.Float.NaN;
 import static java.lang.Float.isNaN;
-import static java.lang.Math.abs;
 import static java.lang.Math.round;
 
 import android.Manifest;
@@ -11,18 +10,15 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
-import android.hardware.SensorManager;
+import android.hardware.display.DisplayManager;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.BatteryManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Gravity;
-import android.view.OrientationEventListener;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -42,8 +38,6 @@ import java.io.IOException;
 import be.ntmn.libinficam.InfiCam;
 
 public class MainActivity extends BaseActivity {
-	public static int ORIENTATION_AUTO = 999;
-
 	/* These are public for Settings things to access them. */
 	public final InfiCam infiCam = new InfiCam();
 
@@ -63,6 +57,7 @@ public class MainActivity extends BaseActivity {
 	private final SurfaceRecorder recorder = new SurfaceRecorder();
 	private boolean recordAudio;
 
+	private SurfaceView cameraView;
 	private MessageView messageView;
 	private ViewGroup dialogBackground;
 	private SettingsMain settings;
@@ -70,10 +65,9 @@ public class MainActivity extends BaseActivity {
 	private SettingsMeasure settingsMeasure;
 	private LinearLayout buttonsLeft, buttonsRight;
 	private ConstraintLayout.LayoutParams buttonsLeftLayout, buttonsRightLayout;
-	private boolean rotate = false, autoOrientation = false;
+	private boolean rotate = false;
 	private int orientation = 0;
 	private boolean swapControls = false;
-	private OrientationEventListener orientationListener;
 
 	private long shutterIntervalInitial; /* These are set by Settings class later. */
 	private long shutterInterval; /* Xtherm does it 1 sec after connect and then every 380 sec. */
@@ -178,6 +172,26 @@ public class MainActivity extends BaseActivity {
 		}
 	};
 
+	/* If the orientation changes between 0 and 180 or 90 and 270 suddenly, onDisplayChanged()
+	 *   is called, but not onConfigurationChanged().
+	 */
+	private final DisplayManager.DisplayListener displayListener =
+			new DisplayManager.DisplayListener() {
+		@Override
+		public void onDisplayAdded(int displayId) { /* Empty. */}
+
+		@Override
+		public void onDisplayChanged(int displayId) { updateOrientation(); }
+
+		@Override
+		public void onDisplayRemoved(int displayId) { /* Empty. */ }
+	};
+
+	private final BroadcastReceiver batteryRecevier = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) { updateBatLevel(intent); }
+	};
+
 	/* The way this works is that first the thermal image on inputSurface gets written, then
 	 *   the frame callback runs, we copy over the info to overlayData, ask handleFrame() to be
 	 *   called on the main thread and then we hold off on returning from the callback until that
@@ -228,7 +242,7 @@ public class MainActivity extends BaseActivity {
 			if (takePic) {
 				final Rect r = new Rect();
 				int w = picWidth, h = picHeight;
-				if (orientation == 90) {
+				if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180) {
 					int tmp = w;
 					w = h;
 					h = tmp;
@@ -257,7 +271,7 @@ public class MainActivity extends BaseActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		SurfaceView cameraView = findViewById(R.id.cameraView);
+		cameraView = findViewById(R.id.cameraView);
 		messageView = findViewById(R.id.message);
 		surfaceMuxer = new SurfaceMuxer(this);
 
@@ -269,7 +283,7 @@ public class MainActivity extends BaseActivity {
 				/* Make size 4:3 aspect ratio for the thermal image, I'd check the actual camera
 				 *   dimensions but this function gets used before the camera is connected.
 				 */
-				if (orientation == 90) {
+				if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180) {
 					ih = 4;
 					iw = 3;
 				}
@@ -341,15 +355,6 @@ public class MainActivity extends BaseActivity {
 		ImageButton buttonVideo = findViewById(R.id.buttonVideo);
 		buttonVideo.setOnClickListener(view -> toggleRecording());
 
-		IntentFilter batIFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-		Intent batteryStatus = registerReceiver(new BroadcastReceiver() {
-			@Override
-			public void onReceive(Context context, Intent intent) {
-				updateBatLevel(intent);
-			}
-		}, batIFilter);
-		updateBatLevel(batteryStatus);
-
 		dialogBackground = findViewById(R.id.dialogBackground);
 		dialogBackground.setOnClickListener(view -> dialogBackground.setVisibility(View.GONE));
 		settings = findViewById(R.id.settings);
@@ -372,36 +377,6 @@ public class MainActivity extends BaseActivity {
 		buttonsRight = findViewById(R.id.buttonsRight);
 		buttonsLeftLayout = (ConstraintLayout.LayoutParams) buttonsLeft.getLayoutParams();
 		buttonsRightLayout = (ConstraintLayout.LayoutParams) buttonsRight.getLayoutParams();
-
-		/* We handle orientation ourselves because Android is dumb and if we let the system do it
-		*    there's only guessing whether we're in landscape or upside down landscape mode.
-		* SettingsMain will call updateOrientation() so we don't need to worry about that part now.
-		*/
-		orientationListener = new OrientationEventListener(this) {
-			@Override
-			public void onOrientationChanged(int i) {
-				if (i == ORIENTATION_UNKNOWN || !autoOrientation)
-					return;
-
-				int rotation = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRotation();
-				Log.e("test", "rotation = " + rotation);
-
-				int newOrientation;
-				if (i < 45)
-					newOrientation = 90;
-				else if (i < 180)
-					newOrientation = 180;
-				else if (i <= 315)
-					newOrientation = 0;
-				else /* if (i > 315) */
-					newOrientation = 90;
-				Log.e("rot", "i = " + i);
-				/* Check how far off 45/90/180 degrees we are, for hysteresis window. */
-				int dst = abs((i + 90) - round((i + 90) / 135.0f) * 135);
-				if (newOrientation != orientation && dst > 5)
-					updateOrientation(newOrientation, true);
-			}
-		};
 	}
 
 	@Override
@@ -410,7 +385,11 @@ public class MainActivity extends BaseActivity {
 		settings.load();
 		settingsTherm.load();
 		settingsMeasure.load();
-		orientationListener.enable();
+		DisplayManager displayManager = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
+		displayManager.registerDisplayListener(displayListener, handler);
+		IntentFilter batIFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+		Intent batteryStatus = registerReceiver(batteryRecevier, batIFilter);
+		updateBatLevel(batteryStatus);
 
 		/* Beware that we can't call these in onResume as they'll ask permission with dialogs and
 		 *   thus trigger another onResume().
@@ -447,7 +426,9 @@ public class MainActivity extends BaseActivity {
 
 	@Override
 	protected void onStop() {
-		orientationListener.disable();
+		unregisterReceiver(batteryRecevier);
+		DisplayManager displayManager = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
+		displayManager.unregisterDisplayListener(displayListener);
 		stopRecording();
 		disconnect();
 		usbMonitor.stop();
@@ -469,23 +450,10 @@ public class MainActivity extends BaseActivity {
 	}
 
 	@SuppressLint("SourceLockedOrientationActivity")
-	private void updateOrientation(int orientation, boolean set) {
-		this.orientation = orientation;
-		if (set) {
-			switch (orientation) {
-				case 0:
-					setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-					break;
-				case 90:
-					setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-					break;
-				case 180:
-					setRequestedOrientation(
-							ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE);
-					break;
-			}
-		}
-		if (orientation == 90) {
+	private void updateOrientation() { /* Called on start by SettingsMain. */
+		WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+		orientation = wm.getDefaultDisplay().getRotation();
+		if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180) {
 			inputSurface.setRotate90(true);
 			buttonsLeft.setOrientation(LinearLayout.HORIZONTAL);
 			buttonsRight.setOrientation(LinearLayout.HORIZONTAL);
@@ -536,19 +504,24 @@ public class MainActivity extends BaseActivity {
 			}
 		}
 		synchronized (frameLock) {
-			if (orientation == 90)
+			if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180)
 				overlayData.rotate90 = true;
 			else overlayData.rotate90 = false;
-			if (orientation == 180) {
+			if (orientation == Surface.ROTATION_270 || orientation == Surface.ROTATION_180) {
 				overlayData.rotate = !rotate;
 				inputSurface.setRotate(!rotate);
 			} else {
 				overlayData.rotate = rotate;
 				inputSurface.setRotate(rotate);
 			}
-			final Rect r = new Rect(); /* If we're recording we update the rect for that. */
+			/* Sometimes full 180 rotation doesn't trigger onSurfaceChanged() so we update the rect
+			 *   here too.
+			 */
+			final Rect r = new Rect();
+			inputSurface.getRect(r, cameraView.getWidth(), cameraView.getHeight());
+			outScreen.setRect(r);
 			inputSurface.getRect(r, outRecord.getWidth(), outRecord.getHeight());
-			outRecord.setRect(r);
+			outRecord.setRect(r); /* Also the rect for video recording should be updated. */
 		}
 	}
 
@@ -674,7 +647,7 @@ public class MainActivity extends BaseActivity {
 
 	public void setSwapControls(boolean value) {
 		swapControls = value;
-		updateOrientation(orientation, false);
+		updateOrientation();
 	}
 
 	public void setShowBatLevel(boolean value) {
@@ -689,7 +662,7 @@ public class MainActivity extends BaseActivity {
 
 	public void setRotate(boolean value) {
 		rotate = value;
-		updateOrientation(orientation, false);
+		updateOrientation();
 	}
 
 	public void setMirror(boolean value) {
@@ -734,15 +707,7 @@ public class MainActivity extends BaseActivity {
 	}
 
 	public void setOrientation(int i) {
-		if (i != ORIENTATION_AUTO) {
-			orientation = i;
-			autoOrientation = false;
-			updateOrientation(orientation, true);
-		} else {
-			autoOrientation = true;
-			int rotation = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRotation();
-			Log.e("test", "rotation = " + rotation);
-			updateOrientation(orientation, false);
-		}
+		setRequestedOrientation(i);
+		updateOrientation();
 	}
 }
