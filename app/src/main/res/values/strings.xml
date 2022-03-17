@@ -45,6 +45,7 @@
 	<string name="set_show_bat_level">Show battery level</string>
 	<string name="set_pic_res">Picture output resolution</string>
 	<string name="set_vid_res">Video output resolution</string>
+	<string name="set_orientation">Orientation</string>
 	<string name="set_defaults">Reset to defaults</string>
 
 	<string name="set_show_min">Show min temperature</string>
@@ -83,4 +84,9 @@
 	<string name="picres_1600">1600x1200 (4:3)</string>
 	<string name="picres_720w">1280x720 (16:9)</string>
 	<string name="picres_1080w">1920x1080 (16:9)</string>
+
+	<string name="orientation_auto">Automatic</string>
+	<string name="orientation_landscape">Landscape</string>
+	<string name="orientation_portrait">Portrait</string>
+	<string name="orientation_reverse">Reverse landscape</string>
 </resources>

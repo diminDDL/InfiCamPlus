@@ -38,6 +38,8 @@ import java.io.IOException;
 import be.ntmn.libinficam.InfiCam;
 
 public class MainActivity extends BaseActivity {
+	public static int ORIENTATION_AUTO = 999;
+
 	/* These are public for Settings things to access them. */
 	public final InfiCam infiCam = new InfiCam();
 
@@ -64,7 +66,7 @@ public class MainActivity extends BaseActivity {
 	private SettingsMeasure settingsMeasure;
 	private LinearLayout buttonsLeft, buttonsRight;
 	private ConstraintLayout.LayoutParams buttonsLeftLayout, buttonsRightLayout;
-	private boolean rotate = false;
+	private boolean rotate = false, autoOrientation = false;
 	private int orientation = 0;
 	private boolean swapControls = false;
 	private OrientationEventListener orientationListener;
@@ -363,13 +365,13 @@ public class MainActivity extends BaseActivity {
 
 		/* We handle orientation ourselves because Android is dumb and if we let the system do it
 		*    there's only guessing whether we're in landscape or upside down landscape mode.
+		* SettingsMain will call updateOrientation() so we don't need to worry about that part now.
 		*/
-		updateOrientation();
 		orientationListener = new OrientationEventListener(this) {
 			@SuppressLint("SourceLockedOrientationActivity")
 			@Override
 			public void onOrientationChanged(int i) {
-				if (i == ORIENTATION_UNKNOWN)
+				if (i == ORIENTATION_UNKNOWN || !autoOrientation)
 					return;
 				int newOrientation;
 				if (i < 45)
@@ -380,22 +382,8 @@ public class MainActivity extends BaseActivity {
 					newOrientation = 0;
 				else /* if (i < 315) */
 					newOrientation = 90;
-				if (newOrientation != orientation) {
-					orientation = newOrientation;
-					switch (orientation) {
-						case 0:
-							setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-							break;
-						case 90:
-							setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-							break;
-						case 180:
-							setRequestedOrientation(
-									ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE);
-							break;
-					}
-					updateOrientation();
-				}
+				if (newOrientation != orientation)
+					updateOrientation(newOrientation);
 			}
 		};
 	}
@@ -457,7 +445,21 @@ public class MainActivity extends BaseActivity {
 		super.onDestroy();
 	}
 
-	private void updateOrientation() {
+	@SuppressLint("SourceLockedOrientationActivity")
+	private void updateOrientation(int orientation) {
+		this.orientation = orientation;
+		switch (orientation) {
+			case 0:
+				setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+				break;
+			case 90:
+				setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+				break;
+			case 180:
+				setRequestedOrientation(
+						ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE);
+				break;
+		}
 		if (orientation == 90) {
 			inputSurface.setRotate90(true);
 			buttonsLeft.setOrientation(LinearLayout.HORIZONTAL);
@@ -647,7 +649,7 @@ public class MainActivity extends BaseActivity {
 
 	public void setSwapControls(boolean value) {
 		swapControls = value;
-		updateOrientation();
+		updateOrientation(orientation);
 	}
 
 	public void setShowBatLevel(boolean value) {
@@ -662,7 +664,7 @@ public class MainActivity extends BaseActivity {
 
 	public void setRotate(boolean value) {
 		rotate = value;
-		updateOrientation();
+		updateOrientation(orientation);
 	}
 
 	public void setMirror(boolean value) {
@@ -704,5 +706,13 @@ public class MainActivity extends BaseActivity {
 	public void setVidSize(int w, int h) {
 		vidWidth = w;
 		vidHeight = h;
+	}
+
+	public void setOrientation(int i) {
+		if (i != ORIENTATION_AUTO) {
+			orientation = i;
+			autoOrientation = false;
+		} else autoOrientation = true;
+		updateOrientation(orientation);
 	}
 }

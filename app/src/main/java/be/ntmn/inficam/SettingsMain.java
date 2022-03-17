@@ -149,6 +149,17 @@ public class SettingsMain extends Settings {
 				act.setVidSize(w, h);
 			}
 		},
+		new SettingRadio("orientation", R.string.set_orientation, 0, new int[] {
+				R.string.orientation_auto,
+				R.string.orientation_landscape,
+				R.string.orientation_portrait,
+				R.string.orientation_reverse
+			}) {
+			@Override
+			void onSet(int value) {
+				act.setOrientation(new int[] { MainActivity.ORIENTATION_AUTO, 0, 90, 180 }[value]);
+			}
+		},
 		settingDefaults
 	};
 }
