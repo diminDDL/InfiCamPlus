@@ -344,6 +344,10 @@ public class MainActivity extends BaseActivity {
 			synchronized (frameLock) {
 				if (overlayData.fi == null)
 					return;
+				// TODO don't lock when fi.min/max is NaN
+				// TODO grow range if needed
+				// TODO 400c range
+				// TODO portrait
 				if (isNaN(overlayData.rangeMin) && isNaN(overlayData.rangeMax)) {
 					overlayData.rangeMin = overlayData.fi.min;
 					overlayData.rangeMax = overlayData.fi.max;
@@ -361,19 +365,15 @@ public class MainActivity extends BaseActivity {
 		});
 
 		rangeSlider = findViewById(R.id.rangeSlider);
-		rangeSlider.setValueFrom(-20.0f); // TODO grow the range if necessary, 400c range
-		rangeSlider.setValueTo(120.0f);
+		rangeSlider.setValueFrom(120.0f); // TODO grow the range if necessary, 400c range
+		rangeSlider.setValueTo(-20.0f);
 		rangeSlider.setStepSize(1.0f);
 		rangeSlider.addOnChangeListener((slider, value, fromUser) -> {
 			List<Float> v = rangeSlider.getValuesCorrected();
 			if (v.size() < 2 || !fromUser)
 				return;
-			float min = v.get(1);
-			float max = v.get(0);
-			if (abs(overlayData.rangeMin - min) >= 1.0f)
-				overlayData.rangeMin = min;
-			if (abs(overlayData.rangeMax - max) >= 1.0f)
-				overlayData.rangeMax = max;
+			overlayData.rangeMin = v.get(1);
+			overlayData.rangeMax = v.get(0);
 			infiCam.lockRange(overlayData.rangeMin, overlayData.rangeMax);
 		});
 
