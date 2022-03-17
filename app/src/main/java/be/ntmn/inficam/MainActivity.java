@@ -60,7 +60,9 @@ public class MainActivity extends BaseActivity {
 	private SettingsMain settings;
 	private SettingsTherm settingsTherm;
 	private SettingsMeasure settingsMeasure;
+	private LinearLayout buttonsLeft, buttonsRight;
 	private ConstraintLayout.LayoutParams buttonsLeftLayout, buttonsRightLayout;
+	private int orientation;
 	private boolean swapControls = false;
 
 	private long shutterIntervalInitial; /* These are set by Settings class later. */
@@ -346,10 +348,12 @@ public class MainActivity extends BaseActivity {
 		ImageButton buttonSettingsMeasure = findViewById(R.id.buttonSettingsMeasure);
 		buttonSettingsMeasure.setOnClickListener(view -> showSettings(settingsMeasure));
 
-		LinearLayout left = findViewById(R.id.buttonsLeft);
-		LinearLayout right = findViewById(R.id.buttonsRight);
-		buttonsLeftLayout = (ConstraintLayout.LayoutParams) left.getLayoutParams();
-		buttonsRightLayout = (ConstraintLayout.LayoutParams) right.getLayoutParams();
+		buttonsLeft = findViewById(R.id.buttonsLeft);
+		buttonsRight = findViewById(R.id.buttonsRight);
+		buttonsLeftLayout = (ConstraintLayout.LayoutParams) buttonsLeft.getLayoutParams();
+		buttonsRightLayout = (ConstraintLayout.LayoutParams) buttonsRight.getLayoutParams();
+		orientation = getResources().getConfiguration().orientation;
+		/* SettingsMain.load() will call setSwapButtons() and thus updateOrientation(). */
 	}
 
 	@Override
@@ -410,32 +414,35 @@ public class MainActivity extends BaseActivity {
 	@Override
 	public void onConfigurationChanged(@NonNull Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
-		LinearLayout left = findViewById(R.id.buttonsLeft);
-		LinearLayout right = findViewById(R.id.buttonsRight);
-		if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
-			left.setOrientation(LinearLayout.HORIZONTAL);
-			right.setOrientation(LinearLayout.HORIZONTAL);
+		orientation = newConfig.orientation;
+		updateOrientation();
+	}
+
+	private void updateOrientation() {
+		if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+			buttonsLeft.setOrientation(LinearLayout.HORIZONTAL);
+			buttonsRight.setOrientation(LinearLayout.HORIZONTAL);
 			buttonsLeftLayout.width = ViewGroup.LayoutParams.MATCH_PARENT;
 			buttonsLeftLayout.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-			buttonsLeftLayout.topToTop = ConstraintLayout.LayoutParams.UNSET;
-			buttonsLeftLayout.bottomToBottom = R.id.mainLayout;
+			buttonsLeftLayout.topToTop = R.id.mainLayout;
+			buttonsLeftLayout.bottomToBottom = ConstraintLayout.LayoutParams.UNSET;
 			buttonsLeftLayout.leftToLeft = R.id.mainLayout;
 			buttonsLeftLayout.rightToRight = R.id.mainLayout;
 			buttonsRightLayout.width = ViewGroup.LayoutParams.MATCH_PARENT;
 			buttonsRightLayout.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-			buttonsRightLayout.topToTop = R.id.mainLayout;
-			buttonsRightLayout.bottomToBottom = ConstraintLayout.LayoutParams.UNSET;
+			buttonsRightLayout.topToTop = ConstraintLayout.LayoutParams.UNSET;
+			buttonsRightLayout.bottomToBottom = R.id.mainLayout;
 			buttonsRightLayout.leftToLeft = R.id.mainLayout;
 			buttonsRightLayout.rightToRight = R.id.mainLayout;
-			left.setLayoutParams(buttonsLeftLayout);
-			right.setLayoutParams(buttonsRightLayout);
-			left.setLayoutParams(buttonsLeftLayout);
-			right.setLayoutParams(buttonsRightLayout);
-			left.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
-			right.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
+			buttonsLeft.setLayoutParams(buttonsLeftLayout);
+			buttonsRight.setLayoutParams(buttonsRightLayout);
+			buttonsLeft.setLayoutParams(buttonsLeftLayout);
+			buttonsRight.setLayoutParams(buttonsRightLayout);
+			buttonsLeft.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
+			buttonsRight.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
 		} else {
-			left.setOrientation(LinearLayout.VERTICAL);
-			right.setOrientation(LinearLayout.VERTICAL);
+			buttonsLeft.setOrientation(LinearLayout.VERTICAL);
+			buttonsRight.setOrientation(LinearLayout.VERTICAL);
 			buttonsLeftLayout.width = ViewGroup.LayoutParams.WRAP_CONTENT;
 			buttonsLeftLayout.height = ViewGroup.LayoutParams.MATCH_PARENT;
 			buttonsLeftLayout.topToTop = ConstraintLayout.LayoutParams.UNSET;
@@ -449,15 +456,15 @@ public class MainActivity extends BaseActivity {
 			buttonsRightLayout.leftToLeft = R.id.mainLayout;
 			buttonsRightLayout.rightToRight = R.id.mainLayout;
 			if (swapControls) {
-				left.setLayoutParams(buttonsRightLayout);
-				right.setLayoutParams(buttonsLeftLayout);
-				left.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
-				right.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+				buttonsLeft.setLayoutParams(buttonsRightLayout);
+				buttonsRight.setLayoutParams(buttonsLeftLayout);
+				buttonsLeft.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
+				buttonsRight.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
 			} else {
-				left.setLayoutParams(buttonsLeftLayout);
-				right.setLayoutParams(buttonsRightLayout);
-				left.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
-				right.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
+				buttonsLeft.setLayoutParams(buttonsLeftLayout);
+				buttonsRight.setLayoutParams(buttonsRightLayout);
+				buttonsLeft.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+				buttonsRight.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
 			}
 		}
 	}
@@ -584,20 +591,7 @@ public class MainActivity extends BaseActivity {
 
 	public void setSwapControls(boolean value) {
 		swapControls = value;
-		// TODO what if portrait?
-		LinearLayout left = findViewById(R.id.buttonsLeft);
-		LinearLayout right = findViewById(R.id.buttonsRight);
-		if (value) {
-			left.setLayoutParams(buttonsRightLayout);
-			right.setLayoutParams(buttonsLeftLayout);
-			left.setGravity(Gravity.END);
-			right.setGravity(Gravity.START);
-		} else {
-			left.setLayoutParams(buttonsLeftLayout);
-			right.setLayoutParams(buttonsRightLayout);
-			left.setGravity(Gravity.START);
-			right.setGravity(Gravity.END);
-		}
+		updateOrientation();
 	}
 
 	public void setShowBatLevel(boolean value) {

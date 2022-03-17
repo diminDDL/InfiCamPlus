@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
 import android.view.WindowManager;
 
 import java.util.ArrayList;
@@ -30,12 +31,16 @@ public class BaseActivity extends AppCompatActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		View dv = getWindow().getDecorView();
+		Window win = getWindow();
+		View dv = win.getDecorView();
 		dv.setOnSystemUiVisibilityChangeListener(i -> {
 			if ((i & View.SYSTEM_UI_FLAG_FULLSCREEN) != 0)
 				return;
 			deferHide();
 		});
+		WindowManager.LayoutParams par = win.getAttributes();
+		par.rotationAnimation = WindowManager.LayoutParams.ROTATION_ANIMATION_CROSSFADE;
+		win.setAttributes(par);
 	}
 
 	@Override
