@@ -148,22 +148,22 @@ public class Overlay {
 					lock.draw(cvs);
 				}
 			} else {
-				formatTemp(sb, Float.isNaN(d.rangeMax) ? d.fi.max : d.rangeMax);
-				drawText(cvs, sb, vRect.right + clear, vRect.top + clear, true, true);
-				formatTemp(sb, Float.isNaN(d.rangeMin) ? d.fi.min : d.rangeMin);
-				drawText(cvs, sb, vRect.right + clear, vRect.bottom - clear, true, false);
 				drawPalette(cvs,
 						vRect.right + clear,
 						vRect.top + theight + clear * 2,
 						(int) (vRect.right + clear + pwidth * vRect.width()),
 						vRect.bottom - theight - clear * 2,
 						d.palette);
+				formatTemp(sb, Float.isNaN(d.rangeMax) ? d.fi.max : d.rangeMax);
+				drawText(cvs, sb, vRect.right + clear, vRect.top + clear, true, true);
 				if (!Float.isNaN(d.rangeMax)) {
 					int off = (int) paintTextOutline.measureText(sb, 0, sb.length());
 					lock.setBounds(vRect.right + clear + off, vRect.top + iclear,
 							vRect.right + clear + off + isize, vRect.top + iclear + isize);
 					lock.draw(cvs);
 				}
+				formatTemp(sb, Float.isNaN(d.rangeMin) ? d.fi.min : d.rangeMin);
+				drawText(cvs, sb, vRect.right + clear, vRect.bottom - clear, true, false);
 				if (!Float.isNaN(d.rangeMin)) {
 					int off = (int) paintTextOutline.measureText(sb, 0, sb.length());
 					lock.setBounds(vRect.right + clear + off, vRect.bottom - iclear - isize,
