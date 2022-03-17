@@ -192,7 +192,10 @@ public class Overlay {
 		}
 		cvs.drawRect(x1, y1, x2, y2, paintOutline);
 		rectTgt.set(x1, y1, x2, y2);
-		cvs.drawBitmap(paletteCache_bitmap, null, rectTgt, null);
+		/* We use the paintPalette for the bitmap to make doubly sure antialias is off, having it
+		 *   on causes our 1px line to go transparent.
+		 */
+		cvs.drawBitmap(paletteCache_bitmap, null, rectTgt, paintPalette);
 	}
 
 	private void drawTPoint(Canvas cvs, Data d, int tx, int ty, float temp) {
