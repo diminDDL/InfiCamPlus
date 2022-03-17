@@ -216,7 +216,7 @@ public class MainActivity extends BaseActivity {
 				Util.writePNG(this, bitmap);
 				outPicture.attachInput(null);
 				takePic = false;
-				messageView.shortMessage(getString(R.string.msg_captured));
+				messageView.shortMessage(R.string.msg_captured);
 			} else {
 				/* We use the inputSurface because it has the most relevant timestamp. */
 				surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
@@ -478,7 +478,7 @@ public class MainActivity extends BaseActivity {
 		int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
 		TextView batLevel = findViewById(R.id.batLevel);
 		batLevel.setText(getString(isCharging ? R.string.batlevel_charging : R.string.batlevel,
-				(int) round(level * 100 / (float) scale)));
+				round(level * 100 / (float) scale)));
 	}
 
 	/*

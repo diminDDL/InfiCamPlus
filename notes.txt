@@ -59,15 +59,20 @@ Short description of the C++ classes in jni/InfiCam dir:
 	- InfiCam       connecting to the camera, feeding the frames to InifFrame class, etc
 	- InfiCamJNI    whatever garbage is needed to glue InfiCam class to the Java end
 
-TODO
+TODO ui stuff
+	- different states for UI interactions:
+		* add measurement point/line/area
+		* zoom/pan the thermal image
+		* zoom/pan the video overlay
+	- deal with phone orientation (auto + allow user to choose, rotate markers etc)
+		* should the dialogs rotate?
+	- manual temperature range setting for the palettization
+		* maybe enter as center + span rather than min + max?
 	- make sure there is space to show palette thing on the side (including lock icons!)
 		* for video we can just give sizes that are big enough as option
 	- show average temp somewhere?
-	- showing of normal camera also (and allow choosing which one, rotation)
-	- overlaying normal camera (with edge detect)
-	- manual temperature range setting for the palettization
-		* maybe enter as center + span rather than min + max?
-	- deal with phone orientation (auto + allow user to choose, rotate markers etc)
+
+TODO thermal camera things
 	- more measurement modes
 	- gallery to check pictures and videos taken
 	- store thermometry data in videos and pictures
@@ -76,6 +81,11 @@ TODO
 	- option to save separate normal and thermal image side by side (what about video?)
 	- software zoom?
 	- proper ironbow palette (real ones get lighter after they go yellow)
+
+TODO normal camera things
+	- choose resolution for the normal camera
+	- showing of normal camera also (and allow choosing which one, rotation)
+	- overlaying normal camera (with edge detect)
 
 Notes about the current implentation for end users:
 	400c mode looks a bit quirky before a few calibration cycles, while it doesn't on xtherm
