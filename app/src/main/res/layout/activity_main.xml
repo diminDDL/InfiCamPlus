@@ -163,7 +163,7 @@
 
 	</LinearLayout>
 
-	<FrameLayout
+	<androidx.constraintlayout.widget.ConstraintLayout
 		android:id="@+id/dialogBackground"
 		android:background="@color/dialog_background"
 		android:layout_width="match_parent"
@@ -180,14 +180,23 @@
 			android:layout_gravity="top|center_horizontal"
 			android:textSize="20sp"
 			android:textColor="@color/white"
+			app:layout_constraintBottom_toTopOf="@id/dialog"
+			app:layout_constraintLeft_toLeftOf="parent"
+			app:layout_constraintRight_toRightOf="parent"
 			android:layout_margin="5dp"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content" />
 
 		<ScrollView
+			android:id="@+id/dialog"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:background="?attr/colorBackgroundFloating"
+			app:layout_constrainedHeight="true"
+			app:layout_constraintTop_toTopOf="parent"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintLeft_toLeftOf="parent"
+			app:layout_constraintRight_toRightOf="parent"
 			android:layout_margin="35dp"
 			android:layout_gravity="center"
 			android:gravity="center">
@@ -229,6 +238,6 @@
 			</FrameLayout>
 		</ScrollView>
 
-	</FrameLayout>
+	</androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
