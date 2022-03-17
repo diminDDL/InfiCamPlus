@@ -354,6 +354,7 @@ public class MainActivity extends BaseActivity {
 		buttonsRightLayout = (ConstraintLayout.LayoutParams) buttonsRight.getLayoutParams();
 		orientation = getResources().getConfiguration().orientation;
 		/* SettingsMain.load() will call setSwapButtons() and thus updateOrientation(). */
+		inputSurface.setRotate90(true);
 	}
 
 	@Override

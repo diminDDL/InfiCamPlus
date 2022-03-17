@@ -142,6 +142,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		}
 
 		private void initVertex() {
+			// TODO maybe we can squeeze scale in here so it doesn't have to be in the vertex shader
+			//   dat float buffer alocation though.. if we want pinch zoom it'll happen a lot
 			float[] vtmp = new float[] { 1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f };
 			if ((mirror && !rotate) || (rotate && !mirror)) /* Flip X. */
 				for (int i = 0; i < vtmp.length; i += 2)
@@ -153,7 +155,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 				for (int i = 0; i < vtmp.length - 1; i += 2) {
 					float tmp = vtmp[i];
 					vtmp[i] = vtmp[i + 1];
-					vtmp[i + 1] = tmp;
+					vtmp[i + 1] = -tmp;
 				}
 			}
 			pVertex.position(0);
