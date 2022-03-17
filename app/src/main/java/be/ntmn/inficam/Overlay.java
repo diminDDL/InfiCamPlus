@@ -61,6 +61,7 @@ public class Overlay {
 		surface = is;
 		paint = new Paint();
 		paintPalette = new Paint();
+		paintPalette.setAntiAlias(false);
 		paint.setAntiAlias(true);
 		paint.setStrokeCap(Paint.Cap.ROUND);
 		paint.setStrokeJoin(Paint.Join.ROUND);
