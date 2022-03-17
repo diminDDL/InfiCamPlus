@@ -4,6 +4,11 @@ And by now everything was rewritten by netman except libuvc_build/libuvc.mk xD
 Ghidra was really useful to figure out what's in libthermometry.so and XthermDLL.DLL and the fact
   there are versions for many platforms also helped.
 
+This whole thing is an Android Studio / Gradle project, either should work to compile it whichever
+  way you normally build your android studio projects (I open the project with android studio and
+  press the run button). If that doesn't work ask Netman about it. Use of the app itself should be
+  self-evident, if not I've failed at the UI design.
+
 A short what-is-what:
 	libinficam  - Has the native (C, C++) library stuff to talk to the camera and a JNI binding to
 	  couple this to Java for the android app, the JNI binding has a small amount of Android
