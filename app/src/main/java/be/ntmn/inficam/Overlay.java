@@ -39,9 +39,11 @@ public class Overlay {
 	private final Paint paintTextOutline;
 	private final Paint paintPalette;
 	private final Drawable lock;
-
 	private int width, height;
-	private final Rect vRect = new Rect();
+	private final Rect vRect = new Rect(), rectTgt = new Rect(); /* Do not alloc each frame! */
+	int[] paletteCache_palette;
+	Bitmap paletteCache_bitmap;
+	int paletteCache_height;
 
 	/* These sizes are in fractions of the total width of the bitmap drawn. */
 	private final static float smarker = 0.015f; /* Marker size. */
@@ -54,14 +56,6 @@ public class Overlay {
 	private final static float pclearance = 0.016f;
 
 	private final StringBuilder sb = new StringBuilder();
-
-	private static class PaletteCache {
-		Bitmap bitmap;
-		int[] palette;
-		Rect rectSrc = new Rect(), rectTgt = new Rect(); /* Don't allocate each frame eh :). */
-	}
-
-	private final PaletteCache paletteCache = new PaletteCache();
 
 	public Overlay(Context ctx, SurfaceMuxer.InputSurface is) {
 		surface = is;
@@ -184,21 +178,20 @@ public class Overlay {
 	private void drawPalette(Canvas cvs, int x1, int y1, int x2, int y2, int[] palette) {
 		if (y2 - y1 <= 0)
 			return;
-		if (paletteCache.palette != palette || paletteCache.rectSrc.bottom != y2 - y1) {
+		if (paletteCache_palette != palette || paletteCache_height != y2 - y1) {
 			int height = y2 - y1;
-			paletteCache.bitmap = Bitmap.createBitmap(1, height, Bitmap.Config.ARGB_8888);
-			Canvas c = new Canvas(paletteCache.bitmap);
+			paletteCache_bitmap = Bitmap.createBitmap(1, height, Bitmap.Config.ARGB_8888);
+			Canvas c = new Canvas(paletteCache_bitmap);
 			for (int i = 0; i < height; ++i) {
 				int col = palette[palette.length - 1 - i * palette.length / height];
 				paintPalette.setARGB(255, (col >> 0) & 0xFF, (col >> 8) & 0xFF, (col >> 16) & 0xFF);
 				c.drawPoint(0, i, paintPalette);
 			}
-			paletteCache.palette = palette;
-			paletteCache.rectSrc.set(0, 0, 1, height);
+			paletteCache_palette = palette;
 		}
 		cvs.drawRect(x1, y1, x2, y2, paintOutline);
-		paletteCache.rectTgt.set(x1, y1, x2, y2);
-		cvs.drawBitmap(paletteCache.bitmap, paletteCache.rectSrc, paletteCache.rectTgt, paint);
+		rectTgt.set(x1, y1, x2, y2);
+		cvs.drawBitmap(paletteCache_bitmap, null, rectTgt, null);
 	}
 
 	private void drawTPoint(Canvas cvs, Data d, int tx, int ty, float temp) {
