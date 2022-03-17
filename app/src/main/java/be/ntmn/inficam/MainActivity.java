@@ -9,7 +9,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.res.Configuration;
+import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
@@ -18,6 +18,7 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.OrientationEventListener;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -62,8 +63,10 @@ public class MainActivity extends BaseActivity {
 	private SettingsMeasure settingsMeasure;
 	private LinearLayout buttonsLeft, buttonsRight;
 	private ConstraintLayout.LayoutParams buttonsLeftLayout, buttonsRightLayout;
-	private int orientation;
+	private boolean rotate = false;
+	private int orientation = 0;
 	private boolean swapControls = false;
+	private OrientationEventListener orientationListener;
 
 	private long shutterIntervalInitial; /* These are set by Settings class later. */
 	private long shutterInterval; /* Xtherm does it 1 sec after connect and then every 380 sec. */
@@ -249,13 +252,17 @@ public class MainActivity extends BaseActivity {
 		inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_LINEAR) {
 			@Override
 			public void getRect(Rect r, int w, int h) {
-				int sw = w, sh = h;
+				int sw = w, sh = h, iw = 4, ih = 3;
 				/* Make size 4:3 aspect ratio for the thermal image, I'd check the actual camera
 				 *   dimensions but this function gets used before the camera is connected.
 				 */
-				if (3 * w / 4 > h)
-					sw = 4 * h / 3;
-				else sh = 3 * w / 4;
+				if (orientation == 90) {
+					ih = 4;
+					iw = 3;
+				}
+				if (ih * w / iw > h)
+					sw = iw * h / ih;
+				else sh = ih * w / iw;
 				r.set(w / 2 - sw / 2, h / 2 - sh / 2,
 						w / 2 - sw / 2 + sw, h / 2 - sh / 2 + sh);
 			}
@@ -352,9 +359,43 @@ public class MainActivity extends BaseActivity {
 		buttonsRight = findViewById(R.id.buttonsRight);
 		buttonsLeftLayout = (ConstraintLayout.LayoutParams) buttonsLeft.getLayoutParams();
 		buttonsRightLayout = (ConstraintLayout.LayoutParams) buttonsRight.getLayoutParams();
-		orientation = getResources().getConfiguration().orientation;
-		/* SettingsMain.load() will call setSwapButtons() and thus updateOrientation(). */
-		inputSurface.setRotate90(true);
+
+		/* We handle orientation ourselves because Android is dumb and if we let the system do it
+		*    there's only guessing whether we're in landscape or upside down landscape mode.
+		*/
+		updateOrientation();
+		orientationListener = new OrientationEventListener(this) {
+			@Override
+			public void onOrientationChanged(int i) {
+				if (i == ORIENTATION_UNKNOWN)
+					return;
+				int newOrientation;
+				if (i < 45)
+					newOrientation = 90;
+				else if (i < 180)
+					newOrientation = 180;
+				else if (i < 315)
+					newOrientation = 0;
+				else /* if (i < 315) */
+					newOrientation = 90;
+				if (newOrientation != orientation) {
+					orientation = newOrientation;
+					switch (orientation) {
+						case 0:
+							setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+							break;
+						case 90:
+							setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+							break;
+						case 180:
+							setRequestedOrientation(
+									ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE);
+							break;
+					}
+					updateOrientation();
+				}
+			}
+		};
 	}
 
 	@Override
@@ -363,6 +404,7 @@ public class MainActivity extends BaseActivity {
 		settings.load();
 		settingsTherm.load();
 		settingsMeasure.load();
+		orientationListener.enable();
 
 		/* Beware that we can't call these in onResume as they'll ask permission with dialogs and
 		 *   thus trigger another onResume().
@@ -399,6 +441,7 @@ public class MainActivity extends BaseActivity {
 
 	@Override
 	protected void onStop() {
+		orientationListener.disable();
 		stopRecording();
 		disconnect();
 		usbMonitor.stop();
@@ -412,15 +455,9 @@ public class MainActivity extends BaseActivity {
 		super.onDestroy();
 	}
 
-	@Override
-	public void onConfigurationChanged(@NonNull Configuration newConfig) {
-		super.onConfigurationChanged(newConfig);
-		orientation = newConfig.orientation;
-		updateOrientation();
-	}
-
 	private void updateOrientation() {
-		if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+		if (orientation == 90) {
+			inputSurface.setRotate90(true);
 			buttonsLeft.setOrientation(LinearLayout.HORIZONTAL);
 			buttonsRight.setOrientation(LinearLayout.HORIZONTAL);
 			buttonsLeftLayout.width = ViewGroup.LayoutParams.MATCH_PARENT;
@@ -442,6 +479,7 @@ public class MainActivity extends BaseActivity {
 			buttonsLeft.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
 			buttonsRight.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
 		} else {
+			inputSurface.setRotate90(false);
 			buttonsLeft.setOrientation(LinearLayout.VERTICAL);
 			buttonsRight.setOrientation(LinearLayout.VERTICAL);
 			buttonsLeftLayout.width = ViewGroup.LayoutParams.WRAP_CONTENT;
@@ -466,6 +504,15 @@ public class MainActivity extends BaseActivity {
 				buttonsRight.setLayoutParams(buttonsRightLayout);
 				buttonsLeft.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
 				buttonsRight.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
+			}
+		}
+		synchronized (frameLock) {
+			if (orientation == 180) {
+				overlayData.rotate = !rotate;
+				inputSurface.setRotate(!rotate);
+			} else {
+				overlayData.rotate = rotate;
+				inputSurface.setRotate(rotate);
 			}
 		}
 	}
@@ -606,10 +653,8 @@ public class MainActivity extends BaseActivity {
 	}
 
 	public void setRotate(boolean value) {
-		synchronized (frameLock) {
-			overlayData.rotate = value;
-			inputSurface.setRotate(value);
-		}
+		rotate = value;
+		updateOrientation();
 	}
 
 	public void setMirror(boolean value) {
