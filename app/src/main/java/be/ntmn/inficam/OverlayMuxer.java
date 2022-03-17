@@ -73,6 +73,8 @@ public class OverlayMuxer implements SurfaceTexture.OnFrameAvailableListener {
 
 	@Override
 	public void onFrameAvailable(SurfaceTexture surfaceTexture) {
+		if (overlaySurface.getSurface() == null) /* In case we get called after onDestroy(). */
+			return;
 		overlay.draw(data);
 		muxer.onFrameAvailable(surfaceTexture);
 	}

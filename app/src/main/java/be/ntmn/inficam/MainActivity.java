@@ -200,6 +200,11 @@ public class MainActivity extends BaseActivity {
 
 	private void handleFrame() {
 		synchronized (frameLock) {
+			if (disconnecting) { /* Don't try stuff when disconnected. */
+				frameLock.notify();
+				return;
+			}
+
 			/* At this point we are certain the frame and the overlayData are matched up with
 			 *   eachother, so now we can do stuff like taking a picture, "the frame" here
 			 *   meaning what's in the SurfaceTexture buffers after the updateTexImage() calls

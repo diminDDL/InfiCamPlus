@@ -32,7 +32,7 @@
 			android:exported="true"
 			android:launchMode="singleTop"
 			android:directBootAware="true"
-			android:screenOrientation="landscape"
+
 			android:configChanges="keyboardHidden|orientation"
 			tools:targetApi="n">
 			<intent-filter>
