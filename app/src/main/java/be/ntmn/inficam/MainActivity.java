@@ -383,7 +383,7 @@ public class MainActivity extends BaseActivity {
 		buttonsRightLayout = (ConstraintLayout.LayoutParams) buttonsRight.getLayoutParams();
 
 		RangeSlider rangeSlider = findViewById(R.id.rangeSlider);
-		rangeSlider.setValues(0.5f, 1.0f);
+		rangeSlider.setValues(0.5f, 0.5f);
 	}
 
 	@Override

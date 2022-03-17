@@ -96,6 +96,7 @@
 		app:layout_constraintLeft_toRightOf="@id/buttonsLeft">
 		<com.google.android.material.slider.RangeSlider
 			android:id="@+id/rangeSlider"
+			app:labelBehavior="gone"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content" />
 	</be.ntmn.inficam.RotateLayout>
