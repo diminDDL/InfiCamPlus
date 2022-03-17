@@ -64,13 +64,13 @@ TODO ui stuff
 		* add measurement point/line/area
 		* zoom/pan the thermal image
 		* zoom/pan the video overlay
-	- deal with phone orientation (auto + allow user to choose, rotate markers etc)
-		* should the dialogs rotate?
 	- manual temperature range setting for the palettization
 		* maybe enter as center + span rather than min + max?
 	- make sure there is space to show palette thing on the side (including lock icons!)
 		* for video we can just give sizes that are big enough as option
 	- show average temp somewhere?
+	- perhaps allow choosing separate resolutions for portrait pics/video
+	- should back button exit dialogs?
 
 TODO thermal camera things
 	- more measurement modes

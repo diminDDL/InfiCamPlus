@@ -223,8 +223,14 @@ public class MainActivity extends BaseActivity {
 			 */
 			if (takePic) {
 				final Rect r = new Rect();
-				inputSurface.getRect(r, picWidth, picHeight);
-				outPicture.setSize(picWidth, picHeight);
+				int w = picWidth, h = picHeight;
+				if (orientation == 90) {
+					int tmp = w;
+					w = h;
+					h = tmp;
+				}
+				inputSurface.getRect(r, w, h);
+				outPicture.setSize(w, h);
 				outPicture.setRect(r);
 				outPicture.attachInput(surfaceMuxer);
 				surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
