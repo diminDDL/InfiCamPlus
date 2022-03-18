@@ -49,6 +49,7 @@ public class MainActivity extends BaseActivity {
 	private SurfaceMuxer.InputSurface videoSurface; /* To draw video from the normal camera. */
 	private OverlayMuxer outScreen, outRecord, outPicture;
 	private final Overlay.Data overlayData = new Overlay.Data();
+	private int range = 120;
 
 	private UsbDevice device;
 	private UsbDeviceConnection usbConnection;
@@ -346,7 +347,6 @@ public class MainActivity extends BaseActivity {
 				if (overlayData.fi == null ||
 						isNaN(overlayData.fi.min) || isNaN(overlayData.fi.max))
 					return;
-				// TODO 400c range
 				if (isNaN(overlayData.rangeMin) && isNaN(overlayData.rangeMax)) {
 					overlayData.rangeMin = overlayData.fi.min;
 					overlayData.rangeMax = overlayData.fi.max;
@@ -354,6 +354,10 @@ public class MainActivity extends BaseActivity {
 					buttonLock.setImageResource(R.drawable.ic_baseline_lock_24);
 					rangeSlider.setVisibility(View.VISIBLE);
 					float start = -20.0f, end = 120.0f;
+					if (range == 400) {
+						start = 100.0f;
+						end = 400.0f;
+					}
 					if (overlayData.fi.min < start)
 						start = (float) floor(overlayData.fi.min);
 					if (overlayData.fi.max > end)
@@ -483,6 +487,8 @@ public class MainActivity extends BaseActivity {
 	private void updateOrientation() { /* Called on start by SettingsMain. */
 		WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
 		orientation = wm.getDefaultDisplay().getRotation();
+		RotateLayout rl = findViewById(R.id.rotateLayoutRange);
+		ConstraintLayout.LayoutParams rlp = (ConstraintLayout.LayoutParams) rl.getLayoutParams();
 		if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180) {
 			inputSurface.setRotate90(true);
 			buttonsLeft.setOrientation(LinearLayout.HORIZONTAL);
@@ -505,9 +511,6 @@ public class MainActivity extends BaseActivity {
 			buttonsRight.setLayoutParams(buttonsRightLayout);
 			buttonsLeft.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
 			buttonsRight.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
-			RotateLayout rl = findViewById(R.id.rotateLayoutRange);
-			ConstraintLayout.LayoutParams rlp =
-					(ConstraintLayout.LayoutParams) rl.getLayoutParams();
 			rlp.topToTop = ConstraintLayout.LayoutParams.UNSET;
 			rlp.topToBottom = R.id.buttonsLeft;
 			rlp.leftToRight = ConstraintLayout.LayoutParams.UNSET;
@@ -530,26 +533,26 @@ public class MainActivity extends BaseActivity {
 			buttonsRightLayout.bottomToBottom = ConstraintLayout.LayoutParams.UNSET;
 			buttonsRightLayout.leftToLeft = R.id.mainLayout;
 			buttonsRightLayout.rightToRight = R.id.mainLayout;
+			rlp.topToTop = R.id.mainLayout;
+			rlp.topToBottom = ConstraintLayout.LayoutParams.UNSET;
+			rlp.leftToRight = ConstraintLayout.LayoutParams.UNSET;
+			rlp.rightToLeft = ConstraintLayout.LayoutParams.UNSET;
+			rlp.leftToLeft = ConstraintLayout.LayoutParams.UNSET;
+			rl.setEnabled(true);
 			if (swapControls) {
+				rlp.rightToLeft = R.id.buttonsLeft;
 				buttonsLeft.setLayoutParams(buttonsRightLayout);
 				buttonsRight.setLayoutParams(buttonsLeftLayout);
 				buttonsLeft.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
 				buttonsRight.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
 			} else {
+				rlp.leftToRight = R.id.buttonsLeft;
 				buttonsLeft.setLayoutParams(buttonsLeftLayout);
 				buttonsRight.setLayoutParams(buttonsRightLayout);
 				buttonsLeft.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
 				buttonsRight.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
 			}
-			RotateLayout rl = findViewById(R.id.rotateLayoutRange); // TODO what if swap buttons
-			ConstraintLayout.LayoutParams rlp =
-					(ConstraintLayout.LayoutParams) rl.getLayoutParams();
-			rlp.topToTop = R.id.mainLayout;
-			rlp.topToBottom = ConstraintLayout.LayoutParams.UNSET;
-			rlp.leftToRight = R.id.buttonsLeft;
-			rlp.leftToLeft = ConstraintLayout.LayoutParams.UNSET;
 			rl.setLayoutParams(rlp);
-			rl.setEnabled(true);
 		}
 		synchronized (frameLock) {
 			overlayData.rotate90 = orientation == Surface.ROTATION_0 ||
@@ -683,6 +686,7 @@ public class MainActivity extends BaseActivity {
 
 	public void setRange(int range) {
 		infiCam.setRange(range);
+		this.range = range;
 		requestReinit();
 	}
 

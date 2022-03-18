@@ -40,7 +40,10 @@ public class RotateLayout extends FrameLayout {
 		if (enabled) {
 			super.onMeasure(heightMeasureSpec, widthMeasureSpec);
 			setTranslationX(getMeasuredHeight());
+			//setTranslationY(getMeasuredWidth());
+			//setY(100);
 			setRotation(90.0f);
+			//setMeasuredDimension(heightMeasureSpec, widthMeasureSpec);
 		} else {
 			super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 			setTranslationX(0);

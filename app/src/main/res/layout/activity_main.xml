@@ -97,7 +97,7 @@
 		app:layout_constraintLeft_toRightOf="@id/buttonsLeft">
 		<be.ntmn.inficam.SliderDouble
 			android:id="@+id/rangeSlider"
-			android:visibility="gone"
+			android:visibility="visible"
 			app:labelBehavior="gone"
 			app:tickVisible="false"
 			android:layout_width="match_parent"
