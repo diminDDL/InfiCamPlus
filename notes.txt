@@ -42,7 +42,6 @@ Quick description of what for the Java classes are:
 	- OverlayMuxer      combines SurfaceMuxer and Overlay which we do separate for screen/video/pic
 	                      so that the Overlay can have the exact resolution of the output
 	- Palette           generating palettes for the thermal image
-	- RotateLayout      a FrameLayout but the contents are rotated by 90 degrees
 	- Settings          abstract class used to make the various settings windows
 	- SettingsMain      the main settings window
 	- SettingsMeasure   turn on/off measurements
