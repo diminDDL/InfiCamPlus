@@ -2,6 +2,7 @@ package be.ntmn.inficam;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.widget.FrameLayout;
@@ -48,13 +49,13 @@ public class RotateLayout extends FrameLayout {
 	}
 
 	@Override
-	protected void onDraw(Canvas canvas) {
+	protected void dispatchDraw(Canvas canvas) {
 		if (enabled) {
 			/* We manually flip X because rotating -90/270 gives me clipping issues. */
 			canvas.translate(getWidth(), 0);
 			canvas.scale(-1, 1);
 		}
-		super.onDraw(canvas);
+		super.dispatchDraw(canvas);
 	}
 
 	@Override
