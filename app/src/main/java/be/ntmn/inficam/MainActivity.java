@@ -511,6 +511,8 @@ public class MainActivity extends BaseActivity {
 			buttonsRight.setLayoutParams(buttonsRightLayout);
 			buttonsLeft.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
 			buttonsRight.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
+			rlp.topToBottom = ConstraintLayout.LayoutParams.UNSET;
+			rlp.rightToLeft = ConstraintLayout.LayoutParams.UNSET;
 			rlp.topToTop = ConstraintLayout.LayoutParams.UNSET;
 			rlp.topToBottom = R.id.buttonsLeft;
 			rlp.leftToRight = ConstraintLayout.LayoutParams.UNSET;

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.FrameLayout;
 
@@ -11,7 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 public class RotateLayout extends FrameLayout {
-	private boolean enabled = true;
+	private boolean enabled = false;
 
 	public RotateLayout(@NonNull Context context) {
 		super(context);
@@ -29,7 +30,7 @@ public class RotateLayout extends FrameLayout {
 	}
 
 	public void setEnabled(boolean value) {
-		enabled = value;
+		//enabled = value;
 		requestLayout();
 	}
 
@@ -43,7 +44,8 @@ public class RotateLayout extends FrameLayout {
 			//setTranslationY(getMeasuredWidth());
 			//setY(100);
 			setRotation(90.0f);
-			//setMeasuredDimension(heightMeasureSpec, widthMeasureSpec);
+			//setMeasuredDimension(getMeasuredWidth(), getMeasuredHeight());
+			Log.e("TEST", "w = " + heightMeasureSpec + " h = " + widthMeasureSpec);
 		} else {
 			super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 			setTranslationX(0);
