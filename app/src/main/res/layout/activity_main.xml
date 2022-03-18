@@ -89,10 +89,11 @@
 
 	<be.ntmn.inficam.RotateLayout
 		android:layout_width="wrap_content"
-		android:layout_height="match_parent"
-		android:elevation="10dp"
+		android:layout_height="wrap_content"
+		android:paddingHorizontal="10dp"
+		android:elevation="20dp"
+		android:id="@+id/rotateLayoutRange"
 		app:layout_constraintTop_toTopOf="parent"
-		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintLeft_toRightOf="@id/buttonsLeft">
 		<be.ntmn.inficam.SliderDouble
 			android:id="@+id/rangeSlider"

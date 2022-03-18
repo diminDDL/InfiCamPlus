@@ -2,7 +2,8 @@ package be.ntmn.inficam;
 
 import static java.lang.Float.NaN;
 import static java.lang.Float.isNaN;
-import static java.lang.Math.abs;
+import static java.lang.Math.ceil;
+import static java.lang.Math.floor;
 import static java.lang.Math.round;
 
 import android.Manifest;
@@ -342,18 +343,23 @@ public class MainActivity extends BaseActivity {
 		ImageButton buttonLock = findViewById(R.id.buttonLock);
 		buttonLock.setOnClickListener(view -> {
 			synchronized (frameLock) {
-				if (overlayData.fi == null)
+				if (overlayData.fi == null ||
+						isNaN(overlayData.fi.min) || isNaN(overlayData.fi.max))
 					return;
-				// TODO don't lock when fi.min/max is NaN
-				// TODO grow range if needed
 				// TODO 400c range
-				// TODO portrait
 				if (isNaN(overlayData.rangeMin) && isNaN(overlayData.rangeMax)) {
 					overlayData.rangeMin = overlayData.fi.min;
 					overlayData.rangeMax = overlayData.fi.max;
 					infiCam.lockRange(overlayData.rangeMin, overlayData.rangeMax);
 					buttonLock.setImageResource(R.drawable.ic_baseline_lock_24);
 					rangeSlider.setVisibility(View.VISIBLE);
+					float start = -20.0f, end = 120.0f;
+					if (overlayData.fi.min < start)
+						start = (float) floor(overlayData.fi.min);
+					if (overlayData.fi.max > end)
+						end = (float) ceil(overlayData.fi.max);
+					rangeSlider.setValueFrom(start);
+					rangeSlider.setValueTo(end);
 					rangeSlider.setValues(overlayData.rangeMin, overlayData.rangeMax);
 				} else {
 					overlayData.rangeMin = overlayData.rangeMax = NaN;
@@ -365,15 +371,14 @@ public class MainActivity extends BaseActivity {
 		});
 
 		rangeSlider = findViewById(R.id.rangeSlider);
-		rangeSlider.setValueFrom(120.0f); // TODO grow the range if necessary, 400c range
-		rangeSlider.setValueTo(-20.0f);
+
 		rangeSlider.setStepSize(1.0f);
 		rangeSlider.addOnChangeListener((slider, value, fromUser) -> {
 			List<Float> v = rangeSlider.getValuesCorrected();
 			if (v.size() < 2 || !fromUser)
 				return;
-			overlayData.rangeMin = v.get(1);
-			overlayData.rangeMax = v.get(0);
+			overlayData.rangeMin = v.get(0);
+			overlayData.rangeMax = v.get(1);
 			infiCam.lockRange(overlayData.rangeMin, overlayData.rangeMax);
 		});
 
@@ -500,6 +505,15 @@ public class MainActivity extends BaseActivity {
 			buttonsRight.setLayoutParams(buttonsRightLayout);
 			buttonsLeft.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
 			buttonsRight.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
+			RotateLayout rl = findViewById(R.id.rotateLayoutRange);
+			ConstraintLayout.LayoutParams rlp =
+					(ConstraintLayout.LayoutParams) rl.getLayoutParams();
+			rlp.topToTop = ConstraintLayout.LayoutParams.UNSET;
+			rlp.topToBottom = R.id.buttonsLeft;
+			rlp.leftToRight = ConstraintLayout.LayoutParams.UNSET;
+			rlp.leftToLeft = R.id.mainLayout;
+			rl.setLayoutParams(rlp);
+			rl.setEnabled(false);
 		} else {
 			inputSurface.setRotate90(false);
 			buttonsLeft.setOrientation(LinearLayout.VERTICAL);
@@ -527,11 +541,19 @@ public class MainActivity extends BaseActivity {
 				buttonsLeft.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
 				buttonsRight.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
 			}
+			RotateLayout rl = findViewById(R.id.rotateLayoutRange); // TODO what if swap buttons
+			ConstraintLayout.LayoutParams rlp =
+					(ConstraintLayout.LayoutParams) rl.getLayoutParams();
+			rlp.topToTop = R.id.mainLayout;
+			rlp.topToBottom = ConstraintLayout.LayoutParams.UNSET;
+			rlp.leftToRight = R.id.buttonsLeft;
+			rlp.leftToLeft = ConstraintLayout.LayoutParams.UNSET;
+			rl.setLayoutParams(rlp);
+			rl.setEnabled(true);
 		}
 		synchronized (frameLock) {
-			if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180)
-				overlayData.rotate90 = true;
-			else overlayData.rotate90 = false;
+			overlayData.rotate90 = orientation == Surface.ROTATION_0 ||
+					orientation == Surface.ROTATION_180;
 			if (orientation == Surface.ROTATION_270 || orientation == Surface.ROTATION_180) {
 				overlayData.rotate = !rotate;
 				inputSurface.setRotate(!rotate);
