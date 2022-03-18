@@ -86,6 +86,7 @@ TODO thermal camera things
 	- store thermometry data in videos and pictures
 	- allow to regenerate images and videos from thermometry data, measure from it
 	- proper ironbow palette (real ones get lighter after they go yellow)
+	- more palettes in general
 
 TODO normal camera things
 	- choose resolution for the normal camera
