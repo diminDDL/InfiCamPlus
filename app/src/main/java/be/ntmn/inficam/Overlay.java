@@ -5,6 +5,7 @@ import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.lang.Math.round;
+import static java.lang.Math.scalb;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -31,6 +32,7 @@ public class Overlay {
 		public boolean showMax = false;
 		public boolean showCenter = false;
 		public boolean showPalette = false;
+		public float scale = 1.0f;
 	}
 
 	private final SurfaceMuxer.InputSurface surface;
@@ -205,17 +207,22 @@ public class Overlay {
 			ty = tmp;
 		}
 
-		float xm = (tx + 0.5f) * vRect.width() / (d.rotate90 ? d.fi.height : d.fi.width);
+		float xm = (tx + 0.5f) * vRect.width() / (d.rotate90 ? d.fi.height : d.fi.width) * d.scale;
 		if (d.rotate)
 			xm = vRect.width() - xm;
 		if (d.mirror)
 			xm = vRect.width() - xm;
 		xm += vRect.left;
+		xm -= (vRect.width() * d.scale - vRect.width()) / 2.0f;
 
-		float ym = (ty + 0.5f) * vRect.height() / (d.rotate90 ? d.fi.width : d.fi.height);
+		float ym = (ty + 0.5f) * vRect.height() / (d.rotate90 ? d.fi.width : d.fi.height) * d.scale;
 		if (d.rotate)
 			ym = vRect.height() - ym;
 		ym += vRect.top;
+		ym -= (vRect.height() * d.scale - vRect.height()) / 2.0f;
+
+		if (xm >= vRect.right || ym >= vRect.bottom || xm < vRect.left || ym < vRect.top)
+			return;
 
 		float smarkerw = smarker * vRect.width();
 

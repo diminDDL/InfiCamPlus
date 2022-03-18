@@ -21,6 +21,8 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -75,6 +77,7 @@ public class MainActivity extends BaseActivity {
 	private boolean rotate = false;
 	private int orientation = 0;
 	private boolean swapControls = false;
+	private float scale = 1.0f;
 
 	private long shutterIntervalInitial; /* These are set by Settings class later. */
 	private long shutterInterval; /* Xtherm does it 1 sec after connect and then every 380 sec. */
@@ -326,6 +329,32 @@ public class MainActivity extends BaseActivity {
 			}
 			//infiCam.calibrate();
 		});
+		final ScaleGestureDetector sd = new ScaleGestureDetector(this,
+				new ScaleGestureDetector.OnScaleGestureListener() {
+			private float scaleStart;
+
+			@Override
+			public boolean onScale(ScaleGestureDetector scaleGestureDetector) {
+				scale = scaleStart * scaleGestureDetector.getScaleFactor();
+				if (scale < 1.0f)
+					scale = 1.0f;
+				if (scale >= 10.0f)
+					scale = 10.0f;
+				overlayData.scale = scale;
+				inputSurface.setScale(scale, scale);
+				return false;
+			}
+
+			@Override
+			public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector) {
+				scaleStart = scale;
+				return true;
+			}
+
+			@Override
+			public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) { /* Empty. */ }
+		});
+		cameraView.setOnTouchListener((view, motionEvent) -> sd.onTouchEvent(motionEvent));
 
 		ImageButton buttonShutter = findViewById(R.id.buttonShutter);
 		buttonShutter.setOnClickListener(view -> infiCam.calibrate());
