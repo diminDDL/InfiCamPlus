@@ -71,7 +71,7 @@ TODO ui stuff
 		* add measurement point/line/area
 		* zoom/pan the thermal image
 		* zoom/pan the video overlay
-	- manual temperature range setting for the palettization
+	- perhaps improve UI for manual range setting
 		* maybe enter as center + span rather than min + max?
 	- make sure there is space to show palette thing on the side (including lock icons!)
 		* for video we can just give sizes that are big enough as option

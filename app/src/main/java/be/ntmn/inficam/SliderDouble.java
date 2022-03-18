@@ -5,11 +5,7 @@ import static java.lang.Math.round;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Rect;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.view.DragEvent;
 import android.view.MotionEvent;
 
 import androidx.annotation.NonNull;
@@ -19,10 +15,12 @@ import com.google.android.material.slider.RangeSlider;
 
 import java.util.List;
 
-/* RangeSlider is annoying as fuck, throwing exceptions if you don't baby it, I try to fix it. */
+/* RangeSlider is annoying as fuck, throwing exceptions if you don't baby it, I try to fix it and
+ *   there is also fluff to make it work vertically too.
+ */
 public class SliderDouble extends RangeSlider {
 	private float from = 0.0f, to = 1.0f;
-	boolean invert;
+	boolean invert = false, vertical = true;
 
 	public SliderDouble(@NonNull Context context) {
 		super(context);
@@ -81,46 +79,42 @@ public class SliderDouble extends RangeSlider {
 		return values;
 	}
 
-	private boolean enabled = true;
+	public void setVertical(boolean vertical) {
+		this.vertical = vertical;
+		requestLayout();
+	}
 
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-		setPivotX(0);
-		setPivotY(0);
-		if (enabled) {
-			//setTranslationX(getMeasuredHeight());
-			//setTranslationY(getMeasuredWidth());
-			//setTranslationX(getMeasuredHeight());
-			//setTranslationY(getMeasuredWidth());
-			//setTranslationX(getMeasuredHeight());
-			//setRotation(0.0f);
+		if (vertical) {
 			super.onMeasure(heightMeasureSpec, widthMeasureSpec);
 			setMeasuredDimension(getMeasuredHeight(), getMeasuredWidth());
-			Log.e("TEST", "w = " + getMeasuredWidth() + " h = " + getMeasuredHeight());
-		} else {
-			super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-			setTranslationX(0);
-			setRotation(0.0f);
-		}
+		} else super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 	}
 
 	@Override
 	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-		super.onSizeChanged(getHeight(), w, oldh, oldw);
+		if (vertical)
+			super.onSizeChanged(h, w, oldh, oldw);
+		else super.onSizeChanged(w, h, oldw, oldh);
 	}
 
 	@Override
 	protected void onDraw(@NonNull Canvas canvas) {
-		canvas.translate(getWidth(), 0);
-		canvas.rotate(90);
-		canvas.drawColor(Color.RED);
+		canvas.save();
+		if (vertical) {
+			canvas.translate(getWidth(), getHeight());
+			canvas.rotate(90);
+			canvas.scale(-1, 1);
+		}
 		super.onDraw(canvas);
+		canvas.restore();
 	}
 
 	@Override
 	public boolean dispatchTouchEvent(MotionEvent ev) {
-		if (enabled)
-			ev.setLocation(ev.getY(), ev.getX());
+		if (vertical)
+			ev.setLocation(getHeight() - ev.getY() - 1, ev.getX());
 		return super.dispatchTouchEvent(ev);
 	}
 }

@@ -35,6 +35,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
+import com.google.android.material.slider.RangeSlider;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -487,8 +489,7 @@ public class MainActivity extends BaseActivity {
 	private void updateOrientation() { /* Called on start by SettingsMain. */
 		WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
 		orientation = wm.getDefaultDisplay().getRotation();
-		RotateLayout rl = findViewById(R.id.rotateLayoutRange);
-		ConstraintLayout.LayoutParams rlp = (ConstraintLayout.LayoutParams) rl.getLayoutParams();
+		ConstraintLayout.LayoutParams rlp = (ConstraintLayout.LayoutParams) rangeSlider.getLayoutParams();
 		if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180) {
 			inputSurface.setRotate90(true);
 			buttonsLeft.setOrientation(LinearLayout.HORIZONTAL);
@@ -517,8 +518,10 @@ public class MainActivity extends BaseActivity {
 			rlp.topToBottom = R.id.buttonsLeft;
 			rlp.leftToRight = ConstraintLayout.LayoutParams.UNSET;
 			rlp.leftToLeft = R.id.mainLayout;
-			rl.setLayoutParams(rlp);
-			rl.setEnabled(false);
+			rlp.width = WindowManager.LayoutParams.MATCH_PARENT;
+			rlp.height = WindowManager.LayoutParams.WRAP_CONTENT;
+			rangeSlider.setLayoutParams(rlp);
+			rangeSlider.setVertical(false);
 		} else {
 			inputSurface.setRotate90(false);
 			buttonsLeft.setOrientation(LinearLayout.VERTICAL);
@@ -540,7 +543,8 @@ public class MainActivity extends BaseActivity {
 			rlp.leftToRight = ConstraintLayout.LayoutParams.UNSET;
 			rlp.rightToLeft = ConstraintLayout.LayoutParams.UNSET;
 			rlp.leftToLeft = ConstraintLayout.LayoutParams.UNSET;
-			rl.setEnabled(true);
+			rlp.width = WindowManager.LayoutParams.WRAP_CONTENT;
+			rlp.height = WindowManager.LayoutParams.MATCH_PARENT;
 			if (swapControls) {
 				rlp.rightToLeft = R.id.buttonsLeft;
 				buttonsLeft.setLayoutParams(buttonsRightLayout);
@@ -554,7 +558,8 @@ public class MainActivity extends BaseActivity {
 				buttonsLeft.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
 				buttonsRight.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
 			}
-			rl.setLayoutParams(rlp);
+			rangeSlider.setLayoutParams(rlp);
+			rangeSlider.setVertical(true);
 		}
 		synchronized (frameLock) {
 			overlayData.rotate90 = orientation == Surface.ROTATION_0 ||

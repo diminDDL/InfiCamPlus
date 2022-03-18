@@ -87,22 +87,16 @@
 
 	</LinearLayout>
 
-	<be.ntmn.inficam.RotateLayout
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:paddingHorizontal="10dp"
+	<be.ntmn.inficam.SliderDouble
+		android:id="@+id/rangeSlider"
+		android:visibility="gone"
+		app:labelBehavior="gone"
+		app:tickVisible="false"
 		android:elevation="20dp"
-		android:id="@+id/rotateLayoutRange"
+		android:layout_width="wrap_content"
+		android:layout_height="match_parent"
 		app:layout_constraintTop_toTopOf="parent"
-		app:layout_constraintLeft_toRightOf="@id/buttonsLeft">
-		<be.ntmn.inficam.SliderDouble
-			android:id="@+id/rangeSlider"
-			android:visibility="visible"
-			app:labelBehavior="gone"
-			app:tickVisible="false"
-			android:layout_width="match_parent"
-			android:layout_height="match_parent" />
-	</be.ntmn.inficam.RotateLayout>
+		app:layout_constraintLeft_toRightOf="@id/buttonsLeft" />
 
 	<FrameLayout
 		android:layout_width="0dp"
