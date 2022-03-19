@@ -76,6 +76,8 @@ TODO ui stuff
 		* for video we can just give sizes that are big enough as option
 	- show average temp somewhere?
 	- perhaps allow choosing separate resolutions for portrait pics/video
+		* maybe instead we should just widen images by as much needed to fit the extra bar in it
+			when it is set to be outside of image
 	- gallery to check pictures and videos taken
 	- show camera product and version info somewhere (perhaps when scroll down in settings)
 	- choose which palettes are allowed for the next palette button
@@ -85,6 +87,11 @@ TODO ui stuff
 		* current buttons for them stay as-is, if they are checked and the list one -> show marker without temp
 		    if only the list one is hown just show in list but not marker
 	- option to show emissivity, ambient, etc on screen
+	- document stuff that isn't obvious like the pinch to zoom
+	- maybe UI can be like we add one extra button and it cycles between zoom, pan/zoom visible light (if on), add measurement of type ..
+		* show momentarily what's picked with showMessage/shortMessage, put small icon somewhere
+		* perhaps on first press before mode changed just show current?
+		* how to remove measurements?
 
 TODO thermal camera things
 	- more measurement modes
