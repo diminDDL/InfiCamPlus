@@ -380,14 +380,18 @@ public class MainActivity extends BaseActivity {
 
 			@Override
 			public boolean onScale(ScaleGestureDetector scaleGestureDetector) {
+				TextView zl = findViewById(R.id.zoomLevel);
 				scale = scaleStart * scaleGestureDetector.getScaleFactor();
-				if (scale < 1.0f)
+				if (scale < 1.0f) {
 					scale = 1.0f;
+					zl.setVisibility(View.INVISIBLE);
+				} else zl.setVisibility(View.VISIBLE);
 				if (scale >= 10.0f)
 					scale = 10.0f;
 				overlayData.scale = scale;
 				inputSurface.setScale(scale, scale);
 				messageView.shortMessage(getString(R.string.msg_zoom, (int) (scale * 100.0f)));
+				zl.setText(getString(R.string.zoomlevel, (int) (scale * 100.0f)));
 				return false;
 			}
 
@@ -483,6 +487,15 @@ public class MainActivity extends BaseActivity {
 
 		ImageButton buttonSettingsMeasure = findViewById(R.id.buttonSettingsMeasure);
 		buttonSettingsMeasure.setOnClickListener(view -> showSettings(settingsMeasure));
+
+		ImageButton buttonGallery = findViewById(R.id.buttonGallery);
+		buttonGallery.setOnClickListener(view -> {
+			Intent intent = new Intent();
+			intent.setAction(android.content.Intent.ACTION_VIEW);
+			intent.setType("image/*");
+			intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			startActivity(intent);
+		});
 
 		buttonsLeft = findViewById(R.id.buttonsLeft);
 		buttonsRight = findViewById(R.id.buttonsRight);

@@ -26,6 +26,7 @@
 	<string name="btn_settings_therm">Thermometry settings</string>
 	<string name="btn_settings_measure">Measurement settings</string>
 	<string name="btn_lock">Lock range</string>
+	<string name="btn_gallery">Gallery</string>
 
 	<string name="dialog_set_therm">Thermometry Settings</string>
 	<string name="dialog_set_measure">Measurement Settings</string>
@@ -79,6 +80,7 @@
 
 	<string name="batlevel">&#128267;%d%%</string>
 	<string name="batlevel_charging">&#9889;%d%%</string>
+	<string name="zoomlevel">&#128270;%d%%</string>
 
 	<string name="picres_320">320x240 (4:3)</string>
 	<string name="picres_640">640x480 (4:3)</string>
