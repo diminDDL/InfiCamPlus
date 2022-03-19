@@ -179,13 +179,14 @@ public class SettingsMain extends Settings {
 			}
 		},
 		new SettingRadio("unit", R.string.set_unit, 0, new int[] {
-				R.string.unit_celcius, R.string.unit_fahrenheit
+				R.string.unit_celcius, R.string.unit_fahrenheit, R.string.unit_kelvin
 			}) {
 			@Override
 			void onSet(int i) {
 				final int[] units = new int[] {
 						Util.TEMPUNIT_CELCIUS,
-						Util.TEMPUNIT_FAHRENHEIT
+						Util.TEMPUNIT_FAHRENHEIT,
+						Util.TEMPUNIT_KELVIN
 				};
 				act.setTempUnit(units[i]);
 			}

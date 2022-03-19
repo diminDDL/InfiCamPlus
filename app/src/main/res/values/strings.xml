@@ -102,4 +102,5 @@
 
 	<string name="unit_celcius">Celcius</string>
 	<string name="unit_fahrenheit">Fahrenheit</string>
+	<string name="unit_kelvin">Kelvin</string>
 </resources>

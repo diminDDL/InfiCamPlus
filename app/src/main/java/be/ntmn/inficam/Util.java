@@ -31,6 +31,7 @@ public class Util {
 
 	public final static int TEMPUNIT_CELCIUS = 0;
 	public final static int TEMPUNIT_FAHRENHEIT = 1;
+	public final static int TEMPUNIT_KELVIN = 2;
 
 	private static void writeImage(Context ctx, Bitmap bmp, Bitmap.CompressFormat format,
 								  String mimeType, String ext, int quality) {
@@ -107,6 +108,8 @@ public class Util {
 		}
 		if (tempunit == TEMPUNIT_FAHRENHEIT)
 			temp = temp * 9 / 5 + 32;
+		if (tempunit == TEMPUNIT_KELVIN)
+			temp += 273.15;
 		if (temp < 0)
 			sb.append("-");
 		sb.append((int) temp);
@@ -115,6 +118,8 @@ public class Util {
 		sb.append(round(temp * 100 % 10));
 		if (tempunit == TEMPUNIT_FAHRENHEIT)
 			sb.append("°F");
+		if (tempunit == TEMPUNIT_KELVIN)
+			sb.append("°K");
 		else sb.append("°C");
 	}
 
