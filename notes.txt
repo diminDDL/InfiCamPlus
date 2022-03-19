@@ -92,8 +92,15 @@ TODO ui stuff
 		* show momentarily what's picked with showMessage/shortMessage, put small icon somewhere
 		* perhaps on first press before mode changed just show current?
 		* how to remove measurements?
+			** perhaps double/triple tap can delete last point / clear all
+				(and/or 2-3 finger touches, maybe, double tapping would be better to not interfere with line/box mode)
+			** line/box should just reposition nearest point if start again the touching, their interface can probably be shared logic-wise
 		* like with palette cycle, add list to enable/disable which ones cycle and a setting item
 	        for the current mode
+	- when zoomed limit min-max to visible area
+	- graph over time temperature(s) of selected point/area (the plural meaning min/max/avg)
+	- cram side-by-side video on screen somehow? dual vertical on horizontal or vice-versa screen if asked?
+	- also indicate to user when in 400c mode more clearly
 
 TODO thermal camera things
 	- more measurement modes
@@ -103,7 +110,7 @@ TODO thermal camera things
 	- more palettes in general
 
 TODO normal camera things
-	- choose resolution for the normal camera
+	- choose resolution for the normal camera (maybe just trying 1080p/720p/VGA/SVGA or close depending on setting is ok)
 	- showing of normal camera also (and allow choosing which one, rotation)
 	- overlaying normal camera (with edge detect)
 	- option to save separate normal and thermal image side by side (what about video?)
