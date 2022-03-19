@@ -5,7 +5,6 @@ import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.lang.Math.round;
-import static java.lang.Math.scalb;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -120,7 +119,7 @@ public class Overlay {
 			drawTPoint(cvs, d, d.fi.max_x, d.fi.max_y, d.fi.max);
 		}
 
-		if (d.showPalette) { // TODO maybe we should draw the palette to a bitmap actually
+		if (d.showPalette) {
 			int clear = (int) (pclearance * vRect.width());
 			int theight = (int) -(paint.descent() + paint.ascent());
 			int isize = (int) (theight + woutline * vRect.width());
@@ -183,6 +182,8 @@ public class Overlay {
 			return;
 		if (paletteCache_palette != palette || paletteCache_height != y2 - y1) {
 			int height = y2 - y1;
+			if (paletteCache_bitmap != null)
+				paletteCache_bitmap.recycle();
 			paletteCache_bitmap = Bitmap.createBitmap(1, height, Bitmap.Config.ARGB_8888);
 			Canvas c = new Canvas(paletteCache_bitmap);
 			for (int i = 0; i < height; ++i) {

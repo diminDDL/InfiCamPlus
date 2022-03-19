@@ -20,12 +20,11 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.BatteryManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
-import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.Surface;
 import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -260,7 +259,9 @@ public class MainActivity extends BaseActivity {
 				outPicture.setRect(r);
 				outPicture.attachInput(surfaceMuxer);
 				surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
+				long t = System.currentTimeMillis();
 				Bitmap bitmap = outPicture.getBitmap();
+				Log.e("TAKEPIC", "time = " + (System.currentTimeMillis() - t));
 				Util.writePNG(this, bitmap);
 				outPicture.attachInput(null);
 				takePic = false;
@@ -325,7 +326,7 @@ public class MainActivity extends BaseActivity {
 				usbMonitor.scan();
 				return;
 			}
-			infiCam.calibrate();
+			//infiCam.calibrate();
 		});
 		final ScaleGestureDetector.OnScaleGestureListener scaleListener =
 				new ScaleGestureDetector.OnScaleGestureListener() {

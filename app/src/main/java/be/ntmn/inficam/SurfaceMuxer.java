@@ -2,7 +2,6 @@ package be.ntmn.inficam;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
@@ -76,8 +75,13 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	private int hProgram_nearest, hProgram_linear, hProgram_cubic, hProgram_edge;
 	private final String vss, fss_nearest, fss_linear, fss_cubic, fss_edge;
 	private final Rect outRect = new Rect();
+	private final float[] pVertexJ = new float[8];
+	private final FloatBuffer pVertex =
+			ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
 
 	public static class InputSurface {
+		private final static float[] pVertex_init = /* We keep this to avoid allocations. */
+				new float[] { 1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f };
 		private SurfaceMuxer surfaceMuxer;
 		private SurfaceTexture surfaceTexture;
 		private Surface surface;
@@ -88,12 +92,11 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		private float scale_x = 1.0f, scale_y = 1.0f;
 		private float translate_x = 0.0f, translate_y = 0.0f;
 		private float sharpening = 0.0f;
-		private final FloatBuffer pVertex;
+		private final float[] pVertexJ = new float[4 * 2];
 
 		public InputSurface(SurfaceMuxer muxer, int imode) {
 			surfaceMuxer = muxer;
 			this.imode = imode;
-			pVertex = ByteBuffer.allocateDirect(32).order(ByteOrder.nativeOrder()).asFloatBuffer();
 			muxer.allSurfaces.add(this);
 			init();
 		}
@@ -142,25 +145,20 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		}
 
 		private void initVertex() {
-			// TODO maybe we can squeeze scale in here so it doesn't have to be in the vertex shader
-			//   dat float buffer alocation though.. if we want pinch zoom it'll happen a lot
-			float[] vtmp = new float[] { 1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f };
+			System.arraycopy(pVertex_init, 0, pVertexJ, 0, pVertexJ.length);
 			if ((mirror && !rotate) || (rotate && !mirror)) /* Flip X. */
-				for (int i = 0; i < vtmp.length; i += 2)
-					vtmp[i] = -vtmp[i];
+				for (int i = 0; i < pVertexJ.length; i += 2)
+					pVertexJ[i] = -pVertexJ[i];
 			if (rotate) /* Flip Y. */
-				for (int i = 1; i < vtmp.length; i += 2)
-					vtmp[i] = -vtmp[i];
+				for (int i = 1; i < pVertexJ.length; i += 2)
+					pVertexJ[i] = -pVertexJ[i];
 			if (rotate90) {
-				for (int i = 0; i < vtmp.length - 1; i += 2) {
-					float tmp = vtmp[i];
-					vtmp[i] = vtmp[i + 1];
-					vtmp[i + 1] = -tmp;
+				for (int i = 0; i < pVertexJ.length - 1; i += 2) {
+					float tmp = pVertexJ[i];
+					pVertexJ[i] = pVertexJ[i + 1];
+					pVertexJ[i + 1] = -tmp;
 				}
 			}
-			pVertex.position(0);
-			pVertex.put(vtmp);
-			pVertex.position(0);
 		}
 
 		private void init() {
@@ -307,7 +305,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		init();
 	}
 
-	private void render(int w, int h) {
+	private void render(int w, int h, boolean flipy) {
 		GLES20.glClearColor(0, 0, 0, 1);
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
@@ -329,7 +327,13 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			int isc = GLES20.glGetUniformLocation(program, "texSize");
 			GLES20.glUniform2f(isc, is.width, is.height);
 			int ph = GLES20.glGetAttribLocation(program, "vPosition");
-			GLES20.glVertexAttribPointer(ph, 2, GLES20.GL_FLOAT, false, 4 * 2, is.pVertex);
+			System.arraycopy(is.pVertexJ, 0, pVertexJ, 0, pVertexJ.length);
+			if (flipy)
+				for (int j = 1; j < pVertexJ.length; j += 2)
+					pVertexJ[j] *= -1;
+			pVertex.put(pVertexJ);
+			pVertex.rewind();
+			GLES20.glVertexAttribPointer(ph, 2, GLES20.GL_FLOAT, false, 4 * 2, pVertex);
 			GLES20.glEnableVertexAttribArray(ph);
 			int tch = GLES20.glGetAttribLocation(program, "vTexCoord");
 			GLES20.glVertexAttribPointer(tch, 2, GLES20.GL_FLOAT, false, 4 * 2, pTexCoord);
@@ -365,7 +369,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		for (int i = 0; i < outputSurfaces.size(); ++i) {
 			OutputSurface os = outputSurfaces.get(i);
 			os.makeCurrent();
-			render(os.width, os.height);
+			render(os.width, os.height, false);
 			os.setPresentationTime(surfaceTexture.getTimestamp());
 			os.swapBuffers();
 		}
@@ -382,13 +386,11 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		EGLSurface surface = EGL14.eglCreatePbufferSurface(eglDisplay, eglConfig, attr, 0);
 		checkEglError("eglCreatePbufferSurface");
 		EGL14.eglMakeCurrent(eglDisplay, surface, surface, eglContext);
-		render(w, h);
+		render(w, h, true);
 		GLES20.glReadPixels(0, 0, w, h, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buf);
 		EGL14.eglDestroySurface(eglDisplay, surface);
 		ret.copyPixelsFromBuffer(buf);
-		Matrix matrix = new Matrix(); /* We have to flip y because OpenGL is weird. */
-		matrix.postScale(1, -1, w / 2.0f, h / 2.0f);
-		return Bitmap.createBitmap(ret, 0, 0, w, h, matrix, false);
+		return ret;
 	}
 
 	private void checkEglError(String msg) {
@@ -443,7 +445,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		float[] ttmp = { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f };
 		pTexCoord = ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
 		pTexCoord.put(ttmp);
-		pTexCoord.position(0);
+		pTexCoord.rewind();
 
 		/* Create the shaders. */
 		int vshader = GLES20.glCreateShader(GLES20.GL_VERTEX_SHADER);
