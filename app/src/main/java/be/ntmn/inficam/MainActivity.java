@@ -37,9 +37,9 @@ import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 import be.ntmn.libinficam.InfiCam;
 
@@ -73,35 +73,42 @@ public class MainActivity extends BaseActivity {
 	private LinearLayout buttonsLeft, buttonsRight;
 	private ConstraintLayout.LayoutParams buttonsLeftLayout, buttonsRightLayout;
 	private SliderDouble rangeSlider;
+	private ImageButton buttonPhoto;
 	private boolean rotate = false;
 	private int orientation = 0;
 	private boolean swapControls = false;
 	private float scale = 1.0f;
 
 	private volatile boolean imgCompressStop = false; /* Because threads it must be volatile. */
-	private final Vector<Bitmap> imgCompressQueue = new Vector<>(); /* Vector is thread-safe. */
+	private Bitmap imgCompressBitmap;
+
 	private class ImgCompressThread extends Thread {
+		public final ReentrantLock lock = new ReentrantLock();
+		public final Condition cond = lock.newCondition();
+
 		@Override
 		public void run() { // TODO give some indication of image being stored so the user sees when done
+			lock.lock();
 			while (true) {
-				while (imgCompressQueue.size() > 0) {
-					Bitmap bmp = imgCompressQueue.remove(0);
-					Util.writePNG(getApplicationContext(), bmp, 100);
-					bmp.recycle();
+				try {
+					cond.await();
+				} catch (Exception e) {
+					e.printStackTrace();
+					continue;
 				}
 				if (imgCompressStop)
 					break;
-				synchronized (this) {
-					if (imgCompressQueue.size() > 0)
-						continue;
-					try {
-						wait();
-					} catch (Exception e) { e.printStackTrace(); }
-				}
+				Util.writePNG565(getApplicationContext(), imgCompressBitmap, 100);
+				imgCompressBitmap.recycle();
+				handler.post(() -> {
+					buttonPhoto.setEnabled(true);
+					buttonPhoto.setColorFilter(null);
+				});
 			}
+			lock.unlock();
 		}
-	};
-	private Thread imgCompressThread;
+	}
+	private ImgCompressThread imgCompressThread;
 
 	private long shutterIntervalInitial; /* These are set by Settings class later. */
 	private long shutterInterval; /* Xtherm does it 1 sec after connect and then every 380 sec. */
@@ -273,7 +280,7 @@ public class MainActivity extends BaseActivity {
 			 *   meaning what's in the SurfaceTexture buffers after the updateTexImage() calls
 			 *   surfaceMuxer should do.
 			 */
-			if (takePic) {
+			if (takePic && imgCompressThread.lock.tryLock()) {
 				final Rect r = new Rect();
 				int w = picWidth, h = picHeight;
 				if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180) {
@@ -286,14 +293,14 @@ public class MainActivity extends BaseActivity {
 				outPicture.setRect(r);
 				outPicture.attachInput(surfaceMuxer);
 				surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
-				Bitmap bitmap = outPicture.getBitmap();
-				synchronized (imgCompressThread) {
-					imgCompressQueue.add(bitmap);
-					imgCompressThread.notify();
-				}
+				imgCompressBitmap = outPicture.getBitmap();
+				imgCompressThread.cond.signal();
+				imgCompressThread.lock.unlock();
 				outPicture.attachInput(null);
 				takePic = false;
 				messageView.shortMessage(R.string.msg_captured);
+				buttonPhoto.setEnabled(false);
+				buttonPhoto.setColorFilter(Color.GRAY);
 			} else {
 				/* We use the inputSurface because it has the most relevant timestamp. */
 				surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
@@ -386,7 +393,7 @@ public class MainActivity extends BaseActivity {
 		ImageButton buttonShutter = findViewById(R.id.buttonShutter);
 		buttonShutter.setOnClickListener(view -> infiCam.calibrate());
 
-		ImageButton buttonPhoto = findViewById(R.id.buttonPhoto);
+		buttonPhoto = findViewById(R.id.buttonPhoto);
 		buttonPhoto.setOnClickListener(view -> {
 			if (usbConnection != null)
 				takePic = true;
@@ -521,14 +528,14 @@ public class MainActivity extends BaseActivity {
 
 	@Override
 	protected void onStop() {
-		synchronized (imgCompressThread) {
-			imgCompressStop = true;
-			imgCompressThread.notify();
-		}
+		imgCompressThread.lock.lock();
+		imgCompressStop = true;
+		imgCompressThread.cond.signal();
 		try {
 			imgCompressThread.join();
 		} catch (Exception e) { e.printStackTrace(); }
-		Log.e("THR", "STOP looper DONE " + imgCompressQueue.size());
+		imgCompressThread.lock.unlock();
+		Log.e("THR", "STOP looper DONE ");
 		unregisterReceiver(batteryRecevier);
 		DisplayManager displayManager = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
 		displayManager.unregisterDisplayListener(displayListener);
