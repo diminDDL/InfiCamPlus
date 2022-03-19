@@ -46,8 +46,8 @@
 	<string name="set_pic_res">Picture output resolution</string>
 	<string name="set_vid_res">Video output resolution</string>
 	<string name="set_orientation">Orientation</string>
-	<string name="set_img_type">Image format</string>
-	<string name="set_img_quality">Image quality (%d%%)</string>
+	<string name="set_pic_type">Picture format</string>
+	<string name="set_pic_quality">Picture quality (%d%%)</string>
 	<string name="set_defaults">Reset to defaults</string>
 
 	<string name="set_show_min">Show min temperature</string>

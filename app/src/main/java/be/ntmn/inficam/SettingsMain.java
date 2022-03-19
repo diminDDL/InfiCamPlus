@@ -138,7 +138,7 @@ public class SettingsMain extends Settings {
 			@Override
 			void onSet(boolean value) { act.setSwapControls(value); }
 		},
-		new SettingRadio("img_type", R.string.set_img_type, 1, new int[] {
+		new SettingRadio("pic_type", R.string.set_pic_type, 1, new int[] {
 				R.string.img_type_png,
 				R.string.img_type_png565,
 				R.string.img_type_jpeg
@@ -146,7 +146,7 @@ public class SettingsMain extends Settings {
 			@Override
 			void onSet(int i) { act.setImgType(i); }
 		},
-		new SettingSliderInt("img_quality", R.string.set_img_quality, 100, 0, 100, 1) {
+		new SettingSliderInt("pic_quality", R.string.set_pic_quality, 100, 0, 100, 1) {
 			@Override
 			void onSet(int i) { act.setImgQuality(i); }
 		},
