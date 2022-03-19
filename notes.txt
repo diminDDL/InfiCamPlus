@@ -80,6 +80,7 @@ TODO ui stuff
 	- show camera product and version info somewhere (perhaps when scroll down in settings)
 	- choose which palettes are allowed for the next palette button
 	- indication of being zoomed and by how much
+	- presets for the settings
 
 TODO thermal camera things
 	- more measurement modes

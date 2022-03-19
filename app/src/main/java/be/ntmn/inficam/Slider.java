@@ -88,9 +88,7 @@ public class Slider extends androidx.appcompat.widget.AppCompatSeekBar {
 	}
 
 	@Override
-	public void setOnSeekBarChangeListener(OnSeekBarChangeListener l) {
-		listener = l;
-	}
+	public void setOnSeekBarChangeListener(OnSeekBarChangeListener l) { listener = l; }
 
 	@Override
 	protected synchronized void onDraw(Canvas canvas) {
