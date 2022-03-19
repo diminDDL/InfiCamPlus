@@ -101,6 +101,7 @@ TODO ui stuff
 	- graph over time temperature(s) of selected point/area (the plural meaning min/max/avg)
 	- cram side-by-side video on screen somehow? dual vertical on horizontal or vice-versa screen if asked?
 	- also indicate to user when in 400c mode more clearly
+	- perhaps longpress on palette and tool switching button should bring up menu to pick one
 
 TODO thermal camera things
 	- more measurement modes
