@@ -93,6 +93,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		private float translate_x = 0.0f, translate_y = 0.0f;
 		private float sharpening = 0.0f;
 		private final float[] pVertexJ = new float[4 * 2];
+		private final FloatBuffer pVertex =
+				ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
 
 		public InputSurface(SurfaceMuxer muxer, int imode) {
 			surfaceMuxer = muxer;
@@ -159,6 +161,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 					pVertexJ[i + 1] = -tmp;
 				}
 			}
+			pVertex.put(pVertexJ);
+			pVertex.rewind();
 		}
 
 		private void init() {
@@ -327,13 +331,17 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			int isc = GLES20.glGetUniformLocation(program, "texSize");
 			GLES20.glUniform2f(isc, is.width, is.height);
 			int ph = GLES20.glGetAttribLocation(program, "vPosition");
-			System.arraycopy(is.pVertexJ, 0, pVertexJ, 0, pVertexJ.length);
-			if (flipy)
+			FloatBuffer vertex = is.pVertex;
+			if (flipy) { /* We have our own pVertex so we don't waste time for the rare Y flip. */
+				is.pVertex.get(pVertexJ);
+				is.pVertex.rewind();
 				for (int j = 1; j < pVertexJ.length; j += 2)
 					pVertexJ[j] *= -1;
-			pVertex.put(pVertexJ);
-			pVertex.rewind();
-			GLES20.glVertexAttribPointer(ph, 2, GLES20.GL_FLOAT, false, 4 * 2, pVertex);
+				pVertex.put(pVertexJ);
+				pVertex.rewind();
+				vertex = pVertex;
+			}
+			GLES20.glVertexAttribPointer(ph, 2, GLES20.GL_FLOAT, false, 4 * 2, vertex);
 			GLES20.glEnableVertexAttribArray(ph);
 			int tch = GLES20.glGetAttribLocation(program, "vTexCoord");
 			GLES20.glVertexAttribPointer(tch, 2, GLES20.GL_FLOAT, false, 4 * 2, pTexCoord);
