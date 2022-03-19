@@ -75,9 +75,6 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	private int hProgram_nearest, hProgram_linear, hProgram_cubic, hProgram_edge;
 	private final String vss, fss_nearest, fss_linear, fss_cubic, fss_edge;
 	private final Rect outRect = new Rect();
-	private final float[] pVertexJ = new float[8];
-	private final FloatBuffer pVertex =
-			ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
 
 	public static class InputSurface {
 		private final static float[] pVertex_init = /* We keep this to avoid allocations. */
@@ -331,17 +328,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			int isc = GLES20.glGetUniformLocation(program, "texSize");
 			GLES20.glUniform2f(isc, is.width, is.height);
 			int ph = GLES20.glGetAttribLocation(program, "vPosition");
-			FloatBuffer vertex = is.pVertex;
-			if (flipy) { /* We have our own pVertex so we don't waste time for the rare Y flip. */
-				is.pVertex.get(pVertexJ);
-				is.pVertex.rewind();
-				for (int j = 1; j < pVertexJ.length; j += 2)
-					pVertexJ[j] *= -1;
-				pVertex.put(pVertexJ);
-				pVertex.rewind();
-				vertex = pVertex;
-			}
-			GLES20.glVertexAttribPointer(ph, 2, GLES20.GL_FLOAT, false, 4 * 2, vertex);
+			GLES20.glVertexAttribPointer(ph, 2, GLES20.GL_FLOAT, false, 4 * 2, is.pVertex);
 			GLES20.glEnableVertexAttribArray(ph);
 			int tch = GLES20.glGetAttribLocation(program, "vTexCoord");
 			GLES20.glVertexAttribPointer(tch, 2, GLES20.GL_FLOAT, false, 4 * 2, pTexCoord);
@@ -350,7 +337,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			GLES20.glUniform1i(th, 0); /* Tells the shader what texture to use. */
 			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 			int sc = GLES20.glGetUniformLocation(program, "scale");
-			GLES20.glUniform2f(sc, is.scale_x, is.scale_y);
+			GLES20.glUniform2f(sc, is.scale_x, is.scale_y * (flipy ? -1.0f : 1.0f));
 			int tr = GLES20.glGetUniformLocation(program, "translate");
 			GLES20.glUniform2f(tr, is.translate_x, is.translate_y);
 
