@@ -387,6 +387,7 @@ public class MainActivity extends BaseActivity {
 					scale = 10.0f;
 				overlayData.scale = scale;
 				inputSurface.setScale(scale, scale);
+				messageView.shortMessage(getString(R.string.msg_zoom, (int) (scale * 100.0f)));
 				return false;
 			}
 
