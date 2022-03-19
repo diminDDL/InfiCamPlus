@@ -261,9 +261,10 @@ public class MainActivity extends BaseActivity {
 				surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
 				long t = System.currentTimeMillis();
 				Bitmap bitmap = outPicture.getBitmap();
-				Util.writePNG(this, bitmap);
+				Log.e("TAKEPIC", "time A = " + (System.currentTimeMillis() - t));
+				Util.writePNG(this, bitmap, 100);
 				bitmap.recycle();
-				Log.e("TAKEPIC", "time = " + (System.currentTimeMillis() - t));
+				Log.e("TAKEPIC", "time B = " + (System.currentTimeMillis() - t));
 				outPicture.attachInput(null);
 				takePic = false;
 				messageView.shortMessage(R.string.msg_captured);
