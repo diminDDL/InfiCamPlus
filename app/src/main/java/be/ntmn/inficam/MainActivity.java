@@ -462,8 +462,9 @@ public class MainActivity extends BaseActivity {
 			List<Float> v = rangeSlider.getValuesCorrected();
 			if (v.size() < 2 || !fromUser)
 				return;
-			overlayData.rangeMin = v.get(0);
-			overlayData.rangeMax = v.get(1);
+			if (value == slider.getValues().get(0))
+				overlayData.rangeMin = v.get(0);
+			else overlayData.rangeMax = v.get(1);
 			infiCam.lockRange(overlayData.rangeMin, overlayData.rangeMax);
 		});
 
