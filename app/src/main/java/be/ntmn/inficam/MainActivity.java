@@ -877,4 +877,13 @@ public class MainActivity extends BaseActivity {
 		if (imgCompressThread != null)
 			imgCompressThread.lock.unlock();
 	}
+
+	public void setTempUnit(int i) {
+		synchronized (frameLock) {
+			overlayData.tempUnit = i;
+		}
+		settings.setTempUnit(i);
+		settingsMeasure.setTempUnit(i);
+		settingsTherm.setTempUnit(i);
+	}
 }

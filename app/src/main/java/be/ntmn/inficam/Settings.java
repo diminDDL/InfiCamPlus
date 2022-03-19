@@ -24,6 +24,7 @@ public abstract class Settings extends LinearLayout {
 	MainActivity act;
 	SharedPreferences sp;
 	SharedPreferences.Editor ed;
+	int tempUnit = Util.TEMPUNIT_CELCIUS;
 
 	public static abstract class Setting {
 		String name;
@@ -211,13 +212,11 @@ public abstract class Settings extends LinearLayout {
 		}
 
 		@Override
-		void setText(int i) {
-			title.setText(getContext().getString(res, i));
-		}
+		void setText(int i) { title.setText(getContext().getString(res, i)); }
 	}
 
 	public abstract class SettingSliderFloat extends SettingSlider {
-		private final int div;
+		final int div;
 
 		SettingSliderFloat(String name, int res, int def, int min, int max, int step, int div) {
 			super(name, res, def, min, max, step);
@@ -225,16 +224,23 @@ public abstract class Settings extends LinearLayout {
 		}
 
 		@Override
-		void setText(int i) {
-			title.setText(getContext().getString(res, (float) i / div));
+		void setText(int i) { title.setText(getContext().getString(res, (float) i / div)); }
+
+		@Override
+		void onSet(int i) { onSet((float) i / div); }
+
+		abstract void onSet(float f);
+	}
+
+	public abstract class SettingSliderTemp extends SettingSliderFloat {
+		SettingSliderTemp(String name, int res, int def, int min, int max) {
+			super(name, res, def, min, max, 5, 10);
 		}
 
 		@Override
-		void onSet(int i) {
-			onSet((float) i / div);
+		void setText(int i) {
+			title.setText(getContext().getString(res, Util.formatTemp((float) i / div, tempUnit)));
 		}
-
-		abstract void onSet(float f);
 	}
 
 	public abstract class SettingButton extends Setting {
@@ -299,6 +305,13 @@ public abstract class Settings extends LinearLayout {
 		Setting[] settings = getSettings();
 		for (Setting setting : settings)
 			setting.setDefault();
+	}
+
+	public void setTempUnit(int unit) {
+		if (unit != tempUnit) { /* For when this is triggered from a setting. */
+			tempUnit = unit;
+			load();
+		}
 	}
 
 	public abstract Setting[] getSettings();

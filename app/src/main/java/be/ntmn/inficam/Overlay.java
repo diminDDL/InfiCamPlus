@@ -32,6 +32,7 @@ public class Overlay {
 		public boolean showCenter = false;
 		public boolean showPalette = false;
 		public float scale = 1.0f;
+		public int tempUnit = Util.TEMPUNIT_CELCIUS;
 	}
 
 	private final SurfaceMuxer.InputSurface surface;
@@ -133,7 +134,7 @@ public class Overlay {
 						vRect.right - clear,
 						vRect.bottom - theight - clear * 2,
 						d.palette);
-				formatTemp(sb, Float.isNaN(d.rangeMax) ? d.fi.max : d.rangeMax);
+				Util.formatTemp(sb, Float.isNaN(d.rangeMax) ? d.fi.max : d.rangeMax, d.tempUnit);
 				drawText(cvs, sb, vRect.right - clear, vRect.top + clear, false, true);
 				if (!Float.isNaN(d.rangeMax)) {
 					int off = (int) paintTextOutline.measureText(sb, 0, sb.length());
@@ -141,7 +142,7 @@ public class Overlay {
 							vRect.right - clear - off, vRect.top + iclear + isize);
 					lock.draw(cvs);
 				}
-				formatTemp(sb, Float.isNaN(d.rangeMin) ? d.fi.min : d.rangeMin);
+				Util.formatTemp(sb, Float.isNaN(d.rangeMin) ? d.fi.min : d.rangeMin, d.tempUnit);
 				drawText(cvs, sb, vRect.right - clear, vRect.bottom - clear, false, false);
 				if (!Float.isNaN(d.rangeMin)) {
 					int off = (int) paintTextOutline.measureText(sb, 0, sb.length());
@@ -156,7 +157,7 @@ public class Overlay {
 						(int) (vRect.right + clear + pwidth * vRect.width()),
 						vRect.bottom - theight - clear * 2,
 						d.palette);
-				formatTemp(sb, Float.isNaN(d.rangeMax) ? d.fi.max : d.rangeMax);
+				Util.formatTemp(sb, Float.isNaN(d.rangeMax) ? d.fi.max : d.rangeMax, d.tempUnit);
 				drawText(cvs, sb, vRect.right + clear, vRect.top + clear, true, true);
 				if (!Float.isNaN(d.rangeMax)) {
 					int off = (int) paintTextOutline.measureText(sb, 0, sb.length());
@@ -164,7 +165,7 @@ public class Overlay {
 							vRect.right + clear + off + isize, vRect.top + iclear + isize);
 					lock.draw(cvs);
 				}
-				formatTemp(sb, Float.isNaN(d.rangeMin) ? d.fi.min : d.rangeMin);
+				Util.formatTemp(sb, Float.isNaN(d.rangeMin) ? d.fi.min : d.rangeMin, d.tempUnit);
 				drawText(cvs, sb, vRect.right + clear, vRect.bottom - clear, true, false);
 				if (!Float.isNaN(d.rangeMin)) {
 					int off = (int) paintTextOutline.measureText(sb, 0, sb.length());
@@ -238,23 +239,7 @@ public class Overlay {
 		offY -= max(ym + offY + paintTextOutline.descent() + tclear - vRect.bottom, 0);
 		offY -= min(ym + offY + paintTextOutline.ascent() - tclear - vRect.top, 0);
 
-		formatTemp(sb, temp);
+		Util.formatTemp(sb, temp, d.tempUnit);
 		drawText(cvs, sb, xm + offX, ym + offY, la, false);
-	}
-
-	private static void formatTemp(StringBuilder sb, float temp) {
-		int t = abs(round(temp * 100.0f));
-		sb.setLength(0);
-		if (Float.isNaN(temp) || Float.isInfinite(temp)) {
-			sb.append("NaN");
-			return;
-		}
-		if (temp < 0)
-			sb.append("-");
-		sb.append(t / 100);
-		sb.append(".");
-		sb.append((t / 10) % 10);
-		sb.append(t % 10);
-		sb.append("°C");
 	}
 }

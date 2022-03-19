@@ -54,15 +54,14 @@ public class SettingsTherm extends Settings {
 				act.infiCam.updateTable();
 			}
 		},
-		new SettingSliderFloat("temp_reflected", R.string.set_temp_reflected,
-				200, -100, 400, 5, 10) {
+		new SettingSliderTemp("temp_reflected", R.string.set_temp_reflected, 200, -100, 400) {
 			@Override
 			void onSet(float f) {
 				act.infiCam.setTempReflected(f);
 				act.infiCam.updateTable();
 			}
 		},
-		new SettingSliderFloat("temp_ambient", R.string.set_temp_ambient, 200, -100, 400, 5, 10) {
+		new SettingSliderTemp("temp_ambient", R.string.set_temp_ambient, 200, -100, 400) {
 			@Override
 			void onSet(float f) {
 				act.infiCam.setTempAir(f);
@@ -83,7 +82,7 @@ public class SettingsTherm extends Settings {
 				act.infiCam.updateTable();
 			}
 		},
-		new SettingSliderFloat("correction", R.string.set_correction, 0, -200, 200, 5, 10) {
+		new SettingSliderTemp("correction", R.string.set_correction, 0, -200, 200) {
 			@Override
 			void onSet(float f) {
 				act.infiCam.setCorrection(f);

@@ -50,6 +50,7 @@
 	<string name="set_orientation">Orientation</string>
 	<string name="set_pic_type">Picture format</string>
 	<string name="set_pic_quality">Picture quality (%d%%)</string>
+	<string name="set_unit">Temperature unit</string>
 	<string name="set_defaults">Reset to defaults</string>
 
 	<string name="set_show_min">Show min temperature</string>
@@ -58,14 +59,14 @@
 	<string name="set_show_palette">Show palette</string>
 
 	<string name="set_emissivity">Emissivity (%.2f)</string>
-	<string name="set_temp_reflected">Reflected temperature (%.1f°C)</string>
-	<string name="set_temp_ambient">Ambient temperature (%.1f°C)</string>
+	<string name="set_temp_reflected">Reflected temperature (%s)</string>
+	<string name="set_temp_ambient">Ambient temperature (%s)</string>
 	<string name="set_humidity">Humidity (%d%%)</string>
 	<string name="set_distance">Distance (%dm)</string>
-	<string name="set_correction">Correction (%.1f°C)</string>
+	<string name="set_correction">Correction (%s)</string>
 	<string name="set_range">Range</string>
-	<string name="set_range_120">–20 – 120°C</string>
-	<string name="set_range_400">120 – 400°C</string>
+	<string name="set_range_120">–20 – 120°C (-4 - 248°F)</string>
+	<string name="set_range_400">120 – 400°C (248 - 752°F)</string>
 	<string name="set_palette">Palette</string>
 
 	<string name="imode_nearest">Nearest</string>
@@ -98,4 +99,7 @@
 	<string name="img_type_png">PNG</string>
 	<string name="img_type_png565">PNG (RGB565)</string>
 	<string name="img_type_jpeg">JPEG</string>
+
+	<string name="unit_celcius">Celcius</string>
+	<string name="unit_fahrenheit">Fahrenheit</string>
 </resources>

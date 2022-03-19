@@ -32,7 +32,7 @@ public class SettingsMeasure extends Settings {
 
 	private final Setting[] settings = {
 			new SettingBool("showcenter", R.string.set_show_center, true) {
-				@Override // TODO all the outscreen shit
+				@Override
 				void onSet(boolean value) { act.setShowCenter(value); }
 			},
 			new SettingBool("showmax", R.string.set_show_max, true) {

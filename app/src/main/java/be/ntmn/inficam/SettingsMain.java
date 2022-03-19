@@ -178,6 +178,18 @@ public class SettingsMain extends Settings {
 					}[i]);
 			}
 		},
+		new SettingRadio("unit", R.string.set_unit, 0, new int[] {
+				R.string.unit_celcius, R.string.unit_fahrenheit
+			}) {
+			@Override
+			void onSet(int i) {
+				final int[] units = new int[] {
+						Util.TEMPUNIT_CELCIUS,
+						Util.TEMPUNIT_FAHRENHEIT
+				};
+				act.setTempUnit(units[i]);
+			}
+		},
 		settingDefaults
 	};
 }

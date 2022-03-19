@@ -1,5 +1,8 @@
 package be.ntmn.inficam;
 
+import static java.lang.Math.abs;
+import static java.lang.Math.round;
+
 import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -25,6 +28,9 @@ public class Util {
 	public final static int IMGTYPE_PNG = 0;
 	public final static int IMGTYPE_PNG565 = 1;
 	public final static int IMGTYPE_JPEG = 2;
+
+	public final static int TEMPUNIT_CELCIUS = 0;
+	public final static int TEMPUNIT_FAHRENHEIT = 1;
 
 	private static void writeImage(Context ctx, Bitmap bmp, Bitmap.CompressFormat format,
 								  String mimeType, String ext, int quality) {
@@ -91,5 +97,31 @@ public class Util {
 		input.close();
 		bas.close();
 		return bas.toString();
+	}
+
+	public static void formatTemp(StringBuilder sb, float temp, int tempunit) {
+		sb.setLength(0);
+		if (Float.isNaN(temp) || Float.isInfinite(temp)) {
+			sb.append("NaN");
+			return;
+		}
+		if (tempunit == TEMPUNIT_FAHRENHEIT)
+			temp = temp * 9 / 5 + 32;
+		if (temp < 0)
+			sb.append("-");
+		sb.append((int) temp);
+		sb.append(".");
+		sb.append((int) ((temp * 10) % 10));
+		sb.append(round(temp * 100 % 10));
+		if (tempunit == TEMPUNIT_FAHRENHEIT)
+			sb.append("°F");
+		else sb.append("°C");
+	}
+
+	/* NOT for performance-critical sections! */
+	public static String formatTemp(float temp, int tempunit) {
+		StringBuilder sb = new StringBuilder();
+		formatTemp(sb, temp, tempunit);
+		return sb.toString();
 	}
 }
