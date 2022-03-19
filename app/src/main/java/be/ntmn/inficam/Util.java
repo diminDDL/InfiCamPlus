@@ -111,11 +111,11 @@ public class Util {
 			temp += 273.15;
 		if (temp < 0)
 			sb.append("-");
-		temp = abs(temp);
-		sb.append((int) temp);
+		temp = abs(temp * 100.0f);
+		sb.append((int) temp / 100);
 		sb.append(".");
-		sb.append((int) ((temp * 10) % 10));
-		sb.append(round(temp * 100 % 10));
+		sb.append((int) ((temp / 10) % 10));
+		sb.append((int) (temp % 10));
 		if (tempunit == TEMPUNIT_FAHRENHEIT)
 			sb.append("°F");
 		if (tempunit == TEMPUNIT_KELVIN)
