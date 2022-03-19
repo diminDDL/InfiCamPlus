@@ -1,6 +1,7 @@
 package be.ntmn.inficam;
 
 import static java.lang.Float.NaN;
+import static java.lang.Float.isInfinite;
 import static java.lang.Float.isNaN;
 import static java.lang.Math.ceil;
 import static java.lang.Math.floor;
@@ -425,13 +426,9 @@ public class MainActivity extends BaseActivity {
 		ImageButton buttonLock = findViewById(R.id.buttonLock);
 		buttonLock.setOnClickListener(view -> {
 			synchronized (frameLock) {
-				if (overlayData.fi == null ||
-						isNaN(overlayData.fi.min) || isNaN(overlayData.fi.max))
-					return;
 				if (isNaN(overlayData.rangeMin) && isNaN(overlayData.rangeMax)) {
 					overlayData.rangeMin = overlayData.fi.min;
 					overlayData.rangeMax = overlayData.fi.max;
-					infiCam.lockRange(overlayData.rangeMin, overlayData.rangeMax);
 					buttonLock.setImageResource(R.drawable.ic_baseline_lock_24);
 					rangeSlider.setVisibility(View.VISIBLE);
 					float start = -20.0f, end = 120.0f;
@@ -439,10 +436,15 @@ public class MainActivity extends BaseActivity {
 						start = 100.0f;
 						end = 400.0f;
 					}
-					if (overlayData.fi.min < start)
-						start = (float) floor(overlayData.fi.min);
-					if (overlayData.fi.max > end)
-						end = (float) ceil(overlayData.fi.max);
+					if (overlayData.rangeMin < start)
+						start = (float) floor(overlayData.rangeMin);
+					if (overlayData.rangeMax > end)
+						end = (float) ceil(overlayData.rangeMax);
+					if (isNaN(overlayData.rangeMin) || isInfinite(overlayData.rangeMin))
+						overlayData.rangeMin = start;
+					if (isNaN(overlayData.rangeMax) || isInfinite(overlayData.rangeMax))
+						overlayData.rangeMax = end;
+					infiCam.lockRange(overlayData.rangeMin, overlayData.rangeMax);
 					rangeSlider.setValueFrom(start);
 					rangeSlider.setValueTo(end);
 					rangeSlider.setValues(overlayData.rangeMin, overlayData.rangeMax);

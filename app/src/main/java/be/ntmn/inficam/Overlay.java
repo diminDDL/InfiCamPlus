@@ -20,7 +20,7 @@ import be.ntmn.libinficam.InfiCam;
 
 public class Overlay {
 	public static class Data {
-		public InfiCam.FrameInfo fi;
+		public InfiCam.FrameInfo fi = new InfiCam.FrameInfo();
 		public float[] temp;
 		public int[] palette;
 		public float rangeMin = NaN, rangeMax = NaN;
