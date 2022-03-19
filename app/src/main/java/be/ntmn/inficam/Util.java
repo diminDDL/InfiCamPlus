@@ -1,6 +1,5 @@
 package be.ntmn.inficam;
 
-import static java.lang.Math.abs;
 import static java.lang.Math.round;
 
 import android.annotation.SuppressLint;
@@ -8,7 +7,6 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.net.Uri;
 import android.os.Build;
