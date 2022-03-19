@@ -46,6 +46,8 @@
 	<string name="set_pic_res">Picture output resolution</string>
 	<string name="set_vid_res">Video output resolution</string>
 	<string name="set_orientation">Orientation</string>
+	<string name="set_img_type">Image format</string>
+	<string name="set_img_quality">Image quality (%d%%)</string>
 	<string name="set_defaults">Reset to defaults</string>
 
 	<string name="set_show_min">Show min temperature</string>
@@ -89,4 +91,8 @@
 	<string name="orientation_landscape">Landscape</string>
 	<string name="orientation_portrait">Portrait</string>
 	<string name="orientation_reverse">Reverse landscape</string>
+
+	<string name="img_type_png">PNG</string>
+	<string name="img_type_png565">PNG (RGB565)</string>
+	<string name="img_type_jpeg">JPEG</string>
 </resources>

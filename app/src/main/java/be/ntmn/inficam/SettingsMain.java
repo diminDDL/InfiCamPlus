@@ -45,8 +45,8 @@ public class SettingsMain extends Settings {
 		}
 
 		@Override
-		void onSet(int value) {
-			switch (value) {
+		void onSet(int i) {
+			switch (i) {
 				case 0:
 					onSetRes(320, 240);
 					break;
@@ -101,13 +101,13 @@ public class SettingsMain extends Settings {
 				R.string.imode_cubic
 			}) {
 			@Override
-			void onSet(int value) {
+			void onSet(int i) {
 				final int[] imodes = new int[] {
 						SurfaceMuxer.IMODE_NEAREST,
 						SurfaceMuxer.IMODE_LINEAR,
 						SurfaceMuxer.IMODE_BICUBIC
 				};
-				act.setIMode(imodes[value]);
+				act.setIMode(imodes[i]);
 			}
 		},
 		new SettingSliderFloat("sharpening", R.string.set_sharpening, 50, 0, 100, 5, 100) {
@@ -138,6 +138,18 @@ public class SettingsMain extends Settings {
 			@Override
 			void onSet(boolean value) { act.setSwapControls(value); }
 		},
+		new SettingRadio("img_type", R.string.set_img_type, 1, new int[] {
+				R.string.img_type_png,
+				R.string.img_type_png565,
+				R.string.img_type_jpeg
+			}) {
+			@Override
+			void onSet(int i) { act.setImgType(i); }
+		},
+		new SettingSliderInt("img_quality", R.string.set_img_quality, 100, 0, 100, 1) {
+			@Override
+			void onSet(int i) { act.setImgQuality(i); }
+		},
 		new SettingResolution("pic_res", R.string.set_pic_res) {
 			@Override
 			void onSetRes(int w, int h) {
@@ -157,13 +169,13 @@ public class SettingsMain extends Settings {
 				R.string.orientation_reverse
 			}) {
 			@Override
-			void onSet(int value) {
+			void onSet(int i) {
 				act.setOrientation(new int[] {
 						ActivityInfo.SCREEN_ORIENTATION_FULL_USER,
 						ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE,
 						ActivityInfo.SCREEN_ORIENTATION_PORTRAIT,
 						ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE
-					}[value]);
+					}[i]);
 			}
 		},
 		settingDefaults

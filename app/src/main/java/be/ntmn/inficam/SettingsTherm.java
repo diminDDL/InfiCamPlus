@@ -39,8 +39,8 @@ public class SettingsTherm extends Settings {
 		}
 
 		@Override
-		void onSet(int value) {
-			act.setPalette(Palette.palettes[value].getData());
+		void onSet(int i) {
+			act.setPalette(Palette.palettes[i].getData());
 		}
 	}
 
@@ -95,8 +95,8 @@ public class SettingsTherm extends Settings {
 				R.string.set_range_400
 			}) {
 			@Override
-			void onSet(int value) {
-				switch (value) {
+			void onSet(int i) {
+				switch (i) {
 					case 0:
 						act.setRange(120);
 						break;

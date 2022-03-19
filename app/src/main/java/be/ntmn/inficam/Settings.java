@@ -140,7 +140,7 @@ public abstract class Settings extends LinearLayout {
 			((RadioButton) rg.getChildAt(i + 1)).setChecked(true);
 		}
 
-		abstract void onSet(int value);
+		abstract void onSet(int i);
 	}
 
 	public abstract class SettingSlider extends Setting {

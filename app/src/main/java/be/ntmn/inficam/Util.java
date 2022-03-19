@@ -22,6 +22,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class Util {
+	public final static int IMGTYPE_PNG = 0;
+	public final static int IMGTYPE_PNG565 = 1;
+	public final static int IMGTYPE_JPEG = 2;
+
 	private static void writeImage(Context ctx, Bitmap bmp, Bitmap.CompressFormat format,
 								  String mimeType, String ext, int quality) {
 		@SuppressLint("SimpleDateFormat")
@@ -57,21 +61,23 @@ public class Util {
 		}
 	}
 
-	public static void writePNG(Context ctx, Bitmap bmp, int quality) {
-		writeImage(ctx, bmp, Bitmap.CompressFormat.PNG, "image/png", ".png", quality);
-	}
-
-	/* Much faster than writePNG() and the output is smaller. */
-	public static void writePNG565(Context ctx, Bitmap bmp, int quality) {
-		Bitmap bmp2 = Bitmap.createBitmap(bmp.getWidth(), bmp.getHeight(), Bitmap.Config.RGB_565);
-		Canvas c = new Canvas(bmp2);
-		c.drawBitmap(bmp, 0, 0, null);
-		writeImage(ctx, bmp2, Bitmap.CompressFormat.PNG, "image/png", ".png", quality);
-		bmp2.recycle();
-	}
-
-	public static void writeJPEG(Context ctx, Bitmap bmp, int quality) {
-		writeImage(ctx, bmp, Bitmap.CompressFormat.JPEG, "image/jpeg", ".jpg", quality);
+	public static void writeImage(Context ctx, Bitmap bmp, int type, int quality) {
+		switch (type) {
+			case IMGTYPE_PNG:
+				writeImage(ctx, bmp, Bitmap.CompressFormat.PNG, "image/png", ".png", quality);
+				break;
+			case IMGTYPE_PNG565: /* Much faster than writePNG() and the output is smaller. */
+				Bitmap bmp2 =
+						Bitmap.createBitmap(bmp.getWidth(), bmp.getHeight(),Bitmap.Config.RGB_565);
+				Canvas c = new Canvas(bmp2);
+				c.drawBitmap(bmp, 0, 0, null);
+				writeImage(ctx, bmp2, Bitmap.CompressFormat.PNG, "image/png", ".png", quality);
+				bmp2.recycle();
+				break;
+			case IMGTYPE_JPEG: /* Fastest and smallest, but lossy. */
+				writeImage(ctx, bmp, Bitmap.CompressFormat.JPEG, "image/jpeg", ".jpg", quality);
+				break;
+		}
 	}
 
 	public static String readStringAsset(Context ctx, String filename) throws IOException {

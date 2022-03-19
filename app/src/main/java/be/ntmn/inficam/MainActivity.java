@@ -20,7 +20,6 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.BatteryManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.ScaleGestureDetector;
 import android.view.Surface;
@@ -78,16 +77,18 @@ public class MainActivity extends BaseActivity {
 	private int orientation = 0;
 	private boolean swapControls = false;
 	private float scale = 1.0f;
+	private int imgType;
+	private int imgQuality;
 
-	private volatile boolean imgCompressStop = false; /* Because threads it must be volatile. */
 	private Bitmap imgCompressBitmap;
 
 	private class ImgCompressThread extends Thread {
+		private volatile boolean stop = false;
 		public final ReentrantLock lock = new ReentrantLock();
 		public final Condition cond = lock.newCondition();
 
 		@Override
-		public void run() { // TODO give some indication of image being stored so the user sees when done
+		public void run() {
 			lock.lock();
 			while (true) {
 				try {
@@ -96,9 +97,9 @@ public class MainActivity extends BaseActivity {
 					e.printStackTrace();
 					continue;
 				}
-				if (imgCompressStop)
+				if (stop)
 					break;
-				Util.writePNG565(getApplicationContext(), imgCompressBitmap, 100);
+				Util.writeImage(getApplicationContext(), imgCompressBitmap, imgType, imgQuality);
 				imgCompressBitmap.recycle();
 				handler.post(() -> {
 					buttonPhoto.setEnabled(true);
@@ -106,6 +107,16 @@ public class MainActivity extends BaseActivity {
 				});
 			}
 			lock.unlock();
+		}
+
+		public void shutdown() {
+			lock.lock();
+			stop = true;
+			cond.signal();
+			lock.unlock();
+			try {
+				join();
+			} catch (Exception e) { e.printStackTrace(); }
 		}
 	}
 	private ImgCompressThread imgCompressThread;
@@ -528,14 +539,8 @@ public class MainActivity extends BaseActivity {
 
 	@Override
 	protected void onStop() {
-		imgCompressThread.lock.lock();
-		imgCompressStop = true;
-		imgCompressThread.cond.signal();
-		try {
-			imgCompressThread.join();
-		} catch (Exception e) { e.printStackTrace(); }
-		imgCompressThread.lock.unlock();
-		Log.e("THR", "STOP looper DONE ");
+		imgCompressThread.shutdown();
+		imgCompressThread = null;
 		unregisterReceiver(batteryRecevier);
 		DisplayManager displayManager = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
 		displayManager.unregisterDisplayListener(displayListener);
@@ -841,5 +846,21 @@ public class MainActivity extends BaseActivity {
 	public void setOrientation(int i) {
 		setRequestedOrientation(i);
 		updateOrientation();
+	}
+
+	public void setImgType(int i) {
+		if (imgCompressThread != null)
+			imgCompressThread.lock.lock();
+		imgType = i;
+		if (imgCompressThread != null)
+			imgCompressThread.lock.unlock();
+	}
+
+	public void setImgQuality(int i) {
+		if (imgCompressThread != null)
+			imgCompressThread.lock.lock();
+		imgQuality = i;
+		if (imgCompressThread != null)
+			imgCompressThread.lock.unlock();
 	}
 }
