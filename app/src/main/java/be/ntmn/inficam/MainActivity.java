@@ -37,8 +37,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
-import com.google.android.material.slider.RangeSlider;
-
 import java.io.IOException;
 import java.util.List;
 
@@ -65,7 +63,7 @@ public class MainActivity extends BaseActivity {
 	private final SurfaceRecorder recorder = new SurfaceRecorder();
 	private boolean recordAudio;
 
-	private SurfaceView cameraView;
+	private CameraView cameraView;
 	private MessageView messageView;
 	private ViewGroup dialogBackground;
 	private SettingsMain settings;
@@ -327,9 +325,9 @@ public class MainActivity extends BaseActivity {
 				usbMonitor.scan();
 				return;
 			}
-			//infiCam.calibrate();
+			infiCam.calibrate();
 		});
-		final ScaleGestureDetector sd = new ScaleGestureDetector(this,
+		final ScaleGestureDetector.OnScaleGestureListener scaleListener =
 				new ScaleGestureDetector.OnScaleGestureListener() {
 			private float scaleStart;
 
@@ -353,8 +351,8 @@ public class MainActivity extends BaseActivity {
 
 			@Override
 			public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) { /* Empty. */ }
-		});
-		cameraView.setOnTouchListener((view, motionEvent) -> sd.onTouchEvent(motionEvent));
+		};
+		cameraView.setScaleListener(scaleListener);
 
 		ImageButton buttonShutter = findViewById(R.id.buttonShutter);
 		buttonShutter.setOnClickListener(view -> infiCam.calibrate());

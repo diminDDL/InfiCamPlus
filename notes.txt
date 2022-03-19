@@ -34,6 +34,7 @@ The versions of third party things in libinficam/src/main/jni dir:
 Quick description of what for the Java classes are:
 	- BaseActivity      the rug under which i swept the mess that is fullscreen mode and requesting
 	                      camera/file permissions, provides a handler that mainactivity uses too
+	- CameraView        SurfaceView with some fluff to draw the image onto
 	- MainActivity      inherits BaseActivity, it's the main activity obviously, sticks most other
 	                      classes together into a usable app
 	- MessageView       a thing for showing messages on the screen, alike Androids Toast stuff
@@ -68,7 +69,6 @@ Short description of the C++ classes in jni/InfiCam dir:
 TODO ui stuff
 	- different states for UI interactions:
 		* add measurement point/line/area
-		* zoom/pan the thermal image
 		* zoom/pan the video overlay
 	- perhaps improve UI for manual range setting
 		* maybe enter as center + span rather than min + max?
@@ -78,8 +78,8 @@ TODO ui stuff
 	- perhaps allow choosing separate resolutions for portrait pics/video
 	- gallery to check pictures and videos taken
 	- show camera product and version info somewhere (perhaps when scroll down in settings)
-	- zooming the thermal image?
 	- choose which palettes are allowed for the next palette button
+	- indication of being zoomed and by how much
 
 TODO thermal camera things
 	- more measurement modes
