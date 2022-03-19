@@ -42,9 +42,10 @@ public class Overlay {
 	private final Drawable lock;
 	private int width, height;
 	private final Rect vRect = new Rect(), rectTgt = new Rect(); /* Do not alloc each frame! */
-	int[] paletteCache_palette;
-	Bitmap paletteCache_bitmap;
-	int paletteCache_height;
+	private int[] paletteCache_palette;
+	private final int[] getPaletteCache_array = new int[InfiCam.paletteLen];
+	private final Bitmap paletteCache_bitmap =
+			Bitmap.createBitmap(1, InfiCam.paletteLen, Bitmap.Config.ARGB_8888);
 
 	/* These sizes are in fractions of the total width of the bitmap drawn. */
 	private final static float smarker = 0.015f; /* Marker size. */
@@ -180,17 +181,11 @@ public class Overlay {
 	private void drawPalette(Canvas cvs, int x1, int y1, int x2, int y2, int[] palette) {
 		if (y2 - y1 <= 0)
 			return;
-		if (paletteCache_palette != palette || paletteCache_height != y2 - y1) {
-			int height = y2 - y1;
-			if (paletteCache_bitmap != null)
-				paletteCache_bitmap.recycle();
-			paletteCache_bitmap = Bitmap.createBitmap(1, height, Bitmap.Config.ARGB_8888);
-			Canvas c = new Canvas(paletteCache_bitmap);
-			for (int i = 0; i < height; ++i) {
-				int col = palette[palette.length - 1 - i * palette.length / height];
-				paintPalette.setARGB(255, (col >> 0) & 0xFF, (col >> 8) & 0xFF, (col >> 16) & 0xFF);
-				c.drawPoint(0, i, paintPalette);
-			}
+		if (paletteCache_palette != palette) {
+			for (int i = 0; i < palette.length; ++i)
+				getPaletteCache_array[i] =
+						Integer.reverseBytes(palette[palette.length - i - 1]) >> 8 | 0xFF000000;
+			paletteCache_bitmap.setPixels(getPaletteCache_array, 0, 1, 0, 0, 1, palette.length);
 			paletteCache_palette = palette;
 		}
 		cvs.drawRect(x1, y1, x2, y2, paintOutline);
