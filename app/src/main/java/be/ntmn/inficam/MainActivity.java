@@ -20,8 +20,7 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.BatteryManager;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.HandlerThread;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.ScaleGestureDetector;
 import android.view.Surface;
@@ -38,7 +37,9 @@ import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
 import be.ntmn.libinficam.InfiCam;
 
@@ -77,8 +78,30 @@ public class MainActivity extends BaseActivity {
 	private boolean swapControls = false;
 	private float scale = 1.0f;
 
-	private HandlerThread imgCompressThread;
-	private Handler imgCompressHandler;
+	private volatile boolean imgCompressStop = false; /* Because threads it must be volatile. */
+	private final Vector<Bitmap> imgCompressQueue = new Vector<>(); /* Vector is thread-safe. */
+	private class ImgCompressThread extends Thread {
+		@Override
+		public void run() { // TODO give some indication of image being stored so the user sees when done
+			while (true) {
+				while (imgCompressQueue.size() > 0) {
+					Bitmap bmp = imgCompressQueue.remove(0);
+					Util.writePNG(getApplicationContext(), bmp, 100);
+					bmp.recycle();
+				}
+				if (imgCompressStop)
+					break;
+				synchronized (this) {
+					if (imgCompressQueue.size() > 0)
+						continue;
+					try {
+						wait();
+					} catch (Exception e) { e.printStackTrace(); }
+				}
+			}
+		}
+	};
+	private Thread imgCompressThread;
 
 	private long shutterIntervalInitial; /* These are set by Settings class later. */
 	private long shutterInterval; /* Xtherm does it 1 sec after connect and then every 380 sec. */
@@ -264,11 +287,10 @@ public class MainActivity extends BaseActivity {
 				outPicture.attachInput(surfaceMuxer);
 				surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
 				Bitmap bitmap = outPicture.getBitmap();
-				imgCompressHandler.post(() -> {
-					// TODO give some indication of image being stored so the user sees when done
-					Util.writePNG(this, bitmap, 100);
-					bitmap.recycle();
-				});
+				synchronized (imgCompressThread) {
+					imgCompressQueue.add(bitmap);
+					imgCompressThread.notify();
+				}
 				outPicture.attachInput(null);
 				takePic = false;
 				messageView.shortMessage(R.string.msg_captured);
@@ -475,9 +497,8 @@ public class MainActivity extends BaseActivity {
 		normalCamera.start(this, videoSurface.getSurface());*/
 		//inputSurface.setScale(2.0f, 2.0f); // TODO
 
-		imgCompressThread = new HandlerThread("imgCompress");
+		imgCompressThread = new ImgCompressThread();
 		imgCompressThread.start();
-		imgCompressHandler = new Handler(imgCompressThread.getLooper());
 	}
 
 	@Override
@@ -500,8 +521,14 @@ public class MainActivity extends BaseActivity {
 
 	@Override
 	protected void onStop() {
-		imgCompressThread.quitSafely();
-
+		synchronized (imgCompressThread) {
+			imgCompressStop = true;
+			imgCompressThread.notify();
+		}
+		try {
+			imgCompressThread.join();
+		} catch (Exception e) { e.printStackTrace(); }
+		Log.e("THR", "STOP looper DONE " + imgCompressQueue.size());
 		unregisterReceiver(batteryRecevier);
 		DisplayManager displayManager = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
 		displayManager.unregisterDisplayListener(displayListener);
