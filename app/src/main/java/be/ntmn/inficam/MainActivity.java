@@ -22,7 +22,6 @@ import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.ScaleGestureDetector;
 import android.view.Surface;
@@ -264,7 +263,6 @@ public class MainActivity extends BaseActivity {
 				outPicture.setRect(r);
 				outPicture.attachInput(surfaceMuxer);
 				surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
-				long t = System.currentTimeMillis();
 				Bitmap bitmap = outPicture.getBitmap();
 				imgCompressHandler.post(() -> {
 					// TODO give some indication of image being stored so the user sees when done
