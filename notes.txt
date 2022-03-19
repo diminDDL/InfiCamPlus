@@ -81,6 +81,10 @@ TODO ui stuff
 	- choose which palettes are allowed for the next palette button
 	- presets for the settings
 	- improve the layout and check that it works with most common aspect ratios
+	- option to show min/max/avg/center in list at top left
+		* current buttons for them stay as-is, if they are checked and the list one -> show marker without temp
+		    if only the list one is hown just show in list but not marker
+	- option to show emissivity, ambient, etc on screen
 
 TODO thermal camera things
 	- more measurement modes

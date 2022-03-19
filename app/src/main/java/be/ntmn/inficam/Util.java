@@ -1,5 +1,6 @@
 package be.ntmn.inficam;
 
+import static java.lang.Math.abs;
 import static java.lang.Math.round;
 
 import android.annotation.SuppressLint;
@@ -110,6 +111,7 @@ public class Util {
 			temp += 273.15;
 		if (temp < 0)
 			sb.append("-");
+		temp = abs(temp);
 		sb.append((int) temp);
 		sb.append(".");
 		sb.append((int) ((temp * 10) % 10));
