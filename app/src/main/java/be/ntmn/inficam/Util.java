@@ -5,6 +5,8 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -20,7 +22,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class Util {
-	private static void writeImage(Context ctx, Bitmap bitmap, Bitmap.CompressFormat format,
+	private static void writeImage(Context ctx, Bitmap bmp, Bitmap.CompressFormat format,
 								  String mimeType, String ext, int quality) {
 		@SuppressLint("SimpleDateFormat")
 		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
@@ -47,7 +49,7 @@ public class Util {
 				}
 				out = new FileOutputStream(file);
 			}
-			bitmap.compress(format, quality, out);
+			bmp.compress(format, quality, out);
 			out.flush();
 			out.close();
 		} catch (Exception e) {
@@ -55,12 +57,21 @@ public class Util {
 		}
 	}
 
-	public static void writePNG(Context ctx, Bitmap bitmap, int quality) {
-		writeImage(ctx, bitmap, Bitmap.CompressFormat.PNG, "image/png", ".png", quality);
+	public static void writePNG(Context ctx, Bitmap bmp, int quality) {
+		writeImage(ctx, bmp, Bitmap.CompressFormat.PNG, "image/png", ".png", quality);
 	}
 
-	public static void writeJPEG(Context ctx, Bitmap bitmap, int quality) {
-		writeImage(ctx, bitmap, Bitmap.CompressFormat.JPEG, "image/jpeg", ".jpg", quality);
+	/* Much faster than writePNG() and the output is smaller. */
+	public static void writePNG565(Context ctx, Bitmap bmp, int quality) {
+		Bitmap bmp2 = Bitmap.createBitmap(bmp.getWidth(), bmp.getHeight(), Bitmap.Config.RGB_565);
+		Canvas c = new Canvas(bmp2);
+		c.drawBitmap(bmp, 0, 0, null);
+		writeImage(ctx, bmp2, Bitmap.CompressFormat.PNG, "image/png", ".png", quality);
+		bmp2.recycle();
+	}
+
+	public static void writeJPEG(Context ctx, Bitmap bmp, int quality) {
+		writeImage(ctx, bmp, Bitmap.CompressFormat.JPEG, "image/jpeg", ".jpg", quality);
 	}
 
 	public static String readStringAsset(Context ctx, String filename) throws IOException {

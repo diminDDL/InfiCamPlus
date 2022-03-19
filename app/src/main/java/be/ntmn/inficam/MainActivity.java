@@ -20,6 +20,8 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.BatteryManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.ScaleGestureDetector;
@@ -75,6 +77,9 @@ public class MainActivity extends BaseActivity {
 	private int orientation = 0;
 	private boolean swapControls = false;
 	private float scale = 1.0f;
+
+	private HandlerThread imgCompressThread;
+	private Handler imgCompressHandler;
 
 	private long shutterIntervalInitial; /* These are set by Settings class later. */
 	private long shutterInterval; /* Xtherm does it 1 sec after connect and then every 380 sec. */
@@ -261,10 +266,11 @@ public class MainActivity extends BaseActivity {
 				surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
 				long t = System.currentTimeMillis();
 				Bitmap bitmap = outPicture.getBitmap();
-				Log.e("TAKEPIC", "time A = " + (System.currentTimeMillis() - t));
-				Util.writePNG(this, bitmap, 100);
-				bitmap.recycle();
-				Log.e("TAKEPIC", "time B = " + (System.currentTimeMillis() - t));
+				imgCompressHandler.post(() -> {
+					// TODO give some indication of image being stored so the user sees when done
+					Util.writePNG(this, bitmap, 100);
+					bitmap.recycle();
+				});
 				outPicture.attachInput(null);
 				takePic = false;
 				messageView.shortMessage(R.string.msg_captured);
@@ -470,6 +476,10 @@ public class MainActivity extends BaseActivity {
 		videoSurface.setIMode(SurfaceMuxer.IMODE_EDGE);
 		normalCamera.start(this, videoSurface.getSurface());*/
 		//inputSurface.setScale(2.0f, 2.0f); // TODO
+
+		imgCompressThread = new HandlerThread("imgCompress");
+		imgCompressThread.start();
+		imgCompressHandler = new Handler(imgCompressThread.getLooper());
 	}
 
 	@Override
@@ -492,6 +502,8 @@ public class MainActivity extends BaseActivity {
 
 	@Override
 	protected void onStop() {
+		imgCompressThread.quitSafely();
+
 		unregisterReceiver(batteryRecevier);
 		DisplayManager displayManager = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
 		displayManager.unregisterDisplayListener(displayListener);
