@@ -24,14 +24,23 @@ public class SliderDouble extends RangeSlider {
 
 	public SliderDouble(@NonNull Context context) {
 		super(context);
+		init();
 	}
 
 	public SliderDouble(@NonNull Context context, @Nullable AttributeSet attrs) {
 		super(context, attrs);
+		init();
 	}
 
 	public SliderDouble(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
 		super(context, attrs, defStyleAttr);
+		init();
+	}
+
+	private void init() {
+		/* Halo won't draw when vertical if background is RippleDrawable and super() initializes
+		 *   it to that. */
+		setBackground(null);
 	}
 
 	@Override
