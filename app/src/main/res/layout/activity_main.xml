@@ -9,9 +9,37 @@
 	android:layout_height="match_parent"
 	android:background="@color/black">
 
+	<FrameLayout
+		android:layout_width="0dp"
+		android:layout_height="0dp"
+		android:layout_marginEnd="0dp"
+		android:layout_marginStart="0dp"
+		android:layout_marginTop="0dp"
+		app:layout_constraintTop_toTopOf="parent"
+		app:layout_constraintBottom_toBottomOf="parent"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent">
+
+		<be.ntmn.inficam.CameraView android:id="@+id/cameraView"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent" />
+
+		<be.ntmn.inficam.MessageView android:id="@+id/message"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:gravity="center"
+			android:text="@string/msg_disconnected"
+			android:textAppearance="@style/TextAppearance.AppCompat.Large"
+			android:textColor="@color/white"
+			android:layout_gravity="center"
+			android:paddingVertical="5dp"
+			android:paddingHorizontal="12dp"
+			android:background="@drawable/message_background" />
+
+	</FrameLayout>
+
 	<TextView
 		android:id="@+id/batLevel"
-		android:elevation="100dp"
 		android:layout_margin="15dp"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
@@ -21,7 +49,6 @@
 
 	<TextView
 		android:id="@+id/zoomLevel"
-		android:elevation="100dp"
 		android:layout_margin="15dp"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
@@ -29,12 +56,10 @@
 		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintEnd_toEndOf="parent" />
 
-	<!-- Elevation is like z-order. -->
 	<LinearLayout
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:orientation="vertical"
-		android:elevation="10dp"
 		android:id="@+id/buttonsLeft"
 		app:layout_constraintTop_toTopOf="parent"
 		app:layout_constraintBottom_toBottomOf="parent"
@@ -102,46 +127,15 @@
 		android:visibility="gone"
 		app:labelBehavior="gone"
 		app:tickVisible="false"
-		android:elevation="20dp"
 		android:layout_width="wrap_content"
 		android:layout_height="match_parent"
 		app:layout_constraintTop_toTopOf="parent"
 		app:layout_constraintLeft_toRightOf="@id/buttonsLeft" />
 
-	<FrameLayout
-		android:layout_width="0dp"
-		android:layout_height="0dp"
-		android:layout_marginEnd="0dp"
-		android:layout_marginStart="0dp"
-		android:layout_marginTop="0dp"
-		app:layout_constraintTop_toTopOf="parent"
-		app:layout_constraintBottom_toBottomOf="parent"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintStart_toStartOf="parent">
-
-		<be.ntmn.inficam.CameraView android:id="@+id/cameraView"
-			android:layout_width="match_parent"
-			android:layout_height="match_parent" />
-
-		<be.ntmn.inficam.MessageView android:id="@+id/message"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:gravity="center"
-			android:text="@string/msg_disconnected"
-			android:textAppearance="@style/TextAppearance.AppCompat.Large"
-			android:textColor="@color/white"
-			android:layout_gravity="center"
-			android:paddingVertical="5dp"
-			android:paddingHorizontal="12dp"
-			android:background="@drawable/message_background" />
-
-	</FrameLayout>
-
 	<LinearLayout
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:orientation="vertical"
-		android:elevation="10dp"
 		android:id="@+id/buttonsRight"
 		app:layout_constraintTop_toTopOf="parent"
 		app:layout_constraintBottom_toBottomOf="parent"
@@ -198,7 +192,6 @@
 		android:background="@color/dialog_background"
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
-		android:elevation="20dp"
 		android:visibility="gone"
 		app:layout_constraintTop_toTopOf="parent"
 		app:layout_constraintBottom_toBottomOf="parent"
