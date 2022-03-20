@@ -102,6 +102,8 @@ TODO ui stuff
 	- cram side-by-side video on screen somehow? dual vertical on horizontal or vice-versa screen if asked?
 	- also indicate to user when in 400c mode more clearly
 	- perhaps longpress on palette and tool switching button should bring up menu to pick one
+	- taking photo fails on older android
+	- bicubic shader takes forever to compile on GN4
 
 TODO thermal camera things
 	- more measurement modes

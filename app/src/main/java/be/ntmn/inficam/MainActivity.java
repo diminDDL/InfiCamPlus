@@ -139,7 +139,7 @@ public class MainActivity extends BaseActivity {
 	private final USBMonitor usbMonitor = new USBMonitor() {
 		@Override
 		public void onDeviceFound(UsbDevice dev) {
-			if (device != null)
+			if (device != null || dev.getDeviceClass() != 239 || dev.getDeviceSubclass() != 2)
 				return;
 			device = dev;
 			/* Connecting to a UVC device needs camera permission. */
@@ -151,8 +151,6 @@ public class MainActivity extends BaseActivity {
 				connect(dev, new ConnectCallback() {
 					@Override
 					public void onConnected(UsbDevice dev, UsbDeviceConnection conn) {
-						if (usbConnection != null) // TODO this may not be proper
-							return;
 						disconnect(); /* Important! Frame callback not allowed during connect. */
 						usbConnection = conn;
 						disconnecting = false;
@@ -169,7 +167,7 @@ public class MainActivity extends BaseActivity {
 						} catch (Exception e) {
 							usbConnection.close();
 							usbConnection = null;
-							messageView.showMessage(getString(R.string.msg_connect_failed));
+							messageView.showMessage(e.getMessage());
 						}
 					}
 

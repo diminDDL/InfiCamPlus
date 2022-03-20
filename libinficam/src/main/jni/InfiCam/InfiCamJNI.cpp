@@ -46,6 +46,7 @@ public:
 static InfiCamJNI *getObject(JNIEnv *env, jobject obj) {
 	jclass cls = env->GetObjectClass(obj);
 	jfieldID nativeObjectPointerID = env->GetFieldID(cls, "instance", "J");
+	env->DeleteLocalRef(cls);
 	return (InfiCamJNI *) env->GetLongField(obj, nativeObjectPointerID);
 }
 
