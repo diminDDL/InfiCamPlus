@@ -138,7 +138,9 @@ public class MainActivity extends BaseActivity {
 		@Override
 		public void onDeviceFound(UsbDevice dev) {
 			Log.e("icconn", "VID = " + dev.getVendorId());
-			/* Both Infiray cameras and HTI HT-301 report VID 0x1514 I believe. */
+			/* Both Infiray cameras and HTI HT-301 report VID 0x1514 I believe. Note that the class
+			 *   and subclass are checked because older android versions don't filter for us.
+			 */
 			if (device != null || dev.getDeviceClass() != 239 || dev.getDeviceSubclass() != 2 ||
 					dev.getVendorId() != 0x1514)
 				return;
