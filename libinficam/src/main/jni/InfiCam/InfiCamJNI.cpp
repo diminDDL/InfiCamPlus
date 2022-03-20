@@ -213,6 +213,8 @@ JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_nativeDelete(JNIEnv *env, jclass 
 JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeConnect(JNIEnv *env, jobject self, jint fd) {
 	InfiCamJNI *icj = getObject(env, self);
 	int ret = icj->connect(fd);
+	if (ret)
+		return ret;
 	pthread_mutex_lock(&icj->jthread_mutex);
 	if (icj->window != NULL) { /* Connect means the size may have changed. */
 		if (ANativeWindow_setBuffersGeometry(
@@ -220,7 +222,7 @@ JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeConnect(JNIEnv *env, jobjec
 			return 1;
 	}
 	pthread_mutex_unlock(&icj->jthread_mutex);
-	return ret;
+	return 0;
 }
 
 JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_disconnect(JNIEnv *env, jobject self) {
