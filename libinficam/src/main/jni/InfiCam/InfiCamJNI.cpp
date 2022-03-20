@@ -54,6 +54,7 @@ static void setIntVar(JNIEnv *env, jobject obj, const char *name, jint value) {
 	jclass cls = env->GetObjectClass(obj);
 	jfieldID nativeObjectPointerID = env->GetFieldID(cls, name, "I");
 	env->SetIntField(obj, nativeObjectPointerID, value);
+	env->DeleteLocalRef(cls);
 }
 
 /* Set an integer variable in the a Java class. */
@@ -61,6 +62,7 @@ static void setFloatVar(JNIEnv *env, jobject obj, const char *name, jfloat value
 	jclass cls = env->GetObjectClass(obj);
 	jfieldID nativeObjectPointerID = env->GetFieldID(cls, name, "F");
 	env->SetFloatField(obj, nativeObjectPointerID, value);
+	env->DeleteLocalRef(cls);
 }
 
 /* Frame callback that notifies jthread (described later). */
@@ -146,7 +148,7 @@ static void *jthread_run(void *a) {
 		setFloatVar(env, fi, "distance", icj->infi.distance);
 
 		/* Make a Java array from the temperature array. */
-		size_t temp_len = icj->infi.width * icj->infi.height;
+		int temp_len = icj->infi.width * icj->infi.height;
 		jfieldID jtemp_id = env->GetFieldID(cls, "temp", "[F");
 		jfloatArray jtemp = (jfloatArray) env->GetObjectField(icj->obj, jtemp_id);
 		if (!jtemp || env->GetArrayLength(jtemp) != temp_len) {
@@ -162,6 +164,7 @@ static void *jthread_run(void *a) {
 		/* Clean up. */
 		env->DeleteLocalRef(jtemp);
 		env->DeleteLocalRef(fi);
+		env->DeleteLocalRef(cls);
 
 		/* Tell the callback's thread we're done. */
 		pthread_cond_broadcast(&icj->jthread_cond);
