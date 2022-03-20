@@ -24,8 +24,8 @@ vec4 sharpen(vec2 texCoord) {
 	vec4 spx = px * 5.0;
 	spx -= texture2D(sTexture, texCoord + vec2(0.0, -ts.y));
 	spx -= texture2D(sTexture, texCoord + vec2(0.0, ts.y));
-	spx -= texture2D(sTexture, texCoord + vec2(-ts.x, 0));
-	spx -= texture2D(sTexture, texCoord + vec2(ts.x, 0));
+	spx -= texture2D(sTexture, texCoord + vec2(-ts.x, 0.0));
+	spx -= texture2D(sTexture, texCoord + vec2(ts.x, 0.0));
 	return mix(px, spx, sharpening);
 }
 
@@ -57,15 +57,15 @@ void main(void) {
 	/* Sample the 4 already linearly interpolated points. */
 	vec4 s0, s1, s2, s3;
 	if (sharpening > 0.0) {
-		s0 = sharpen(vec2(pos.x, pos.z) / texSize);
-		s1 = sharpen(vec2(pos.y, pos.z) / texSize);
-		s2 = sharpen(vec2(pos.x, pos.w) / texSize);
-		s3 = sharpen(vec2(pos.y, pos.w) / texSize);
+		s0 = sharpen(pos.xz / texSize);
+		s1 = sharpen(pos.yz / texSize);
+		s2 = sharpen(pos.xw / texSize);
+		s3 = sharpen(pos.yw / texSize);
 	} else {
-		s0 = texture2D(sTexture, vec2(pos.x, pos.z) / texSize);
-		s1 = texture2D(sTexture, vec2(pos.y, pos.z) / texSize);
-		s2 = texture2D(sTexture, vec2(pos.x, pos.w) / texSize);
-		s3 = texture2D(sTexture, vec2(pos.y, pos.w) / texSize);
+		s0 = texture2D(sTexture, pos.xz / texSize);
+		s1 = texture2D(sTexture, pos.yz / texSize);
+		s2 = texture2D(sTexture, pos.xw / texSize);
+		s3 = texture2D(sTexture, pos.yw / texSize);
 	}
 
 	/* Get weights per row/column. */
