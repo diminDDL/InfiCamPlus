@@ -21,6 +21,7 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.BatteryManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.ScaleGestureDetector;
 import android.view.Surface;
@@ -136,9 +137,10 @@ public class MainActivity extends BaseActivity {
 	private final USBMonitor usbMonitor = new USBMonitor() {
 		@Override
 		public void onDeviceFound(UsbDevice dev) {
-			/* VID 0x1514 is HTI HT-301, possibly. */
+			Log.e("icconn", "VID = " + dev.getVendorId());
+			/* Both Infiray cameras and HTI HT-301 report VID 0x1514 I believe. */
 			if (device != null || dev.getDeviceClass() != 239 || dev.getDeviceSubclass() != 2 ||
-					(!dev.getManufacturerName().equals("Infiray") && (dev.getVendorId() != 0x1514)))
+					dev.getVendorId() != 0x1514)
 				return;
 			device = dev;
 			/* Connecting to a UVC device needs camera permission. */
