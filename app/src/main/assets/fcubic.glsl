@@ -39,7 +39,7 @@ vec4 sharpen(const in vec2 texCoord, const in vec2 ts) {
  */
 void main(void) {
 	vec2 uv = texCoord * texSize + 0.5; /* Center of the closest texel in bitmap coords. */
-	//vec2 iuv = ; /* Top left of that pixel. */
+	vec2 iuv = floor(uv); /* Top left of that pixel. */
 	vec2 fuv = fract(uv); /* How far off the top left of that we are. */
 	vec4 xc = cubic(fuv.x); /* Spline basis weights for X offsets. */
 	vec4 yc = cubic(fuv.y); /* Spline basis weights for Y offsets. */
@@ -48,7 +48,7 @@ void main(void) {
 	vec4 s = vec4(xc.x + xc.y, xc.z + xc.w, yc.x + yc.y, yc.z + yc.w);
 
 	/* We put the nearest 4 pixels in c. */
-	vec4 c = floor(uv).xxyy + vec4(-1.0, 1.0, -1.0, +1.0);
+	vec4 c = iuv.xxyy + vec4(-1.0, 1.0, -1.0, +1.0);
 
 	/* Figure out which positions to sample. */
 	vec4 pos = c + vec4(xc.y, xc.w, yc.y, yc.w) / s - 0.5;
