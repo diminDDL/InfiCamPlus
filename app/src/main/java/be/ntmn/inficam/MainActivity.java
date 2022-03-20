@@ -14,16 +14,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.BatteryManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.ScaleGestureDetector;
 import android.view.Surface;
@@ -139,7 +136,9 @@ public class MainActivity extends BaseActivity {
 	private final USBMonitor usbMonitor = new USBMonitor() {
 		@Override
 		public void onDeviceFound(UsbDevice dev) {
-			if (device != null || dev.getDeviceClass() != 239 || dev.getDeviceSubclass() != 2)
+			/* VID 0x1514 is HTI HT-301, possibly. */
+			if (device != null || dev.getDeviceClass() != 239 || dev.getDeviceSubclass() != 2 ||
+					(!dev.getManufacturerName().equals("Infiray") && (dev.getVendorId() != 0x1514)))
 				return;
 			device = dev;
 			/* Connecting to a UVC device needs camera permission. */
@@ -152,6 +151,7 @@ public class MainActivity extends BaseActivity {
 					@Override
 					public void onConnected(UsbDevice dev, UsbDeviceConnection conn) {
 						disconnect(); /* Important! Frame callback not allowed during connect. */
+						device = dev;
 						usbConnection = conn;
 						disconnecting = false;
 						try {
@@ -165,8 +165,7 @@ public class MainActivity extends BaseActivity {
 							messageView.showMessage(getString(R.string.msg_connected,
 									dev.getProductName()));
 						} catch (Exception e) {
-							usbConnection.close();
-							usbConnection = null;
+							disconnect();
 							messageView.showMessage(e.getMessage());
 						}
 					}
@@ -186,7 +185,8 @@ public class MainActivity extends BaseActivity {
 
 		@Override
 		public void onDisconnect(UsbDevice dev) {
-			disconnect();
+			if (dev.equals(device))
+				disconnect();
 		}
 	};
 

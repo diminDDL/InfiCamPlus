@@ -104,6 +104,7 @@ TODO ui stuff
 	- perhaps longpress on palette and tool switching button should bring up menu to pick one
 	- taking photo fails on older android
 	- bicubic shader takes forever to compile on GN4
+	- HT301 should also work, hopefully someone can test that
 
 TODO thermal camera things
 	- more measurement modes

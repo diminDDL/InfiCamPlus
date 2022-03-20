@@ -77,7 +77,7 @@ public abstract class USBMonitor extends BroadcastReceiver {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		UsbDevice dev = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+		UsbDevice dev = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
 		switch (intent.getAction()) {
 			case UsbManager.ACTION_USB_DEVICE_ATTACHED:
 				scan();
