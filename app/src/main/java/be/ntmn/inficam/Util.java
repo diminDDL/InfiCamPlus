@@ -52,6 +52,8 @@ public class Util {
 				int num = 0;
 				String fname = "img_" + timeStamp + "_" + num + ext;
 				File dir = new File(Environment.DIRECTORY_DCIM, dirname);
+				if (!dir.exists())
+					dir.mkdir();
 				File file = new File(dir, fname);
 				while (file.exists()) { /* Avoid overwriting existing files. */
 					fname = "img_" + timeStamp + "_" + ++num + ext;
