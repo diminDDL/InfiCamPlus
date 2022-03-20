@@ -7,7 +7,7 @@ uniform vec2 texSize;
 uniform float sharpening;
 
 /* Uniform cubic B-spline basis functions. */
-vec4 cubic(float x) {
+vec4 cubic(const in float x) {
 	float x2 = x * x;
 	float x3 = x2 * x;
 	return vec4(
@@ -18,8 +18,7 @@ vec4 cubic(float x) {
 	) / 6.0;
 }
 
-vec4 sharpen(vec2 texCoord) {
-	vec2 ts = 1.0 / texSize;
+vec4 sharpen(const in vec2 texCoord, const in vec2 ts) {
 	vec4 px = texture2D(sTexture, texCoord);
 	vec4 spx = px * 5.0;
 	spx -= texture2D(sTexture, texCoord + vec2(0.0, -ts.y));
@@ -40,7 +39,7 @@ vec4 sharpen(vec2 texCoord) {
  */
 void main(void) {
 	vec2 uv = texCoord * texSize + 0.5; /* Center of the closest texel in bitmap coords. */
-	vec2 iuv = floor(uv); /* Top left of that pixel. */
+	//vec2 iuv = ; /* Top left of that pixel. */
 	vec2 fuv = fract(uv); /* How far off the top left of that we are. */
 	vec4 xc = cubic(fuv.x); /* Spline basis weights for X offsets. */
 	vec4 yc = cubic(fuv.y); /* Spline basis weights for Y offsets. */
@@ -49,23 +48,24 @@ void main(void) {
 	vec4 s = vec4(xc.x + xc.y, xc.z + xc.w, yc.x + yc.y, yc.z + yc.w);
 
 	/* We put the nearest 4 pixels in c. */
-	vec4 c = vec4(iuv.x - 1.0, iuv.x + 1.0, iuv.y - 1.0, iuv.y + 1.0);
+	vec4 c = floor(uv).xxyy + vec4(-1.0, 1.0, -1.0, +1.0);
 
 	/* Figure out which positions to sample. */
 	vec4 pos = c + vec4(xc.y, xc.w, yc.y, yc.w) / s - 0.5;
 
 	/* Sample the 4 already linearly interpolated points. */
 	vec4 s0, s1, s2, s3;
+	vec2 ts = 1.0 / texSize;
 	if (sharpening > 0.0) {
-		s0 = sharpen(pos.xz / texSize);
-		s1 = sharpen(pos.yz / texSize);
-		s2 = sharpen(pos.xw / texSize);
-		s3 = sharpen(pos.yw / texSize);
+		s0 = sharpen(pos.xz * ts, ts);
+		s1 = sharpen(pos.yz * ts, ts);
+		s2 = sharpen(pos.xw * ts, ts);
+		s3 = sharpen(pos.yw * ts, ts);
 	} else {
-		s0 = texture2D(sTexture, pos.xz / texSize);
-		s1 = texture2D(sTexture, pos.yz / texSize);
-		s2 = texture2D(sTexture, pos.xw / texSize);
-		s3 = texture2D(sTexture, pos.yw / texSize);
+		s0 = texture2D(sTexture, pos.xz * ts);
+		s1 = texture2D(sTexture, pos.yz * ts);
+		s2 = texture2D(sTexture, pos.xw * ts);
+		s3 = texture2D(sTexture, pos.yw * ts);
 	}
 
 	/* Get weights per row/column. */

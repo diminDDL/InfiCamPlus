@@ -105,7 +105,7 @@ public class SettingsMain extends Settings {
 				final int[] imodes = new int[] {
 						SurfaceMuxer.IMODE_NEAREST,
 						SurfaceMuxer.IMODE_LINEAR,
-						SurfaceMuxer.IMODE_BICUBIC
+						SurfaceMuxer.IMODE_CUBIC
 				};
 				act.setIMode(imodes[i]);
 			}

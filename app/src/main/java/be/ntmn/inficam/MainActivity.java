@@ -14,13 +14,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.BatteryManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.ScaleGestureDetector;
 import android.view.Surface;
@@ -148,6 +151,8 @@ public class MainActivity extends BaseActivity {
 				connect(dev, new ConnectCallback() {
 					@Override
 					public void onConnected(UsbDevice dev, UsbDeviceConnection conn) {
+						if (usbConnection != null) // TODO this may not be proper
+							return;
 						disconnect(); /* Important! Frame callback not allowed during connect. */
 						usbConnection = conn;
 						disconnecting = false;
@@ -531,6 +536,21 @@ public class MainActivity extends BaseActivity {
 		videoSurface.setIMode(SurfaceMuxer.IMODE_EDGE);
 		normalCamera.start(this, videoSurface.getSurface());*/
 		//inputSurface.setScale(2.0f, 2.0f); // TODO
+
+		// TODO this is just test for interpolation
+	/*SurfaceMuxer.InputSurface test = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_CUBIC);
+      test.getSurfaceTexture().setDefaultBufferSize(8, 6);
+      test.setSize(8, 6);
+      Canvas tcvs = test.getSurface().lockCanvas(null);
+      Paint p = new Paint();
+      tcvs.drawColor(Color.YELLOW);
+      p.setColor(Color.BLUE);
+      tcvs.drawLine(0, 6, 8, 0, p);
+      p.setColor(Color.RED);
+      tcvs.drawLine(0, 0, 8, 6, p);
+      test.getSurface().unlockCanvasAndPost(tcvs);
+      surfaceMuxer.inputSurfaces.add(test);*/
+      //surfaceMuxer.onFrameAvailable(test.getSurfaceTexture());
 
 		imgCompressThread = new ImgCompressThread();
 		imgCompressThread.start();

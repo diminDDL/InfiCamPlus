@@ -60,7 +60,7 @@ import java.util.ArrayList;
 public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	public final static int IMODE_NEAREST = 0;
 	public final static int IMODE_LINEAR = 1;
-	public final static int IMODE_BICUBIC = 2;
+	public final static int IMODE_CUBIC = 2;
 	public final static int IMODE_EDGE = 3; /* Not really an interpolation mode -_o_-. */
 
 	public final ArrayList<InputSurface> inputSurfaces = new ArrayList<>();
@@ -281,7 +281,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			int program = hProgram_nearest;
 			if (is.imode == IMODE_LINEAR)
 				program = hProgram_linear;
-			if (is.imode == IMODE_BICUBIC)
+			if (is.imode == IMODE_CUBIC)
 				program = hProgram_cubic;
 			if (is.imode == IMODE_EDGE)
 				program = hProgram_edge;
