@@ -72,6 +72,8 @@ public class SurfaceRecorder implements Runnable {
 			int num = 0;
 			String fname = "vid_" + timeStamp + "_" + num + MUX_EXT;
 			File dir = new File(Environment.DIRECTORY_DCIM, dirname);
+			if (!dir.exists())
+				dir.mkdir();
 			File file = new File(dir, fname);
 			while (file.exists()) { /* Avoid overwriting existing files. */
 				fname = "vid_" + timeStamp + "_" + ++num + MUX_EXT;
