@@ -57,6 +57,9 @@ public class SurfaceRecorder implements Runnable {
 		@SuppressLint("SimpleDateFormat")
 		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
 		String dirname = ctx.getString(R.string.app_name);
+		// TODO show error to user if this fails
+		// TODO perhaps try to merge this with the image code
+		//   note the MediaStore.*.media.EXTERNAL_CONTENT_URI is different
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 			String fname = "vid_" + timeStamp + MUX_EXT; /* MediaStore won't overwrite. */
 			ContentValues cv = new ContentValues();

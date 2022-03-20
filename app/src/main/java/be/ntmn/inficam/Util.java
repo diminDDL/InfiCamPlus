@@ -66,6 +66,7 @@ public class Util {
 			out.close();
 		} catch (Exception e) {
 			e.printStackTrace();
+			// TODO show error to user
 		}
 	}
 
