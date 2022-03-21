@@ -20,6 +20,7 @@ import android.hardware.display.DisplayManager;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.BatteryManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.ScaleGestureDetector;
@@ -103,8 +104,12 @@ public class MainActivity extends BaseActivity {
 				}
 				if (stop)
 					break;
-				Util.writeImage(getApplicationContext(), imgCompressBitmap, imgType, imgQuality);
-				imgCompressBitmap.recycle();
+				try {
+					Util.writeImage(getApplicationContext(), imgCompressBitmap, imgType,
+							imgQuality);
+				} catch (Exception e) {
+					handler.post(() -> messageView.showMessage(e.getMessage()));
+				}
 				handler.post(() -> {
 					buttonPhoto.setEnabled(true);
 					buttonPhoto.setColorFilter(null);
@@ -303,7 +308,9 @@ public class MainActivity extends BaseActivity {
 			 *   meaning what's in the SurfaceTexture buffers after the updateTexImage() calls
 			 *   surfaceMuxer should do.
 			 */
-			if (takePic && imgCompressThread.lock.tryLock()) {
+			if (takePic && imgCompressThread == null) {
+				messageView.showMessage(R.string.msg_permdenied_storage);
+			} else if (takePic && imgCompressThread.lock.tryLock()) {
 				final Rect r = new Rect();
 				int w = picWidth, h = picHeight;
 				if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180) {
@@ -551,8 +558,19 @@ public class MainActivity extends BaseActivity {
 		normalCamera.start(this, videoSurface.getSurface());*/
 		//inputSurface.setScale(2.0f, 2.0f); // TODO
 
-		imgCompressThread = new ImgCompressThread();
-		imgCompressThread.start();
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+			askPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, granted -> {
+				if (!granted) {
+					messageView.showMessage(R.string.msg_permdenied_storage);
+					return;
+				}
+				imgCompressThread = new ImgCompressThread();
+				imgCompressThread.start();
+			});
+		} else {
+			imgCompressThread = new ImgCompressThread();
+			imgCompressThread.start();
+		}
 	}
 
 	@Override
@@ -761,8 +779,18 @@ public class MainActivity extends BaseActivity {
 		} else stopRecording();
 	}
 
-	/* Request audio permission first when necessary! */
 	private void startRecording(boolean recordAudio) {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+			askPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, granted -> {
+				if (!granted)
+					messageView.showMessage(R.string.msg_permdenied_storage);
+				else _startRecording(recordAudio);
+			});
+		} else _startRecording(recordAudio);
+	}
+
+	/* Request audio permission first when necessary! */
+	private void _startRecording(boolean recordAudio) {
 		try {
 			final Rect r = new Rect();
 			sharpISurface.getRect(r, vidWidth, vidHeight);

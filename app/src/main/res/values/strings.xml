@@ -8,6 +8,7 @@
 	<string name="msg_permdenied_cam">Camera permission denied.</string>
 	<string name="msg_permdenied_usb">USB permission denied.</string>
 	<string name="msg_permdenied_audio">Audio permission denied.</string>
+	<string name="msg_permdenied_storage">Storage permission denied.</string>
 	<string name="msg_failrecord">Failed to start recording.</string>
 	<string name="msg_zoom">Zoom: %d%%</string>
 

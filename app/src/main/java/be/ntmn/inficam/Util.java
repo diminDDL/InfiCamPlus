@@ -16,6 +16,7 @@ import android.provider.MediaStore;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,44 +34,42 @@ public class Util {
 	public final static int TEMPUNIT_KELVIN = 2;
 
 	private static void writeImage(Context ctx, Bitmap bmp, Bitmap.CompressFormat format,
-								  String mimeType, String ext, int quality) {
+								  String mimeType, String ext, int quality)
+			throws IOException {
 		@SuppressLint("SimpleDateFormat")
 		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
 		String dirname = ctx.getString(R.string.app_name);
-		try {
-			OutputStream out;
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-				String fname = "img_" + timeStamp + ext; /* MediaStore won't overwrite. */
-				ContentValues cv = new ContentValues();
-				cv.put(MediaStore.MediaColumns.DISPLAY_NAME, fname);
-				cv.put(MediaStore.MediaColumns.MIME_TYPE, mimeType);
-				cv.put(MediaStore.MediaColumns.RELATIVE_PATH, "DCIM/" + dirname);
-				ContentResolver cr = ctx.getContentResolver();
-				Uri uri = cr.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv);
-				out = cr.openOutputStream(uri);
-			} else {
-				int num = 0;
-				String fname = "img_" + timeStamp + "_" + num + ext;
-				File dir = new File(Environment.DIRECTORY_DCIM, dirname);
-				if (!dir.exists())
-					dir.mkdir();
-				File file = new File(dir, fname);
-				while (file.exists()) { /* Avoid overwriting existing files. */
-					fname = "img_" + timeStamp + "_" + ++num + ext;
-					file = new File(fname);
-				}
-				out = new FileOutputStream(file);
+		OutputStream out;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+			String fname = "img_" + timeStamp + ext; /* MediaStore won't overwrite. */
+			ContentValues cv = new ContentValues();
+			cv.put(MediaStore.MediaColumns.DISPLAY_NAME, fname);
+			cv.put(MediaStore.MediaColumns.MIME_TYPE, mimeType);
+			cv.put(MediaStore.MediaColumns.RELATIVE_PATH, "DCIM/" + dirname);
+			ContentResolver cr = ctx.getContentResolver();
+			Uri uri = cr.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv);
+			out = cr.openOutputStream(uri);
+		} else {
+			int num = 0;
+			String fname = "img_" + timeStamp + "_" + num + ext;
+			File dcim = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
+			File dir = new File(dcim, dirname);
+			if (!dir.exists())
+				dir.mkdirs();
+			File file = new File(dir, fname);
+			while (file.exists()) { /* Avoid overwriting existing files. */
+				fname = "img_" + timeStamp + "_" + ++num + ext;
+				file = new File(fname);
 			}
-			bmp.compress(format, quality, out);
-			out.flush();
-			out.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-			// TODO show error to user
+			out = new FileOutputStream(file);
 		}
+		bmp.compress(format, quality, out);
+		out.flush();
+		out.close();
 	}
 
-	public static void writeImage(Context ctx, Bitmap bmp, int type, int quality) {
+	public static void writeImage(Context ctx, Bitmap bmp, int type, int quality)
+			throws IOException {
 		switch (type) {
 			case IMGTYPE_PNG:
 				writeImage(ctx, bmp, Bitmap.CompressFormat.PNG, "image/png", ".png", quality);

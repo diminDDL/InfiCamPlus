@@ -57,7 +57,6 @@ public class SurfaceRecorder implements Runnable {
 		@SuppressLint("SimpleDateFormat")
 		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
 		String dirname = ctx.getString(R.string.app_name);
-		// TODO show error to user if this fails
 		// TODO perhaps try to merge this with the image code
 		//   note the MediaStore.*.media.EXTERNAL_CONTENT_URI is different
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -74,9 +73,10 @@ public class SurfaceRecorder implements Runnable {
 		} else {
 			int num = 0;
 			String fname = "vid_" + timeStamp + "_" + num + MUX_EXT;
-			File dir = new File(Environment.DIRECTORY_DCIM, dirname);
+			File dcim = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
+			File dir = new File(dcim, dirname);
 			if (!dir.exists())
-				dir.mkdir();
+				dir.mkdirs();
 			File file = new File(dir, fname);
 			while (file.exists()) { /* Avoid overwriting existing files. */
 				fname = "vid_" + timeStamp + "_" + ++num + MUX_EXT;
