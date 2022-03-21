@@ -171,7 +171,8 @@ public class MainActivity extends BaseActivity {
 							inputSurface.setSize(infiCam.getWidth(), infiCam.getHeight());
 							sharpOSurface.setSize(infiCam.getWidth(), infiCam.getHeight());
 							sharpISurface.setSize(infiCam.getWidth(), infiCam.getHeight());
-							sharpISurface.getSurfaceTexture().setDefaultBufferSize(infiCam.getWidth(), infiCam.getHeight());
+							sharpISurface.getSurfaceTexture().setDefaultBufferSize(
+									infiCam.getWidth(), infiCam.getHeight());
 							handler.removeCallbacks(timedShutter); /* Before stream starts! */
 							infiCam.startStream();
 							handler.postDelayed(timedShutter, shutterIntervalInitial);
