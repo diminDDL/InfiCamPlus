@@ -21,7 +21,6 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.os.BatteryManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.ScaleGestureDetector;
 import android.view.Surface;
@@ -49,7 +48,10 @@ public class MainActivity extends BaseActivity {
 	public final InfiCam infiCam = new InfiCam();
 
 	private SurfaceMuxer surfaceMuxer;
+	private SurfaceMuxer sharpenMuxer; /* We sharpen separately so we can do it lo-res. */
 	private SurfaceMuxer.InputSurface inputSurface; /* Input surface for the thermal image. */
+	private SurfaceMuxer.OutputSurface sharpOSurface; /* From sharpenMuxer. */
+	private SurfaceMuxer.InputSurface sharpISurface; /* To outputMuxer. */
 	private SurfaceMuxer.InputSurface videoSurface; /* To draw video from the normal camera. */
 	private OverlayMuxer outScreen, outRecord, outPicture;
 	private final Overlay.Data overlayData = new Overlay.Data();
@@ -137,7 +139,6 @@ public class MainActivity extends BaseActivity {
 	private final USBMonitor usbMonitor = new USBMonitor() {
 		@Override
 		public void onDeviceFound(UsbDevice dev) {
-			Log.e("icconn", "VID = " + dev.getVendorId());
 			/* Both Infiray cameras and HTI HT-301 report VID 0x1514 I believe. Note that the class
 			 *   and subclass are checked because older android versions don't filter for us.
 			 */
@@ -162,6 +163,9 @@ public class MainActivity extends BaseActivity {
 							infiCam.connect(conn.getFileDescriptor());
 							/* Size is only important for cubic interpolation. */
 							inputSurface.setSize(infiCam.getWidth(), infiCam.getHeight());
+							sharpOSurface.setSize(infiCam.getWidth(), infiCam.getHeight());
+							sharpISurface.setSize(infiCam.getWidth(), infiCam.getHeight());
+							sharpISurface.getSurfaceTexture().setDefaultBufferSize(infiCam.getWidth(), infiCam.getHeight());
 							handler.removeCallbacks(timedShutter); /* Before stream starts! */
 							infiCam.startStream();
 							handler.postDelayed(timedShutter, shutterIntervalInitial);
@@ -203,7 +207,7 @@ public class MainActivity extends BaseActivity {
 		@Override
 		public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int w, int h) {
 			final Rect r = new Rect();
-			inputSurface.getRect(r, w, h);
+			sharpISurface.getRect(r, w, h);
 			outScreen.setSize(w, h);
 			outScreen.setRect(r);
 		}
@@ -307,11 +311,11 @@ public class MainActivity extends BaseActivity {
 					w = h;
 					h = tmp;
 				}
-				inputSurface.getRect(r, w, h);
+				sharpISurface.getRect(r, w, h);
 				outPicture.setSize(w, h);
 				outPicture.setRect(r);
 				outPicture.attachInput(surfaceMuxer);
-				surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
+				sharpenMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
 				imgCompressBitmap = outPicture.getBitmap();
 				imgCompressThread.cond.signal();
 				imgCompressThread.lock.unlock();
@@ -322,7 +326,7 @@ public class MainActivity extends BaseActivity {
 				buttonPhoto.setColorFilter(Color.GRAY);
 			} else {
 				/* We use the inputSurface because it has the most relevant timestamp. */
-				surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
+				sharpenMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
 			}
 
 			/* Now we allow another frame to come in */
@@ -337,9 +341,12 @@ public class MainActivity extends BaseActivity {
 		cameraView = findViewById(R.id.cameraView);
 		messageView = findViewById(R.id.message);
 		surfaceMuxer = new SurfaceMuxer(this);
+		sharpenMuxer = new SurfaceMuxer(this);
 
 		/* Create and set up the InputSurface for thermal image, imode setting is not final. */
-		inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_LINEAR) {
+		inputSurface = new SurfaceMuxer.InputSurface(sharpenMuxer, SurfaceMuxer.IMODE_SHARPEN);
+		sharpenMuxer.inputSurfaces.add(inputSurface);
+		sharpISurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_LINEAR) {
 			@Override
 			public void getRect(Rect r, int w, int h) {
 				int sw = w, sh = h, iw = 4, ih = 3;
@@ -357,7 +364,12 @@ public class MainActivity extends BaseActivity {
 						w / 2 - sw / 2 + sw, h / 2 - sh / 2 + sh);
 			}
 		};
-		surfaceMuxer.inputSurfaces.add(inputSurface);
+		surfaceMuxer.inputSurfaces.add(sharpISurface);
+		sharpOSurface =
+				new SurfaceMuxer.OutputSurface(sharpenMuxer, sharpISurface.getSurface(), false);
+		sharpenMuxer.outputSurfaces.add(sharpOSurface);
+		sharpISurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer);
+
 		infiCam.setSurface(inputSurface.getSurface());
 		cameraView.getHolder().addCallback(surfaceHolderCallback);
 
@@ -397,7 +409,7 @@ public class MainActivity extends BaseActivity {
 				if (scale >= 10.0f)
 					scale = 10.0f;
 				overlayData.scale = scale;
-				inputSurface.setScale(scale, scale);
+				sharpISurface.setScale(scale, scale);
 				messageView.shortMessage(getString(R.string.msg_zoom, (int) (scale * 100.0f)));
 				zl.setText(getString(R.string.zoomlevel, (int) (scale * 100.0f)));
 				return false;
@@ -539,21 +551,6 @@ public class MainActivity extends BaseActivity {
 		normalCamera.start(this, videoSurface.getSurface());*/
 		//inputSurface.setScale(2.0f, 2.0f); // TODO
 
-		// TODO this is just test for interpolation
-	/*SurfaceMuxer.InputSurface test = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_CUBIC);
-      test.getSurfaceTexture().setDefaultBufferSize(8, 6);
-      test.setSize(8, 6);
-      Canvas tcvs = test.getSurface().lockCanvas(null);
-      Paint p = new Paint();
-      tcvs.drawColor(Color.YELLOW);
-      p.setColor(Color.BLUE);
-      tcvs.drawLine(0, 6, 8, 0, p);
-      p.setColor(Color.RED);
-      tcvs.drawLine(0, 0, 8, 6, p);
-      test.getSurface().unlockCanvasAndPost(tcvs);
-      surfaceMuxer.inputSurfaces.add(test);*/
-      //surfaceMuxer.onFrameAvailable(test.getSurfaceTexture());
-
 		imgCompressThread = new ImgCompressThread();
 		imgCompressThread.start();
 	}
@@ -561,10 +558,27 @@ public class MainActivity extends BaseActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+		sharpenMuxer.init();
 		surfaceMuxer.init();
 		outScreen.init();
 		outRecord.init();
 		outPicture.init();
+
+		// TODO this is just test for interpolation
+		/*SurfaceMuxer.InputSurface test = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_SHARPEN);
+		test.getSurfaceTexture().setDefaultBufferSize(8, 6);
+		test.setSize(8, 6);
+		Canvas tcvs = test.getSurface().lockCanvas(null);
+		Paint p = new Paint();
+		tcvs.drawColor(Color.YELLOW);
+		p.setColor(Color.BLUE);
+		tcvs.drawLine(0, 6, 8, 0, p);
+		p.setColor(Color.RED);
+		tcvs.drawLine(0, 0, 8, 6, p);
+		test.getSurface().unlockCanvasAndPost(tcvs);
+		test.setSharpening(1.0f);
+		surfaceMuxer.inputSurfaces.add(test);
+		handler.postDelayed(() -> surfaceMuxer.onFrameAvailable(test.getSurfaceTexture()), 500);*/
 	}
 
 	@Override
@@ -573,6 +587,7 @@ public class MainActivity extends BaseActivity {
 		outRecord.deinit();
 		outPicture.deinit();
 		surfaceMuxer.deinit();
+		sharpenMuxer.deinit();
 		super.onPause();
 	}
 
@@ -593,6 +608,7 @@ public class MainActivity extends BaseActivity {
 	protected void onDestroy() {
 		outScreen.release();
 		surfaceMuxer.release();
+		sharpenMuxer.release();
 		super.onDestroy();
 	}
 
@@ -609,7 +625,7 @@ public class MainActivity extends BaseActivity {
 		orientation = wm.getDefaultDisplay().getRotation();
 		ConstraintLayout.LayoutParams rlp = (ConstraintLayout.LayoutParams) rangeSlider.getLayoutParams();
 		if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180) {
-			inputSurface.setRotate90(true);
+			sharpISurface.setRotate90(true);
 			buttonsLeft.setOrientation(LinearLayout.HORIZONTAL);
 			buttonsRight.setOrientation(LinearLayout.HORIZONTAL);
 			buttonsLeftLayout.width = ViewGroup.LayoutParams.MATCH_PARENT;
@@ -641,7 +657,7 @@ public class MainActivity extends BaseActivity {
 			rangeSlider.setLayoutParams(rlp);
 			rangeSlider.setVertical(false);
 		} else {
-			inputSurface.setRotate90(false);
+			sharpISurface.setRotate90(false);
 			buttonsLeft.setOrientation(LinearLayout.VERTICAL);
 			buttonsRight.setOrientation(LinearLayout.VERTICAL);
 			buttonsLeftLayout.width = ViewGroup.LayoutParams.WRAP_CONTENT;
@@ -684,18 +700,18 @@ public class MainActivity extends BaseActivity {
 					orientation == Surface.ROTATION_180;
 			if (orientation == Surface.ROTATION_270 || orientation == Surface.ROTATION_180) {
 				overlayData.rotate = !rotate;
-				inputSurface.setRotate(!rotate);
+				sharpISurface.setRotate(!rotate);
 			} else {
 				overlayData.rotate = rotate;
-				inputSurface.setRotate(rotate);
+				sharpISurface.setRotate(rotate);
 			}
 			/* Sometimes full 180 rotation doesn't trigger onSurfaceChanged() so we update the rect
 			 *   here too.
 			 */
 			final Rect r = new Rect();
-			inputSurface.getRect(r, cameraView.getWidth(), cameraView.getHeight());
+			sharpISurface.getRect(r, cameraView.getWidth(), cameraView.getHeight());
 			outScreen.setRect(r);
-			inputSurface.getRect(r, outRecord.getWidth(), outRecord.getHeight());
+			sharpISurface.getRect(r, outRecord.getWidth(), outRecord.getHeight());
 			outRecord.setRect(r); /* Also the rect for video recording should be updated. */
 		}
 	}
@@ -749,7 +765,7 @@ public class MainActivity extends BaseActivity {
 	private void startRecording(boolean recordAudio) {
 		try {
 			final Rect r = new Rect();
-			inputSurface.getRect(r, vidWidth, vidHeight);
+			sharpISurface.getRect(r, vidWidth, vidHeight);
 			outRecord.setSize(vidWidth, vidHeight);
 			outRecord.setRect(r);
 			outRecord.attachInput(surfaceMuxer);
@@ -797,13 +813,9 @@ public class MainActivity extends BaseActivity {
 			handler.postDelayed(timedShutter, shutterInterval);
 	}
 
-	public void setIMode(int value) {
-		inputSurface.setIMode(value);
-	}
+	public void setIMode(int value) { sharpISurface.setIMode(value); }
 
-	public void setSharpening(float value) {
-		inputSurface.setSharpening(value);
-	}
+	public void setSharpening(float value) { inputSurface.setSharpening(value); }
 
 	public void setRecordAudio(boolean value) {
 		recordAudio = value;
@@ -844,7 +856,7 @@ public class MainActivity extends BaseActivity {
 	public void setMirror(boolean value) {
 		synchronized (frameLock) {
 			overlayData.mirror = value;
-			inputSurface.setMirror(value);
+			sharpISurface.setMirror(value);
 		}
 	}
 

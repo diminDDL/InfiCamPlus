@@ -32,8 +32,7 @@ import java.util.ArrayList;
  * - Create an instance of the SurfaceMuxer class.
  * - To get an input surface create a SurfaceMuxer.InputSurface instance, this is bound to the
  *     SurfaceMuxer instance you give the constructor.
- * - If you are going to use nearest neighbor or cubic interpolation, edge detection or sharpening
- *     on it also call setSize() on the InputSurface.
+ * - Call setSize() on the InputSurface.
  * - Call getSurface() and/or getSurfaceTexture on that to get the actual input Surface and/or
  *     SurfaceTexture texture to draw to.
  * - Call setOnFrameAvailableListener(surfaceMuxer) on the SurfaceTexture from the InputSurface(s)
@@ -61,7 +60,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	public final static int IMODE_NEAREST = 0;
 	public final static int IMODE_LINEAR = 1;
 	public final static int IMODE_CUBIC = 2;
-	public final static int IMODE_EDGE = 3; /* Not really an interpolation mode -_o_-. */
+	public final static int IMODE_SHARPEN = 3; /* Not really an interpolation mode -_o_-. */
+	public final static int IMODE_EDGE = 4; /* Neither is this. */
 
 	public final ArrayList<InputSurface> inputSurfaces = new ArrayList<>();
 	public final ArrayList<OutputSurface> outputSurfaces = new ArrayList<>();
@@ -72,8 +72,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	private EGLContext eglContext = EGL14.EGL_NO_CONTEXT;
 	private EGLConfig eglConfig;
 	private FloatBuffer pTexCoord;
-	private int hProgram_nearest, hProgram_linear, hProgram_cubic, hProgram_edge;
-	private final String vss, fss_nearest, fss_linear, fss_cubic, fss_edge;
+	private int hProgram_nearest, hProgram_linear, hProgram_cubic, hProgram_sharpen, hProgram_edge;
+	private final String vss, fss_nearest, fss_linear, fss_cubic, fss_sharpen, fss_edge;
 	private final Rect outRect = new Rect();
 	private final FloatBuffer pVertex =
 			ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
@@ -105,7 +105,6 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			scale_y = y;
 		}
 
-		/* Size is only important for IMODE_NEAREST, IMODE_CUBIC and _EDGE. */
 		public void setSize(int w, int h) {
 			width = w;
 			height = h;
@@ -259,6 +258,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			fss_nearest = Util.readStringAsset(ctx, "fnearest.glsl");
 			fss_linear = Util.readStringAsset(ctx, "flinear.glsl");
 			fss_cubic = Util.readStringAsset(ctx, "fcubic.glsl");
+			fss_sharpen = Util.readStringAsset(ctx, "fsharpen.glsl");
 			fss_edge = Util.readStringAsset(ctx, "fedge.glsl");
 		} catch (IOException e) {
 			/* Crash to inform the user I done did a stupid. */
@@ -283,6 +283,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 				program = hProgram_linear;
 			if (is.imode == IMODE_CUBIC)
 				program = hProgram_cubic;
+			if (is.imode == IMODE_SHARPEN)
+				program = hProgram_sharpen;
 			if (is.imode == IMODE_EDGE)
 				program = hProgram_edge;
 			GLES20.glUseProgram(program);
@@ -440,6 +442,13 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		if (compiled[0] == 0)
 			throw new RuntimeException(GLES20.glGetShaderInfoLog(fshaderc));
 
+		int fshaders = GLES20.glCreateShader(GLES20.GL_FRAGMENT_SHADER);
+		GLES20.glShaderSource(fshaders, fss_sharpen);
+		GLES20.glCompileShader(fshaders);
+		GLES20.glGetShaderiv(fshaders, GLES20.GL_COMPILE_STATUS, compiled, 0);
+		if (compiled[0] == 0)
+			throw new RuntimeException(GLES20.glGetShaderInfoLog(fshaders));
+
 		int fshadere = GLES20.glCreateShader(GLES20.GL_FRAGMENT_SHADER);
 		GLES20.glShaderSource(fshadere, fss_edge);
 		GLES20.glCompileShader(fshadere);
@@ -460,6 +469,10 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		GLES20.glAttachShader(hProgram_cubic, vshader);
 		GLES20.glAttachShader(hProgram_cubic, fshaderc);
 		GLES20.glLinkProgram(hProgram_cubic);
+		hProgram_sharpen = GLES20.glCreateProgram();
+		GLES20.glAttachShader(hProgram_sharpen, vshader);
+		GLES20.glAttachShader(hProgram_sharpen, fshaders);
+		GLES20.glLinkProgram(hProgram_sharpen);
 		hProgram_edge = GLES20.glCreateProgram();
 		GLES20.glAttachShader(hProgram_edge, vshader);
 		GLES20.glAttachShader(hProgram_edge, fshadere);
@@ -468,6 +481,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		GLES20.glDeleteShader(fshadern);
 		GLES20.glDeleteShader(fshaderl);
 		GLES20.glDeleteShader(fshaderc);
+		GLES20.glDeleteShader(fshaders);
 		GLES20.glDeleteShader(fshadere);
 
 		/* Initialize any surfaces we have. */

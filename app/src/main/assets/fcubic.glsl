@@ -18,16 +18,6 @@ vec4 cubic(const in float x) {
 	) / 6.0;
 }
 
-vec4 sharpen(const in vec2 texCoord, const in vec2 ts) {
-	vec4 px = texture2D(sTexture, texCoord);
-	vec4 spx = px * 5.0;
-	spx -= texture2D(sTexture, texCoord + vec2(0.0, -ts.y));
-	spx -= texture2D(sTexture, texCoord + vec2(0.0, ts.y));
-	spx -= texture2D(sTexture, texCoord + vec2(-ts.x, 0.0));
-	spx -= texture2D(sTexture, texCoord + vec2(ts.x, 0.0));
-	return mix(px, spx, sharpening);
-}
-
 /* Do 4x4 cubic interpolation with remarkably few lookups by abusing the linear interpolation done
  *   by EGL. This is not my idea, I pieced it together from things on StackOverflow and various
  *   other sources, most notably:
@@ -55,18 +45,10 @@ void main(void) {
 
 	/* Sample the 4 already linearly interpolated points. */
 	vec4 s0, s1, s2, s3;
-	vec2 ts = 1.0 / texSize;
-	if (sharpening > 0.0) {
-		s0 = sharpen(pos.xz * ts, ts);
-		s1 = sharpen(pos.yz * ts, ts);
-		s2 = sharpen(pos.xw * ts, ts);
-		s3 = sharpen(pos.yw * ts, ts);
-	} else {
-		s0 = texture2D(sTexture, pos.xz * ts);
-		s1 = texture2D(sTexture, pos.yz * ts);
-		s2 = texture2D(sTexture, pos.xw * ts);
-		s3 = texture2D(sTexture, pos.yw * ts);
-	}
+	s0 = texture2D(sTexture, pos.xz / texSize);
+	s1 = texture2D(sTexture, pos.yz / texSize);
+	s2 = texture2D(sTexture, pos.xw / texSize);
+	s3 = texture2D(sTexture, pos.yw / texSize);
 
 	/* Get weights per row/column. */
 	float sx = s.x / (s.x + s.y);
