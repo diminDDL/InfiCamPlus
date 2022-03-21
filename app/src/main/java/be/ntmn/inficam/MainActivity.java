@@ -107,6 +107,7 @@ public class MainActivity extends BaseActivity {
 				try {
 					Util.writeImage(getApplicationContext(), imgCompressBitmap, imgType,
 							imgQuality);
+					imgCompressBitmap.recycle();
 				} catch (Exception e) {
 					handler.post(() -> messageView.showMessage(e.getMessage()));
 				}
@@ -322,7 +323,12 @@ public class MainActivity extends BaseActivity {
 				outPicture.setSize(w, h);
 				outPicture.setRect(r);
 				outPicture.attachInput(surfaceMuxer);
+				/* We must call the onFrameAvailable() ourselves, otherwise it waits for this
+				 *   function to exit first.
+				 */
 				sharpenMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
+				surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
+				outPicture.onFrameAvailable(inputSurface.getSurfaceTexture());
 				imgCompressBitmap = outPicture.getBitmap();
 				imgCompressThread.cond.signal();
 				imgCompressThread.lock.unlock();

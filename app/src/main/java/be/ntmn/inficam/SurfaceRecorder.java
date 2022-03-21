@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaCodec;
@@ -38,6 +39,7 @@ public class SurfaceRecorder implements Runnable {
 	private static final boolean SND_STEREO = false;
 	private static final int SND_BITRATE = 128000;
 
+	private Context ctx;
 	private Surface inputSurface;
 	private MediaCodec videoEncoder;
 	private MediaCodec audioEncoder;
@@ -49,16 +51,16 @@ public class SurfaceRecorder implements Runnable {
 	private volatile boolean endSignal; /* Volatile is important because threading. */
 	private boolean muxerStarted;
 	private Thread thread;
+	private Uri fileUri;
 
 	/* If enabling audio, request audio permission first! */
 	@SuppressLint("MissingPermission")
 	private Surface _start(Context ctx, int w, int h, boolean sound) throws IOException {
+		this.ctx = ctx;
 		/* Deal with actually getting a file and opening the muxer. */
 		@SuppressLint("SimpleDateFormat")
 		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
 		String dirname = ctx.getString(R.string.app_name);
-		// TODO perhaps try to merge this with the image code
-		//   note the MediaStore.*.media.EXTERNAL_CONTENT_URI is different
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 			String fname = "vid_" + timeStamp + MUX_EXT; /* MediaStore won't overwrite. */
 			ContentValues cv = new ContentValues();
@@ -66,8 +68,8 @@ public class SurfaceRecorder implements Runnable {
 			cv.put(MediaStore.MediaColumns.MIME_TYPE, MUX_MIME_TYPE);
 			cv.put(MediaStore.MediaColumns.RELATIVE_PATH, "DCIM/" + dirname);
 			ContentResolver cr = ctx.getContentResolver();
-			Uri uri = cr.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, cv);
-			ParcelFileDescriptor fd = cr.openFileDescriptor(uri, "rw");
+			fileUri = cr.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, cv);
+			ParcelFileDescriptor fd = cr.openFileDescriptor(fileUri, "rw");
 			muxer = new MediaMuxer(fd.getFileDescriptor(),
 					MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
 		} else {
@@ -83,6 +85,7 @@ public class SurfaceRecorder implements Runnable {
 				file = new File(fname);
 			}
 			muxer = new MediaMuxer(file.getPath(), MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+			fileUri = Uri.fromFile(file);
 		}
 		muxerStarted = false; /* We start it later, when the codecs report they're configured. */
 
@@ -180,6 +183,9 @@ public class SurfaceRecorder implements Runnable {
 		inputSurface = null;
 		audioTrack = -1;
 		videoTrack = -1;
+		if (fileUri != null)
+			ctx.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, fileUri));
+		fileUri = null;
 	}
 
 	@Override

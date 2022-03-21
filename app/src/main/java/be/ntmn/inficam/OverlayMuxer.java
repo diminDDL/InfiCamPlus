@@ -82,10 +82,7 @@ public class OverlayMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		muxer.onFrameAvailable(surfaceTexture);
 	}
 
-	public Bitmap getBitmap() {
-		onFrameAvailable(inputIs.getSurfaceTexture()); /* In case muxer has just been attached. */
-		return muxer.getBitmap(width, height);
-	}
+	public Bitmap getBitmap() { return muxer.getBitmap(width, height); }
 
 	public void release() {
 		muxer.release();

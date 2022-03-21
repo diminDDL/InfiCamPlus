@@ -7,6 +7,7 @@ import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.net.Uri;
@@ -40,6 +41,7 @@ public class Util {
 		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
 		String dirname = ctx.getString(R.string.app_name);
 		OutputStream out;
+		Uri uri;
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 			String fname = "img_" + timeStamp + ext; /* MediaStore won't overwrite. */
 			ContentValues cv = new ContentValues();
@@ -47,7 +49,7 @@ public class Util {
 			cv.put(MediaStore.MediaColumns.MIME_TYPE, mimeType);
 			cv.put(MediaStore.MediaColumns.RELATIVE_PATH, "DCIM/" + dirname);
 			ContentResolver cr = ctx.getContentResolver();
-			Uri uri = cr.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv);
+			uri = cr.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv);
 			out = cr.openOutputStream(uri);
 		} else {
 			int num = 0;
@@ -62,10 +64,12 @@ public class Util {
 				file = new File(fname);
 			}
 			out = new FileOutputStream(file);
+			uri = Uri.fromFile(file);
 		}
 		bmp.compress(format, quality, out);
 		out.flush();
 		out.close();
+		ctx.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri));
 	}
 
 	public static void writeImage(Context ctx, Bitmap bmp, int type, int quality)
