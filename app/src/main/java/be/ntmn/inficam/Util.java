@@ -1,7 +1,6 @@
 package be.ntmn.inficam;
 
 import static java.lang.Math.abs;
-import static java.lang.Math.round;
 
 import android.annotation.SuppressLint;
 import android.content.ContentResolver;
@@ -17,7 +16,6 @@ import android.provider.MediaStore;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
