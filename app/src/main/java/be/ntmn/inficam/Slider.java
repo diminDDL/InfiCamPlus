@@ -49,11 +49,11 @@ public class Slider extends androidx.appcompat.widget.AppCompatSeekBar {
 				if (listener == null)
 					return;
 				int p = i;
-				if (i != min && i != max)
+				if (i != 0 && i != max - min)
 					p = i - i % step;
 				if (p != i)
-					setProgress(p);
-				listener.onProgressChanged(seekBar, p, b);
+					Slider.super.setProgress(p);
+				listener.onProgressChanged(seekBar, min + p, b);
 			}
 
 			@Override
@@ -73,18 +73,23 @@ public class Slider extends androidx.appcompat.widget.AppCompatSeekBar {
 	@Override
 	public synchronized void setMin(int min) {
 		this.min = min;
-		super.setMin(min);
+		super.setMax(max - min);
 	}
 
 	@Override
 	public synchronized void setMax(int max) {
 		this.max = max;
-		super.setMax(max);
+		super.setMax(max - min);
 	}
 
 	public void setStep(int step) {
 		this.step = step;
 		setKeyProgressIncrement(step);
+	}
+
+	@Override
+	public synchronized void setProgress(int progress) {
+		super.setProgress(progress - min);
 	}
 
 	@Override
@@ -97,7 +102,7 @@ public class Slider extends androidx.appcompat.widget.AppCompatSeekBar {
 		int height = getHeight();
 		int left = getPaddingLeft();
 		int right = getPaddingRight();
-		int zeroX = left - min * (width - left - right) / (getMax() - min);
+		int zeroX = left - min * (width - left - right) / (max - min);
 		float dotSizePressed = getHeight() / 2.0f;
 		float dotSize = dotSizePressed * 2 / 3;
 		int barTop = height * 4 / 9;
@@ -108,7 +113,9 @@ public class Slider extends androidx.appcompat.widget.AppCompatSeekBar {
 		canvas.drawRect(rect, paint);
 
 		paint.setColor(colorAccent);
-		rect.set(thumbX, barTop, zeroX, barBot);
+		if (zeroX > thumbX) /* The order matters on old android. */
+			rect.set(thumbX, barTop, zeroX, barBot);
+		else rect.set(zeroX, barTop, thumbX, barBot);
 		canvas.drawRect(rect, paint);
 		canvas.drawCircle(thumbX, height / 2.0f, isPressed() ? dotSizePressed : dotSize, paint);
 	}
