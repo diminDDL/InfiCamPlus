@@ -444,8 +444,17 @@ public class MainActivity extends BaseActivity {
 
 		buttonPhoto = findViewById(R.id.buttonPhoto);
 		buttonPhoto.setOnClickListener(view -> {
-			if (usbConnection != null)
-				takePic = true;
+			if (usbConnection != null) {
+				if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+					askPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, granted -> {
+						if (!granted) {
+							messageView.showMessage(R.string.msg_permdenied_storage);
+							return;
+						}
+						takePic = true;
+					});
+				} else takePic = true;
+			}
 		});
 
 		ImageButton buttonPalette = findViewById(R.id.buttonPalette);
@@ -564,19 +573,8 @@ public class MainActivity extends BaseActivity {
 		normalCamera.start(this, videoSurface.getSurface());*/
 		//inputSurface.setScale(2.0f, 2.0f); // TODO
 
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-			askPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, granted -> {
-				if (!granted) {
-					messageView.showMessage(R.string.msg_permdenied_storage);
-					return;
-				}
-				imgCompressThread = new ImgCompressThread();
-				imgCompressThread.start();
-			});
-		} else {
-			imgCompressThread = new ImgCompressThread();
-			imgCompressThread.start();
-		}
+		imgCompressThread = new ImgCompressThread();
+		imgCompressThread.start();
 	}
 
 	@Override
@@ -612,6 +610,7 @@ public class MainActivity extends BaseActivity {
 		outPicture.deinit();
 		surfaceMuxer.deinit();
 		sharpenMuxer.deinit();
+		takePic = false;
 		super.onPause();
 	}
 

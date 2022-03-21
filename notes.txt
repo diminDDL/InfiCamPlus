@@ -104,7 +104,6 @@ TODO ui stuff
 	- perhaps longpress on palette and tool switching button should bring up menu to pick one
 	- HT301 should also work, hopefully someone can test that
 	- put in documentation that linear/nearest interpolation is better if performance issues
-	- sometimes crash happens after (first time?) recording video (nokia 6 did that)
 	- on older android versions restarting can result in "failed to start streaming"
 
 TODO thermal camera things
