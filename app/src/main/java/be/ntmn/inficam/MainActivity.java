@@ -227,14 +227,10 @@ public class MainActivity extends BaseActivity {
 
 	private final NormalCamera normalCamera = new NormalCamera() {
 		@Override
-		public void onStarted() {
-			surfaceMuxer.inputSurfaces.add(videoSurface);
-		}
+		public void onStarted() { surfaceMuxer.inputSurfaces.add(videoSurface); }
 
 		@Override
-		public void onStopped() {
-			surfaceMuxer.inputSurfaces.remove(videoSurface);
-		}
+		public void onStopped() { surfaceMuxer.inputSurfaces.remove(videoSurface); }
 
 		@Override
 		public void onStartFailed(String message) {
@@ -836,9 +832,7 @@ public class MainActivity extends BaseActivity {
 	 * Following are routines called by the settings class.
 	 */
 
-	public void setShutterIntervalInitial(long value) {
-		shutterIntervalInitial = value;
-	}
+	public void setShutterIntervalInitial(long value) { shutterIntervalInitial = value; }
 
 	public void setShutterInterval(long value) {
 		shutterInterval = value;
@@ -851,9 +845,7 @@ public class MainActivity extends BaseActivity {
 
 	public void setSharpening(float value) { inputSurface.setSharpening(value); }
 
-	public void setRecordAudio(boolean value) {
-		recordAudio = value;
-	}
+	public void setRecordAudio(boolean value) { recordAudio = value; }
 
 	public void setRange(int range) {
 		infiCam.setRange(range);
