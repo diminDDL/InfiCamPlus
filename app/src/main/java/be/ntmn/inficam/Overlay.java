@@ -30,7 +30,7 @@ public class Overlay {
 		public boolean showCenter = false;
 		public boolean showPalette = false;
 		public float scale = 1.0f;
-		public int tempUnit = Util.TEMPUNIT_CELCIUS;
+		public int tempUnit = Util.TEMPUNIT_CELSIUS;
 	}
 
 	private final SurfaceMuxer.InputSurface surface;

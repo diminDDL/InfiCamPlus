@@ -102,7 +102,7 @@
 	<string name="img_type_png565">PNG (RGB565)</string>
 	<string name="img_type_jpeg">JPEG</string>
 
-	<string name="unit_celcius">Celsius</string>
+	<string name="unit_celsius">Celsius</string>
 	<string name="unit_fahrenheit">Fahrenheit</string>
 	<string name="unit_kelvin">Kelvin</string>
 	<string name="unit_rankine">Rankine</string>

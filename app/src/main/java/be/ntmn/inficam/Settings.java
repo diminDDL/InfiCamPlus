@@ -24,7 +24,7 @@ public abstract class Settings extends LinearLayout {
 	MainActivity act;
 	SharedPreferences sp;
 	SharedPreferences.Editor ed;
-	int tempUnit = Util.TEMPUNIT_CELCIUS;
+	int tempUnit = Util.TEMPUNIT_CELSIUS;
 
 	public static abstract class Setting {
 		String name;

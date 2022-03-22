@@ -70,8 +70,6 @@ TODO ui stuff
 	- different states for UI interactions:
 		* add measurement point/line/area
 		* zoom/pan the video overlay
-	- perhaps improve UI for manual range setting
-		* maybe enter as center + span rather than min + max?
 	- make sure there is space to show palette thing on the side (including lock icons!)
 		* for video we can just give sizes that are big enough as option
 	- show average temp somewhere?
@@ -104,8 +102,10 @@ TODO ui stuff
 	- HT301 should also work, hopefully someone can test that
 	- put in documentation that linear/nearest interpolation is better if performance issues
 	- on older android versions restarting through ADB can result in "failed to start streaming"
-	- option to just limit the range instead of locking it
-	- separate locking for min and max of range
+	- perhaps improve UI for manual range setting
+		* maybe enter as center + span rather than min + max?
+		* separate locking for min and max of range
+		* option to just limit the range instead of locking it
 
 TODO thermal camera things
 	- more measurement modes
@@ -126,7 +126,7 @@ Notes about the current implentation for end users:
 	  first calculates the temperatures puts the palette on those, and below a certain point the
 	  temperatures can't be calculated at all. There still is some image information in the parts
 	  where temperatures can not be calculated, but if we want to make it visible we have to scale
-	  the palette beyond what we can slap a number in celcius on, and I don't see a sensible way to
+	  the palette beyond what we can slap a number in celsius on, and I don't see a sensible way to
 	  present this to the user hence I'll leave this as it is.
 	targetSdkVersion has to be <= 27 or lower for the app to work on some Android 10 devices and
 	  there isn't anything much we can do about that, it can be higher for other devices. It
@@ -162,7 +162,7 @@ Things i learned about the protocol these thermal cameras talk:
 		Location  | Datatype        | Parameter
 		------------------------------------------------------
 		  0 -   2 | 16bit uint      | FPA Average, whatever that means (also detectAvg somewhere)
-		  2 -   4 | 16bit uint      | FPA temperature (convert to celcius is weird and depends on camera)
+		  2 -   4 | 16bit uint      | FPA temperature (convert to celsius is weird and depends on camera)
 		  4 -   6 | 16bit uint      | Max point X
 		  6 -   8 | 16bit uint      | Max point Y
 		  8 -  10 | 16bit uint      | Max temperature

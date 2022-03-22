@@ -17,7 +17,7 @@ static inline float read_float(uint16_t *src, int offset) {
 	return ret;
 }
 
-/* I find it strange the equations wvc and atmt are based on work with degrees Celcius without
+/* I find it strange the equations wvc and atmt are based on work with degrees Celsius without
  *   seemingly involving Kelvin at all. I've verified they match ht301_hacklib and ht301_ircam's
  *   implementations and the graphs in https://doi.org/10.3390/s17081718
  */

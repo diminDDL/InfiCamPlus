@@ -28,7 +28,7 @@ public class Util {
 	public final static int IMGTYPE_PNG565 = 1;
 	public final static int IMGTYPE_JPEG = 2;
 
-	public final static int TEMPUNIT_CELCIUS = 0;
+	public final static int TEMPUNIT_CELSIUS = 0;
 	public final static int TEMPUNIT_FAHRENHEIT = 1;
 	public final static int TEMPUNIT_KELVIN = 2;
 	public final static int TEMPUNIT_RANKINE = 3;

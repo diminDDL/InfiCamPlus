@@ -38,7 +38,7 @@ public:
 	 */
 	float distance_multiplier = 1.0;
 
-	/*   range: 120 or 400 (-20-120 / 120-400 Celcius).
+	/*   range: 120 or 400 (-20-120 / 120-400 Celsius).
 	 * Changes affect temp_single() only after update() and table dependent things after
 	 *   update_table().
 	 */
@@ -48,7 +48,7 @@ public:
 	float offset_temp_fpa = 0.0;
 	float offset_temp_shutter = 0.0;
 
-	/* Lookup table for temperature in celcius from pixel values, written by table_invalid(). */
+	/* Lookup table for temperature in celsius from pixel values, written by table_invalid(). */
 	static const int table_len = 0x4000;
 	static const int table_mask = table_len - 1;
 	float table[table_len]; /* Do not forget to always check bounds before access! */
@@ -61,7 +61,7 @@ public:
 	/* Values read by update(). */
 	float temp_fpa, temp_shutter, temp_core;
 	uint16_t fpa_average; /* I'm not exactly sure what this value is. */
-	uint16_t temp_max_x, temp_max_y, temp_max; /* To get Celcius values use temp(). */
+	uint16_t temp_max_x, temp_max_y, temp_max; /* To get Celsius values use temp(). */
 	uint16_t temp_min_x, temp_min_y, temp_min;
 	uint16_t temp_avg, temp_center;
 	uint16_t temp_user[3];
@@ -77,7 +77,7 @@ public:
 	void update(uint16_t *frame); /* For when table is not needed. */
 	float temp_single(uint16_t x); /* Does not need table, does use values from update(). */
 
-	/* Generate lookup table for converting to Celcius, calls update().
+	/* Generate lookup table for converting to Celsius, calls update().
 	 * For realtime use I suggest using it only when the shutter closes as a calibration step, as
 	 *   it is not a very fast function.
 	 */
