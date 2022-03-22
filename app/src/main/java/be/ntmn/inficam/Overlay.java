@@ -2,8 +2,6 @@ package be.ntmn.inficam;
 
 import static java.lang.Float.NaN;
 import static java.lang.Float.isNaN;
-import static java.lang.Math.ceil;
-import static java.lang.Math.floor;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
@@ -142,13 +140,13 @@ public class Overlay {
 			drawTPoint(cvs, d, d.fi.width / 2, d.fi.height / 2, d.fi.center);
 		}
 
-		/*if (d.scale > 1.0f) {
-			float lost = 1.0f - 1.0f / d.scale;
+		if (d.scale > 1.0f) {
+			float lost = (1.0f - 1.0f / d.scale) / 2.0f;
 			mmaRect(mma, d.temp,
-					(int) floor(lost * d.fi.width / 2.0f),
-					(int) floor(lost * d.fi.height / 2.0f),
-					(int) ceil((1.0f - lost) * d.fi.width / 2.0f),
-					(int) ceil((1.0f - lost) * d.fi.height / 2.0f),
+					(int) (lost * d.fi.width),
+					(int) (lost * d.fi.height),
+					(int) ((1.0f - lost) * d.fi.width) + 1,
+					(int) ((1.0f - lost) * d.fi.height) + 1,
 					d.fi.width);
 			d.fi.min = mma.min;
 			d.fi.min_x = mma.min_x;
@@ -156,7 +154,7 @@ public class Overlay {
 			d.fi.max = mma.max;
 			d.fi.max_x = mma.max_x;
 			d.fi.max_y = mma.max_y;
-		}*/
+		}
 
 		if (d.showMin) {
 			paint.setColor(Color.rgb(0, 127, 255)); // Blue.
@@ -265,11 +263,7 @@ public class Overlay {
 		ym += vRect.top;
 		ym -= (vRect.height() * d.scale - vRect.height()) / 2.0f;
 
-		if (xm >= vRect.right || ym >= vRect.bottom || xm < vRect.left || ym < vRect.top)
-			return;
-
 		float smarkerw = smarker * vRect.width();
-
 		cvs.drawLine(xm - smarkerw, ym, xm + smarkerw, ym, paintOutline);
 		cvs.drawLine(xm, ym - smarkerw, xm, ym + smarkerw, paintOutline);
 		cvs.drawLine(xm - smarkerw, ym, xm + smarkerw, ym, paint);

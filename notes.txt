@@ -96,7 +96,6 @@ TODO ui stuff
 			** line/box should just reposition nearest point if start again the touching, their interface can probably be shared logic-wise
 		* like with palette cycle, add list to enable/disable which ones cycle and a setting item
 	        for the current mode
-	- when zoomed limit min-max to visible area
 	- graph over time temperature(s) of selected point/area (the plural meaning min/max/avg)
 	- cram side-by-side video on screen somehow? dual vertical on horizontal or vice-versa screen if asked?
 	- also indicate to user when in 400c mode more clearly
