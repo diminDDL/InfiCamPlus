@@ -47,6 +47,7 @@ Quick description of what for the Java classes are:
 	- SettingsMain      the main settings window
 	- SettingsMeasure   turn on/off measurements
 	- SettingsTherm     thermometry settings like emissivity, ambient temperature, etc
+	- SettingsPalette   for switching palette and the likes
 	- Slider            improved SeekBar
 	- SliderDouble      improved "material" RangeSlider
 	- SurfaceMuxer      multiplexing for android Surface things (basically framebuffers) handles
