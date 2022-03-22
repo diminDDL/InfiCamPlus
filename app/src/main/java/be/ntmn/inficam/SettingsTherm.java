@@ -24,8 +24,6 @@ public class SettingsTherm extends Settings {
 	@Override
 	public Setting[] getSettings() { return settings; }
 
-	public SettingPalette palette = new SettingPalette();
-
 	private final Setting[] settings = {
 		new SettingSliderFloat("emissivity", R.string.set_emissivity, 100, 0, 100, 1, 100) {
 			@Override
@@ -85,7 +83,6 @@ public class SettingsTherm extends Settings {
 				}
 			}
 		},
-		palette,
 		settingDefaults
 	};
 }

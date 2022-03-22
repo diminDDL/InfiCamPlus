@@ -74,6 +74,7 @@ public class MainActivity extends BaseActivity {
 	private SettingsMain settings;
 	private SettingsTherm settingsTherm;
 	private SettingsMeasure settingsMeasure;
+	private SettingsPalette settingsPalette;
 	private LinearLayout buttonsLeft, buttonsRight;
 	private ConstraintLayout.LayoutParams buttonsLeftLayout, buttonsRightLayout;
 	private SliderDouble rangeSlider;
@@ -456,14 +457,11 @@ public class MainActivity extends BaseActivity {
 
 		ImageButton buttonPalette = findViewById(R.id.buttonPalette);
 		buttonPalette.setOnClickListener(view -> {
-			settingsTherm.palette.set((settingsTherm.palette.current + 1) %
-					settingsTherm.palette.items.length);
-			messageView.showMessage(Palette.palettes[settingsTherm.palette.current].name);
+			settingsPalette.palette.set((settingsPalette.palette.current + 1) %
+					settingsPalette.palette.items.length);
+			messageView.showMessage(Palette.palettes[settingsPalette.palette.current].name);
 		});
 		buttonPalette.setOnLongClickListener(view -> {
-			SettingsPalette settingsPalette = findViewById(R.id.settingsPalette);
-			settingsPalette.init(this);
-			settingsPalette.load();
 			showSettings(settingsPalette);
 			return true;
 		});
@@ -525,6 +523,8 @@ public class MainActivity extends BaseActivity {
 		settingsTherm.init(this);
 		settingsMeasure = findViewById(R.id.settingsMeasure);
 		settingsMeasure.init(this);
+		settingsPalette = findViewById(R.id.settingsPalette);
+		settingsPalette.init(this);
 
 		ImageButton buttonSettings = findViewById(R.id.buttonSettings);
 		buttonSettings.setOnClickListener(view -> showSettings(settings));
@@ -556,6 +556,7 @@ public class MainActivity extends BaseActivity {
 		settings.load();
 		settingsTherm.load();
 		settingsMeasure.load();
+		settingsPalette.load();
 		DisplayManager displayManager = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
 		displayManager.registerDisplayListener(displayListener, handler);
 		IntentFilter batIFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
@@ -954,7 +955,8 @@ public class MainActivity extends BaseActivity {
 			overlayData.tempUnit = i;
 		}
 		settings.setTempUnit(i);
-		settingsMeasure.setTempUnit(i);
 		settingsTherm.setTempUnit(i);
+		settingsMeasure.setTempUnit(i);
+		settingsPalette.setTempUnit(i);
 	}
 }

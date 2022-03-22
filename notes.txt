@@ -101,7 +101,6 @@ TODO ui stuff
 	- graph over time temperature(s) of selected point/area (the plural meaning min/max/avg)
 	- cram side-by-side video on screen somehow? dual vertical on horizontal or vice-versa screen if asked?
 	- also indicate to user when in 400c mode more clearly
-	- perhaps longpress on palette and tool switching button should bring up menu to pick one
 	- HT301 should also work, hopefully someone can test that
 	- put in documentation that linear/nearest interpolation is better if performance issues
 	- on older android versions restarting through ADB can result in "failed to start streaming"
