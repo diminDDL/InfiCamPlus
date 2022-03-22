@@ -104,6 +104,8 @@ TODO ui stuff
 	- HT301 should also work, hopefully someone can test that
 	- put in documentation that linear/nearest interpolation is better if performance issues
 	- on older android versions restarting through ADB can result in "failed to start streaming"
+	- option to just limit the range instead of locking it
+	- separate locking for min and max of range
 
 TODO thermal camera things
 	- more measurement modes

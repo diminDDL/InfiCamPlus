@@ -67,12 +67,12 @@
 	<string name="set_distance">Distance (%dm)</string>
 	<string name="set_correction">Correction (%s)</string>
 	<string name="set_range">Range</string>
-	<string name="set_range_120">–20 – 120°C (-4 - 248°F)</string>
-	<string name="set_range_400">120 – 400°C (248 - 752°F)</string>
+	<string name="set_range_120">–20 – 120°C (–4 – 248°F)</string>
+	<string name="set_range_400">120 – 400°C (248 – 752°F)</string>
 	<string name="set_palette">Palette</string>
 
-	<string name="imode_nearest">Nearest</string>
-	<string name="imode_linear">Linear</string>
+	<string name="imode_nearest">Nearest Neighbor</string>
+	<string name="imode_linear">Bilinear</string>
 	<string name="imode_cubic">Bicubic</string>
 
 	<string name="palette_whitehot">White Hot</string>
@@ -102,7 +102,7 @@
 	<string name="img_type_png565">PNG (RGB565)</string>
 	<string name="img_type_jpeg">JPEG</string>
 
-	<string name="unit_celcius">Celcius</string>
+	<string name="unit_celcius">Celsius</string>
 	<string name="unit_fahrenheit">Fahrenheit</string>
 	<string name="unit_kelvin">Kelvin</string>
 	<string name="unit_rankine">Rankine</string>
