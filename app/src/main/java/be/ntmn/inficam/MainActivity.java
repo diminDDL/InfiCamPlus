@@ -56,7 +56,7 @@ public class MainActivity extends BaseActivity {
 	private SurfaceMuxer.InputSurface videoSurface; /* To draw video from the normal camera. */
 	private OverlayMuxer outScreen, outRecord, outPicture;
 	private final Overlay.Data overlayData = new Overlay.Data();
-	private int range = 120;
+	private int range = 0;
 
 	private UsbDevice device;
 	private UsbDeviceConnection usbConnection;
@@ -848,8 +848,10 @@ public class MainActivity extends BaseActivity {
 	public void setRecordAudio(boolean value) { recordAudio = value; }
 
 	public void setRange(int range) {
-		infiCam.setRange(range);
+		if (this.range == range)
+			return;
 		this.range = range;
+		infiCam.setRange(range);
 		requestReinit();
 	}
 

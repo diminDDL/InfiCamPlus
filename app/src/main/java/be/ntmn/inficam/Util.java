@@ -31,6 +31,7 @@ public class Util {
 	public final static int TEMPUNIT_CELCIUS = 0;
 	public final static int TEMPUNIT_FAHRENHEIT = 1;
 	public final static int TEMPUNIT_KELVIN = 2;
+	public final static int TEMPUNIT_RANKINE = 3;
 
 	private static void writeImage(Context ctx, Bitmap bmp, Bitmap.CompressFormat format,
 								  String mimeType, String ext, int quality)
@@ -109,10 +110,12 @@ public class Util {
 			sb.append("NaN");
 			return;
 		}
+		if (tempunit == TEMPUNIT_KELVIN || tempunit == TEMPUNIT_RANKINE)
+			temp += 273.15f;
+		if (tempunit == TEMPUNIT_FAHRENHEIT || tempunit == TEMPUNIT_RANKINE)
+			temp *= 9.0f / 5.0f;
 		if (tempunit == TEMPUNIT_FAHRENHEIT)
-			temp = temp * 9 / 5 + 32;
-		if (tempunit == TEMPUNIT_KELVIN)
-			temp += 273.15;
+			temp += 32.0f;
 		if (temp < 0)
 			sb.append("-");
 		temp = abs(temp * 100.0f);
@@ -122,8 +125,10 @@ public class Util {
 		sb.append((int) (temp % 10));
 		if (tempunit == TEMPUNIT_FAHRENHEIT)
 			sb.append("°F");
-		if (tempunit == TEMPUNIT_KELVIN)
+		else if (tempunit == TEMPUNIT_KELVIN)
 			sb.append("°K");
+		else if (tempunit == TEMPUNIT_RANKINE)
+			sb.append("°R");
 		else sb.append("°C");
 	}
 
