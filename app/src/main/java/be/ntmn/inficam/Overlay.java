@@ -1,6 +1,9 @@
 package be.ntmn.inficam;
 
 import static java.lang.Float.NaN;
+import static java.lang.Float.isNaN;
+import static java.lang.Math.ceil;
+import static java.lang.Math.floor;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
@@ -57,6 +60,12 @@ public class Overlay {
 	private final static float pclearance = 0.016f;
 
 	private final StringBuilder sb = new StringBuilder();
+	private final MinMaxAvg mma = new MinMaxAvg();
+
+	private static class MinMaxAvg {
+		float min, max, avg;
+		int min_x, min_y, max_x, max_y;
+	}
 
 	public Overlay(Context ctx, SurfaceMuxer.InputSurface is) {
 		surface = is;
@@ -99,6 +108,30 @@ public class Overlay {
 		cvs.drawText(sb, 0, sb.length(), x, y + (ta ? theight : 0), paint);
 	}
 
+	private void mmaRect(MinMaxAvg out, float[] temp, int left, int top,
+						 int right, int bottom, int stride) {
+		out.min = out.max = NaN;
+		out.avg = 0.0f;
+		out.min_x = out.min_y = out.max_x = out.max_y = 0;
+		for (int y = top; y < bottom; ++y) {
+			for (int x = left; x < right; ++x) {
+				float t = temp[y * stride + x];
+				if (t < out.min || isNaN(out.min)) {
+					out.min = t;
+					out.min_x = x;
+					out.min_y = y;
+				}
+				if (t > out.max || isNaN(out.max)) {
+					out.max = t;
+					out.max_x = x;
+					out.max_y = y;
+				}
+				out.avg += t;
+			}
+		}
+		out.avg /= (right - left) * (bottom - top);
+	}
+
 	@SuppressLint("DefaultLocale")
 	public void draw(Data d) {
 		Canvas cvs = surface.getSurface().lockCanvas(null);
@@ -107,6 +140,22 @@ public class Overlay {
 		if (d.showCenter) { // TODO this is off by a pixel and we should check the other points too
 			paint.setColor(Color.rgb(255, 255, 0)); // Yellow.
 			drawTPoint(cvs, d, d.fi.width / 2, d.fi.height / 2, d.fi.center);
+		}
+
+		if (d.scale > 1.0f) {
+			float lost = 1.0f - 1.0f / d.scale;
+			mmaRect(mma, d.temp,
+					(int) floor(lost * d.fi.width / 2.0f),
+					(int) floor(lost * d.fi.height / 2.0f),
+					(int) ceil((1.0f - lost) * d.fi.width / 2.0f),
+					(int) ceil((1.0f - lost) * d.fi.height / 2.0f),
+					d.fi.width);
+			d.fi.min = mma.min;
+			d.fi.min_x = mma.min_x;
+			d.fi.min_y = mma.min_y;
+			d.fi.max = mma.max;
+			d.fi.max_x = mma.max_x;
+			d.fi.max_y = mma.max_y;
 		}
 
 		if (d.showMin) {

@@ -107,6 +107,7 @@ TODO ui stuff
 		* maybe enter as center + span rather than min + max?
 		* separate locking for min and max of range
 		* option to just limit the range instead of locking it
+	- listen for physical camera button keycode
 
 TODO thermal camera things
 	- more measurement modes
@@ -116,6 +117,7 @@ TODO thermal camera things
 	- more palettes in general
 
 TODO normal camera things
+	- perhaps the modes can be called "thermal", "combined"/"fusion", "picture-in-picture"
 	- choose resolution for the normal camera (maybe just trying 1080p/720p/VGA/SVGA or close depending on setting is ok)
 	- showing of normal camera also (and allow choosing which one, rotation)
 	- overlaying normal camera (with edge detect)
