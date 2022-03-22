@@ -184,7 +184,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		private SurfaceMuxer surfaceMuxer;
 		private Surface surface;
 		private final boolean surfaceOwned;
-		private EGLSurface eglSurface = EGL14.EGL_NO_SURFACE; /* Not dependent on context. */
+		private EGLSurface eglSurface = EGL14.EGL_NO_SURFACE;
 		private int width = 1, height = 1;
 
 		public OutputSurface(SurfaceMuxer muxer, Surface surf, boolean release) {
@@ -196,8 +196,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		}
 
 		private void init() {
-			if (surfaceMuxer == null || surfaceMuxer.eglDisplay == EGL14.EGL_NO_DISPLAY ||
-					eglSurface != EGL14.EGL_NO_SURFACE)
+			deinit();
+			if (surfaceMuxer == null || surfaceMuxer.eglDisplay == EGL14.EGL_NO_DISPLAY)
 				return;
 			int[] attr = { EGL14.EGL_NONE };
 			eglSurface = EGL14.eglCreateWindowSurface(surfaceMuxer.eglDisplay,
