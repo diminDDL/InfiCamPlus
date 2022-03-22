@@ -32,7 +32,7 @@
 	<string name="dialog_set_main">Settings</string>
 	<string name="dialog_set_therm">Thermometry Settings</string>
 	<string name="dialog_set_measure">Measurement Settings</string>
-	<string name="dialog_set_palette">Palette</string>
+	<string name="dialog_set_palette">Palette Settings</string>
 
 	<string name="set_imode">Scaling mode</string>
 	<string name="set_sharpening">Sharpening (%.2f)</string>
