@@ -108,6 +108,7 @@ TODO ui stuff
 		* separate locking for min and max of range
 		* option to just limit the range instead of locking it
 	- listen for physical camera button keycode
+	- sometimes crash on first install (see TODO in SurfaceMuxer)
 
 TODO thermal camera things
 	- more measurement modes

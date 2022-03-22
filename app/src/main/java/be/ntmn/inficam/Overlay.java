@@ -142,7 +142,7 @@ public class Overlay {
 			drawTPoint(cvs, d, d.fi.width / 2, d.fi.height / 2, d.fi.center);
 		}
 
-		if (d.scale > 1.0f) {
+		/*if (d.scale > 1.0f) {
 			float lost = 1.0f - 1.0f / d.scale;
 			mmaRect(mma, d.temp,
 					(int) floor(lost * d.fi.width / 2.0f),
@@ -156,7 +156,7 @@ public class Overlay {
 			d.fi.max = mma.max;
 			d.fi.max_x = mma.max_x;
 			d.fi.max_y = mma.max_y;
-		}
+		}*/
 
 		if (d.showMin) {
 			paint.setColor(Color.rgb(0, 127, 255)); // Blue.
@@ -253,15 +253,15 @@ public class Overlay {
 
 		float xm = (tx + 0.5f) * vRect.width() / (d.rotate90 ? d.fi.height : d.fi.width) * d.scale;
 		if (d.rotate)
-			xm = vRect.width() - xm;
+			xm = vRect.width() * d.scale - xm;
 		if (d.mirror)
-			xm = vRect.width() - xm;
+			xm = vRect.width() * d.scale - xm;
 		xm += vRect.left;
 		xm -= (vRect.width() * d.scale - vRect.width()) / 2.0f;
 
 		float ym = (ty + 0.5f) * vRect.height() / (d.rotate90 ? d.fi.width : d.fi.height) * d.scale;
 		if (d.rotate)
-			ym = vRect.height() - ym;
+			ym = vRect.height() * d.scale - ym;
 		ym += vRect.top;
 		ym -= (vRect.height() * d.scale - vRect.height()) / 2.0f;
 
