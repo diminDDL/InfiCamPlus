@@ -10,14 +10,8 @@ public class SettingsMain extends Settings {
 	private static final String SP_NAME = "PREFS";
 	private static final int name = R.string.dialog_set_main;
 
-	public SettingsMain(Context context) {
-		super(context);
-	}
-
-	public SettingsMain(Context context, @Nullable AttributeSet attrs) {
-		super(context, attrs);
-	}
-
+	public SettingsMain(Context context) { super(context); }
+	public SettingsMain(Context context, @Nullable AttributeSet attrs) { super(context, attrs); }
 	public SettingsMain(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
 		super(context, attrs, defStyleAttr);
 	}

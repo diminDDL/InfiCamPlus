@@ -268,19 +268,25 @@ public abstract class Settings extends LinearLayout {
 		abstract void onPress();
 	}
 
+	public class SettingPalette extends SettingRadio {
+		SettingPalette() {
+			super("palette", R.string.set_palette, 2, new int[] {});
+			items = new int[Palette.palettes.length];
+			for (int i = 0; i < Palette.palettes.length; ++i)
+				items[i] = Palette.palettes[i].name;
+		}
+
+		@Override
+		void onSet(int i) { act.setPalette(Palette.palettes[i].getData()); }
+	}
+
 	final SettingButton settingDefaults = new SettingButton(R.string.set_defaults) {
 		@Override
 		void onPress() { setDefaults(); }
 	};
 
-	public Settings(Context context) {
-		super(context);
-	}
-
-	public Settings(Context context, @Nullable AttributeSet attrs) {
-		super(context, attrs);
-	}
-
+	public Settings(Context context) { super(context); }
+	public Settings(Context context, @Nullable AttributeSet attrs) { super(context, attrs); }
 	public Settings(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
 		super(context, attrs, defStyleAttr);
 	}

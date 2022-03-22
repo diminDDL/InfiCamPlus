@@ -9,14 +9,8 @@ public class SettingsMeasure extends Settings {
 	private static final String SP_NAME = "PREFS_MEASURE";
 	private static final int name = R.string.dialog_set_measure;
 
-	public SettingsMeasure(Context context) {
-		super(context);
-	}
-
-	public SettingsMeasure(Context context, @Nullable AttributeSet attrs) {
-		super(context, attrs);
-	}
-
+	public SettingsMeasure(Context context) { super(context); }
+	public SettingsMeasure(Context context, @Nullable AttributeSet attrs) { super(context, attrs); }
 	public SettingsMeasure(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
 		super(context, attrs, defStyleAttr);
 	}

@@ -460,6 +460,13 @@ public class MainActivity extends BaseActivity {
 					settingsTherm.palette.items.length);
 			messageView.showMessage(Palette.palettes[settingsTherm.palette.current].name);
 		});
+		buttonPalette.setOnLongClickListener(view -> {
+			SettingsPalette settingsPalette = findViewById(R.id.settingsPalette);
+			settingsPalette.init(this);
+			settingsPalette.load();
+			showSettings(settingsPalette);
+			return true;
+		});
 
 		ImageButton buttonLock = findViewById(R.id.buttonLock);
 		buttonLock.setOnClickListener(view -> {
@@ -496,7 +503,6 @@ public class MainActivity extends BaseActivity {
 		});
 
 		rangeSlider = findViewById(R.id.rangeSlider);
-
 		rangeSlider.setStepSize(1.0f);
 		rangeSlider.addOnChangeListener((slider, value, fromUser) -> {
 			List<Float> v = rangeSlider.getValuesCorrected();

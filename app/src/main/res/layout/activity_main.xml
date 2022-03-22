@@ -73,6 +73,7 @@
 			android:layout_height="40dp"
 			android:scaleType="fitCenter"
 			android:layout_margin="5dp"
+			android:hapticFeedbackEnabled="false"
 			app:tint="@color/white"
 			android:background="?android:attr/selectableItemBackground" />
 
@@ -84,6 +85,7 @@
 			android:layout_height="40dp"
 			android:scaleType="fitCenter"
 			android:layout_margin="5dp"
+			android:hapticFeedbackEnabled="false"
 			app:tint="@color/white"
 			android:background="?android:attr/selectableItemBackground" />
 
@@ -95,6 +97,7 @@
 			android:layout_height="40dp"
 			android:scaleType="fitCenter"
 			android:layout_margin="5dp"
+			android:hapticFeedbackEnabled="false"
 			app:tint="@color/white"
 			android:background="?android:attr/selectableItemBackground" />
 
@@ -106,6 +109,7 @@
 			android:layout_height="40dp"
 			android:scaleType="fitCenter"
 			android:layout_margin="5dp"
+			android:hapticFeedbackEnabled="false"
 			app:tint="@color/white"
 			android:background="?android:attr/selectableItemBackground" />
 
@@ -117,6 +121,7 @@
 			android:layout_height="40dp"
 			android:scaleType="fitCenter"
 			android:layout_margin="5dp"
+			android:hapticFeedbackEnabled="false"
 			app:tint="@color/white"
 			android:background="?android:attr/selectableItemBackground" />
 
@@ -149,6 +154,7 @@
 			android:layout_height="40dp"
 			android:scaleType="fitCenter"
 			android:layout_margin="5dp"
+			android:hapticFeedbackEnabled="false"
 			app:tint="@color/white"
 			android:background="?android:attr/selectableItemBackground" />
 
@@ -160,6 +166,7 @@
 			android:layout_height="60dp"
 			android:scaleType="fitCenter"
 			android:layout_margin="5dp"
+			android:hapticFeedbackEnabled="false"
 			app:tint="@color/white"
 			android:background="?android:attr/selectableItemBackground" />
 
@@ -171,6 +178,7 @@
 			android:layout_height="40dp"
 			android:scaleType="fitCenter"
 			android:layout_margin="5dp"
+			android:hapticFeedbackEnabled="false"
 			app:tint="@color/white"
 			android:background="?android:attr/selectableItemBackground" />
 
@@ -182,6 +190,7 @@
 			android:layout_height="40dp"
 			android:scaleType="fitCenter"
 			android:layout_margin="5dp"
+			android:hapticFeedbackEnabled="false"
 			app:tint="@color/white"
 			android:background="?android:attr/selectableItemBackground" />
 
@@ -256,6 +265,16 @@
 					android:showDividers="middle"
 					android:divider="@drawable/settings_divider"
 					android:layout_width="match_parent"
+					android:layout_height="wrap_content" />
+
+				<be.ntmn.inficam.SettingsPalette
+					android:id="@+id/settingsPalette"
+					android:orientation="vertical"
+					android:padding="20dp"
+					android:minWidth="250dp"
+					android:showDividers="middle"
+					android:divider="@drawable/settings_divider"
+					android:layout_width="wrap_content"
 					android:layout_height="wrap_content" />
 
 			</FrameLayout>
