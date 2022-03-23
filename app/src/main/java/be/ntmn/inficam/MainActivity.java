@@ -536,13 +536,7 @@ public class MainActivity extends BaseActivity {
 		buttonSettingsMeasure.setOnClickListener(view -> showSettings(settingsMeasure));
 
 		ImageButton buttonGallery = findViewById(R.id.buttonGallery);
-		buttonGallery.setOnClickListener(view -> {
-			Intent intent = new Intent();
-			intent.setAction(android.content.Intent.ACTION_VIEW);
-			intent.setType("image/*");
-			intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-			startActivity(intent);
-		});
+		buttonGallery.setOnClickListener(view -> Util.openGallery(this) );
 
 		buttonsLeft = findViewById(R.id.buttonsLeft);
 		buttonsRight = findViewById(R.id.buttonsRight);

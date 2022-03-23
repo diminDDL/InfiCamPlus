@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -89,6 +90,63 @@ public class Util {
 				writeImage(ctx, bmp, Bitmap.CompressFormat.JPEG, "image/jpeg", ".jpg", quality);
 				break;
 		}
+	}
+
+	private static class GalleryOpener implements MediaScannerConnection.MediaScannerConnectionClient {
+		Context ctx;
+		File dir;
+		MediaScannerConnection conn;
+
+		GalleryOpener(Context ctx, File dir) {
+			this.ctx = ctx;
+			this.dir = dir;
+			conn = new MediaScannerConnection(ctx, this);
+			conn.connect();
+		}
+
+		@Override
+		public void onMediaScannerConnected() {
+			conn.scanFile(dir.getAbsolutePath(), null);
+		}
+
+		@Override
+		public void onScanCompleted(String s, Uri uri) {
+			Intent intent = new Intent(Intent.ACTION_VIEW);
+			intent.setDataAndType(uri, "image/*");
+			/*intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION |
+					Intent.FLAG_GRANT_WRITE_URI_PERMISSION |
+					Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);*/
+			//intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			//Intent chooser = Intent.createChooser(intent, "Open Gallery");
+
+			/*List<ResolveInfo> resInfoList = ctx.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+			for (ResolveInfo resolveInfo : resInfoList) {
+				String packageName = resolveInfo.activityInfo.packageName;
+				ctx.grantUriPermission(packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+			}*/
+			ctx.startActivity(intent);
+		}
+	}
+
+	public static void openGallery(Context ctx) {
+		File dcim = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
+		String dirname = ctx.getString(R.string.app_name);
+		File dir = new File(dcim, dirname);
+		GalleryOpener go = new GalleryOpener(ctx, dir);
+		// TODO manifest and the provider_paths.xml where modified for this, check later if we still need em
+		/*Intent intent = new Intent(Intent.ACTION_PICK);
+		Uri uri = FileProvider.getUriForFile(ctx, BuildConfig.APPLICATION_ID + ".provider", dir);
+		intent.setDataAndType(uri, "image/*");
+		intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		//Intent chooser = Intent.createChooser(intent, "Open Gallery");
+
+		List<ResolveInfo> resInfoList = ctx.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+		for (ResolveInfo resolveInfo : resInfoList) {
+			String packageName = resolveInfo.activityInfo.packageName;
+			ctx.grantUriPermission(packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+		}
+		ctx.startActivity(intent);*/
 	}
 
 	public static String readStringAsset(Context ctx, String filename) throws IOException {
