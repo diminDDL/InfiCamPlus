@@ -39,6 +39,42 @@ public class Util {
 	public final static int TEMPUNIT_KELVIN = 2;
 	public final static int TEMPUNIT_RANKINE = 3;
 
+	private static class Mscc implements MediaScannerConnection.MediaScannerConnectionClient {
+		Context ctx;
+		File file;
+		MediaScannerConnection conn;
+
+		Mscc(Context ctx, File file) {
+			this.ctx = ctx;
+			this.file = file;
+			conn = new MediaScannerConnection(ctx, this);
+			conn.connect();
+		}
+
+		@Override
+		public void onScanCompleted(String path, Uri uri) {
+			try {
+				Log.e("DATEADD", "scan done " + uri); // TODO remove the log things
+				ctx.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri));
+				// TODO perhaps update thumbnail?
+			} finally {
+				conn.disconnect();
+			}
+		}
+
+		@Override
+		public void onMediaScannerConnected() { conn.scanFile(file.getAbsolutePath(), "*/*"); }
+	}
+
+	public static void scanMedia(Context ctx, Uri uri) {
+		new Mscc(ctx, new File(uri.getPath())); // TODO maybe not needed
+		ctx.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri));
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) // TODO probly not needed
+			ctx.getContentResolver().notifyChange(uri, null, 0);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+			ctx.getContentResolver().refresh(uri, null, null); // TODO probably not needed
+	}
+
 	private static void writeImage(Context ctx, Bitmap bmp, Bitmap.CompressFormat format,
 								  String mimeType, String ext, int quality)
 			throws IOException {
@@ -76,8 +112,7 @@ public class Util {
 		bmp.compress(format, quality, out);
 		out.flush();
 		out.close();
-		// TODO also use mediascanner, also do this for videos
-		ctx.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri));
+		scanMedia(ctx, uri);
 	}
 
 	public static void writeImage(Context ctx, Bitmap bmp, int type, int quality)
@@ -97,46 +132,6 @@ public class Util {
 			case IMGTYPE_JPEG: /* Fastest and smallest, but lossy. */
 				writeImage(ctx, bmp, Bitmap.CompressFormat.JPEG, "image/jpeg", ".jpg", quality);
 				break;
-		}
-	}
-
-	private static class Mscc implements MediaScannerConnection.MediaScannerConnectionClient {
-		Context ctx;
-		File file;
-		MediaScannerConnection conn;
-
-		Mscc(Context ctx, File file) {
-			this.ctx = ctx;
-			this.file = file;
-			conn = new MediaScannerConnection(ctx, this);
-			conn.connect();
-		}
-
-		@Override
-		public void onScanCompleted(String path, Uri uri) {
-			try {
-				if (uri != null) {
-					Intent intent = new Intent(Intent.ACTION_VIEW);
-					//Intent intent = new Intent("com.android.camera.action.REVIEW");
-					intent.setDataAndType(uri, "image/*");
-					//intent.setDataAndType(Uri.fromFile(new File(path)), "image/*");
-					//intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-					intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-					//ctx.getContentResolver();
-
-					/*String parentDocUri = DocumentsContract.getTreeDocumentId(uri);
-					intent.setDataAndType(DocumentsContract.buildChildDocumentsUriUsingTree(uri, parentDocUri), "image/*");*/
-
-					ctx.startActivity(intent);
-				}
-			} finally {
-				conn.disconnect();
-			}
-		}
-
-		@Override
-		public void onMediaScannerConnected() {
-			conn.scanFile(file.getAbsolutePath(), "*/*");
 		}
 	}
 
@@ -189,11 +184,16 @@ public class Util {
 
 		Intent intent = new Intent(Intent.ACTION_VIEW);
 		intent.setDataAndType(mediaUri, "image/*");
-		/*intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-		List<ResolveInfo> resInfoList = ctx.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+		/*intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION |
+				Intent.FLAG_GRANT_WRITE_URI_PERMISSION |
+				Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+		List<ResolveInfo> resInfoList = ctx.getPackageManager().queryIntentActivities(intent,
+				PackageManager.MATCH_DEFAULT_ONLY);
 		for (ResolveInfo resolveInfo : resInfoList) {
 			String packageName = resolveInfo.activityInfo.packageName;
-			ctx.grantUriPermission(packageName, mediaUri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+			ctx.grantUriPermission(packageName, mediaUri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION |
+					Intent.FLAG_GRANT_READ_URI_PERMISSION |
+					Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
 		}*/
 
 		//intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
