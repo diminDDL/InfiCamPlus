@@ -69,9 +69,14 @@ Short description of the C++ classes in jni/InfiCam dir:
 
 I try to keep the amount of threads limited as to prevent headaches, we have the following threads:
 	- Androids UI thread.
-	- imgCompressThread in MainActivity, deals with compressing images by Bitmap.compress()
-	- usb_thread in UVCDevice.cpp, to repeatedly call libusb's message handling function
-	- libuvc has a thread to call the callback we give it
+	- MainActivity.imgCompressThread, deals with compressing images by Bitmap.compress()
+	- SurfaceRecorder.thread, shovels data from the video/audio encoders out, separated because
+	    swapBuffers() in SurfaceMuxer on the UI thread would block if somehow it gets called too
+	    often before the encoders buffers have been emptied.
+	- usb_thread in UVCDevice.cpp, to repeatedly call libusb's message handling function.
+	- libuvc has a thread to call the callback we give it, be copy out the data and post to a
+	    handler on the UI thread to further process the data from that (while blocking it until
+	    the processing is done).
 
 TODO ui stuff
 	- different states for UI interactions:
