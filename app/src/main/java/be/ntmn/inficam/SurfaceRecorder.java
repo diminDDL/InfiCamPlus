@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.Intent;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaCodec;
@@ -52,6 +51,7 @@ public class SurfaceRecorder implements Runnable {
 	private boolean muxerStarted;
 	private Thread thread;
 	private Uri fileUri;
+	private ParcelFileDescriptor fileDescriptor;
 
 	/* If enabling audio, request audio permission first! */
 	@SuppressLint("MissingPermission")
@@ -71,8 +71,8 @@ public class SurfaceRecorder implements Runnable {
 			cv.put(MediaStore.Images.Media.DATE_TAKEN, System.currentTimeMillis());
 			ContentResolver cr = ctx.getContentResolver();
 			fileUri = cr.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, cv);
-			ParcelFileDescriptor fd = cr.openFileDescriptor(fileUri, "rw");
-			muxer = new MediaMuxer(fd.getFileDescriptor(),
+			fileDescriptor = cr.openFileDescriptor(fileUri, "rw");
+			muxer = new MediaMuxer(fileDescriptor.getFileDescriptor(),
 					MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
 		} else {
 			int num = 0;
@@ -185,8 +185,14 @@ public class SurfaceRecorder implements Runnable {
 		inputSurface = null;
 		audioTrack = -1;
 		videoTrack = -1;
+		if (fileDescriptor != null) {
+			try {
+				fileDescriptor.close();
+			} catch (Exception e) { /* Empty. */ }
+		}
+		fileDescriptor = null;
 		if (fileUri != null)
-			ctx.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, fileUri));
+			Util.scanMedia(ctx, fileUri);
 		fileUri = null;
 	}
 
