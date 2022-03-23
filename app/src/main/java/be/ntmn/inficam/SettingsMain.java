@@ -108,7 +108,7 @@ public class SettingsMain extends Settings {
 			@Override
 			void onSet(float f) { act.setSharpening(f); }
 		},
-		new SettingSliderFloat("adaptiveness", R.string.set_adaptiveness, 75, 0, 100, 5, 100) {
+		new SettingSliderFloat("adaptiveness", R.string.set_adaptiveness, 50, 0, 100, 5, 100) {
 			@Override
 			void onSet(float f) { act.setAdaptiveness(f); }
 		},
