@@ -67,6 +67,12 @@ Short description of the C++ classes in jni/InfiCam dir:
 	- InfiCam       connecting to the camera, feeding the frames to InifFrame class, etc
 	- InfiCamJNI    whatever garbage is needed to glue InfiCam class to the Java end
 
+I try to keep the amount of threads limited as to prevent headaches, we have the following threads:
+	- Androids UI thread.
+	- imgCompressThread in MainActivity, deals with compressing images by Bitmap.compress()
+	- usb_thread in UVCDevice.cpp, to repeatedly call libusb's message handling function
+	- libuvc has a thread to call the callback we give it
+
 TODO ui stuff
 	- different states for UI interactions:
 		* add measurement point/line/area
