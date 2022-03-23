@@ -89,7 +89,7 @@ public class SettingsMain extends Settings {
 			@Override
 			void onSet(boolean value) { act.setMirror(value); }
 		},
-		new SettingRadio("imode", R.string.set_imode, 2, new int[] {
+		new SettingRadio("imode", R.string.set_imode, 1, new int[] {
 				R.string.imode_nearest,
 				R.string.imode_linear,
 				R.string.imode_cubic
