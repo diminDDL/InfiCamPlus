@@ -142,6 +142,7 @@ public class Util {
 	}
 
 	public static Uri getImageContentUri(Context context, String filePath) {
+		// TODO also query for video
 		Cursor cursor = context.getContentResolver().query(
 				MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
 				new String[] { MediaStore.Images.Media._ID, MediaStore.Images.Media.BUCKET_DISPLAY_NAME },
@@ -165,31 +166,6 @@ public class Util {
 				return null;
 			}
 		}
-	}
-
-	public static void openGallery2(Context context) {
-		String bucketId = "";
-		final String[] projection = new String[] { MediaStore.Images.Media.BUCKET_DISPLAY_NAME, MediaStore.Images.Media.BUCKET_ID };
-		final Cursor cur = context.getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, projection, null, null, null);
-		while (cur != null && cur.moveToNext()) {
-			final String bucketName = cur.getString(0);
-			Log.e("BUCKETNAME", bucketName);
-			if (bucketName.equals("InfiCam")) {
-				bucketId = cur.getString(1);
-				break;
-			}
-		}
-		Log.e("BUCKETNAME", "got bucketId = " + bucketId);
-		Uri mediaUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-		if (bucketId.length() > 0) {
-			mediaUri = mediaUri.buildUpon().authority("media")
-					.appendQueryParameter("bucketId", bucketId).build();
-		}
-		if (cur != null)
-			cur.close();
-		Intent intent = new Intent(Intent.ACTION_VIEW);
-		intent.setDataAndType(mediaUri, "image/*");
-		context.startActivity(intent);
 	}
 
 	public static void openGallery(Context ctx) {
