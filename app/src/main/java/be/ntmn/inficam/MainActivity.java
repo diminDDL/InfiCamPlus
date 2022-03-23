@@ -536,7 +536,12 @@ public class MainActivity extends BaseActivity {
 		buttonSettingsMeasure.setOnClickListener(view -> showSettings(settingsMeasure));
 
 		ImageButton buttonGallery = findViewById(R.id.buttonGallery);
-		buttonGallery.setOnClickListener(view -> Util.openGallery(this) );
+		buttonGallery.setOnClickListener(view ->
+			askPermission(Manifest.permission.READ_EXTERNAL_STORAGE, granted -> {
+				if (granted)
+					Util.openGallery(this);
+				else messageView.showMessage(R.string.msg_permdenied_storage);
+			}));
 
 		buttonsLeft = findViewById(R.id.buttonsLeft);
 		buttonsRight = findViewById(R.id.buttonsRight);

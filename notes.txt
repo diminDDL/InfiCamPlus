@@ -110,7 +110,8 @@ TODO ui stuff
 	- listen for physical camera button keycode
 
 TODO thermal camera things
-	- more measurement modes
+	- more measurement modes (point, line, rect)
+	- 9 point grid rectangle for measuring
 	- store thermometry data in videos and pictures
 	- allow to regenerate images and videos from thermometry data, measure from it
 	- proper ironbow palette (real ones get lighter after they go yellow)
