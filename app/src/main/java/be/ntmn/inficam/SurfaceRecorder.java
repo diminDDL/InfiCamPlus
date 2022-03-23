@@ -67,6 +67,8 @@ public class SurfaceRecorder implements Runnable {
 			cv.put(MediaStore.MediaColumns.DISPLAY_NAME, fname);
 			cv.put(MediaStore.MediaColumns.MIME_TYPE, MUX_MIME_TYPE);
 			cv.put(MediaStore.MediaColumns.RELATIVE_PATH, "DCIM/" + dirname);
+			cv.put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis());
+			cv.put(MediaStore.Images.Media.DATE_TAKEN, System.currentTimeMillis());
 			ContentResolver cr = ctx.getContentResolver();
 			fileUri = cr.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, cv);
 			ParcelFileDescriptor fd = cr.openFileDescriptor(fileUri, "rw");

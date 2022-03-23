@@ -16,11 +16,8 @@ import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.util.Log;
-
-import androidx.core.content.FileProvider;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -56,6 +53,8 @@ public class Util {
 			cv.put(MediaStore.MediaColumns.DISPLAY_NAME, fname);
 			cv.put(MediaStore.MediaColumns.MIME_TYPE, mimeType);
 			cv.put(MediaStore.MediaColumns.RELATIVE_PATH, "DCIM/" + dirname);
+			cv.put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis());
+			cv.put(MediaStore.Images.Media.DATE_TAKEN, System.currentTimeMillis());
 			ContentResolver cr = ctx.getContentResolver();
 			uri = cr.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv);
 			out = cr.openOutputStream(uri);
@@ -141,59 +140,81 @@ public class Util {
 		}
 	}
 
-	public static Uri getImageContentUri(Context context, String filePath) {
-		// TODO also query for video
-		Cursor cursor = context.getContentResolver().query(
+	public static Uri getLastImage(Context ctx) {
+		String bucketName = ctx.getString(R.string.app_name);
+		Uri mediaUri = null;
+		String path = null;
+		long date = 0;
+		Cursor cursor = ctx.getContentResolver().query(
 				MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-				new String[] { MediaStore.Images.Media._ID, MediaStore.Images.Media.BUCKET_DISPLAY_NAME },
-				MediaStore.Images.Media.BUCKET_DISPLAY_NAME + "='InfiCam'",
+				new String[] {
+					MediaStore.Images.Media._ID,
+					MediaStore.Images.Media.DATE_MODIFIED,
+					MediaStore.Images.Media.DATA
+				},
+				MediaStore.Images.Media.BUCKET_DISPLAY_NAME + "='" + bucketName + "'",
 				null,
-				MediaStore.Images.Media.DATE_TAKEN + " DESC");
+				MediaStore.Images.Media.DATE_MODIFIED + " DESC");
 		if (cursor != null && cursor.moveToFirst()) {
 			int id = cursor.getInt(0);
+			date = cursor.getLong(1);
+			path = cursor.getString(2);
+			mediaUri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "" + id);
+			Log.e("DATEADD", "pic date = " + date);
+		}
+		if (cursor != null)
 			cursor.close();
-			Log.e("MYLOG", "got cusror one");
-			return Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "" + id);
-		} else {
-			try{
-				ContentValues values = new ContentValues();
-				values.put(MediaStore.Images.Media.DATA, filePath);
-				Log.e("MYLOG", "got value");
-				return context.getContentResolver().insert(
-						MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-			} catch (Exception e){
-				Log.e("MYLOG", "it's null");
-				return null;
+		cursor = ctx.getContentResolver().query(
+				MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+				new String[] {
+					MediaStore.Video.Media._ID,
+					MediaStore.Video.Media.DATE_MODIFIED,
+					MediaStore.Video.Media.DATA
+				},
+				MediaStore.Video.Media.BUCKET_DISPLAY_NAME + "='" + bucketName + "'",
+				null,
+				MediaStore.Video.Media.DATE_MODIFIED + " DESC");
+		if (cursor != null && cursor.moveToFirst()) {
+			Log.e("DATEADD", "vid date = " + cursor.getLong(1));
+			if (cursor.getLong(1) > date) {
+				int id = cursor.getInt(0);
+				path = cursor.getString(2);
+				mediaUri = Uri.withAppendedPath(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, "" + id);
 			}
 		}
+		if (cursor != null)
+			cursor.close();
+
+		//new Mscc(ctx, new File(path));
+
+		Intent intent = new Intent(Intent.ACTION_VIEW);
+		intent.setDataAndType(mediaUri, "image/*");
+		/*intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+		List<ResolveInfo> resInfoList = ctx.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+		for (ResolveInfo resolveInfo : resInfoList) {
+			String packageName = resolveInfo.activityInfo.packageName;
+			ctx.grantUriPermission(packageName, mediaUri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+		}*/
+
+		//intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		ctx.startActivity(intent);
+
+		return mediaUri;
 	}
 
 	public static void openGallery(Context ctx) {
 		// TODO activity requests permission atm, should it?
 		//openGallery2(ctx);
-		//File dcim = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
-		File dcim = new File(Environment.getExternalStorageDirectory(), "DCIM");
+		File dcim = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
+		//File dcim = new File(Environment.getExternalStorageDirectory(), "DCIM");
 		String dirname = ctx.getString(R.string.app_name);
 		File dir = new File(dcim, dirname);
 		// TODO manifest and the provider_paths.xml where modified for this, check later if we still need em
 		File[] files = dir.listFiles();
-		Uri uri = getImageContentUri(ctx, files[0].getAbsolutePath());
+		Uri uri = getLastImage(ctx);
 		//Uri uri = FileProvider.getUriForFile(ctx, BuildConfig.APPLICATION_ID + ".provider", files[0]);
 		//Intent intent = new Intent("com.android.camera.action.REVIEW"); // TODO try that one first
-		Intent intent = new Intent(Intent.ACTION_VIEW);
-		//Intent intent = new Intent(Intent.ACTION_VIEW, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-		intent.setDataAndType(uri, "image/*");
-		intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-		//intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-		//intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		//Intent chooser = Intent.createChooser(intent, "Open Gallery");
 
-		List<ResolveInfo> resInfoList = ctx.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
-		for (ResolveInfo resolveInfo : resInfoList) {
-			String packageName = resolveInfo.activityInfo.packageName;
-			ctx.grantUriPermission(packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-		}
-		ctx.startActivity(intent);
 		//new Mscc(ctx, files[0]);
 		// TODO catch ActivityNotFoundException
 	}
