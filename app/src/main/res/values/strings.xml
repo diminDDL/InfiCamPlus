@@ -18,6 +18,7 @@
 	       have them actually shown as a message to the user rather than just going to logcat -->
 	<string name="err_failopencamera">Failed to open camera.</string>
 	<string name="err_failconfigcamera">Failed to configure camera.</string>
+	<string name="err_nogallery">No gallery app found.</string>
 
 	<string name="btn_shutter">Shutter</string>
 	<string name="btn_photo">Take photo</string>

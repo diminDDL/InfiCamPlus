@@ -538,9 +538,13 @@ public class MainActivity extends BaseActivity {
 		ImageButton buttonGallery = findViewById(R.id.buttonGallery);
 		buttonGallery.setOnClickListener(view ->
 			askPermission(Manifest.permission.READ_EXTERNAL_STORAGE, granted -> {
-				if (granted)
-					Util.openGallery(this);
-				else messageView.showMessage(R.string.msg_permdenied_storage);
+				if (granted) {
+					try {
+						Util.openGallery(this);
+					} catch (Exception e) {
+						messageView.showMessage(e.getMessage());
+					}
+				} else messageView.showMessage(R.string.msg_permdenied_storage);
 			}));
 
 		buttonsLeft = findViewById(R.id.buttonsLeft);
