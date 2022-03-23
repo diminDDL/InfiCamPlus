@@ -67,12 +67,8 @@ public class Util {
 	}
 
 	public static void scanMedia(Context ctx, Uri uri) {
-		new Mscc(ctx, new File(uri.getPath())); // TODO maybe not needed
+		//new Mscc(ctx, new File(uri.getPath())); // TODO maybe not needed
 		ctx.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri));
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) // TODO probly not needed
-			ctx.getContentResolver().notifyChange(uri, null, 0);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-			ctx.getContentResolver().refresh(uri, null, null); // TODO probably not needed
 	}
 
 	private static void writeImage(Context ctx, Bitmap bmp, Bitmap.CompressFormat format,
