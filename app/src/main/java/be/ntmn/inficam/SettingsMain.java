@@ -136,7 +136,7 @@ public class SettingsMain extends Settings {
 			@Override
 			void onSet(boolean value) { act.setSwapControls(value); }
 		},
-		new SettingRadio("pic_type", R.string.set_pic_type, 1, new int[] {
+		new SettingRadio("pic_type", R.string.set_pic_type, 0, new int[] {
 				R.string.img_type_png,
 				R.string.img_type_png565,
 				R.string.img_type_jpeg
