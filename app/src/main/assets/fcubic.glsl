@@ -4,7 +4,6 @@ precision mediump float;
 uniform samplerExternalOES sTexture;
 varying vec2 texCoord;
 uniform vec2 texSize;
-uniform float sharpening;
 
 /* Uniform cubic B-spline basis functions. */
 vec4 cubic(const in float x) {

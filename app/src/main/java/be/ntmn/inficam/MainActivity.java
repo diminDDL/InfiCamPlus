@@ -854,6 +854,7 @@ public class MainActivity extends BaseActivity {
 	public void setIMode(int value) { sharpISurface.setIMode(value); }
 
 	public void setSharpening(float value) { inputSurface.setSharpening(value); }
+	public void setAdaptiveness(float value) { inputSurface.setAdaptiveness(value); }
 
 	public void setRecordAudio(boolean value) { recordAudio = value; }
 
