@@ -39,35 +39,8 @@ public class Util {
 	public final static int TEMPUNIT_KELVIN = 2;
 	public final static int TEMPUNIT_RANKINE = 3;
 
-	private static class Mscc implements MediaScannerConnection.MediaScannerConnectionClient {
-		Context ctx;
-		File file;
-		MediaScannerConnection conn;
-
-		Mscc(Context ctx, File file) {
-			this.ctx = ctx;
-			this.file = file;
-			conn = new MediaScannerConnection(ctx, this);
-			conn.connect();
-		}
-
-		@Override
-		public void onScanCompleted(String path, Uri uri) {
-			try {
-				Log.e("DATEADD", "scan done " + uri); // TODO remove the log things
-				ctx.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri));
-				// TODO perhaps update thumbnail?
-			} finally {
-				conn.disconnect();
-			}
-		}
-
-		@Override
-		public void onMediaScannerConnected() { conn.scanFile(file.getAbsolutePath(), "*/*"); }
-	}
-
 	public static void scanMedia(Context ctx, Uri uri) {
-		//new Mscc(ctx, new File(uri.getPath())); // TODO maybe not needed
+		MediaScannerConnection.scanFile(ctx, new String[] { uri.getPath() }, null, null);
 		ctx.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri));
 	}
 
