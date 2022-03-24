@@ -88,7 +88,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		private boolean rotate = false, mirror = false, rotate90 = false;
 		private float scale_x = 1.0f, scale_y = 1.0f;
 		private float translate_x = 0.0f, translate_y = 0.0f;
-		private float sharpening = 0.0f, adaptiveness = 0.0f;
+		private float sharpening = 0.0f;
 
 		public InputSurface(SurfaceMuxer muxer, int imode) {
 			surfaceMuxer = muxer;
@@ -99,7 +99,6 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 
 		public void setIMode(int imode) { this.imode = imode; }
 		public void setSharpening(float s) { sharpening = s; }
-		public void setAdaptiveness(float s) { adaptiveness = s; }
 
 		public void setScale(float x, float y) {
 			scale_x = x;
@@ -308,12 +307,9 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			GLES20.glUniform2f(tr, is.translate_x, is.translate_y);
 			int r9 = GLES20.glGetUniformLocation(program, "rot90");
 			GLES20.glUniform1i(r9, is.rotate90 ? 1 : 0);
-
 			if (is.imode == IMODE_SHARPEN) {
 				int sh = GLES20.glGetUniformLocation(program, "sharpening");
 				GLES20.glUniform1f(sh, is.sharpening);
-				int ad = GLES20.glGetUniformLocation(program, "adaptiveness");
-				GLES20.glUniform1f(ad, is.adaptiveness);
 			}
 
 			GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);

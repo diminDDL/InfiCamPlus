@@ -37,7 +37,6 @@
 
 	<string name="set_imode">Scaling mode</string>
 	<string name="set_sharpening">Sharpening (%.2f)</string>
-	<string name="set_adaptiveness">Sharpening Contrast Dependence (%.2f)</string>
 	<string name="set_recordaudio">Record audio with videos</string>
 	<string name="set_fullscreen">Full-screen mode</string>
 	<string name="set_hide_navigation">Hide navigation</string>
