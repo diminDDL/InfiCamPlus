@@ -5,6 +5,7 @@ uniform samplerExternalOES sTexture;
 varying vec2 texCoord;
 uniform vec2 texSize;
 
+// TODO check https://en.wikipedia.org/wiki/Sobel_operator#Alternative_operators
 void main(void) {
 	vec2 ts = 1.0 / texSize;
 	vec4 a = texture2D(sTexture, texCoord + vec2(-ts.x, -ts.y));
