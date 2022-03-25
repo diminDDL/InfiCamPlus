@@ -72,7 +72,6 @@ public class BatteryLevel extends View {
 		paint.setColor(textColor);
 		paint.setTextSize(9.0f);
 		canvas.drawText((level * 100 / scale) + "%", 12, 9, paint);
-
 		canvas.restore();
 	}
 }
