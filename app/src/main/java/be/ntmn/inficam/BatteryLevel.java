@@ -4,23 +4,26 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
 import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.graphics.ColorUtils;
 
 public class BatteryLevel extends View {
 	private final static int batColor = Color.WHITE;
 	private final static int textColor = Color.WHITE;
-	private final static int fillBackColor = Color.rgb(150, 150, 150);
-	private final static int emptyColor = Color.RED;
-	private final static int fullColor = Color.GREEN;
+	private final static int fillBackColor = Color.GRAY;
+	private final static int emptyColor = Color.rgb(220, 20, 20);
+	private final static int midColor = Color.rgb(220, 150, 0);
+	private final static int fullColor = Color.rgb(20, 220, 20);
 
 	private final Paint paint = new Paint();
+	private final Path chargePath = new Path();
 	private int scale = 1, level = 0;
+	private boolean charging = false;
 
 	public BatteryLevel(Context context) {
 		super(context);
@@ -38,13 +41,23 @@ public class BatteryLevel extends View {
 	}
 
 	private void init(Context ctx) {
+		paint.setAntiAlias(true);
 		paint.setTypeface(Typeface.DEFAULT_BOLD);
 		paint.setTextAlign(Paint.Align.CENTER);
+		paint.setStyle(Paint.Style.FILL);
+		chargePath.moveTo(4, -1);
+		chargePath.lineTo(9.5f, -1);
+		chargePath.lineTo(9.5f, -3);
+		chargePath.lineTo(17, 1);
+		chargePath.lineTo(11.5f, 1);
+		chargePath.lineTo(11.5f, 3);
+		chargePath.close();
 	}
 
-	public void setLevel(int scale, int level) {
+	public void setLevel(int scale, int level, boolean charging) {
 		this.scale = scale;
 		this.level = level;
+		this.charging = charging;
 		invalidate();
 	}
 
@@ -56,9 +69,9 @@ public class BatteryLevel extends View {
 		super.draw(canvas);
 		int w = getWidth();
 		int h = getHeight();
-		paint.setAntiAlias(true);
-		canvas.save();
 		float batY = -5;
+		float lvl = (float) level / scale;
+		canvas.save();
 		canvas.translate(0, h / 2.0f);
 		canvas.scale(w / 24.0f, w / 24.0f);
 		paint.setColor(batColor);
@@ -66,12 +79,18 @@ public class BatteryLevel extends View {
 		canvas.drawRect(19, -2 + batY, 22, 2 + batY, paint);
 		paint.setColor(fillBackColor);
 		canvas.drawRect(4, -3 + batY, 18, 3 + batY, paint);
-		float lvl = (float) level / scale;
-		paint.setColor(ColorUtils.blendARGB(emptyColor, fullColor, lvl));
+		paint.setColor(Util.blendColor3(emptyColor, midColor, fullColor, lvl));
 		canvas.drawRect(4, -3 + batY, 4 + 14 * lvl, 3 + batY, paint);
 		paint.setColor(textColor);
 		paint.setTextSize(9.0f);
 		canvas.drawText((level * 100 / scale) + "%", 12, 9, paint);
+		if (charging) {
+			paint.setColor(batColor);
+			canvas.save();
+			canvas.translate(0.5f, batY);
+			canvas.drawPath(chargePath, paint);
+			canvas.restore();
+		}
 		canvas.restore();
 	}
 }

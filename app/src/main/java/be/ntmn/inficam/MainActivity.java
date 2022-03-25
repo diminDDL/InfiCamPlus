@@ -834,7 +834,7 @@ public class MainActivity extends BaseActivity {
 		int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
 		int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
 		BatteryLevel batLevel = findViewById(R.id.batLevel);
-		batLevel.setLevel(scale, level); // TODO indicate charging
+		batLevel.setLevel(scale, level, isCharging);
 	}
 
 	/*

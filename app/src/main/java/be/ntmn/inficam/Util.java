@@ -17,6 +17,8 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 
+import androidx.core.graphics.ColorUtils;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -208,5 +210,11 @@ public class Util {
 		StringBuilder sb = new StringBuilder();
 		formatTemp(sb, temp, tempunit);
 		return sb.toString();
+	}
+
+	public static int blendColor3(int left, int mid, int right, float pos) {
+		if (pos < 0.5)
+			return ColorUtils.blendARGB(left, mid, pos * 2);
+		return ColorUtils.blendARGB(mid, right, pos * 2 - 1);
 	}
 }
