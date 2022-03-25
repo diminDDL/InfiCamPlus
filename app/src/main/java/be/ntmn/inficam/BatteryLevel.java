@@ -72,7 +72,6 @@ public class BatteryLevel extends View {
 		float batY = -40;
 		float lvl = (float) level / scale;
 		canvas.save();
-		canvas.drawColor(Color.RED);
 		canvas.translate(0, h / 2.0f);
 		canvas.scale(w / 240.0f, w / 240.0f);
 		paint.setColor(batColor);
