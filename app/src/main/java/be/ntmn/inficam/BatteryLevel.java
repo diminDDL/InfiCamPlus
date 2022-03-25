@@ -10,20 +10,36 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.ColorUtils;
 
 public class BatteryLevel extends View {
 	private final static int batColor = Color.WHITE;
-	private final static int textColor = Color.BLACK;
-	private final static int emptyColor = Color.rgb(150, 150, 150);
-	private final static int fullColor = Color.rgb(20, 200, 20);
+	private final static int textColor = Color.WHITE;
+	private final static int fillBackColor = Color.rgb(150, 150, 150);
+	private final static int emptyColor = Color.RED;
+	private final static int fullColor = Color.GREEN;
 
 	private final Paint paint = new Paint();
 	private int scale = 1, level = 0;
 
-	public BatteryLevel(Context context) { super(context); }
-	public BatteryLevel(Context context, @Nullable AttributeSet attrs) { super(context, attrs); }
+	public BatteryLevel(Context context) {
+		super(context);
+		init(context);
+	}
+
+	public BatteryLevel(Context context, @Nullable AttributeSet attrs) {
+		super(context, attrs);
+		init(context);
+	}
+
 	public BatteryLevel(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
 		super(context, attrs, defStyleAttr);
+		init(context);
+	}
+
+	private void init(Context ctx) {
+		paint.setTypeface(Typeface.DEFAULT_BOLD);
+		paint.setTextAlign(Paint.Align.CENTER);
 	}
 
 	public void setLevel(int scale, int level) {
@@ -42,22 +58,21 @@ public class BatteryLevel extends View {
 		int h = getHeight();
 		paint.setAntiAlias(true);
 		canvas.save();
+		float batY = -5;
 		canvas.translate(0, h / 2.0f);
 		canvas.scale(w / 24.0f, w / 24.0f);
 		paint.setColor(batColor);
-		canvas.drawRoundRect(2, -5, 20, 5, 1, 1, paint);
-		canvas.drawRect(19, -2, 22, 2, paint);
-		paint.setColor(emptyColor);
-		canvas.drawRect(4, -3, 18, 3, paint);
-		paint.setColor(fullColor);
+		canvas.drawRoundRect(2, -5 + batY, 20, 5 + batY, 1, 1, paint);
+		canvas.drawRect(19, -2 + batY, 22, 2 + batY, paint);
+		paint.setColor(fillBackColor);
+		canvas.drawRect(4, -3 + batY, 18, 3 + batY, paint);
 		float lvl = (float) level / scale;
-		canvas.drawRect(4, -3, 4 + 14 * lvl, 3, paint);
+		paint.setColor(ColorUtils.blendARGB(emptyColor, fullColor, lvl));
+		canvas.drawRect(4, -3 + batY, 4 + 14 * lvl, 3 + batY, paint);
 		paint.setColor(textColor);
-		paint.setTextSize(5.5f);
-		paint.setFakeBoldText(true);
-		paint.setTypeface(Typeface.DEFAULT_BOLD);
-		paint.setTextAlign(Paint.Align.CENTER);
-		canvas.drawText((level * 100 / scale) + "%", 4 + 7, 2, paint);
+		paint.setTextSize(9.0f);
+		canvas.drawText((level * 100 / scale) + "%", 12, 9, paint);
+
 		canvas.restore();
 	}
 }
