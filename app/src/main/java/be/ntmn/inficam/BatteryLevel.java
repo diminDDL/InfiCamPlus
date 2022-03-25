@@ -45,12 +45,12 @@ public class BatteryLevel extends View {
 		paint.setTypeface(Typeface.DEFAULT_BOLD);
 		paint.setTextAlign(Paint.Align.CENTER);
 		paint.setStyle(Paint.Style.FILL);
-		chargePath.moveTo(4, -1);
-		chargePath.lineTo(9.5f, -1);
-		chargePath.lineTo(9.5f, -3);
-		chargePath.lineTo(17, 1);
-		chargePath.lineTo(11.5f, 1);
-		chargePath.lineTo(11.5f, 3);
+		chargePath.moveTo(40, -10);
+		chargePath.lineTo(95, -10);
+		chargePath.lineTo(95, -30);
+		chargePath.lineTo(170, 10);
+		chargePath.lineTo(115, 10);
+		chargePath.lineTo(115, 30);
 		chargePath.close();
 	}
 
@@ -69,25 +69,25 @@ public class BatteryLevel extends View {
 		super.draw(canvas);
 		int w = getWidth();
 		int h = getHeight();
-		float batY = -5;
+		float batY = -50;
 		float lvl = (float) level / scale;
 		canvas.save();
 		canvas.translate(0, h / 2.0f);
-		canvas.scale(w / 24.0f, w / 24.0f);
+		canvas.scale(w / 240.0f, w / 240.0f);
 		paint.setColor(batColor);
-		canvas.drawRoundRect(2, -5 + batY, 20, 5 + batY, 1, 1, paint);
-		canvas.drawRect(19, -2 + batY, 22, 2 + batY, paint);
+		canvas.drawRoundRect(20, -50 + batY, 200, 50 + batY, 10, 10, paint);
+		canvas.drawRect(190, -20 + batY, 220, 20 + batY, paint);
 		paint.setColor(fillBackColor);
-		canvas.drawRect(4, -3 + batY, 18, 3 + batY, paint);
+		canvas.drawRect(40, -30 + batY, 180, 30 + batY, paint);
 		paint.setColor(Util.blendColor3(emptyColor, midColor, fullColor, lvl));
-		canvas.drawRect(4, -3 + batY, 4 + 14 * lvl, 3 + batY, paint);
+		canvas.drawRect(40, -30 + batY, 40 + 140 * lvl, 30 + batY, paint);
 		paint.setColor(textColor);
-		paint.setTextSize(9.0f);
-		canvas.drawText((level * 100 / scale) + "%", 12, 9, paint);
+		paint.setTextSize(90);
+		canvas.drawText((level * 100 / scale) + "%", 120, 90, paint);
 		if (charging) {
 			paint.setColor(batColor);
 			canvas.save();
-			canvas.translate(0.5f, batY);
+			canvas.translate(5f, batY);
 			canvas.drawPath(chargePath, paint);
 			canvas.restore();
 		}
