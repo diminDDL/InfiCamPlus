@@ -38,16 +38,6 @@
 
 	</FrameLayout>
 
-	<be.ntmn.inficam.BatteryLevel
-		android:id="@+id/batLevel"
-		android:layout_margin="15dp"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:padding="10dp"
-		android:textStyle="bold"
-		app:layout_constraintBottom_toBottomOf="parent"
-		app:layout_constraintStart_toStartOf="parent" />
-
 	<TextView
 		android:id="@+id/zoomLevel"
 		android:layout_margin="15dp"
@@ -125,6 +115,12 @@
 			android:hapticFeedbackEnabled="false"
 			app:tint="@color/white"
 			android:background="?android:attr/selectableItemBackground" />
+
+		<be.ntmn.inficam.BatteryLevel
+			android:id="@+id/batLevel"
+			android:layout_width="40dp"
+			android:layout_height="40dp"
+			android:layout_margin="5dp" />
 
 	</LinearLayout>
 

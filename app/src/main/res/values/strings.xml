@@ -82,7 +82,6 @@
 	<string name="palette_rainbow">Rainbow</string>
 	<string name="palette_rainbow2">Rainbow 2</string>
 
-	<string name="batlevel">%d%%</string>
 	<string name="zoomlevel">&#128270;%d%%</string>
 
 	<string name="picres_320">320x240 (4:3)</string>
