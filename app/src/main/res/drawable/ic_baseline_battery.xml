@@ -1,0 +1,23 @@
+<!-- Modified by netman. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android"
+	android:width="24dp"
+	android:height="24dp"
+	android:viewportWidth="24"
+	android:viewportHeight="24"
+	android:tint="?attr/colorControlNormal">
+	<item android:drawable="@drawable/ic_baseline_battery_bg" />
+	<item android:left="4dp" android:top="9dp" android:bottom="9dp" android:right="6dp">
+		<shape android:shape="rectangle">
+			<solid android:color="#555555" />
+		</shape>
+	</item>
+	<item android:left="4dp" android:right="6dp" android:top="9dp" android:bottom="9dp">
+		<clip
+			android:clipOrientation="horizontal"
+			android:gravity="start">
+			<shape android:shape="rectangle">
+				<solid android:color="#55CC55" />
+			</shape>
+		</clip>
+	</item>
+</layer-list>

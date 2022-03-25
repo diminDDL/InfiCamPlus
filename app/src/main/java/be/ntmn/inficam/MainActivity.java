@@ -831,11 +831,10 @@ public class MainActivity extends BaseActivity {
 		int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
 		boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
 				status == BatteryManager.BATTERY_STATUS_FULL;
-		int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
 		int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
-		TextView batLevel = findViewById(R.id.batLevel);
-		batLevel.setText(getString(isCharging ? R.string.batlevel_charging : R.string.batlevel,
-				round(level * 100 / (float) scale)));
+		int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+		BatteryLevel batLevel = findViewById(R.id.batLevel);
+		batLevel.setLevel(scale, level); // TODO indicate charging
 	}
 
 	/*
@@ -876,7 +875,7 @@ public class MainActivity extends BaseActivity {
 	}
 
 	public void setShowBatLevel(boolean value) {
-		TextView batLevel = findViewById(R.id.batLevel);
+		BatteryLevel batLevel = findViewById(R.id.batLevel);
 		batLevel.setVisibility(value ? View.VISIBLE : View.GONE);
 	}
 
