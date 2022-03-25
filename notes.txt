@@ -34,6 +34,7 @@ The versions of third party things in libinficam/src/main/jni dir:
 Quick description of what for the Java classes are:
 	- BaseActivity      the rug under which i swept the mess that is fullscreen mode and requesting
 	                      camera/file permissions, provides a handler that mainactivity uses too
+	- BatteryLevel      battery level indicator widget
 	- CameraView        SurfaceView with some fluff to draw the image onto
 	- MainActivity      inherits BaseActivity, it's the main activity obviously, sticks most other
 	                      classes together into a usable app
