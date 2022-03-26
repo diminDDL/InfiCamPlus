@@ -120,6 +120,8 @@ TODO ui stuff
 		* separate locking for min and max of range
 		* option to just limit the range instead of locking it
 	- listen for physical camera button keycode
+	- can we detect and prevent potential burn-in? close the shutter and stop responding to USB?
+		* if not outright closing the shutter, we could just warn
 
 TODO thermal camera things
 	- more measurement modes (point, line, rect)
