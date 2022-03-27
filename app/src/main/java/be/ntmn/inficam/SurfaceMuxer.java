@@ -258,7 +258,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			fss_nearest = Util.readStringAsset(ctx, "fnearest.glsl");
 			fss_linear = Util.readStringAsset(ctx, "flinear.glsl");
 			fss_cubic = Util.readStringAsset(ctx, "fcubic.glsl");
-			fss_sharpen = Util.readStringAsset(ctx, "fsharpen.glsl");
+			fss_sharpen = Util.readStringAsset(ctx, "fsharpen5.glsl");
 			fss_edge = Util.readStringAsset(ctx, "fedge.glsl");
 		} catch (IOException e) {
 			/* Crash to inform the user I done did a stupid. */
