@@ -8,10 +8,9 @@
    version="1.1"
    id="svg5"
    inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
-   sodipodi:docname="logo.svg"
+   sodipodi:docname="logo_fg.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
   <sodipodi:namedview
@@ -617,28 +616,6 @@
          result="composite2"
          id="feComposite24399" />
     </filter>
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient23551"
-       id="linearGradient23553"
-       x1="15.385904"
-       y1="38.494446"
-       x2="95.385902"
-       y2="118.49445"
-       gradientUnits="userSpaceOnUse"
-       gradientTransform="matrix(0.62500001,0,0,0.62500008,14.499233,67.989272)" />
-    <linearGradient
-       inkscape:collect="always"
-       id="linearGradient23551">
-      <stop
-         style="stop-color:#8000ff;stop-opacity:1"
-         offset="0"
-         id="stop23547" />
-      <stop
-         style="stop-color:#fe001e;stop-opacity:1"
-         offset="1"
-         id="stop23549" />
-    </linearGradient>
     <filter
        style="color-interpolation-filters:sRGB;"
        inkscape:label="Drop Shadow"
@@ -825,14 +802,6 @@
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(-24.115423,-92.048302)">
-    <rect
-       style="fill:url(#linearGradient23553);fill-opacity:1;stroke-width:0.389769"
-       id="rect20978"
-       width="50"
-       height="50.000004"
-       x="24.115423"
-       y="92.048302"
-       ry="0" />
     <path
        id="rect846"
        style="fill:#ffffff;stroke-width:4.32482;filter:url(#filter32656)"
