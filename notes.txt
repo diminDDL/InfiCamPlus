@@ -123,6 +123,7 @@ TODO ui stuff
 	- can we detect and prevent potential burn-in? close the shutter and stop responding to USB?
 		* if not outright closing the shutter, we could just warn
 	- only scale palette to visible area when zoomed in
+	- should we have to option to apply sharpening before calculating temperature?
 
 TODO thermal camera things
 	- more measurement modes (point, line, rect)

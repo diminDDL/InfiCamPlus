@@ -48,7 +48,7 @@ void main(void) { /* Awesome page: https://setosa.io/ev/image-kernels/ */
 			}
 		}
 
-		vec4 spx = v[4];
+		vec4 spx = px + (px - v[4]);
 		px = mix(px, spx, sharpening);
 	}
 	gl_FragColor = px;
