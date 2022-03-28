@@ -604,28 +604,32 @@
        cx="52.290428"
        cy="119.65058"
        r="7.7155833" />
-    <path
-       id="circle4632"
-       style="fill:#000000;stroke:#ffffff;stroke-width:0.7;filter:url(#filter11387)"
-       d="m 35.113406,109.00343 c -0.668282,0 -1.206643,0.5459 -1.206643,1.22421 v 15.38252 a 2.5,2.5 0 0 0 -1.293463,2.18798 2.5,2.5 0 0 0 2.500106,2.49959 2.5,2.5 0 0 0 2.500106,-2.49959 2.5,2.5 0 0 0 -1.293976,-2.19004 v -15.38046 c 0,-0.67831 -0.537845,-1.22421 -1.20613,-1.22421 z" />
     <g
-       id="g5931"
-       transform="translate(5.0001074,6.7492048)"
-       style="fill:#ff0000">
-      <circle
-         style="fill:#ff0000;fill-opacity:1;stroke-width:0.884832"
-         id="path4344"
-         cx="30.113298"
-         cy="121.04869"
-         r="1.6655217" />
-      <rect
-         style="fill:#ff0000;fill-opacity:1;stroke-width:0.751257"
-         id="rect4546"
-         width="0.85470665"
-         height="10.564564"
-         x="29.685946"
-         y="110.8145"
-         ry="0" />
+       id="g21726"
+       transform="translate(1.5875)">
+      <path
+         id="circle4632"
+         style="fill:#000000;stroke:#ffffff;stroke-width:0.7;filter:url(#filter11387)"
+         d="m 35.113406,109.00343 c -0.668282,0 -1.206643,0.5459 -1.206643,1.22421 v 15.38252 a 2.5,2.5 0 0 0 -1.293463,2.18798 2.5,2.5 0 0 0 2.500106,2.49959 2.5,2.5 0 0 0 2.500106,-2.49959 2.5,2.5 0 0 0 -1.293976,-2.19004 v -15.38046 c 0,-0.67831 -0.537845,-1.22421 -1.20613,-1.22421 z" />
+      <g
+         id="g5931"
+         transform="translate(5.0001074,6.7492048)"
+         style="fill:#ff0000">
+        <circle
+           style="fill:#ff0000;fill-opacity:1;stroke-width:0.884832"
+           id="path4344"
+           cx="30.113298"
+           cy="121.04869"
+           r="1.6655217" />
+        <rect
+           style="fill:#ff0000;fill-opacity:1;stroke-width:0.751257"
+           id="rect4546"
+           width="0.85470665"
+           height="10.564564"
+           x="29.685946"
+           y="110.8145"
+           ry="0" />
+      </g>
     </g>
     <text
        xml:space="preserve"
