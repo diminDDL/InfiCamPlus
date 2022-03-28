@@ -142,7 +142,7 @@ public class Util {
 		if (cursor != null)
 			cursor.close();
 
-		if (uri != null) {
+		if (false && uri != null) {
 			try { /* Some gallery apps crash when this intent is sent without data. */
 				Intent intent = new Intent("com.android.camera.action.REVIEW");
 				intent.setDataAndType(uri, "image/*");
@@ -155,8 +155,8 @@ public class Util {
 		try {
 			Intent intent = new Intent(Intent.ACTION_VIEW);
 			if (uri != null)
-				intent.setData(uri);
-			intent.setType("image/*");
+				intent.setDataAndType(uri, "image/*");
+			else intent.setType("image/*");
 			//intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			ctx.startActivity(intent);
 		} catch (ActivityNotFoundException anfe) {

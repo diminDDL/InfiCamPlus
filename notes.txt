@@ -90,7 +90,7 @@ TODO ui stuff
 		* maybe instead we should just widen images by as much needed to fit the extra bar in it
 			when it is set to be outside of image
 	- gallery to check pictures and videos taken
-	- open gallery in the right folder
+	- open gallery in the right folder (done but not for samsung gallery)
 	- show camera product and version info somewhere (perhaps when scroll down in settings)
 	- choose which palettes are allowed for the next palette button
 	- presets for the settings
