@@ -24,9 +24,9 @@
      inkscape:pagecheckerboard="0"
      inkscape:document-units="mm"
      showgrid="false"
-     inkscape:zoom="0.90583672"
-     inkscape:cx="-94.939847"
-     inkscape:cy="209.75083"
+     inkscape:zoom="1.8116734"
+     inkscape:cx="105.97936"
+     inkscape:cy="184.91191"
      inkscape:window-width="1674"
      inkscape:window-height="1029"
      inkscape:window-x="0"
@@ -41,15 +41,15 @@
      id="defs2">
     <linearGradient
        inkscape:collect="always"
-       id="linearGradient22372">
+       id="linearGradient23551">
       <stop
-         style="stop-color:#800080;stop-opacity:1;"
+         style="stop-color:#8000ff;stop-opacity:1"
          offset="0"
-         id="stop22368" />
+         id="stop23547" />
       <stop
-         style="stop-color:#aa0000;stop-opacity:1"
+         style="stop-color:#fe001e;stop-opacity:1"
          offset="1"
-         id="stop22370" />
+         id="stop23549" />
     </linearGradient>
     <filter
        style="color-interpolation-filters:sRGB"
@@ -123,16 +123,6 @@
          result="composite2"
          id="feComposite22248" />
     </filter>
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient22372"
-       id="linearGradient22395"
-       gradientUnits="userSpaceOnUse"
-       x1="26.041151"
-       y1="47.143173"
-       x2="96.52787"
-       y2="120.20174"
-       gradientTransform="matrix(0.89089884,0,0,0.89089884,1.67862,4.1997886)" />
     <filter
        style="color-interpolation-filters:sRGB"
        inkscape:label="Drop Shadow"
@@ -174,7 +164,7 @@
        inkscape:label="Drop Shadow"
        id="filter22997"
        x="-0.17497561"
-       y="-0.15738208"
+       y="-0.1573821"
        width="1.3499512"
        height="1.3147642">
       <feFlood
@@ -241,6 +231,16 @@
          result="composite2"
          id="feComposite23123" />
     </filter>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient23551"
+       id="linearGradient23553"
+       x1="15.385904"
+       y1="38.494446"
+       x2="95.385902"
+       y2="118.49445"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.9,0,0,0.9,5.5385901,7.8494448)" />
   </defs>
   <g
      inkscape:label="Layer 1"
@@ -248,36 +248,33 @@
      id="layer1"
      transform="translate(-15.385904,-38.494446)">
     <rect
-       style="fill:url(#linearGradient22395);fill-opacity:1;stroke-width:0.623629"
+       style="fill:url(#linearGradient23553);fill-opacity:1;stroke-width:0.561266"
        id="rect20978"
-       width="80"
-       height="80"
-       x="15.385904"
-       y="38.494446"
-       ry="4.0656462" />
+       width="72"
+       height="72"
+       x="19.385904"
+       y="42.494446"
+       ry="3.6590815" />
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:90.443px;line-height:1.25;font-family:'Droid Sans';-inkscape-font-specification:'Droid Sans';fill:#ff6600;fill-opacity:1;stroke:none;stroke-width:2.26107;filter:url(#filter23125)"
        x="24.690113"
        y="116.35957"
        id="text1310"
-       transform="matrix(0.89089884,0,0,0.89089884,1.67862,4.1997886)"><tspan
+       transform="matrix(0.80180896,0,0,0.80180896,7.0493481,11.629254)"><tspan
          sodipodi:role="line"
          id="tspan1308"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Droid Sans';-inkscape-font-specification:'Droid Sans';fill:#ff6600;stroke-width:2.26107"
          x="24.690113"
          y="116.35957">Φ</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:55.7569px;line-height:1.25;font-family:'DejaVu Math TeX Gyre';-inkscape-font-specification:'DejaVu Math TeX Gyre';fill:#ffff00;fill-opacity:1;stroke:none;stroke-width:1.39392;filter:url(#filter22997)"
-       x="60.579712"
-       y="115.57899"
+    <g
+       aria-label="e"
+       transform="matrix(0.80180896,0,0,0.80180896,7.0493481,11.629254)"
        id="text5230"
-       transform="matrix(0.89089884,0,0,0.89089884,1.67862,4.1997886)"><tspan
-         sodipodi:role="line"
-         id="tspan5228"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Math TeX Gyre';-inkscape-font-specification:'DejaVu Math TeX Gyre';fill:#ffff00;stroke-width:1.39392"
-         x="60.579712"
-         y="115.57899">e</tspan></text>
+       style="font-size:55.7569px;line-height:1.25;font-family:'DejaVu Math TeX Gyre';-inkscape-font-specification:'DejaVu Math TeX Gyre';fill:#ffff00;stroke-width:1.39392;filter:url(#filter22997)">
+      <path
+         d="M 84.889721,98.740403 Q 84.72245,93.722282 82.770958,91.101708 80.76371,88.53689 77.083755,88.53689 q -3.512685,0 -5.464177,2.620575 -2.007248,2.564817 -2.397546,7.582938 z m 5.910231,2.899357 h -21.57792 v 0.22303 q 0,5.91023 2.174519,8.80959 2.230276,3.01087 6.523557,3.01087 3.345414,0 5.408419,-1.72846 2.118763,-1.78422 2.955116,-5.12964 h 4.014497 q -1.170895,4.73934 -4.404795,7.13689 -3.2339,2.39754 -8.475049,2.39754 -6.356287,0 -10.203513,-4.18176 -3.847226,-4.18177 -3.847226,-11.09563 0,-6.802339 3.791469,-11.039863 3.791469,-4.181768 9.924729,-4.181768 6.579314,0 10.091999,4.070254 3.568441,4.070254 3.624198,11.708947 z"
+         id="path24042" />
+    </g>
   </g>
 </svg>
