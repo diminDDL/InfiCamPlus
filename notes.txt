@@ -124,6 +124,7 @@ TODO ui stuff
 		* if not outright closing the shutter, we could just warn
 	- only scale palette to visible area when zoomed in
 	- should we have to option to apply sharpening before calculating temperature?
+	- for portrait mode put horizontal palette preview under image instead of in the image
 
 TODO thermal camera things
 	- more measurement modes (point, line, rect)
