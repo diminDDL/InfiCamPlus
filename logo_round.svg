@@ -8,7 +8,7 @@
    version="1.1"
    id="svg5"
    inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
-   sodipodi:docname="logo.svg"
+   sodipodi:docname="logo_round.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -25,7 +25,7 @@
      inkscape:document-units="mm"
      showgrid="false"
      inkscape:zoom="2.5620932"
-     inkscape:cx="88.599433"
+     inkscape:cx="81.183621"
      inkscape:cy="104.60197"
      inkscape:window-width="1674"
      inkscape:window-height="1029"
@@ -656,14 +656,12 @@
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(-24.115423,-92.048302)">
-    <rect
-       style="opacity:1;fill:#00901f;fill-opacity:1;stroke:none;stroke-width:0.793749;stroke-miterlimit:4;stroke-dasharray:none"
-       id="rect21962"
-       width="48.797817"
-       height="48.797817"
-       x="24.716515"
-       y="92.649391"
-       ry="4.5635204" />
+    <circle
+       style="opacity:1;fill:#00901f;fill-opacity:1;stroke:none;stroke-width:0.825497;stroke-miterlimit:4;stroke-dasharray:none"
+       id="path28991"
+       cx="49.115421"
+       cy="117.0483"
+       r="24.579615" />
     <g
        id="g20027"
        style="fill:#ffffff;filter:url(#filter24401)"
