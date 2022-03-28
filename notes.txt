@@ -132,6 +132,7 @@ TODO thermal camera things
 	- allow to regenerate images and videos from thermometry data, measure from it
 	- proper ironbow palette (real ones get lighter after they go yellow)
 	- more palettes in general
+	- custom palette loading from images (png, bmp)
 
 TODO normal camera things
 	- perhaps the modes can be called "thermal", "combined"/"fusion", "picture-in-picture"
