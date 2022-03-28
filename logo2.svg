@@ -277,93 +277,6 @@
          result="composite2"
          id="feComposite25700" />
     </filter>
-    <filter
-       style="color-interpolation-filters:sRGB;"
-       inkscape:label="Drop Shadow"
-       id="filter28392"
-       x="-0.2635874"
-       y="-0.24399045"
-       width="1.5271748"
-       height="1.4879809">
-      <feGaussianBlur
-         in="SourceGraphic"
-         stdDeviation="1.69462"
-         result="blur1"
-         id="feGaussianBlur28376" />
-      <feComposite
-         in="blur1"
-         in2="blur1"
-         operator="in"
-         result="composite1"
-         id="feComposite28378" />
-      <feComposite
-         in="composite1"
-         in2="composite1"
-         k2="0.279117"
-         operator="arithmetic"
-         result="composite2"
-         id="feComposite28380" />
-      <feColorMatrix
-         in="composite2"
-         values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 9.25884 0 "
-         result="colormatrix1"
-         id="feColorMatrix28382" />
-      <feGaussianBlur
-         stdDeviation="0.0798713"
-         result="blur2"
-         id="feGaussianBlur28384" />
-      <feColorMatrix
-         in="blur2"
-         values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 5 -1 "
-         result="colormatrix2"
-         id="feColorMatrix28386" />
-      <feBlend
-         in="SourceGraphic"
-         in2="colormatrix2"
-         stdDeviation="17"
-         mode="normal"
-         result="blend"
-         id="feBlend28388" />
-      <feComposite
-         in="blend"
-         in2="colormatrix2"
-         operator="in"
-         result="fbSourceGraphic"
-         id="feComposite28390" />
-      <feColorMatrix
-         result="fbSourceGraphicAlpha"
-         in="fbSourceGraphic"
-         values="0 0 0 -1 0 0 0 0 -1 0 0 0 0 -1 0 0 0 0 1 0"
-         id="feColorMatrix28592" />
-      <feFlood
-         id="feFlood28594"
-         flood-opacity="1"
-         flood-color="rgb(255,255,255)"
-         result="flood"
-         in="fbSourceGraphic" />
-      <feComposite
-         in2="fbSourceGraphic"
-         id="feComposite28596"
-         in="flood"
-         operator="in"
-         result="composite1" />
-      <feGaussianBlur
-         id="feGaussianBlur28598"
-         in="composite1"
-         stdDeviation="3.6"
-         result="blur" />
-      <feOffset
-         id="feOffset28600"
-         dx="0"
-         dy="0"
-         result="offset" />
-      <feComposite
-         in2="offset"
-         id="feComposite28602"
-         in="fbSourceGraphic"
-         operator="over"
-         result="composite2" />
-    </filter>
   </defs>
   <g
      inkscape:label="Layer 1"
@@ -380,7 +293,7 @@
        ry="3.6590815" />
     <g
        id="g25420"
-       style="filter:url(#filter28392)">
+       style="filter:url(#filter25702)">
       <g
          aria-label="Φ"
          transform="matrix(0.80180896,0,0,0.80180896,7.0493481,11.629254)"
