@@ -199,8 +199,8 @@
        style="color-interpolation-filters:sRGB"
        inkscape:label="Drop Shadow"
        id="filter23125"
-       x="-0.078648091"
-       y="-0.072800845"
+       x="-0.078648092"
+       y="-0.072800848"
        width="1.1572962"
        height="1.1456017">
       <feFlood
@@ -255,18 +255,15 @@
        x="19.385904"
        y="42.494446"
        ry="3.6590815" />
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:90.443px;line-height:1.25;font-family:'Droid Sans';-inkscape-font-specification:'Droid Sans';fill:#ff6600;fill-opacity:1;stroke:none;stroke-width:2.26107;filter:url(#filter23125)"
-       x="24.690113"
-       y="116.35957"
+    <g
+       aria-label="Φ"
+       transform="matrix(0.80180896,0,0,0.80180896,7.0493481,11.629254)"
        id="text1310"
-       transform="matrix(0.80180896,0,0,0.80180896,7.0493481,11.629254)"><tspan
-         sodipodi:role="line"
-         id="tspan1308"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Droid Sans';-inkscape-font-specification:'Droid Sans';fill:#ff6600;stroke-width:2.26107"
-         x="24.690113"
-         y="116.35957">Φ</tspan></text>
+       style="font-size:90.443px;line-height:1.25;font-family:'Droid Sans';-inkscape-font-specification:'Droid Sans';fill:#ff6600;stroke-width:2.26107;filter:url(#filter23125)">
+      <path
+         d="m 55.868218,64.867123 q -6.624243,0.927394 -10.952082,4.769455 -5.741011,5.078586 -5.741011,13.822587 0,8.69984 5.741011,13.778426 4.327839,3.842059 10.952082,4.769459 z m 8.920647,37.139927 q 6.624244,-0.9274 10.952082,-4.769459 5.652688,-5.078586 5.652688,-13.778426 0,-8.744001 -5.652688,-13.822587 -4.327838,-3.842061 -10.952082,-4.769455 z m -8.920647,7.37499 Q 45.092782,108.41048 38.115246,102.49282 29.7687,95.426965 29.7687,83.459165 q 0,-11.967799 8.346546,-19.07782 6.933375,-5.961819 17.752972,-6.933375 v -7.021698 h 8.920647 v 7.021698 q 10.775436,1.015718 17.708811,6.933375 8.302384,7.110021 8.302384,19.07782 0,11.923638 -8.302384,19.033655 -6.933375,5.91766 -17.708811,6.93338 v 6.93337 h -8.920647 z"
+         id="path24225" />
+    </g>
     <g
        aria-label="e"
        transform="matrix(0.80180896,0,0,0.80180896,7.0493481,11.629254)"
