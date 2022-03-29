@@ -71,10 +71,11 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	private EGLDisplay eglDisplay = EGL14.EGL_NO_DISPLAY;
 	private EGLContext eglContext = EGL14.EGL_NO_CONTEXT;
 	private EGLConfig eglConfig;
-	private FloatBuffer pTexCoord;
 	private int hProgram_nearest, hProgram_linear, hProgram_cubic, hProgram_sharpen, hProgram_edge;
 	private final String vss, fss_nearest, fss_linear, fss_cubic, fss_sharpen, fss_edge;
 	private final Rect outRect = new Rect();
+	private final FloatBuffer pTexCoord =
+			ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
 	private final FloatBuffer pVertex =
 			ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
 
@@ -265,6 +266,16 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			/* Crash to inform the user I done did a stupid. */
 			throw new RuntimeException(e);
 		}
+
+		/* Initialize vertex and texture coords. */
+		float[] ttmp = { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f };
+		pTexCoord.put(ttmp);
+		pTexCoord.rewind();
+		float[] vtmp = { 1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f };
+		pVertex.put(vtmp);
+		pVertex.rewind();
+
+		/* Try initializing the context already. */
 		init();
 	}
 
@@ -425,15 +436,6 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		/* Enable alpha blending. */
 		GLES20.glEnable(GLES20.GL_BLEND);
 		GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-
-		/* Initialize vertex and texture coords. */
-		float[] ttmp = { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f };
-		pTexCoord = ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
-		pTexCoord.put(ttmp);
-		pTexCoord.rewind();
-		float[] vtmp = new float[] { 1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f };
-		pVertex.put(vtmp);
-		pVertex.rewind();
 
 		/* Compile the shaders. */
 		int vshader = loadShader(GLES20.GL_VERTEX_SHADER, vss);
