@@ -119,7 +119,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		public SurfaceTexture getSurfaceTexture() { return surfaceTexture; }
 		public Surface getSurface() { return surface; }
 
-		/* Override this to change the size. */
+		/* Override this to change target area for drawing. */
 		public void getRect(Rect r, int w, int h) { /* Git rekt lol. */
 			r.set(0, 0, w, h);
 		}
