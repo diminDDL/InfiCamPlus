@@ -1,15 +1,39 @@
 #!/bin/sh
-convert -background none -resize 48x48 logo.svg app/src/main/res/mipmap-mdpi/ic_launcher.png
-convert -background none -resize 72x72 logo.svg app/src/main/res/mipmap-hdpi/ic_launcher.png
-convert -background none -resize 96x96 logo.svg app/src/main/res/mipmap-xhdpi/ic_launcher.png
-convert -background none -resize 144x144 logo.svg app/src/main/res/mipmap-xxhdpi/ic_launcher.png
-convert -background none -resize 192x192 logo.svg app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
 
-convert -background none -resize 48x48 logo_round.svg app/src/main/res/mipmap-mdpi/ic_launcher_round.png
-convert -background none -resize 72x72 logo_round.svg app/src/main/res/mipmap-hdpi/ic_launcher_round.png
-convert -background none -resize 96x96 logo_round.svg app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
-convert -background none -resize 144x144 logo_round.svg app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
-convert -background none -resize 192x192 logo_round.svg app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
+#mksquare() {
+#	size=$1
+#	convert -background none -layers flatten -resize "$size"x"$size" logo_bg.svg logo_fg.svg \
+#		-gravity Center \( +clone  -alpha extract \
+#		-draw "fill black polygon 0,0 0,15 15,0 fill white circle 15,15 15,0" \
+#		\( +clone -flip \) -compose Multiply -composite \
+#		\( +clone -flop \) -compose Multiply -composite \
+#		\) -alpha off -compose CopyOpacity -composite "$2"
+#}
+
+mksquare() {
+	size=$1
+	convert -background none -layers flatten -resize "$size"x"$size" logo_bg.svg logo_fg.svg "$tmp"
+}
+
+mkcircle() {
+	size=$1
+	half=$(( $1 / 2 ))
+	convert -background none -layers flatten -resize "$size"x"$size" logo_bg.svg logo_fg.svg \
+		-gravity Center \( -size "$size"x"$size" xc:Black -fill White \
+		-draw "circle $half $half $half 0" -alpha Copy \) \
+		-compose CopyOpacity -composite "$2"
+}
+
+mkicon() {
+	mksquare "$1" "$2.png"
+	mkcircle "$1" "$2_round.png"
+}
+
+mkicon 48 app/src/main/res/mipmap-mdpi/ic_launcher
+mkicon 72 app/src/main/res/mipmap-hdpi/ic_launcher
+mkicon 96 app/src/main/res/mipmap-xhdpi/ic_launcher
+mkicon 144 app/src/main/res/mipmap-xxhdpi/ic_launcher
+mkicon 192 app/src/main/res/mipmap-xxxhdpi/ic_launcher
 
 convert -background none -resize 108x108 logo_fg.svg app/src/main/res/mipmap-mdpi/ic_launcher_fg.png
 convert -background none -resize 162x162 logo_fg.svg app/src/main/res/mipmap-hdpi/ic_launcher_fg.png
