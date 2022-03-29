@@ -11,8 +11,13 @@
 #}
 
 mksquare() {
-	size=$1
-	convert -background none -layers flatten -resize "$size"x"$size" logo_bg.svg logo_fg.svg "$tmp"
+	tmp="$(mktemp -t inficam_mkicon.XXXX.png)"
+	convert -background none -layers flatten -resize "$1"x"$1" logo_bg.svg logo_fg.svg "$tmp"
+	convert -background none -layers flatten -resize "$1"x"$1" "$tmp" \
+		\( logo_mask.svg -colorspace gray \) -compose CopyOpacity -composite "$2"
+	convert -background none -layers flatten -resize "$1"x"$1" "$tmp" \
+		\( logo_mask_round.svg -colorspace gray \) -compose CopyOpacity -composite "$2"
+	rm "$tmp"
 }
 
 mkcircle() {
