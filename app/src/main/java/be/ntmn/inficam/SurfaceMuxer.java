@@ -270,7 +270,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 
 	private void render(int w, int h, boolean flipy) {
 		GLES20.glClearColor(0, 0, 0, 1);
-		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT); // TODO this is probably not needed
 
 		/* We use an oldschool loop because for (... : ...) causes an allocation to happen. */
 		for (int i = 0; i < inputSurfaces.size(); ++i) {
