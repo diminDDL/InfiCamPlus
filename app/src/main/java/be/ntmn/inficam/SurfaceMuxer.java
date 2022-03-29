@@ -105,6 +105,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			scale_y = y;
 		}
 
+		// TODO maybe we can get the size from getTransformMatrix() instead
 		public void setSize(int w, int h) {
 			width = w;
 			height = h;
