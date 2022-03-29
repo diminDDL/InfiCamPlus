@@ -363,6 +363,27 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			throw new RuntimeException(msg + ": EGL error: 0x" + Integer.toHexString(error));
 	}
 
+	private int loadShader(int type, String source) {
+		int shader = GLES20.glCreateShader(type);
+		GLES20.glShaderSource(shader, source);
+		GLES20.glCompileShader(shader);
+		int[] compiled = new int[1];
+		GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compiled, 0);
+		if (compiled[0] == 0)
+			throw new RuntimeException(GLES20.glGetShaderInfoLog(shader));
+		return shader;
+	}
+
+	private int loadFragment(int vshader, String fss) {
+		int fshader = loadShader(GLES20.GL_FRAGMENT_SHADER, fss);
+		int hProgram = GLES20.glCreateProgram();
+		GLES20.glAttachShader(hProgram, vshader);
+		GLES20.glAttachShader(hProgram, fshader);
+		GLES20.glLinkProgram(hProgram);
+		GLES20.glDeleteShader(fshader); /* As long as the program exists, a reference remains. */
+		return hProgram;
+	}
+
 	public void init() { /* Initialize EGL context. */
 		if (eglContext != EGL14.EGL_NO_CONTEXT)
 			deinit();
@@ -414,77 +435,14 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		pVertex.put(vtmp);
 		pVertex.rewind();
 
-		/* Create the shaders. */
-		int vshader = GLES20.glCreateShader(GLES20.GL_VERTEX_SHADER);
-		GLES20.glShaderSource(vshader, vss);
-		GLES20.glCompileShader(vshader);
-		int[] compiled = new int[1];
-		GLES20.glGetShaderiv(vshader, GLES20.GL_COMPILE_STATUS, compiled, 0);
-		if (compiled[0] == 0)
-			throw new RuntimeException(GLES20.glGetShaderInfoLog(vshader));
-
-		int fshadern = GLES20.glCreateShader(GLES20.GL_FRAGMENT_SHADER);
-		GLES20.glShaderSource(fshadern, fss_nearest);
-		GLES20.glCompileShader(fshadern);
-		GLES20.glGetShaderiv(fshadern, GLES20.GL_COMPILE_STATUS, compiled, 0);
-		if (compiled[0] == 0)
-			throw new RuntimeException(GLES20.glGetShaderInfoLog(fshadern));
-
-		int fshaderl = GLES20.glCreateShader(GLES20.GL_FRAGMENT_SHADER);
-		GLES20.glShaderSource(fshaderl, fss_linear);
-		GLES20.glCompileShader(fshaderl);
-		GLES20.glGetShaderiv(fshaderl, GLES20.GL_COMPILE_STATUS, compiled, 0);
-		if (compiled[0] == 0)
-			throw new RuntimeException(GLES20.glGetShaderInfoLog(fshaderl));
-
-		int fshaderc = GLES20.glCreateShader(GLES20.GL_FRAGMENT_SHADER);
-		GLES20.glShaderSource(fshaderc, fss_cubic);
-		GLES20.glCompileShader(fshaderc);
-		GLES20.glGetShaderiv(fshaderc, GLES20.GL_COMPILE_STATUS, compiled, 0);
-		if (compiled[0] == 0)
-			throw new RuntimeException(GLES20.glGetShaderInfoLog(fshaderc));
-
-		int fshaders = GLES20.glCreateShader(GLES20.GL_FRAGMENT_SHADER);
-		GLES20.glShaderSource(fshaders, fss_sharpen);
-		GLES20.glCompileShader(fshaders);
-		GLES20.glGetShaderiv(fshaders, GLES20.GL_COMPILE_STATUS, compiled, 0);
-		if (compiled[0] == 0)
-			throw new RuntimeException(GLES20.glGetShaderInfoLog(fshaders));
-
-		int fshadere = GLES20.glCreateShader(GLES20.GL_FRAGMENT_SHADER);
-		GLES20.glShaderSource(fshadere, fss_edge);
-		GLES20.glCompileShader(fshadere);
-		GLES20.glGetShaderiv(fshadere, GLES20.GL_COMPILE_STATUS, compiled, 0);
-		if (compiled[0] == 0)
-			throw new RuntimeException(GLES20.glGetShaderInfoLog(fshadere));
-
-		/* Create the program. */
-		hProgram_nearest = GLES20.glCreateProgram();
-		GLES20.glAttachShader(hProgram_nearest, vshader);
-		GLES20.glAttachShader(hProgram_nearest, fshadern);
-		GLES20.glLinkProgram(hProgram_nearest);
-		hProgram_linear = GLES20.glCreateProgram();
-		GLES20.glAttachShader(hProgram_linear, vshader);
-		GLES20.glAttachShader(hProgram_linear, fshaderl);
-		GLES20.glLinkProgram(hProgram_linear);
-		hProgram_cubic = GLES20.glCreateProgram();
-		GLES20.glAttachShader(hProgram_cubic, vshader);
-		GLES20.glAttachShader(hProgram_cubic, fshaderc);
-		GLES20.glLinkProgram(hProgram_cubic);
-		hProgram_sharpen = GLES20.glCreateProgram();
-		GLES20.glAttachShader(hProgram_sharpen, vshader);
-		GLES20.glAttachShader(hProgram_sharpen, fshaders);
-		GLES20.glLinkProgram(hProgram_sharpen);
-		hProgram_edge = GLES20.glCreateProgram();
-		GLES20.glAttachShader(hProgram_edge, vshader);
-		GLES20.glAttachShader(hProgram_edge, fshadere);
-		GLES20.glLinkProgram(hProgram_edge);
-		GLES20.glDeleteShader(vshader); /* They will still live until the program dies. */
-		GLES20.glDeleteShader(fshadern);
-		GLES20.glDeleteShader(fshaderl);
-		GLES20.glDeleteShader(fshaderc);
-		GLES20.glDeleteShader(fshaders);
-		GLES20.glDeleteShader(fshadere);
+		/* Compile the shaders. */
+		int vshader = loadShader(GLES20.GL_VERTEX_SHADER, vss);
+		hProgram_nearest = loadFragment(vshader, fss_nearest);
+		hProgram_linear = loadFragment(vshader, fss_linear);
+		hProgram_cubic = loadFragment(vshader, fss_cubic);
+		hProgram_sharpen = loadFragment(vshader, fss_sharpen);
+		hProgram_edge = loadFragment(vshader, fss_edge);
+		GLES20.glDeleteShader(vshader); /* Shader will still live until the programs die. */
 
 		/* Initialize any surfaces we have. */
 		for (Object o : allSurfaces) {
