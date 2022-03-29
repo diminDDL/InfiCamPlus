@@ -260,17 +260,14 @@ public class MainActivity extends BaseActivity {
 		public void onReceive(Context context, Intent intent) { updateBatLevel(intent); }
 	};
 
-	// TODO this comment isn't probably correct anymore since we apply palette from handleFrame
-	/* The way this works is that first the thermal image on inputSurface gets written, then
-	 *   the frame callback runs, we copy over the info to overlayData, ask handleFrame() to be
-	 *   called on the main thread and then we hold off on returning from the callback until that
-	 *   frame and the matching lastFi and lastTemp have been dealt with, after which the frameLock
-	 *   should be notified.
-	 * The point of it is to make sure we have a matching lastFi and lastTemp with the last
-	 *   frame that don't get overwritten by the next run of this callback. The contents of the
-	 *   inputSurface texture etc are less of a concern since they don't get updated until
-	 *   updateTexImage() is called. We can't just do everything on the callback thread because
-	 *   we need our EGL context and EGL contexts are stuck to a particular thread.
+	/* This is called by infiCam to run every frame, it calls applyPalette which writes the surface
+	 *   we get the thermal image from, it's good to do the work like applying palette and doing
+	 *   complicated measurements here to avoid blocking the main thread. Once this is done we fill
+	 *   overlayData with the info needed to draw the overlays and then post handleFrame() to run
+	 *   on the main UI thread to do the work that should happen there (everyting involving the
+	 *   EGL context we've created there). After that we wait until handleFrame() signals we can
+	 *   continue and process another frame, so that we don't mess with overlayData while it is
+	 *   needed to draw the frame.
 	 */
 	private final InfiCam.FrameCallback frameCallback = new InfiCam.FrameCallback() {
 		/* To avoid creating a new lambda object every frame we store one here. */

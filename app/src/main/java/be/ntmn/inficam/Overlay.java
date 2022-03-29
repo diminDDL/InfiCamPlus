@@ -97,15 +97,6 @@ public class Overlay {
 		paintTextOutline.setTextSize(textsize * w);
 	}
 
-	private void drawText(Canvas cvs, StringBuilder sb, float x, float y, boolean la, boolean ta) {
-		float theight = (int) -(paint.descent() + paint.ascent());
-		paint.setTextAlign(la ? Paint.Align.LEFT : Paint.Align.RIGHT);
-		paintTextOutline.setTextAlign(la ? Paint.Align.LEFT : Paint.Align.RIGHT);
-		cvs.drawText(sb, 0, sb.length(), x, y + (ta ? theight : 0), paintTextOutline);
-		cvs.drawText(sb, 0, sb.length(), x, y + (ta ? theight : 0), paint);
-	}
-
-	// TODO Is overlay the right class to put this?
 	public static void mmaRect(MinMaxAvg out, float[] temp, int left, int top,
 							   int right, int bottom, int stride) {
 		out.min = out.max = NaN;
@@ -128,6 +119,14 @@ public class Overlay {
 			}
 		}
 		out.avg /= (right - left) * (bottom - top);
+	}
+
+	private void drawText(Canvas cvs, StringBuilder sb, float x, float y, boolean la, boolean ta) {
+		float theight = (int) -(paint.descent() + paint.ascent());
+		paint.setTextAlign(la ? Paint.Align.LEFT : Paint.Align.RIGHT);
+		paintTextOutline.setTextAlign(la ? Paint.Align.LEFT : Paint.Align.RIGHT);
+		cvs.drawText(sb, 0, sb.length(), x, y + (ta ? theight : 0), paintTextOutline);
+		cvs.drawText(sb, 0, sb.length(), x, y + (ta ? theight : 0), paint);
 	}
 
 	@SuppressLint("DefaultLocale")
