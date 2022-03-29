@@ -21,9 +21,7 @@ public class InfiCam {
 			throw new OutOfMemoryError();
 	}
 
-	public void release() {
-		nativeDelete(instance);
-	}
+	public void release() { nativeDelete(instance); }
 
 	@Override
 	protected void finalize() throws Throwable {
@@ -35,9 +33,7 @@ public class InfiCam {
 	}
 
 	/* The actual class starts here. */
-	public interface FrameCallback {
-		void onFrame(FrameInfo fi, float[] temp);
-	}
+	public interface FrameCallback { void onFrame(FrameInfo fi, float[] temp); }
 
 	/* C++ fills this one and passes it to callback, do not rename or modify without also looking
 	 *   at the C++ side.
@@ -122,7 +118,7 @@ public class InfiCam {
 	public native void setEmissivity(float emi);
 	public native void setDistance(float dist);
 	public native void setParams(float corr, float t_ref, float t_air, float humi, float emi,
-								  float dist);
+								 float dist);
 	/* Store user memory to camera so values remain when reconnecting. */
 	public native void storeParams();
 
@@ -135,5 +131,6 @@ public class InfiCam {
 			throw new IllegalArgumentException();
 	}
 
-	public native void lockRange(float min, float max);
+	/* Applies the set palette to the surface given with setSurface(). */
+	public native void applyPalette(float min, float max);
 }

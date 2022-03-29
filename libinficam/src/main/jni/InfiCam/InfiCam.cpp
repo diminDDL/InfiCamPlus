@@ -20,16 +20,12 @@ void InfiCam::uvc_callback(uvc_frame_t *frame, void *user_ptr) {
 		p->table_invalid = 0;
 	} else p->infi.update((uint16_t *) frame->data);
 	p->infi.temp((uint16_t *) frame->data, p->frame_temp);
-	p->infi.palette_appy(p->frame_temp, p->frame_rgb,
-						 isnan(p->min) ? p->infi.temp(p->infi.temp_min) : p->min,
-						 isnan(p->max) ? p->infi.temp(p->infi.temp_max) : p->max);
 
 	/* Unlock before the callback so if it decides to call a function that locks the this callback
 	 *   we don't end up in a deadlock.
 	 */
 	pthread_mutex_unlock(&p->frame_callback_mutex);
-	p->frame_callback(p, p->frame_rgb, p->frame_temp, (uint16_t *) frame->data,
-					  p->frame_callback_arg);
+	p->frame_callback(p, p->frame_temp, (uint16_t *) frame->data, p->frame_callback_arg);
 }
 
 void InfiCam::set_float(int addr, float val) {
@@ -78,9 +74,8 @@ void InfiCam::disconnect() {
 int InfiCam::stream_start(frame_callback_t *cb, void *user_ptr) {
 	if (streaming)
 		return 1;
-	frame_rgb = (uint32_t *) calloc(infi.width * infi.height, sizeof(uint32_t));
 	frame_temp = (float *) calloc(infi.width * infi.height, sizeof(float));
-	if (frame_rgb == NULL || frame_temp == NULL) {
+	if (frame_temp == NULL) {
 		stream_stop();
 		return 2;
 	}
@@ -97,9 +92,7 @@ int InfiCam::stream_start(frame_callback_t *cb, void *user_ptr) {
 
 void InfiCam::stream_stop() {
 	dev.stream_stop();
-	free(frame_rgb);
 	free(frame_temp);
-	frame_rgb = NULL;
 	frame_temp = NULL;
 	streaming = 0;
 }
@@ -205,9 +198,4 @@ void InfiCam::set_palette(uint32_t *palette) {
 	memcpy(infi.palette, palette, palette_len * sizeof(uint32_t));
 	if (streaming)
 		pthread_mutex_unlock(&frame_callback_mutex);
-}
-
-void InfiCam::lock_range(float min, float max) {
-	this->min = min;
-	this->max = max;
 }

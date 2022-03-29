@@ -16,18 +16,14 @@
  *   thread dedicated to calling the user callback, in the worst case a few frames are missed.
  */
 class InfiCam {
-	typedef void (frame_callback_t)(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw,
-									void *user_ptr);
+	typedef void (frame_callback_t)(InfiCam *cam, float *temp, uint16_t *raw, void *user_ptr);
 
 	UVCDevice dev;
 	frame_callback_t *frame_callback;
 	void *frame_callback_arg;
-	uint32_t *frame_rgb = NULL;
 	float *frame_temp = NULL;
 	pthread_mutex_t frame_callback_mutex;
 	int connected = 0, streaming = 0, table_invalid;
-	int range = 120;
-	float min = NAN, max = NAN; /* Range for palettization. */
 
 	static const int CMD_SHUTTER = 0x8000;
 	static const int CMD_MODE_TEMP = 0x8004;
@@ -96,9 +92,6 @@ public:
 	void calibrate();
 
 	void set_palette(uint32_t *palette); /* Length must be palette_len. */
-
-	/* Lock range for palettization scaling, NAN means no lock. */
-	void lock_range(float min, float max);
 };
 
 #endif /* __INFICAM_H__ */

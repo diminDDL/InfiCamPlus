@@ -58,9 +58,8 @@ public class Overlay {
 	private final static float pclearance = 0.016f;
 
 	private final StringBuilder sb = new StringBuilder();
-	private final MinMaxAvg mma = new MinMaxAvg();
 
-	private static class MinMaxAvg {
+	public static class MinMaxAvg {
 		float min, max, avg;
 		int min_x, min_y, max_x, max_y;
 	}
@@ -106,8 +105,9 @@ public class Overlay {
 		cvs.drawText(sb, 0, sb.length(), x, y + (ta ? theight : 0), paint);
 	}
 
-	private void mmaRect(MinMaxAvg out, float[] temp, int left, int top,
-						 int right, int bottom, int stride) {
+	// TODO Is overlay the right class to put this?
+	public static void mmaRect(MinMaxAvg out, float[] temp, int left, int top,
+							   int right, int bottom, int stride) {
 		out.min = out.max = NaN;
 		out.avg = 0.0f;
 		out.min_x = out.min_y = out.max_x = out.max_y = 0;
@@ -138,22 +138,6 @@ public class Overlay {
 		if (d.showCenter) { // TODO this is off by a pixel and we should check the other points too
 			paint.setColor(Color.rgb(255, 255, 0)); // Yellow.
 			drawTPoint(cvs, d, d.fi.width / 2, d.fi.height / 2, d.fi.center);
-		}
-
-		if (d.scale > 1.0f) {
-			float lost = (1.0f - 1.0f / d.scale) / 2.0f;
-			mmaRect(mma, d.temp,
-					(int) (lost * d.fi.width),
-					(int) (lost * d.fi.height),
-					(int) ((1.0f - lost) * d.fi.width) + 1,
-					(int) ((1.0f - lost) * d.fi.height) + 1,
-					d.fi.width);
-			d.fi.min = mma.min;
-			d.fi.min_x = mma.min_x;
-			d.fi.min_y = mma.min_y;
-			d.fi.max = mma.max;
-			d.fi.max_x = mma.max_x;
-			d.fi.max_y = mma.max_y;
 		}
 
 		if (d.showMin) {

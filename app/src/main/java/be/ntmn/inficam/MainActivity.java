@@ -260,6 +260,7 @@ public class MainActivity extends BaseActivity {
 		public void onReceive(Context context, Intent intent) { updateBatLevel(intent); }
 	};
 
+	// TODO this comment isn't probably correct anymore since we apply palette from handleFrame
 	/* The way this works is that first the thermal image on inputSurface gets written, then
 	 *   the frame callback runs, we copy over the info to overlayData, ask handleFrame() to be
 	 *   called on the main thread and then we hold off on returning from the callback until that
@@ -274,12 +275,40 @@ public class MainActivity extends BaseActivity {
 	private final InfiCam.FrameCallback frameCallback = new InfiCam.FrameCallback() {
 		/* To avoid creating a new lambda object every frame we store one here. */
 		private final Runnable handleFrameRunnable = () -> handleFrame();
+		Overlay.MinMaxAvg mma = new Overlay.MinMaxAvg();
 
 		@Override
 		public void onFrame(InfiCam.FrameInfo fi, float[] temp) {
 			synchronized (frameLock) { /* Note this is called from another thread. */
 				overlayData.fi = fi;
 				overlayData.temp = temp;
+				float rangeMin = overlayData.rangeMin;
+				float rangeMax = overlayData.rangeMax;
+
+				/* If the range isn't locked and we're zoomed in, find the min/max. */
+				if ((isNaN(rangeMin) || isNaN(rangeMax)) && scale > 1.0f) {
+					float lost = (1.0f - 1.0f / scale) / 2.0f;
+					Overlay.mmaRect(mma, temp,
+							(int) (lost * fi.width),
+							(int) (lost * fi.height),
+							(int) ((1.0f - lost) * fi.width) + 1,
+							(int) ((1.0f - lost) * fi.height) + 1,
+							fi.width);
+					if (isNaN(rangeMin)) {
+						fi.min = mma.min;
+						fi.min_x = mma.min_x;
+						fi.min_y = mma.min_y;
+						rangeMin = mma.min;
+					}
+					if (isNaN(rangeMax)) {
+						fi.max = mma.max;
+						fi.max_x = mma.max_x;
+						fi.max_y = mma.max_y;
+						rangeMax = mma.max;
+					}
+				}
+
+				infiCam.applyPalette(rangeMin, rangeMax);
 				handler.post(handleFrameRunnable);
 				if (disconnecting)
 					return;
@@ -487,13 +516,11 @@ public class MainActivity extends BaseActivity {
 						overlayData.rangeMin = start;
 					if (isNaN(overlayData.rangeMax) || isInfinite(overlayData.rangeMax))
 						overlayData.rangeMax = end;
-					infiCam.lockRange(overlayData.rangeMin, overlayData.rangeMax);
 					rangeSlider.setValueFrom(start);
 					rangeSlider.setValueTo(end);
 					rangeSlider.setValues(overlayData.rangeMin, overlayData.rangeMax);
 				} else {
 					overlayData.rangeMin = overlayData.rangeMax = NaN;
-					infiCam.lockRange(NaN, NaN);
 					buttonLock.setImageResource(R.drawable.ic_baseline_lock_open_24);
 					rangeSlider.setVisibility(View.GONE);
 				}
@@ -509,7 +536,6 @@ public class MainActivity extends BaseActivity {
 			if (value == slider.getValues().get(0))
 				overlayData.rangeMin = v.get(0);
 			else overlayData.rangeMax = v.get(1);
-			infiCam.lockRange(overlayData.rangeMin, overlayData.rangeMax);
 		});
 
 		ImageButton buttonVideo = findViewById(R.id.buttonVideo);

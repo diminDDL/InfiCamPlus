@@ -22,9 +22,9 @@ public:
 	JNIEnv *env;
 	jobject obj;
 	int jthread_stop = 0;
-	uint32_t *rgb;
-	float *temp;
-	uint16_t *raw;
+	uint32_t *rgb = NULL;
+	float *temp = NULL;
+	uint16_t *raw = NULL;
 
 	/* Initialized elsewhere to avoid needing exceptions. */
 	pthread_t jthread;
@@ -67,11 +67,9 @@ static void setFloatVar(JNIEnv *env, jobject obj, const char *name, jfloat value
 }
 
 /* Frame callback that notifies jthread (described later). */
-static void frame_callback(InfiCam *cam, uint32_t *rgb, float *temp, uint16_t *raw,
-						   void *user_ptr) {
+static void frame_callback(InfiCam *cam, float *temp, uint16_t *raw, void *user_ptr) {
 	InfiCamJNI *icj = (InfiCamJNI *) cam;
 	pthread_mutex_lock(&icj->jthread_mutex);
-	icj->rgb = rgb;
 	icj->temp = temp;
 	icj->raw = raw;
 	pthread_cond_broadcast(&icj->jthread_cond);
@@ -97,31 +95,6 @@ static void *jthread_run(void *a) {
 		if (icj->jthread_stop) {
 			pthread_mutex_unlock(&icj->jthread_mutex);
 			break;
-		}
-
-		/* Update the surface if we have one. */
-		if (icj->window != NULL) {
-			ANativeWindow_Buffer buffer;
-			if (ANativeWindow_lock(icj->window, &buffer, NULL) == 0) {
-				const uint8_t *src = (uint8_t *) icj->rgb;
-				const int src_w = icj->infi.width * 4;
-				const int dst_w = buffer.width * 4;
-				const int dst_step = buffer.stride * 4;
-
-				/* Set w and h to be the smallest of the two rectangles. */
-				const int w = src_w < dst_w ? src_w : dst_w;
-				const int h = icj->infi.height < buffer.height ? icj->infi.height : buffer.height;
-
-				/* Transfer from frame data to the Surface */
-				uint8_t *dst = (uint8_t *) buffer.bits;
-				for (int i = 0; i < h; ++i) {
-					memcpy(dst, src, w);
-					dst += dst_step;
-					src += src_w;
-				}
-
-				ANativeWindow_unlockAndPost(icj->window);
-			}
 		}
 
 		/* Fill the FrameInfo struct. */
@@ -222,8 +195,19 @@ JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeConnect(JNIEnv *env, jobjec
 	pthread_mutex_lock(&icj->jthread_mutex);
 	if (icj->window != NULL) { /* Connect means the size may have changed. */
 		if (ANativeWindow_setBuffersGeometry(
-				icj->window, icj->infi.width, icj->infi.height, WINDOW_FORMAT_RGBX_8888))
+				icj->window, icj->infi.width, icj->infi.height, WINDOW_FORMAT_RGBX_8888)) {
+			icj->disconnect();
+			pthread_mutex_unlock(&icj->jthread_mutex);
 			return 1;
+		}
+		if (icj->rgb != NULL)
+			free(icj->rgb);
+		icj->rgb = (uint32_t *) calloc(icj->infi.width * icj->infi.height, sizeof(uint32_t));
+		if (icj->rgb == NULL) {
+			icj->disconnect();
+			pthread_mutex_unlock(&icj->jthread_mutex);
+			return 2;
+		}
 	}
 	pthread_mutex_unlock(&icj->jthread_mutex);
 	return 0;
@@ -256,19 +240,33 @@ JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeSetSurface(JNIEnv *env, job
 		ANativeWindow_release(icj->window);
 		icj->window = NULL;
 	}
+	if (icj->rgb != NULL) {
+		free(icj->rgb);
+		icj->rgb = NULL;
+	}
 
 	/* Set new surface if we have one. */
 	if (surface != NULL) {
 		icj->window = ANativeWindow_fromSurface(env, surface);
-		if (icj->window == NULL)
+		if (icj->window == NULL) {
+			pthread_mutex_unlock(&icj->jthread_mutex);
 			return 1;
+		}
 		/* Size is set to 0 initially and by disconnect(), we can't resize to 0x0. */
 		if (icj->infi.width != 0 && icj->infi.height != 0) {
 			if (ANativeWindow_setBuffersGeometry(icj->window, icj->infi.width, icj->infi.height,
 												 WINDOW_FORMAT_RGBX_8888)) {
 				ANativeWindow_release(icj->window);
 				icj->window = NULL;
+				pthread_mutex_unlock(&icj->jthread_mutex);
 				return 2;
+			}
+			icj->rgb = (uint32_t *) calloc(icj->infi.width * icj->infi.height, sizeof(uint32_t));
+			if (icj->rgb == NULL) {
+				ANativeWindow_release(icj->window);
+				icj->window = NULL;
+				pthread_mutex_unlock(&icj->jthread_mutex);
+				return 3;
 			}
 		}
 	}
@@ -367,10 +365,38 @@ JNIEXPORT jint Java_be_ntmn_libinficam_InfiCam_nativeSetPalette(JNIEnv *env, job
 	return 0;
 }
 
-JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_lockRange(JNIEnv *env, jobject self, jfloat min,
-														 jfloat max) {
+JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_applyPalette(JNIEnv *env, jobject self, jfloat min,
+		jfloat max) {
 	InfiCamJNI *icj = getObject(env, self);
-	icj->lock_range(min, max);
+	/* Update the surface if we have one. */
+	if (icj->window != NULL) {
+		ANativeWindow_Buffer buffer;
+
+		icj->infi.palette_appy(icj->temp, icj->rgb,
+							 isnan(min) ? icj->infi.temp(icj->infi.temp_min) : min,
+							 isnan(max) ? icj->infi.temp(icj->infi.temp_max) : max);
+
+		if (ANativeWindow_lock(icj->window, &buffer, NULL) == 0) {
+			const uint8_t *src = (uint8_t *) icj->rgb;
+			const int src_w = icj->infi.width * 4;
+			const int dst_w = buffer.width * 4;
+			const int dst_step = buffer.stride * 4;
+
+			/* Set w and h to be the smallest of the two rectangles. */
+			const int w = src_w < dst_w ? src_w : dst_w;
+			const int h = icj->infi.height < buffer.height ? icj->infi.height : buffer.height;
+
+			/* Transfer from frame data to the Surface */
+			uint8_t *dst = (uint8_t *) buffer.bits;
+			for (int i = 0; i < h; ++i) {
+				memcpy(dst, src, w);
+				dst += dst_step;
+				src += src_w;
+			}
+
+			ANativeWindow_unlockAndPost(icj->window);
+		}
+	}
 }
 
 } /* extern "C" */
