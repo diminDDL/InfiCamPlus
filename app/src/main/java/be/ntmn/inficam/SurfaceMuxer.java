@@ -88,7 +88,6 @@ public class SurfaceMuxer {
 	private EGLContext eglContext = EGL14.EGL_NO_CONTEXT;
 	private EGLConfig eglConfig;
 	private final String vss;
-	private final Rect outRect = new Rect();
 	private final FloatBuffer pTexCoord =
 			ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
 	private final FloatBuffer pVertex =
@@ -100,7 +99,7 @@ public class SurfaceMuxer {
 		public Surface surface;
 		private final int[] textures = new int[1];
 		private boolean initialized = false;
-		private int width = 1, height = 1;
+		public int width = 1, height = 1;
 		public int drawMode; // TODO this should be an argument to draw() instead, perhaps
 		public boolean rotate = false, mirror = false, rotate90 = false;
 		public float scale_x = 1.0f, scale_y = 1.0f;
@@ -118,11 +117,6 @@ public class SurfaceMuxer {
 			width = w;
 			height = h;
 			surfaceTexture.setDefaultBufferSize(w, h);
-		}
-
-		/* Override this to change target area for drawing. */
-		public void getRect(Rect r, int w, int h) { /* Git rekt lol. */
-			r.set(0, 0, w, h);
 		}
 
 		private void init() {
@@ -181,15 +175,12 @@ public class SurfaceMuxer {
 			surfaceTexture = null;
 		}
 
-		public void draw(OutputSurface os) {
+		public void draw(OutputSurface os, int x, int y, int w, int h) {
 			if (surfaceMuxer.eglContext == EGL14.EGL_NO_CONTEXT)
 				return;
 			os.makeCurrent(); /* We need the context to be current before updateTexImage(). */
 			surfaceTexture.updateTexImage(); /* Call might be redundant, probably don't care. */
-			Rect outRect = surfaceMuxer.outRect;
-			getRect(outRect, os.width, os.height);
-			GLES20.glViewport(outRect.left, os.height - outRect.bottom,
-					outRect.width(), outRect.height());
+			GLES20.glViewport(x, y, w, h);
 			int program = surfaceMuxer.drawModes[drawMode].program;
 			GLES20.glUseProgram(program);
 			int ph = GLES20.glGetAttribLocation(program, "vPosition");
@@ -221,13 +212,11 @@ public class SurfaceMuxer {
 			GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
 		}
 
-		public void drawSwap(OutputSurface os) {
-			draw(os);
-			os.swapBuffers();
-		}
-
+		public void draw(OutputSurface os) { draw(os, 0, 0, os.width, os.height); }
 		public void draw(ThroughSurface ts) { draw(ts.outputSurface); }
-		public void drawSwap(ThroughSurface ts) { drawSwap(ts.outputSurface); }
+		public void draw(ThroughSurface ts, int x, int y, int w, int h) {
+			draw(ts.outputSurface, x, y, w, h);
+		}
 	}
 
 	public static class OutputSurface {
@@ -235,7 +224,7 @@ public class SurfaceMuxer {
 		private Surface surface;
 		private final boolean surfaceOwned;
 		private EGLSurface eglSurface = EGL14.EGL_NO_SURFACE;
-		private int width = 1, height = 1;
+		public int width = 1, height = 1;
 
 		public OutputSurface(SurfaceMuxer muxer, Surface surf, boolean release) {
 			surfaceMuxer = muxer;
@@ -331,6 +320,8 @@ public class SurfaceMuxer {
 			super.release();
 			outputSurface.release();
 		}
+
+		public void swapBuffers() { outputSurface.swapBuffers(); }
 	}
 
 	public SurfaceMuxer(Context ctx) {
@@ -355,6 +346,7 @@ public class SurfaceMuxer {
 		init();
 	}
 
+	// TODO this entire function can go away soon
 	private void render(OutputSurface os, long time) {
 		// TODO this is probably not needed
 		os.makeCurrent();

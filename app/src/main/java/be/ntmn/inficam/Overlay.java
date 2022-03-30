@@ -86,16 +86,6 @@ public class Overlay {
 		surface.setSize(w, h);
 	}
 
-	public void setRect(Rect rect) { /* Set the area of thermal view. */
-		int w = rect.width();
-		vRect.set(rect);
-		paint.setStrokeWidth(wmarker * w);
-		paint.setTextSize(textsize * w);
-		paintOutline.setStrokeWidth(wmarker * w * 3);
-		paintTextOutline.setStrokeWidth(woutline * w);
-		paintTextOutline.setTextSize(textsize * w);
-	}
-
 	public static void mmaRect(MinMaxAvg out, float[] temp, int left, int top,
 							   int right, int bottom, int stride) {
 		out.min = out.max = NaN;
@@ -129,9 +119,17 @@ public class Overlay {
 	}
 
 	@SuppressLint("DefaultLocale")
-	public void draw(Data d) {
+	public void draw(Data d, Rect rect) {
 		Canvas cvs = surface.surface.lockCanvas(null);
 		cvs.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+
+		int w = rect.width();
+		vRect.set(rect);
+		paint.setStrokeWidth(wmarker * w);
+		paint.setTextSize(textsize * w);
+		paintOutline.setStrokeWidth(wmarker * w * 3);
+		paintTextOutline.setStrokeWidth(woutline * w);
+		paintTextOutline.setTextSize(textsize * w);
 
 		if (d.showCenter) { // TODO this is off by a pixel and we should check the other points too
 			paint.setColor(Color.rgb(255, 255, 0)); // Yellow.

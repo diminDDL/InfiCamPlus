@@ -5,7 +5,6 @@ import static java.lang.Float.isInfinite;
 import static java.lang.Float.isNaN;
 import static java.lang.Math.ceil;
 import static java.lang.Math.floor;
-import static java.lang.Math.round;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -53,7 +52,7 @@ public class MainActivity extends BaseActivity {
 	private SurfaceMuxer.ThroughSurface thruSurface; /* We sharpen separately to do it lo-res. */
 	private SurfaceMuxer.InputSurface videoSurface; /* To draw video from the normal camera. */
 	private Overlay overlayScreen, overlayRecord, overlayPicture;
-	private SurfaceMuxer.OutputSurface outScreen;
+	private SurfaceMuxer.OutputSurface outScreen, outRecord;
 	private final Overlay.Data overlayData = new Overlay.Data();
 	private int range = 0;
 
@@ -66,6 +65,7 @@ public class MainActivity extends BaseActivity {
 	private volatile boolean disconnecting = false;
 	private final SurfaceRecorder recorder = new SurfaceRecorder();
 	private boolean recordAudio;
+	private final Rect rect = new Rect(); /* To use during frames, to avoid allocating it there. */
 
 	private CameraView cameraView;
 	private MessageView messageView;
@@ -211,11 +211,8 @@ public class MainActivity extends BaseActivity {
 
 		@Override
 		public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int w, int h) {
-			final Rect r = new Rect();
-			thruSurface.getRect(r, w, h);
 			outScreen.setSize(w, h);
 			overlayScreen.setSize(w, h);
-			overlayScreen.setRect(r);
 		}
 
 		@Override
@@ -320,6 +317,23 @@ public class MainActivity extends BaseActivity {
 		}
 	};
 
+	/* Git rekt! */
+	public void getRect43(Rect r, int w, int h) {
+		int sw = w, sh = h, iw = 4, ih = 3;
+		/* Make size 4:3 aspect ratio for the thermal image, I'd check the actual camera
+		 *   dimensions but this function gets used before the camera is connected.
+		 */
+		if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180) {
+			ih = 4;
+			iw = 3;
+		}
+		if (ih * w / iw > h)
+			sw = iw * h / ih;
+		else sh = ih * w / iw;
+		r.set(w / 2 - sw / 2, h / 2 - sh / 2,
+				w / 2 - sw / 2 + sw, h / 2 - sh / 2 + sh);
+	}
+
 	private void handleFrame() {
 		synchronized (frameLock) {
 			if (disconnecting) { /* Don't try stuff when disconnected. */
@@ -343,7 +357,7 @@ public class MainActivity extends BaseActivity {
 					w = h;
 					h = tmp;
 				}
-				thruSurface.getRect(r, w, h);
+				// TODO? thruSurface.getRect(r, w, h);
 				// TODO
 				/*outPicture.setSize(w, h);
 				outPicture.setRect(r);
@@ -362,16 +376,28 @@ public class MainActivity extends BaseActivity {
 			} else {
 				/* We use the inputSurface because it has the most relevant timestamp. */
 				// TODO this sometimes gets called after EGL context is gone, we should avoid that
-				inputSurface.drawSwap(thruSurface);
+				inputSurface.draw(thruSurface);
+				thruSurface.swapBuffers();
 				if (outScreen != null) {
+					getRect43(rect, outScreen.width, outScreen.height);
 					outScreen.clear(0, 0, 0, 1);
-					thruSurface.draw(outScreen);
-					overlayScreen.draw(overlayData);
+					thruSurface.draw(outScreen, rect.left, rect.top, rect.width(), rect.height());
+					overlayScreen.draw(overlayData, rect);
 					overlayScreen.surface.draw(outScreen);
 					// TODO draw normal video if needed
 					outScreen.swapBuffers();
 				}
 				// TODO video recording
+				if (outRecord != null) {
+					getRect43(rect, outRecord.width, outRecord.height);
+					outRecord.clear(0, 0, 0, 1);
+					thruSurface.draw(outRecord, rect.left, rect.top, rect.width(), rect.height());
+					overlayRecord.draw(overlayData, rect);
+					overlayRecord.surface.draw(outRecord);
+					// TODO draw normal video if needed
+					outRecord.setPresentationTime(inputSurface.surfaceTexture.getTimestamp());
+					outRecord.swapBuffers();
+				}
 			}
 
 			/* Now we allow another frame to come in */
@@ -389,24 +415,7 @@ public class MainActivity extends BaseActivity {
 
 		/* Create and set up the InputSurface for thermal image, imode setting is not final. */
 		inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.DM_SHARPEN);
-		thruSurface = new SurfaceMuxer.ThroughSurface(surfaceMuxer, SurfaceMuxer.DM_LINEAR) {
-			@Override
-			public void getRect(Rect r, int w, int h) {
-				int sw = w, sh = h, iw = 4, ih = 3;
-				/* Make size 4:3 aspect ratio for the thermal image, I'd check the actual camera
-				 *   dimensions but this function gets used before the camera is connected.
-				 */
-				if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180) {
-					ih = 4;
-					iw = 3;
-				}
-				if (ih * w / iw > h)
-					sw = iw * h / ih;
-				else sh = ih * w / iw;
-				r.set(w / 2 - sw / 2, h / 2 - sh / 2,
-						w / 2 - sw / 2 + sw, h / 2 - sh / 2 + sh);
-			}
-		};
+		thruSurface = new SurfaceMuxer.ThroughSurface(surfaceMuxer, SurfaceMuxer.DM_LINEAR);
 
 		infiCam.setSurface(inputSurface.surface);
 		cameraView.getHolder().addCallback(surfaceHolderCallback);
@@ -760,15 +769,6 @@ public class MainActivity extends BaseActivity {
 				overlayData.rotate = rotate;
 				thruSurface.rotate = rotate;
 			}
-			/* Sometimes full 180 rotation doesn't trigger onSurfaceChanged() so we update the rect
-			 *   here too.
-			 */
-			final Rect r = new Rect();
-			thruSurface.getRect(r, cameraView.getWidth(), cameraView.getHeight());
-			overlayScreen.setRect(r);
-			// TODO
-			//sharpenSurface.getRect(r, outRecord.getWidth(), outRecord.getHeight());
-			//outRecord.setRect(r); /* Also the rect for video recording should be updated. */
 		}
 	}
 
@@ -830,14 +830,10 @@ public class MainActivity extends BaseActivity {
 	/* Request audio permission first when necessary! */
 	private void _startRecording(boolean recordAudio) {
 		try {
-			final Rect r = new Rect();
-			thruSurface.getRect(r, vidWidth, vidHeight);
-			// TODO
-			/*outRecord.setSize(vidWidth, vidHeight);
-			outRecord.setRect(r);
-			outRecord.attachInput(surfaceMuxer);*/
 			Surface rsurface = recorder.start(this, vidWidth, vidHeight, recordAudio);
-			//outRecord.setOutputSurface(rsurface);
+			outRecord = new SurfaceMuxer.OutputSurface(surfaceMuxer, rsurface, false);
+			outRecord.setSize(vidWidth, vidHeight);
+			overlayRecord.setSize(vidWidth, vidHeight);
 			ImageButton buttonVideo = findViewById(R.id.buttonVideo);
 			buttonVideo.setColorFilter(Color.RED);
 		} catch (IOException e) {
@@ -850,9 +846,10 @@ public class MainActivity extends BaseActivity {
 		ImageButton buttonVideo = findViewById(R.id.buttonVideo);
 		buttonVideo.clearColorFilter();
 		recorder.stop();
-		// TODO
-		/*outRecord.setOutputSurface(null);
-		outRecord.attachInput(null);*/
+		if (outRecord != null) {
+			outRecord.release();
+			outRecord = null;
+		}
 	}
 
 	public void updateBatLevel(Intent batteryStatus) {
