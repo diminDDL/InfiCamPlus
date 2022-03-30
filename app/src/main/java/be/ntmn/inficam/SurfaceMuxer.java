@@ -99,7 +99,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		private final int[] textures = new int[1];
 		private boolean initialized = false;
 		private int width = 1, height = 1;
-		public int drawMode;
+		public int drawMode; // TODO this should be an argument to draw() instead, perhaps
 		public boolean rotate = false, mirror = false, rotate90 = false;
 		public float scale_x = 1.0f, scale_y = 1.0f;
 		public float translate_x = 0.0f, translate_y = 0.0f;
@@ -178,6 +178,49 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 				surfaceTexture.release();
 			surfaceTexture = null;
 		}
+
+		public void draw(OutputSurface os, boolean flipy) { // TODO the flipy thing is kinda ugly
+			os.makeCurrent(); /* We need the context to be current before updateTexImage(). */
+			surfaceTexture.updateTexImage(); /* Call might be redundant, probably don't care. */
+			Rect outRect = surfaceMuxer.outRect;
+			getRect(outRect, os.width, os.height);
+			GLES20.glViewport(outRect.left, os.height - outRect.bottom,
+					outRect.width(), outRect.height());
+			int program = surfaceMuxer.drawModes[drawMode].program;
+			GLES20.glUseProgram(program);
+			int ph = GLES20.glGetAttribLocation(program, "vPosition");
+			GLES20.glVertexAttribPointer(ph, 2, GLES20.GL_FLOAT, false, 4 * 2,
+					surfaceMuxer.pVertex);
+			GLES20.glEnableVertexAttribArray(ph);
+			int tch = GLES20.glGetAttribLocation(program, "vTexCoord");
+			GLES20.glVertexAttribPointer(tch, 2, GLES20.GL_FLOAT, false, 4 * 2,
+					surfaceMuxer.pTexCoord);
+			GLES20.glEnableVertexAttribArray(tch);
+			int th = GLES20.glGetUniformLocation(program, "sTexture");
+			GLES20.glUniform1i(th, 0); /* Tells the shader what texture to use. */
+			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+			int sc = GLES20.glGetUniformLocation(program, "scale");
+			float sx = scale_x * (mirror ? -1.0f : 1.0f) * (rotate ? -1.0f : 1.0f);
+			float sy = scale_y * (rotate ? -1.0f : 1.0f);
+			GLES20.glUniform2f(sc, sx, sy * (flipy ? -1.0f : 1.0f));
+			int tr = GLES20.glGetUniformLocation(program, "translate");
+			GLES20.glUniform2f(tr, translate_x, translate_y);
+			int r9 = GLES20.glGetUniformLocation(program, "rot90");
+			GLES20.glUniform1i(r9, rotate90 ? 1 : 0);
+			int isc = GLES20.glGetUniformLocation(program, "texSize");
+			GLES20.glUniform2f(isc, width, height);
+			int sh = GLES20.glGetUniformLocation(program, "sharpening");
+			GLES20.glUniform1f(sh, sharpening); /* It's okay if the shader doesn't have this. */
+
+			GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+			GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textures[0]);
+			GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+		}
+
+		public void drawSwap(OutputSurface os) {
+			draw(os);
+			os.swapBuffers();
+		}
 	}
 
 	public static class OutputSurface {
@@ -252,6 +295,27 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		}
 	}
 
+	public static class ThroughSurface extends InputSurface {
+		private final OutputSurface outputSurface;
+
+		public ThroughSurface(SurfaceMuxer muxer, int dm) {
+			super(muxer, dm);
+			outputSurface = new OutputSurface(muxer, surface, false);
+		}
+
+		@Override
+		public void setSize(int w, int h) {
+			super.setSize(w, h);
+			outputSurface.setSize(w, h);
+		}
+
+		@Override
+		public void release() {
+			super.release();
+			outputSurface.release();
+		}
+	}
+
 	public SurfaceMuxer(Context ctx) {
 		try {
 			vss = Util.readStringAsset(ctx, "vshader.glsl");
@@ -274,46 +338,20 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		init();
 	}
 
-	private void render(int w, int h, boolean flipy) {
+	private void render(OutputSurface os, boolean flipy, long time) {
+		// TODO this is probably not needed
+		os.makeCurrent();
 		GLES20.glClearColor(0, 0, 0, 1);
-		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT); // TODO this is probably not needed
+		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
 		/* We use an oldschool loop because for (... : ...) causes an allocation to happen. */
-		for (int i = 0; i < inputSurfaces.size(); ++i) {
-			InputSurface is = inputSurfaces.get(i);
+		for (int i = 0; i < inputSurfaces.size(); ++i)
+			inputSurfaces.get(i).draw(os, flipy);
 
-			is.getRect(outRect, w, h);
-			GLES20.glViewport(outRect.left, h - outRect.bottom, outRect.width(), outRect.height());
-
-			int program = drawModes[is.drawMode].program;
-			GLES20.glUseProgram(program);
-			int ph = GLES20.glGetAttribLocation(program, "vPosition");
-			GLES20.glVertexAttribPointer(ph, 2, GLES20.GL_FLOAT, false, 4 * 2, pVertex);
-			GLES20.glEnableVertexAttribArray(ph);
-			int tch = GLES20.glGetAttribLocation(program, "vTexCoord");
-			GLES20.glVertexAttribPointer(tch, 2, GLES20.GL_FLOAT, false, 4 * 2, pTexCoord);
-			GLES20.glEnableVertexAttribArray(tch);
-			int th = GLES20.glGetUniformLocation(program, "sTexture");
-			GLES20.glUniform1i(th, 0); /* Tells the shader what texture to use. */
-			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-			int sc = GLES20.glGetUniformLocation(program, "scale");
-			float sx = is.scale_x * (is.mirror ? -1.0f : 1.0f) * (is.rotate ? -1.0f : 1.0f);
-			float sy = is.scale_y * (is.rotate ? -1.0f : 1.0f);
-			GLES20.glUniform2f(sc, sx, sy * (flipy ? -1.0f : 1.0f));
-			int tr = GLES20.glGetUniformLocation(program, "translate");
-			GLES20.glUniform2f(tr, is.translate_x, is.translate_y);
-			int r9 = GLES20.glGetUniformLocation(program, "rot90");
-			GLES20.glUniform1i(r9, is.rotate90 ? 1 : 0);
-			int isc = GLES20.glGetUniformLocation(program, "texSize");
-			GLES20.glUniform2f(isc, is.width, is.height);
-			int sh = GLES20.glGetUniformLocation(program, "sharpening");
-			GLES20.glUniform1f(sh, is.sharpening); /* It's okay if the shader doesn't have this. */
-
-			GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-			GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, is.textures[0]);
-			GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
-		}
-		GLES20.glFlush();
+		GLES20.glFlush(); // TODO only needed for non-double-buffered
+		GLES20.glFinish(); // TODO only needed for non-double-buffered
+		os.setPresentationTime(time);
+		os.swapBuffers();
 	}
 
 	@Override
@@ -321,18 +359,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		if (eglContext == EGL14.EGL_NO_CONTEXT)
 			return;
 		/* We use oldschool for loops because for (... : ...) causes an allocation to happen. */
-		EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, eglContext);
-		for (int i = 0; i < inputSurfaces.size(); ++i) {
-			InputSurface is = inputSurfaces.get(i);
-			is.surfaceTexture.updateTexImage();
-		}
-		for (int i = 0; i < outputSurfaces.size(); ++i) {
-			OutputSurface os = outputSurfaces.get(i);
-			os.makeCurrent();
-			render(os.width, os.height, false);
-			os.setPresentationTime(surfaceTexture.getTimestamp());
-			os.swapBuffers();
-		}
+		for (int i = 0; i < outputSurfaces.size(); ++i)
+			render(outputSurfaces.get(i), false, surfaceTexture.getTimestamp());
 	}
 
 	public Bitmap getBitmap(int w, int h) {
@@ -346,7 +374,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		EGLSurface surface = EGL14.eglCreatePbufferSurface(eglDisplay, eglConfig, attr, 0);
 		checkEglError("eglCreatePbufferSurface");
 		EGL14.eglMakeCurrent(eglDisplay, surface, surface, eglContext);
-		render(w, h, true);
+		//render(w, h, true); // TODO
 		GLES20.glReadPixels(0, 0, w, h, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buf);
 		EGL14.eglDestroySurface(eglDisplay, surface);
 		ret.copyPixelsFromBuffer(buf);
