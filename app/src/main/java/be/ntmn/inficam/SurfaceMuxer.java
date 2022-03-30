@@ -58,7 +58,8 @@ import java.util.ArrayList;
  */
 public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	private static class DrawMode {
-		private String file, source;
+		private final String file;
+		private String source;
 		private int program;
 		private DrawMode(String file) { this.file = file; }
 	}
@@ -286,8 +287,6 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 
 			int program = drawModes[is.drawMode].program;
 			GLES20.glUseProgram(program);
-			int isc = GLES20.glGetUniformLocation(program, "texSize");
-			GLES20.glUniform2f(isc, is.width, is.height);
 			int ph = GLES20.glGetAttribLocation(program, "vPosition");
 			GLES20.glVertexAttribPointer(ph, 2, GLES20.GL_FLOAT, false, 4 * 2, pVertex);
 			GLES20.glEnableVertexAttribArray(ph);
@@ -305,10 +304,10 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			GLES20.glUniform2f(tr, is.translate_x, is.translate_y);
 			int r9 = GLES20.glGetUniformLocation(program, "rot90");
 			GLES20.glUniform1i(r9, is.rotate90 ? 1 : 0);
-			if (is.drawMode == DM_SHARPEN) {
-				int sh = GLES20.glGetUniformLocation(program, "sharpening");
-				GLES20.glUniform1f(sh, is.sharpening);
-			}
+			int isc = GLES20.glGetUniformLocation(program, "texSize");
+			GLES20.glUniform2f(isc, is.width, is.height);
+			int sh = GLES20.glGetUniformLocation(program, "sharpening");
+			GLES20.glUniform1f(sh, is.sharpening); /* It's okay if the shader doesn't have this. */
 
 			GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 			GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, is.textures[0]);
@@ -371,16 +370,6 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		return shader;
 	}
 
-	private int loadFragment(int vshader, String fss) {
-		int fshader = loadShader(GLES20.GL_FRAGMENT_SHADER, fss);
-		int hProgram = GLES20.glCreateProgram();
-		GLES20.glAttachShader(hProgram, vshader);
-		GLES20.glAttachShader(hProgram, fshader);
-		GLES20.glLinkProgram(hProgram);
-		GLES20.glDeleteShader(fshader); /* As long as the program exists, a reference remains. */
-		return hProgram;
-	}
-
 	public void init() { /* Initialize EGL context. */
 		if (eglContext != EGL14.EGL_NO_CONTEXT)
 			deinit();
@@ -425,8 +414,14 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 
 		/* Compile the shaders. */
 		int vshader = loadShader(GLES20.GL_VERTEX_SHADER, vss);
-		for (DrawMode dm : drawModes)
-			dm.program = loadFragment(vshader, dm.source);
+		for (DrawMode dm : drawModes) {
+			int fshader = loadShader(GLES20.GL_FRAGMENT_SHADER, dm.source);
+			dm.program = GLES20.glCreateProgram();
+			GLES20.glAttachShader(dm.program, vshader);
+			GLES20.glAttachShader(dm.program, fshader);
+			GLES20.glLinkProgram(dm.program);
+			GLES20.glDeleteShader(fshader); /* Just decreases refcount. */
+		}
 		GLES20.glDeleteShader(vshader); /* Shader will still live until the programs die. */
 
 		/* Initialize any surfaces we have. */
