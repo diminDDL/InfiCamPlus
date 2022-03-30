@@ -172,8 +172,6 @@ public class MainActivity extends BaseActivity {
 							inputSurface.setSize(infiCam.getWidth(), infiCam.getHeight());
 							sharpOSurface.setSize(infiCam.getWidth(), infiCam.getHeight());
 							sharpISurface.setSize(infiCam.getWidth(), infiCam.getHeight());
-							sharpISurface.getSurfaceTexture().setDefaultBufferSize(
-									infiCam.getWidth(), infiCam.getHeight());
 							handler.removeCallbacks(timedShutter); /* Before stream starts! */
 							infiCam.startStream();
 							handler.postDelayed(timedShutter, shutterIntervalInitial);
@@ -350,9 +348,9 @@ public class MainActivity extends BaseActivity {
 				/* We must call the onFrameAvailable() ourselves, otherwise it waits for this
 				 *   function to exit first.
 				 */
-				sharpenMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
-				surfaceMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
-				outPicture.onFrameAvailable(inputSurface.getSurfaceTexture());
+				sharpenMuxer.onFrameAvailable(inputSurface.surfaceTexture);
+				surfaceMuxer.onFrameAvailable(inputSurface.surfaceTexture);
+				outPicture.onFrameAvailable(inputSurface.surfaceTexture);
 				imgCompressBitmap = outPicture.getBitmap();
 				imgCompressThread.cond.signal();
 				imgCompressThread.lock.unlock();
@@ -363,7 +361,7 @@ public class MainActivity extends BaseActivity {
 				buttonPhoto.setColorFilter(Color.GRAY);
 			} else {
 				/* We use the inputSurface because it has the most relevant timestamp. */
-				sharpenMuxer.onFrameAvailable(inputSurface.getSurfaceTexture());
+				sharpenMuxer.onFrameAvailable(inputSurface.surfaceTexture);
 			}
 
 			/* Now we allow another frame to come in */
@@ -403,11 +401,11 @@ public class MainActivity extends BaseActivity {
 		};
 		surfaceMuxer.inputSurfaces.add(sharpISurface);
 		sharpOSurface =
-				new SurfaceMuxer.OutputSurface(sharpenMuxer, sharpISurface.getSurface(), false);
+				new SurfaceMuxer.OutputSurface(sharpenMuxer, sharpISurface.surface, false);
 		sharpenMuxer.outputSurfaces.add(sharpOSurface);
-		sharpISurface.getSurfaceTexture().setOnFrameAvailableListener(surfaceMuxer);
+		sharpISurface.surfaceTexture.setOnFrameAvailableListener(surfaceMuxer);
 
-		infiCam.setSurface(inputSurface.getSurface());
+		infiCam.setSurface(inputSurface.surface);
 		cameraView.getHolder().addCallback(surfaceHolderCallback);
 
 		/* Create and set up the OverlayMuxers. */
@@ -446,7 +444,7 @@ public class MainActivity extends BaseActivity {
 				if (scale >= 10.0f)
 					scale = 10.0f;
 				overlayData.scale = scale;
-				sharpISurface.setScale(scale, scale);
+				sharpISurface.scale_x = sharpISurface.scale_y = scale;
 				messageView.shortMessage(getString(R.string.msg_zoom, (int) (scale * 100.0f)));
 				zl.setText(getString(R.string.zoomlevel, (int) (scale * 100.0f)));
 				return false;
@@ -678,7 +676,7 @@ public class MainActivity extends BaseActivity {
 		orientation = wm.getDefaultDisplay().getRotation();
 		ConstraintLayout.LayoutParams rlp = (ConstraintLayout.LayoutParams) rangeSlider.getLayoutParams();
 		if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180) {
-			sharpISurface.setRotate90(true);
+			sharpISurface.rotate90 = true;
 			buttonsLeft.setOrientation(LinearLayout.HORIZONTAL);
 			buttonsRight.setOrientation(LinearLayout.HORIZONTAL);
 			buttonsLeftLayout.width = ViewGroup.LayoutParams.MATCH_PARENT;
@@ -710,7 +708,7 @@ public class MainActivity extends BaseActivity {
 			rangeSlider.setLayoutParams(rlp);
 			rangeSlider.setVertical(false);
 		} else {
-			sharpISurface.setRotate90(false);
+			sharpISurface.rotate90 = false;
 			buttonsLeft.setOrientation(LinearLayout.VERTICAL);
 			buttonsRight.setOrientation(LinearLayout.VERTICAL);
 			buttonsLeftLayout.width = ViewGroup.LayoutParams.WRAP_CONTENT;
@@ -753,10 +751,10 @@ public class MainActivity extends BaseActivity {
 					orientation == Surface.ROTATION_180;
 			if (orientation == Surface.ROTATION_270 || orientation == Surface.ROTATION_180) {
 				overlayData.rotate = !rotate;
-				sharpISurface.setRotate(!rotate);
+				sharpISurface.rotate = !rotate;
 			} else {
 				overlayData.rotate = rotate;
-				sharpISurface.setRotate(rotate);
+				sharpISurface.rotate = rotate;
 			}
 			/* Sometimes full 180 rotation doesn't trigger onSurfaceChanged() so we update the rect
 			 *   here too.
@@ -873,8 +871,8 @@ public class MainActivity extends BaseActivity {
 			handler.postDelayed(timedShutter, shutterInterval);
 	}
 
-	public void setIMode(int value) { sharpISurface.setIMode(value); }
-	public void setSharpening(float value) { inputSurface.setSharpening(value); }
+	public void setIMode(int value) { sharpISurface.imode = value; }
+	public void setSharpening(float value) { inputSurface.sharpening = value; }
 
 	public void setRecordAudio(boolean value) { recordAudio = value; }
 
@@ -915,7 +913,7 @@ public class MainActivity extends BaseActivity {
 	public void setMirror(boolean value) {
 		synchronized (frameLock) {
 			overlayData.mirror = value;
-			sharpISurface.setMirror(value);
+			sharpISurface.mirror = value;
 		}
 	}
 

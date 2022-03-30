@@ -83,7 +83,6 @@ public class Overlay {
 	public void setSize(int w, int h) {
 		width = w;
 		height = h;
-		surface.getSurfaceTexture().setDefaultBufferSize(w, h);
 		surface.setSize(w, h);
 	}
 
@@ -131,7 +130,7 @@ public class Overlay {
 
 	@SuppressLint("DefaultLocale")
 	public void draw(Data d) {
-		Canvas cvs = surface.getSurface().lockCanvas(null);
+		Canvas cvs = surface.surface.lockCanvas(null);
 		cvs.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
 		if (d.showCenter) { // TODO this is off by a pixel and we should check the other points too
@@ -204,7 +203,7 @@ public class Overlay {
 			}
 		}
 
-		surface.getSurface().unlockCanvasAndPost(cvs);
+		surface.surface.unlockCanvasAndPost(cvs);
 	}
 
 	private void drawPalette(Canvas cvs, int x1, int y1, int x2, int y2, int[] palette) {

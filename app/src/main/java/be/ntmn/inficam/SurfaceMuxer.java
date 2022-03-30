@@ -81,15 +81,16 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 
 	public static class InputSurface {
 		private SurfaceMuxer surfaceMuxer;
-		private SurfaceTexture surfaceTexture;
-		private Surface surface;
+		public SurfaceTexture surfaceTexture;
+		public Surface surface;
 		private final int[] textures = new int[1];
 		private boolean initialized = false;
-		private int imode, width = 1, height = 1;
-		private boolean rotate = false, mirror = false, rotate90 = false;
-		private float scale_x = 1.0f, scale_y = 1.0f;
-		private float translate_x = 0.0f, translate_y = 0.0f;
-		private float sharpening = 0.0f;
+		private int width = 1, height = 1;
+		public int imode;
+		public boolean rotate = false, mirror = false, rotate90 = false;
+		public float scale_x = 1.0f, scale_y = 1.0f;
+		public float translate_x = 0.0f, translate_y = 0.0f;
+		public float sharpening = 0.0f;
 
 		public InputSurface(SurfaceMuxer muxer, int imode) {
 			surfaceMuxer = muxer;
@@ -98,26 +99,11 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			init();
 		}
 
-		public void setIMode(int imode) { this.imode = imode; }
-		public void setSharpening(float s) { sharpening = s; }
-
-		public void setScale(float x, float y) {
-			scale_x = x;
-			scale_y = y;
-		}
-
 		public void setSize(int w, int h) {
 			width = w;
 			height = h;
+			surfaceTexture.setDefaultBufferSize(w, h);
 		}
-
-		public void setRotate(boolean rotate) { this.rotate = rotate; }
-		public void setRotate90(boolean rotate90) { this.rotate90 = rotate90; }
-		public void setMirror(boolean mirror) { this.mirror = mirror; }
-
-		public int getTexture() { return textures[0]; }
-		public SurfaceTexture getSurfaceTexture() { return surfaceTexture; }
-		public Surface getSurface() { return surface; }
 
 		/* Override this to change target area for drawing. */
 		public void getRect(Rect r, int w, int h) { /* Git rekt lol. */
@@ -149,7 +135,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			/* After attaching to a new context we must call updateTexImage() or the
 			 *   OnFrameAvailableListener may stop being called for some reason.
 			 */
-			getSurfaceTexture().updateTexImage();
+			surfaceTexture.updateTexImage();
 			initialized = true;
 		}
 
@@ -324,7 +310,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			}
 
 			GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-			GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, is.getTexture());
+			GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, is.textures[0]);
 			GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
 		}
 		GLES20.glFlush();
@@ -338,7 +324,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, eglContext);
 		for (int i = 0; i < inputSurfaces.size(); ++i) {
 			InputSurface is = inputSurfaces.get(i);
-			is.getSurfaceTexture().updateTexImage();
+			is.surfaceTexture.updateTexImage();
 		}
 		for (int i = 0; i < outputSurfaces.size(); ++i) {
 			OutputSurface os = outputSurfaces.get(i);

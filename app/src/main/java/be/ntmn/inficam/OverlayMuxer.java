@@ -22,7 +22,7 @@ public class OverlayMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	public OverlayMuxer(Context ctx, Overlay.Data d) {
 		muxer = new SurfaceMuxer(ctx);
 		inputIs = new SurfaceMuxer.InputSurface(muxer, SurfaceMuxer.IMODE_LINEAR);
-		inputIs.getSurfaceTexture().setOnFrameAvailableListener(this);
+		inputIs.surfaceTexture.setOnFrameAvailableListener(this);
 		overlaySurface = new SurfaceMuxer.InputSurface(muxer, SurfaceMuxer.IMODE_LINEAR);
 		overlay = new Overlay(ctx, overlaySurface);
 		muxer.inputSurfaces.add(inputIs);
@@ -34,8 +34,8 @@ public class OverlayMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	public void deinit() { muxer.deinit(); }
 
 	public void setSize(int w, int h) {
-		inputIs.getSurfaceTexture().setDefaultBufferSize(w, h);
-		overlaySurface.getSurfaceTexture().setDefaultBufferSize(w, h);
+		inputIs.setSize(w, h);
+		overlaySurface.setSize(w, h);
 		overlay.setSize(w, h);
 		for (SurfaceMuxer.OutputSurface os : muxer.outputSurfaces)
 			os.setSize(w, h);
@@ -58,7 +58,7 @@ public class OverlayMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			inputOs.release();
 		inputOs = null;
 		if (im != null) {
-			inputOs = new SurfaceMuxer.OutputSurface(im, inputIs.getSurface(), false);
+			inputOs = new SurfaceMuxer.OutputSurface(im, inputIs.surface, false);
 			inputOs.setSize(width, height);
 			im.outputSurfaces.add(inputOs);
 		}
@@ -76,7 +76,7 @@ public class OverlayMuxer implements SurfaceTexture.OnFrameAvailableListener {
 
 	@Override
 	public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-		if (overlaySurface.getSurface() == null) /* In case we get called after onDestroy(). */
+		if (overlaySurface.surface == null) /* In case we get called after onDestroy(). */
 			return;
 		overlay.draw(data);
 		muxer.onFrameAvailable(surfaceTexture);
