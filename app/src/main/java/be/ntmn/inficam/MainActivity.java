@@ -206,7 +206,7 @@ public class MainActivity extends BaseActivity {
 		@Override
 		public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
 			outScreen =
-					new SurfaceMuxer.OutputSurface(surfaceMuxer, surfaceHolder.getSurface(), false);
+					new SurfaceMuxer.OutputSurface(surfaceMuxer, surfaceHolder.getSurface());
 		}
 
 		@Override
@@ -222,7 +222,7 @@ public class MainActivity extends BaseActivity {
 		}
 	};
 
-	private final NormalCamera normalCamera = new NormalCamera() {
+	/*private final NormalCamera normalCamera = new NormalCamera() {
 		@Override
 		public void onStarted() { surfaceMuxer.inputSurfaces.add(videoSurface); }
 
@@ -234,7 +234,7 @@ public class MainActivity extends BaseActivity {
 			surfaceMuxer.inputSurfaces.remove(videoSurface);
 			messageView.showMessage(message);
 		}
-	};
+	};*/
 
 	/* If the orientation changes between 0 and 180 or 90 and 270 suddenly, onDisplayChanged()
 	 *   is called, but not onConfigurationChanged().
@@ -332,15 +332,17 @@ public class MainActivity extends BaseActivity {
 				w / 2 - sw / 2 + sw, h / 2 - sh / 2 + sh);
 	}
 
-	private void drawFrame(SurfaceMuxer.OutputSurface os, Overlay overlay) {
+	private void drawFrame(SurfaceMuxer.OutputSurface os, Overlay overlay, boolean swap) {
 		getRect(rect, os.width, os.height);
 		os.clear(0, 0, 0, 1);
 		thruSurface.draw(os, rect.left, rect.top, rect.width(), rect.height());
 		overlay.draw(overlayData, rect);
 		overlay.surface.draw(os);
 		// TODO draw normal video if needed
-		os.setPresentationTime(inputSurface.surfaceTexture.getTimestamp());
-		os.swapBuffers();
+		if (swap) {
+			os.setPresentationTime(inputSurface.surfaceTexture.getTimestamp());
+			os.swapBuffers();
+		}
 	}
 
 	private void handleFrame() {
@@ -355,42 +357,36 @@ public class MainActivity extends BaseActivity {
 			 *   meaning what's in the SurfaceTexture buffers after the updateTexImage() calls
 			 *   surfaceMuxer should do.
 			 */
+			inputSurface.draw(thruSurface);
+			thruSurface.swapBuffers();
+
 			if (takePic && imgCompressThread == null) {
 				messageView.showMessage(R.string.msg_permdenied_storage);
 			} else if (takePic && imgCompressThread.lock.tryLock()) {
-				// TODO update this for new SurfaceMuxer stuff
-				final Rect r = new Rect();
 				int w = picWidth, h = picHeight;
 				if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180) {
 					int tmp = w;
 					w = h;
 					h = tmp;
 				}
-				// TODO? thruSurface.getRect(r, w, h);
-				// TODO
-				/*outPicture.setSize(w, h);
-				outPicture.setRect(r);
-				outPicture.attachInput(surfaceMuxer);*/
-				/* We must call the onFrameAvailable() ourselves, otherwise it waits for this
-				 *   function to exit first.
-				 */
-				//TODO imgCompressBitmap = outPicture.getBitmap();
+				SurfaceMuxer.OutputSurface outPicture =
+						new SurfaceMuxer.OutputSurface(surfaceMuxer, null, w, h);
+				overlayPicture.setSize(w, h);
+				drawFrame(outPicture, overlayPicture, false);
+				imgCompressBitmap = outPicture.getBitmap();
+				outPicture.release();
 				imgCompressThread.cond.signal();
 				imgCompressThread.lock.unlock();
-				//TODO outPicture.attachInput(null);
 				takePic = false;
 				messageView.shortMessage(R.string.msg_captured);
 				buttonPhoto.setEnabled(false);
 				buttonPhoto.setColorFilter(Color.GRAY);
-			} else {
-				// TODO this sometimes gets called after EGL context is gone, we should avoid that
-				inputSurface.draw(thruSurface);
-				thruSurface.swapBuffers();
-				if (outScreen != null)
-					drawFrame(outScreen, overlayScreen);
-				if (outRecord != null)
-					drawFrame(outRecord, overlayRecord);
 			}
+
+			if (outScreen != null)
+				drawFrame(outScreen, overlayScreen, true);
+			if (outRecord != null)
+				drawFrame(outRecord, overlayRecord, true);
 
 			/* Now we allow another frame to come in */
 			frameLock.notify();
@@ -615,10 +611,6 @@ public class MainActivity extends BaseActivity {
 	protected void onResume() {
 		super.onResume();
 		surfaceMuxer.init();
-		// TODO
-		/*outScreen.init();
-		outRecord.init();
-		outPicture.init();*/
 
 		// TODO this is just test for interpolation
 		/*SurfaceMuxer.InputSurface test = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_SHARPEN);
@@ -639,10 +631,6 @@ public class MainActivity extends BaseActivity {
 
 	@Override
 	protected void onPause() {
-		// TODO
-		/*outScreen.deinit();
-		outRecord.deinit();
-		outPicture.deinit();*/
 		surfaceMuxer.deinit();
 		takePic = false;
 		super.onPause();
@@ -823,7 +811,7 @@ public class MainActivity extends BaseActivity {
 	private void _startRecording(boolean recordAudio) {
 		try {
 			Surface rsurface = recorder.start(this, vidWidth, vidHeight, recordAudio);
-			outRecord = new SurfaceMuxer.OutputSurface(surfaceMuxer, rsurface, false);
+			outRecord = new SurfaceMuxer.OutputSurface(surfaceMuxer, rsurface);
 			outRecord.setSize(vidWidth, vidHeight);
 			overlayRecord.setSize(vidWidth, vidHeight);
 			ImageButton buttonVideo = findViewById(R.id.buttonVideo);
