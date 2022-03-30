@@ -317,21 +317,30 @@ public class MainActivity extends BaseActivity {
 		}
 	};
 
-	/* Git rekt! */
-	public void getRect43(Rect r, int w, int h) {
-		int sw = w, sh = h, iw = 4, ih = 3;
-		/* Make size 4:3 aspect ratio for the thermal image, I'd check the actual camera
-		 *   dimensions but this function gets used before the camera is connected.
-		 */
+	private void getRect(Rect r, int w, int h) { /* Git rekt! */
+		int sw = w, sh = h, iw = infiCam.getWidth(), ih = infiCam.getHeight();
+		if (w == 0 || ih == 0) { iw = 4; ih = 3; }
 		if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180) {
-			ih = 4;
-			iw = 3;
+			ih ^= iw;
+			iw ^= ih;
+			ih ^= iw;
 		}
 		if (ih * w / iw > h)
 			sw = iw * h / ih;
 		else sh = ih * w / iw;
 		r.set(w / 2 - sw / 2, h / 2 - sh / 2,
 				w / 2 - sw / 2 + sw, h / 2 - sh / 2 + sh);
+	}
+
+	private void drawFrame(SurfaceMuxer.OutputSurface os, Overlay overlay) {
+		getRect(rect, os.width, os.height);
+		os.clear(0, 0, 0, 1);
+		thruSurface.draw(os, rect.left, rect.top, rect.width(), rect.height());
+		overlay.draw(overlayData, rect);
+		overlay.surface.draw(os);
+		// TODO draw normal video if needed
+		os.setPresentationTime(inputSurface.surfaceTexture.getTimestamp());
+		os.swapBuffers();
 	}
 
 	private void handleFrame() {
@@ -374,30 +383,13 @@ public class MainActivity extends BaseActivity {
 				buttonPhoto.setEnabled(false);
 				buttonPhoto.setColorFilter(Color.GRAY);
 			} else {
-				/* We use the inputSurface because it has the most relevant timestamp. */
 				// TODO this sometimes gets called after EGL context is gone, we should avoid that
 				inputSurface.draw(thruSurface);
 				thruSurface.swapBuffers();
-				if (outScreen != null) {
-					getRect43(rect, outScreen.width, outScreen.height);
-					outScreen.clear(0, 0, 0, 1);
-					thruSurface.draw(outScreen, rect.left, rect.top, rect.width(), rect.height());
-					overlayScreen.draw(overlayData, rect);
-					overlayScreen.surface.draw(outScreen);
-					// TODO draw normal video if needed
-					outScreen.swapBuffers();
-				}
-				// TODO video recording
-				if (outRecord != null) {
-					getRect43(rect, outRecord.width, outRecord.height);
-					outRecord.clear(0, 0, 0, 1);
-					thruSurface.draw(outRecord, rect.left, rect.top, rect.width(), rect.height());
-					overlayRecord.draw(overlayData, rect);
-					overlayRecord.surface.draw(outRecord);
-					// TODO draw normal video if needed
-					outRecord.setPresentationTime(inputSurface.surfaceTexture.getTimestamp());
-					outRecord.swapBuffers();
-				}
+				if (outScreen != null)
+					drawFrame(outScreen, overlayScreen);
+				if (outRecord != null)
+					drawFrame(outRecord, overlayRecord);
 			}
 
 			/* Now we allow another frame to come in */
