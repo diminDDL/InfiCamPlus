@@ -379,9 +379,9 @@ public class MainActivity extends BaseActivity {
 		sharpenMuxer = new SurfaceMuxer(this);
 
 		/* Create and set up the InputSurface for thermal image, imode setting is not final. */
-		inputSurface = new SurfaceMuxer.InputSurface(sharpenMuxer, SurfaceMuxer.IMODE_SHARPEN);
+		inputSurface = new SurfaceMuxer.InputSurface(sharpenMuxer, SurfaceMuxer.DM_SHARPEN);
 		sharpenMuxer.inputSurfaces.add(inputSurface);
-		sharpISurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_LINEAR) {
+		sharpISurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.DM_LINEAR) {
 			@Override
 			public void getRect(Rect r, int w, int h) {
 				int sw = w, sh = h, iw = 4, ih = 3;
@@ -415,7 +415,7 @@ public class MainActivity extends BaseActivity {
 		outPicture = new OverlayMuxer(this, overlayData);
 
 		/* We use it later. */
-		videoSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_LINEAR);
+		videoSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.DM_LINEAR);
 
 		/* This one will run every frame. */
 		infiCam.setFrameCallback(frameCallback);
@@ -871,7 +871,7 @@ public class MainActivity extends BaseActivity {
 			handler.postDelayed(timedShutter, shutterInterval);
 	}
 
-	public void setIMode(int value) { sharpISurface.imode = value; }
+	public void setIMode(int value) { sharpISurface.drawMode = value; }
 	public void setSharpening(float value) { inputSurface.sharpening = value; }
 
 	public void setRecordAudio(boolean value) { recordAudio = value; }

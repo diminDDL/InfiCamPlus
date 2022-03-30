@@ -57,11 +57,24 @@ import java.util.ArrayList;
  *   longer in use.
  */
 public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
-	public final static int IMODE_NEAREST = 0;
-	public final static int IMODE_LINEAR = 1;
-	public final static int IMODE_CUBIC = 2;
-	public final static int IMODE_SHARPEN = 3; /* Not really an interpolation mode -_o_-. */
-	public final static int IMODE_EDGE = 4; /* Neither is this. */
+	private static class DrawMode {
+		private String file, source;
+		private int program;
+		private DrawMode(String file) { this.file = file; }
+	}
+
+	public final static int DM_NEAREST = 0;
+	public final static int DM_LINEAR = 1;
+	public final static int DM_CUBIC = 2;
+	public final static int DM_SHARPEN = 3;
+	public final static int DM_EDGE = 4;
+	private final DrawMode[] drawModes = {
+			new DrawMode("fnearest.glsl"),
+			new DrawMode("flinear.glsl"),
+			new DrawMode("fcubic.glsl"),
+			new DrawMode("fsharpen.glsl"),
+			new DrawMode("fedge.glsl")
+	};
 
 	public final ArrayList<InputSurface> inputSurfaces = new ArrayList<>();
 	public final ArrayList<OutputSurface> outputSurfaces = new ArrayList<>();
@@ -71,8 +84,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	private EGLDisplay eglDisplay = EGL14.EGL_NO_DISPLAY;
 	private EGLContext eglContext = EGL14.EGL_NO_CONTEXT;
 	private EGLConfig eglConfig;
-	private int hProgram_nearest, hProgram_linear, hProgram_cubic, hProgram_sharpen, hProgram_edge;
-	private final String vss, fss_nearest, fss_linear, fss_cubic, fss_sharpen, fss_edge;
+	private final String vss;
 	private final Rect outRect = new Rect();
 	private final FloatBuffer pTexCoord =
 			ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
@@ -86,15 +98,15 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		private final int[] textures = new int[1];
 		private boolean initialized = false;
 		private int width = 1, height = 1;
-		public int imode;
+		public int drawMode;
 		public boolean rotate = false, mirror = false, rotate90 = false;
 		public float scale_x = 1.0f, scale_y = 1.0f;
 		public float translate_x = 0.0f, translate_y = 0.0f;
 		public float sharpening = 0.0f;
 
-		public InputSurface(SurfaceMuxer muxer, int imode) {
+		public InputSurface(SurfaceMuxer muxer, int dm) {
 			surfaceMuxer = muxer;
-			this.imode = imode;
+			drawMode = dm;
 			muxer.allSurfaces.add(this);
 			init();
 		}
@@ -242,11 +254,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 	public SurfaceMuxer(Context ctx) {
 		try {
 			vss = Util.readStringAsset(ctx, "vshader.glsl");
-			fss_nearest = Util.readStringAsset(ctx, "fnearest.glsl");
-			fss_linear = Util.readStringAsset(ctx, "flinear.glsl");
-			fss_cubic = Util.readStringAsset(ctx, "fcubic.glsl");
-			fss_sharpen = Util.readStringAsset(ctx, "fsharpen.glsl");
-			fss_edge = Util.readStringAsset(ctx, "fedge.glsl");
+			for (DrawMode dm : drawModes)
+				dm.source = Util.readStringAsset(ctx, dm.file);
 		} catch (IOException e) {
 			/* Crash to inform the user I done did a stupid. */
 			throw new RuntimeException(e);
@@ -275,15 +284,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			is.getRect(outRect, w, h);
 			GLES20.glViewport(outRect.left, h - outRect.bottom, outRect.width(), outRect.height());
 
-			int program = hProgram_nearest;
-			if (is.imode == IMODE_LINEAR)
-				program = hProgram_linear;
-			if (is.imode == IMODE_CUBIC)
-				program = hProgram_cubic;
-			if (is.imode == IMODE_SHARPEN)
-				program = hProgram_sharpen;
-			if (is.imode == IMODE_EDGE)
-				program = hProgram_edge;
+			int program = drawModes[is.drawMode].program;
 			GLES20.glUseProgram(program);
 			int isc = GLES20.glGetUniformLocation(program, "texSize");
 			GLES20.glUniform2f(isc, is.width, is.height);
@@ -304,7 +305,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			GLES20.glUniform2f(tr, is.translate_x, is.translate_y);
 			int r9 = GLES20.glGetUniformLocation(program, "rot90");
 			GLES20.glUniform1i(r9, is.rotate90 ? 1 : 0);
-			if (is.imode == IMODE_SHARPEN) {
+			if (is.drawMode == DM_SHARPEN) {
 				int sh = GLES20.glGetUniformLocation(program, "sharpening");
 				GLES20.glUniform1f(sh, is.sharpening);
 			}
@@ -424,11 +425,8 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 
 		/* Compile the shaders. */
 		int vshader = loadShader(GLES20.GL_VERTEX_SHADER, vss);
-		hProgram_nearest = loadFragment(vshader, fss_nearest);
-		hProgram_linear = loadFragment(vshader, fss_linear);
-		hProgram_cubic = loadFragment(vshader, fss_cubic);
-		hProgram_sharpen = loadFragment(vshader, fss_sharpen);
-		hProgram_edge = loadFragment(vshader, fss_edge);
+		for (DrawMode dm : drawModes)
+			dm.program = loadFragment(vshader, dm.source);
 		GLES20.glDeleteShader(vshader); /* Shader will still live until the programs die. */
 
 		/* Initialize any surfaces we have. */

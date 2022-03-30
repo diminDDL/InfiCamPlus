@@ -97,9 +97,9 @@ public class SettingsMain extends Settings {
 			@Override
 			void onSet(int i) {
 				final int[] imodes = new int[] {
-						SurfaceMuxer.IMODE_NEAREST,
-						SurfaceMuxer.IMODE_LINEAR,
-						SurfaceMuxer.IMODE_CUBIC
+						SurfaceMuxer.DM_NEAREST,
+						SurfaceMuxer.DM_LINEAR,
+						SurfaceMuxer.DM_CUBIC
 				};
 				act.setIMode(imodes[i]);
 			}
