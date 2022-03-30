@@ -34,7 +34,7 @@ public class Overlay {
 		public int tempUnit = Util.TEMPUNIT_CELSIUS;
 	}
 
-	private final SurfaceMuxer.InputSurface surface;
+	public final SurfaceMuxer.InputSurface surface;
 	private final Paint paint;
 	private final Paint paintOutline;
 	private final Paint paintTextOutline;

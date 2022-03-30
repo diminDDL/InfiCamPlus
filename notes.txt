@@ -41,8 +41,6 @@ Quick description of what for the Java classes are:
 	- MessageView       a thing for showing messages on the screen, alike Androids Toast stuff
 	- NormalCamera      wrapper for using the visible light camera builtin to the phone
 	- Overlay           drawing temperature measurements on the thermal image etc
-	- OverlayMuxer      combines SurfaceMuxer and Overlay which we do separate for screen/video/pic
-	                      so that the Overlay can have the exact resolution of the output
 	- Palette           generating palettes for the thermal image
 	- Settings          abstract class used to make the various settings windows
 	- SettingsMain      the main settings window

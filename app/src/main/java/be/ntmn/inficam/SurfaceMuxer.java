@@ -22,6 +22,8 @@ import java.util.ArrayList;
 
 /* SurfaceMuxer
  *
+ * TODO not all of this is relevant anymore
+ *
  * Our native code can't write directly to the Surface that we can get from a MediaCodec or
  *   MediaRecorder for whatever reason (the documentation states: "The Surface must be rendered
  *   with a hardware-accelerated API, such as OpenGL ES. Surface.lockCanvas(android.graphics.Rect)
@@ -56,7 +58,7 @@ import java.util.ArrayList;
  *   SurfaceMuxer.release(), which also should be called when the SurfaceMuxer instance is no
  *   longer in use.
  */
-public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
+public class SurfaceMuxer {
 	private static class DrawMode {
 		private final String file;
 		private String source;
@@ -179,7 +181,9 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			surfaceTexture = null;
 		}
 
-		public void draw(OutputSurface os, boolean flipy) { // TODO the flipy thing is kinda ugly
+		public void draw(OutputSurface os) {
+			if (surfaceMuxer.eglContext == EGL14.EGL_NO_CONTEXT)
+				return;
 			os.makeCurrent(); /* We need the context to be current before updateTexImage(). */
 			surfaceTexture.updateTexImage(); /* Call might be redundant, probably don't care. */
 			Rect outRect = surfaceMuxer.outRect;
@@ -202,7 +206,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			int sc = GLES20.glGetUniformLocation(program, "scale");
 			float sx = scale_x * (mirror ? -1.0f : 1.0f) * (rotate ? -1.0f : 1.0f);
 			float sy = scale_y * (rotate ? -1.0f : 1.0f);
-			GLES20.glUniform2f(sc, sx, sy * (flipy ? -1.0f : 1.0f));
+			GLES20.glUniform2f(sc, sx, sy);
 			int tr = GLES20.glGetUniformLocation(program, "translate");
 			GLES20.glUniform2f(tr, translate_x, translate_y);
 			int r9 = GLES20.glGetUniformLocation(program, "rot90");
@@ -221,6 +225,9 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 			draw(os);
 			os.swapBuffers();
 		}
+
+		public void draw(ThroughSurface ts) { draw(ts.outputSurface); }
+		public void drawSwap(ThroughSurface ts) { drawSwap(ts.outputSurface); }
 	}
 
 	public static class OutputSurface {
@@ -267,12 +274,16 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		}
 
 		public void makeCurrent() {
+			if (surfaceMuxer.eglContext == EGL14.EGL_NO_CONTEXT)
+				return;
 			EGL14.eglMakeCurrent(surfaceMuxer.eglDisplay, eglSurface, eglSurface,
 					surfaceMuxer.eglContext);
 			surfaceMuxer.checkEglError("eglMakeCurrent");
 		}
 
 		public void swapBuffers() {
+			if (surfaceMuxer.eglContext == EGL14.EGL_NO_CONTEXT)
+				return;
 			EGL14.eglSwapBuffers(surfaceMuxer.eglDisplay, eglSurface);
 			surfaceMuxer.checkEglError("eglSwapBuffers");
 		}
@@ -292,6 +303,12 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 				surface.release();
 			surfaceMuxer = null;
 			surface = null;
+		}
+
+		public void clear(float r, float g, float b, float a) {
+			makeCurrent();
+			GLES20.glClearColor(r, g, b, a);
+			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 		}
 	}
 
@@ -338,7 +355,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		init();
 	}
 
-	private void render(OutputSurface os, boolean flipy, long time) {
+	private void render(OutputSurface os, long time) {
 		// TODO this is probably not needed
 		os.makeCurrent();
 		GLES20.glClearColor(0, 0, 0, 1);
@@ -346,21 +363,12 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 
 		/* We use an oldschool loop because for (... : ...) causes an allocation to happen. */
 		for (int i = 0; i < inputSurfaces.size(); ++i)
-			inputSurfaces.get(i).draw(os, flipy);
+			inputSurfaces.get(i).draw(os);
 
 		GLES20.glFlush(); // TODO only needed for non-double-buffered
 		GLES20.glFinish(); // TODO only needed for non-double-buffered
 		os.setPresentationTime(time);
 		os.swapBuffers();
-	}
-
-	@Override
-	public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-		if (eglContext == EGL14.EGL_NO_CONTEXT)
-			return;
-		/* We use oldschool for loops because for (... : ...) causes an allocation to happen. */
-		for (int i = 0; i < outputSurfaces.size(); ++i)
-			render(outputSurfaces.get(i), false, surfaceTexture.getTimestamp());
 	}
 
 	public Bitmap getBitmap(int w, int h) {
@@ -377,6 +385,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		//render(w, h, true); // TODO
 		GLES20.glReadPixels(0, 0, w, h, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buf);
 		EGL14.eglDestroySurface(eglDisplay, surface);
+		// TODO flip vertically
 		ret.copyPixelsFromBuffer(buf);
 		return ret;
 	}

@@ -49,12 +49,11 @@ public class MainActivity extends BaseActivity {
 	public final InfiCam infiCam = new InfiCam();
 
 	private SurfaceMuxer surfaceMuxer;
-	private SurfaceMuxer sharpenMuxer; /* We sharpen separately so we can do it lo-res. */
 	private SurfaceMuxer.InputSurface inputSurface; /* Input surface for the thermal image. */
-	private SurfaceMuxer.OutputSurface sharpOSurface; /* From sharpenMuxer. */
-	private SurfaceMuxer.InputSurface sharpISurface; /* To outputMuxer. */
+	private SurfaceMuxer.ThroughSurface thruSurface; /* We sharpen separately to do it lo-res. */
 	private SurfaceMuxer.InputSurface videoSurface; /* To draw video from the normal camera. */
-	private OverlayMuxer outScreen, outRecord, outPicture;
+	private Overlay overlayScreen, overlayRecord, overlayPicture;
+	private SurfaceMuxer.OutputSurface outScreen;
 	private final Overlay.Data overlayData = new Overlay.Data();
 	private int range = 0;
 
@@ -170,8 +169,7 @@ public class MainActivity extends BaseActivity {
 							infiCam.connect(conn.getFileDescriptor());
 							/* Size is only important for cubic interpolation. */
 							inputSurface.setSize(infiCam.getWidth(), infiCam.getHeight());
-							sharpOSurface.setSize(infiCam.getWidth(), infiCam.getHeight());
-							sharpISurface.setSize(infiCam.getWidth(), infiCam.getHeight());
+							thruSurface.setSize(infiCam.getWidth(), infiCam.getHeight());
 							handler.removeCallbacks(timedShutter); /* Before stream starts! */
 							infiCam.startStream();
 							handler.postDelayed(timedShutter, shutterIntervalInitial);
@@ -207,20 +205,23 @@ public class MainActivity extends BaseActivity {
 	private final SurfaceHolder.Callback surfaceHolderCallback = new SurfaceHolder.Callback() {
 		@Override
 		public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
-			outScreen.setOutputSurface(surfaceHolder.getSurface());
+			outScreen =
+					new SurfaceMuxer.OutputSurface(surfaceMuxer, surfaceHolder.getSurface(), false);
 		}
 
 		@Override
 		public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int w, int h) {
 			final Rect r = new Rect();
-			sharpISurface.getRect(r, w, h);
+			thruSurface.getRect(r, w, h);
 			outScreen.setSize(w, h);
-			outScreen.setRect(r);
+			overlayScreen.setSize(w, h);
+			overlayScreen.setRect(r);
 		}
 
 		@Override
 		public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
-			outScreen.setOutputSurface(null);
+			outScreen.release();
+			outScreen = null;
 		}
 	};
 
@@ -334,6 +335,7 @@ public class MainActivity extends BaseActivity {
 			if (takePic && imgCompressThread == null) {
 				messageView.showMessage(R.string.msg_permdenied_storage);
 			} else if (takePic && imgCompressThread.lock.tryLock()) {
+				// TODO update this for new SurfaceMuxer stuff
 				final Rect r = new Rect();
 				int w = picWidth, h = picHeight;
 				if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180) {
@@ -341,27 +343,35 @@ public class MainActivity extends BaseActivity {
 					w = h;
 					h = tmp;
 				}
-				sharpISurface.getRect(r, w, h);
-				outPicture.setSize(w, h);
+				thruSurface.getRect(r, w, h);
+				// TODO
+				/*outPicture.setSize(w, h);
 				outPicture.setRect(r);
-				outPicture.attachInput(surfaceMuxer);
+				outPicture.attachInput(surfaceMuxer);*/
 				/* We must call the onFrameAvailable() ourselves, otherwise it waits for this
 				 *   function to exit first.
 				 */
-				sharpenMuxer.onFrameAvailable(inputSurface.surfaceTexture);
-				surfaceMuxer.onFrameAvailable(inputSurface.surfaceTexture);
-				outPicture.onFrameAvailable(inputSurface.surfaceTexture);
-				imgCompressBitmap = outPicture.getBitmap();
+				//TODO imgCompressBitmap = outPicture.getBitmap();
 				imgCompressThread.cond.signal();
 				imgCompressThread.lock.unlock();
-				outPicture.attachInput(null);
+				//TODO outPicture.attachInput(null);
 				takePic = false;
 				messageView.shortMessage(R.string.msg_captured);
 				buttonPhoto.setEnabled(false);
 				buttonPhoto.setColorFilter(Color.GRAY);
 			} else {
 				/* We use the inputSurface because it has the most relevant timestamp. */
-				sharpenMuxer.onFrameAvailable(inputSurface.surfaceTexture);
+				// TODO this sometimes gets called after EGL context is gone, we should avoid that
+				inputSurface.drawSwap(thruSurface);
+				if (outScreen != null) {
+					outScreen.clear(0, 0, 0, 1);
+					thruSurface.draw(outScreen);
+					overlayScreen.draw(overlayData);
+					overlayScreen.surface.draw(outScreen);
+					// TODO draw normal video if needed
+					outScreen.swapBuffers();
+				}
+				// TODO video recording
 			}
 
 			/* Now we allow another frame to come in */
@@ -376,12 +386,10 @@ public class MainActivity extends BaseActivity {
 		cameraView = findViewById(R.id.cameraView);
 		messageView = findViewById(R.id.message);
 		surfaceMuxer = new SurfaceMuxer(this);
-		sharpenMuxer = new SurfaceMuxer(this);
 
 		/* Create and set up the InputSurface for thermal image, imode setting is not final. */
-		inputSurface = new SurfaceMuxer.InputSurface(sharpenMuxer, SurfaceMuxer.DM_SHARPEN);
-		sharpenMuxer.inputSurfaces.add(inputSurface);
-		sharpISurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.DM_LINEAR) {
+		inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.DM_SHARPEN);
+		thruSurface = new SurfaceMuxer.ThroughSurface(surfaceMuxer, SurfaceMuxer.DM_LINEAR) {
 			@Override
 			public void getRect(Rect r, int w, int h) {
 				int sw = w, sh = h, iw = 4, ih = 3;
@@ -399,20 +407,17 @@ public class MainActivity extends BaseActivity {
 						w / 2 - sw / 2 + sw, h / 2 - sh / 2 + sh);
 			}
 		};
-		surfaceMuxer.inputSurfaces.add(sharpISurface);
-		sharpOSurface =
-				new SurfaceMuxer.OutputSurface(sharpenMuxer, sharpISurface.surface, false);
-		sharpenMuxer.outputSurfaces.add(sharpOSurface);
-		sharpISurface.surfaceTexture.setOnFrameAvailableListener(surfaceMuxer);
 
 		infiCam.setSurface(inputSurface.surface);
 		cameraView.getHolder().addCallback(surfaceHolderCallback);
 
-		/* Create and set up the OverlayMuxers. */
-		outScreen = new OverlayMuxer(this, overlayData);
-		outScreen.attachInput(surfaceMuxer);
-		outRecord = new OverlayMuxer(this, overlayData);
-		outPicture = new OverlayMuxer(this, overlayData);
+		/* Create and set up the Overlays. */
+		overlayScreen = new Overlay(this,
+				new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.DM_LINEAR));
+		overlayRecord = new Overlay(this,
+				new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.DM_LINEAR));
+		overlayPicture = new Overlay(this,
+				new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.DM_LINEAR));
 
 		/* We use it later. */
 		videoSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.DM_LINEAR);
@@ -444,7 +449,7 @@ public class MainActivity extends BaseActivity {
 				if (scale >= 10.0f)
 					scale = 10.0f;
 				overlayData.scale = scale;
-				sharpISurface.scale_x = sharpISurface.scale_y = scale;
+				thruSurface.scale_x = thruSurface.scale_y = scale;
 				messageView.shortMessage(getString(R.string.msg_zoom, (int) (scale * 100.0f)));
 				zl.setText(getString(R.string.zoomlevel, (int) (scale * 100.0f)));
 				return false;
@@ -608,11 +613,11 @@ public class MainActivity extends BaseActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		sharpenMuxer.init();
 		surfaceMuxer.init();
-		outScreen.init();
+		// TODO
+		/*outScreen.init();
 		outRecord.init();
-		outPicture.init();
+		outPicture.init();*/
 
 		// TODO this is just test for interpolation
 		/*SurfaceMuxer.InputSurface test = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_SHARPEN);
@@ -633,11 +638,11 @@ public class MainActivity extends BaseActivity {
 
 	@Override
 	protected void onPause() {
-		outScreen.deinit();
+		// TODO
+		/*outScreen.deinit();
 		outRecord.deinit();
-		outPicture.deinit();
+		outPicture.deinit();*/
 		surfaceMuxer.deinit();
-		sharpenMuxer.deinit();
 		takePic = false;
 		super.onPause();
 	}
@@ -659,7 +664,6 @@ public class MainActivity extends BaseActivity {
 	protected void onDestroy() {
 		outScreen.release();
 		surfaceMuxer.release();
-		sharpenMuxer.release();
 		super.onDestroy();
 	}
 
@@ -676,7 +680,7 @@ public class MainActivity extends BaseActivity {
 		orientation = wm.getDefaultDisplay().getRotation();
 		ConstraintLayout.LayoutParams rlp = (ConstraintLayout.LayoutParams) rangeSlider.getLayoutParams();
 		if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180) {
-			sharpISurface.rotate90 = true;
+			thruSurface.rotate90 = true;
 			buttonsLeft.setOrientation(LinearLayout.HORIZONTAL);
 			buttonsRight.setOrientation(LinearLayout.HORIZONTAL);
 			buttonsLeftLayout.width = ViewGroup.LayoutParams.MATCH_PARENT;
@@ -708,7 +712,7 @@ public class MainActivity extends BaseActivity {
 			rangeSlider.setLayoutParams(rlp);
 			rangeSlider.setVertical(false);
 		} else {
-			sharpISurface.rotate90 = false;
+			thruSurface.rotate90 = false;
 			buttonsLeft.setOrientation(LinearLayout.VERTICAL);
 			buttonsRight.setOrientation(LinearLayout.VERTICAL);
 			buttonsLeftLayout.width = ViewGroup.LayoutParams.WRAP_CONTENT;
@@ -751,19 +755,20 @@ public class MainActivity extends BaseActivity {
 					orientation == Surface.ROTATION_180;
 			if (orientation == Surface.ROTATION_270 || orientation == Surface.ROTATION_180) {
 				overlayData.rotate = !rotate;
-				sharpISurface.rotate = !rotate;
+				thruSurface.rotate = !rotate;
 			} else {
 				overlayData.rotate = rotate;
-				sharpISurface.rotate = rotate;
+				thruSurface.rotate = rotate;
 			}
 			/* Sometimes full 180 rotation doesn't trigger onSurfaceChanged() so we update the rect
 			 *   here too.
 			 */
 			final Rect r = new Rect();
-			sharpISurface.getRect(r, cameraView.getWidth(), cameraView.getHeight());
-			outScreen.setRect(r);
-			sharpISurface.getRect(r, outRecord.getWidth(), outRecord.getHeight());
-			outRecord.setRect(r); /* Also the rect for video recording should be updated. */
+			thruSurface.getRect(r, cameraView.getWidth(), cameraView.getHeight());
+			overlayScreen.setRect(r);
+			// TODO
+			//sharpenSurface.getRect(r, outRecord.getWidth(), outRecord.getHeight());
+			//outRecord.setRect(r); /* Also the rect for video recording should be updated. */
 		}
 	}
 
@@ -826,12 +831,13 @@ public class MainActivity extends BaseActivity {
 	private void _startRecording(boolean recordAudio) {
 		try {
 			final Rect r = new Rect();
-			sharpISurface.getRect(r, vidWidth, vidHeight);
-			outRecord.setSize(vidWidth, vidHeight);
+			thruSurface.getRect(r, vidWidth, vidHeight);
+			// TODO
+			/*outRecord.setSize(vidWidth, vidHeight);
 			outRecord.setRect(r);
-			outRecord.attachInput(surfaceMuxer);
+			outRecord.attachInput(surfaceMuxer);*/
 			Surface rsurface = recorder.start(this, vidWidth, vidHeight, recordAudio);
-			outRecord.setOutputSurface(rsurface);
+			//outRecord.setOutputSurface(rsurface);
 			ImageButton buttonVideo = findViewById(R.id.buttonVideo);
 			buttonVideo.setColorFilter(Color.RED);
 		} catch (IOException e) {
@@ -844,8 +850,9 @@ public class MainActivity extends BaseActivity {
 		ImageButton buttonVideo = findViewById(R.id.buttonVideo);
 		buttonVideo.clearColorFilter();
 		recorder.stop();
-		outRecord.setOutputSurface(null);
-		outRecord.attachInput(null);
+		// TODO
+		/*outRecord.setOutputSurface(null);
+		outRecord.attachInput(null);*/
 	}
 
 	public void updateBatLevel(Intent batteryStatus) {
@@ -871,7 +878,7 @@ public class MainActivity extends BaseActivity {
 			handler.postDelayed(timedShutter, shutterInterval);
 	}
 
-	public void setIMode(int value) { sharpISurface.drawMode = value; }
+	public void setIMode(int value) { thruSurface.drawMode = value; }
 	public void setSharpening(float value) { inputSurface.sharpening = value; }
 
 	public void setRecordAudio(boolean value) { recordAudio = value; }
@@ -913,7 +920,7 @@ public class MainActivity extends BaseActivity {
 	public void setMirror(boolean value) {
 		synchronized (frameLock) {
 			overlayData.mirror = value;
-			sharpISurface.mirror = value;
+			thruSurface.mirror = value;
 		}
 	}
 
