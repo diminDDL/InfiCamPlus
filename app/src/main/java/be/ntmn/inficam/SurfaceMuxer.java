@@ -342,7 +342,7 @@ public class SurfaceMuxer implements SurfaceTexture.OnFrameAvailableListener {
 		}
 		for (int i = 0; i < outputSurfaces.size(); ++i) {
 			OutputSurface os = outputSurfaces.get(i);
-			os.makeCurrent(); // TODO this can happen before surfaces are valid, apparently
+			os.makeCurrent();
 			render(os.width, os.height, false);
 			os.setPresentationTime(surfaceTexture.getTimestamp());
 			os.swapBuffers();

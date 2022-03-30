@@ -141,6 +141,7 @@ TODO normal camera things
 	- showing of normal camera also (and allow choosing which one, rotation)
 	- overlaying normal camera (with edge detect)
 	- option to save separate normal and thermal image side by side (what about video?)
+	- this will be useful https://tomoima525.medium.com/how-to-programmatically-control-preview-size-of-android-camera-app-62c26168b784
 
 Notes about the current implentation for end users:
 	400c mode looks a bit quirky before a few calibration cycles, while it doesn't on xtherm
