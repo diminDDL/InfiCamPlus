@@ -23,30 +23,29 @@ import java.util.ArrayList;
 
 /* SurfaceMuxer
  *
- * TODO not all of this is relevant anymore
- *
  * Our native code can't write directly to the Surface that we can get from a MediaCodec or
  *   MediaRecorder for whatever reason (the documentation states: "The Surface must be rendered
  *   with a hardware-accelerated API, such as OpenGL ES. Surface.lockCanvas(android.graphics.Rect)
- *   may fail or produce unexpected results."). To solve this we use this class that'll take one or
- *   more input surfaces and draw them to one or more output surfaces using EGL.
+ *   may fail or produce unexpected results."). To solve this we use this class that'll facilitate
+ *   drawing to and from Surfaces using EGL.
  *
  * To use do the following:
  * - Create an instance of the SurfaceMuxer class.
  * - To get an input surface create a SurfaceMuxer.InputSurface instance, this is bound to the
  *     SurfaceMuxer instance you give the constructor.
  * - Call setSize() on the InputSurface.
- * - Call getSurface() and/or getSurfaceTexture on that to get the actual input Surface and/or
+ * - Use .surface and/or .surfaceTexture on that to get the actual input Surface and/or
  *     SurfaceTexture texture to draw to.
- * - Call setOnFrameAvailableListener(surfaceMuxer) on the SurfaceTexture from the InputSurface(s)
- *     you want to synchronize the output with.
  * - Create an instance of SurfaceMuxer.OutputSurface for surfaces you want to output to and call
  *     setSize() on them to set the dimensions.
- * - Add the InputSurface and OutputSurface instances to the inputSurfaces and outputSurfaces of
- *     the SurfaceMuxer instance, and you're of to the races.
+ * - ThroughSurface is like InputSurface and OutputSurface in one, it can draw to itself.
  * - Call init() on the SurfaceMuxer instance, most likely you'll want to do this in onResume()
  *     because at onPause()  (or onStop()?) the EGL context can get destroyed, and in onPause()
  *     you should call deinit() to release any resources attached to the EGL context in question.
+ * - Use .draw() on Input- and/or ThroughSurface(s) to draw to Output- and/or ThroughSurfaces.
+ * - When done drawing to an Output- or ThroughSurface call .swapBuffers() on it to flip the
+ *     buffer and make the drawn framebuffer go through, or instead getBitmap() to get the bitmap
+ *     if null was passed as the Surface to create an OutputSurface.
  *
  * The order of operations of the above list isn't of particular importance as long as it's
  *   actually possible, but only use this class from a single thread since the EGL context is
