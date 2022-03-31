@@ -11,6 +11,8 @@ uniform vec2 texSize;
  * Some interesting links:
  *   https://vec3.ca/bicubic-filtering-in-fewer-taps/
  *   https://www.shadertoy.com/view/NlBXWR
+ *   https://www.decarpentier.nl/2d-catmull-rom-in-4-samples
+ *   https://entropymine.com/imageworsener/bicubic/
  *
  * TODO mention third party license in license.txt
  *
@@ -53,6 +55,7 @@ void main(void) {
 	vec2 texPos12 = (iuv + offset12) / texSize;
 
 	vec4 result = vec4(0.0);
+
 	result += texture2D(sTexture, vec2(texPos0.x, texPos0.y)) * w0.x * w0.y;
 	result += texture2D(sTexture, vec2(texPos12.x, texPos0.y)) * w12.x * w0.y;
 	result += texture2D(sTexture, vec2(texPos3.x, texPos0.y)) * w3.x * w0.y;
@@ -65,5 +68,6 @@ void main(void) {
 	result += texture2D(sTexture, vec2(texPos12.x, texPos3.y)) * w12.x * w3.y;
 	result += texture2D(sTexture, vec2(texPos3.x, texPos3.y)) * w3.x * w3.y;
 
+	result.w = 1.0;
 	gl_FragColor = result;
 }
