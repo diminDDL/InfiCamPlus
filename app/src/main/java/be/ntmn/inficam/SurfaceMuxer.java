@@ -2,7 +2,6 @@ package be.ntmn.inficam;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;

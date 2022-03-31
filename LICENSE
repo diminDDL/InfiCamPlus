@@ -4,6 +4,7 @@ This project contains the following third party software under license agreement
 	- a makefile for libuvc in libinficam/src/main/jni/libuvc_build/libuvc.mk (BSD license)
 	- libusb in libinficam/src/main/jni/libusb (GNU LGPL)
 	- the gradlew and gradlew.bat files (Apache License Version 2.0)
+	- app/src/main/assets/fcmrom2.glsl (MIT license)
 
 See the respective files and directories for their license.
 
@@ -24,9 +25,9 @@ The Material Design icons under app/src/main/res/drawable/ic_*.xml are under the
 	See the License for the specific language governing permissions and
 	limitations under the License.
 
-Evertyhing else part of this project is under the following license unless otherwise stated in the
-  file itself (and at the time of writing I believe all the licenses involved in this project are
-  listed in this document but provide no guarantees of that):
+Evertyhing else part of this project is under the following license (MIT license) unless otherwise
+  stated in the file itself (and at the time of writing I believe all the licenses involved in this
+  project are listed in this document but provide no guarantees of that):
 
 	Copyright (c) 2022 Netman
 
