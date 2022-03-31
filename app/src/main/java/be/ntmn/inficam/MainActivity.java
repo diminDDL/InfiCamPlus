@@ -616,15 +616,15 @@ public class MainActivity extends BaseActivity {
 
 		// TODO this is just test for interpolation
 		SurfaceMuxer.InputSurface test = new SurfaceMuxer.InputSurface(surfaceMuxer);
-		test.setSize(80, 60);
+		test.setSize(8, 6);
 		Canvas tcvs = test.surface.lockCanvas(null);
 		Paint p = new Paint();
 		p.setAntiAlias(true);
 		tcvs.drawColor(Color.YELLOW);
 		p.setColor(Color.BLUE);
-		tcvs.drawLine(0, 60, 80, 0, p);
+		tcvs.drawLine(0, 6, 8, 0, p);
 		p.setColor(Color.RED);
-		tcvs.drawLine(0, 0, 80, 60, p);
+		tcvs.drawLine(0, 0, 8, 6, p);
 		test.surface.unlockCanvasAndPost(tcvs);
 		test.sharpening = 1.0f;
 		handler.postDelayed(() -> {
