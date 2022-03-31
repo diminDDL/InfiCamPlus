@@ -360,14 +360,22 @@ public class MainActivity extends BaseActivity {
 			inputSurface.draw(thruSurface, SurfaceMuxer.DM_SHARPEN);
 			thruSurface.swapBuffers();
 
+			if (iMode == SurfaceMuxer.DM_CMROM) {
+				float tmp = thruSurface.scale_x; // TODO
+				thruSurface.scale_x = thruSurface.scale_y = 1;
+				thruSurface.draw(thruSurface, SurfaceMuxer.DM_CMROM_PRE);
+				thruSurface.swapBuffers();
+				thruSurface.scale_x = thruSurface.scale_y = tmp;
+			}
+
 			if (takePic && imgCompressThread == null) {
 				messageView.showMessage(R.string.msg_permdenied_storage);
 			} else if (takePic && imgCompressThread.lock.tryLock()) {
 				int w = picWidth, h = picHeight;
 				if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180) {
-					int tmp = w;
-					w = h;
-					h = tmp;
+					h ^= w;
+					w ^= h;
+					h ^= w;
 				}
 				SurfaceMuxer.OutputSurface outPicture =
 						new SurfaceMuxer.OutputSurface(surfaceMuxer, null, w, h);

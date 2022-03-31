@@ -92,14 +92,16 @@ public class SettingsMain extends Settings {
 		new SettingRadio("imode", R.string.set_imode, 1, new int[] {
 				R.string.imode_nearest,
 				R.string.imode_linear,
-				R.string.imode_cubic
+				R.string.imode_cubic,
+				R.string.imode_cmrom
 			}) {
 			@Override
 			void onSet(int i) {
 				final int[] imodes = new int[] {
 						SurfaceMuxer.DM_NEAREST,
 						SurfaceMuxer.DM_LINEAR,
-						SurfaceMuxer.DM_CUBIC
+						SurfaceMuxer.DM_CUBIC,
+						SurfaceMuxer.DM_CMROM
 				};
 				act.setIMode(imodes[i]);
 			}

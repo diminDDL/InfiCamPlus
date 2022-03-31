@@ -75,6 +75,7 @@
 	<string name="imode_nearest">Nearest Neighbor</string>
 	<string name="imode_linear">Bilinear</string>
 	<string name="imode_cubic">Bicubic</string>
+	<string name="imode_cmrom">Catmull-Rom</string>
 
 	<string name="palette_whitehot">White Hot</string>
 	<string name="palette_blackhot">Black Hot</string>
