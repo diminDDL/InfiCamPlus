@@ -5,7 +5,18 @@ uniform samplerExternalOES sTexture;
 varying vec2 texCoord;
 uniform vec2 texSize;
 
-void main() { /* This one is from: https://www.shadertoy.com/view/styXDh */
+/* This is a modified version of: https://www.shadertoy.com/view/styXDh
+ *
+ * Some interesting links:
+ *   https://vec3.ca/bicubic-filtering-in-fewer-taps/
+ *   https://www.shadertoy.com/view/NlBXWR
+ *   https://www.decarpentier.nl/2d-catmull-rom-in-4-samples
+ *   https://entropymine.com/imageworsener/bicubic/
+ *   https://www.shadertoy.com/view/styXDh
+ *   https://www.shadertoy.com/view/MllSzX
+ *   https://gist.github.com/TheRealMJP/c83b8c0f46b63f3a88a5986f4fa982b1
+ */
+void main() {
 	vec2 Weight[3];
 	vec2 Sample[3];
 

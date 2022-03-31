@@ -8,14 +8,6 @@ uniform vec2 texSize;
 /* This code is a modified version of the following:
  *   https://gist.github.com/TheRealMJP/c83b8c0f46b63f3a88a5986f4fa982b1
  *
- * Some interesting links:
- *   https://vec3.ca/bicubic-filtering-in-fewer-taps/
- *   https://www.shadertoy.com/view/NlBXWR
- *   https://www.decarpentier.nl/2d-catmull-rom-in-4-samples
- *   https://entropymine.com/imageworsener/bicubic/
- *   https://www.shadertoy.com/view/styXDh
- *   https://www.shadertoy.com/view/MllSzX
- *
  * MIT License
  * Copyright (c) 2019 MJP
  *
