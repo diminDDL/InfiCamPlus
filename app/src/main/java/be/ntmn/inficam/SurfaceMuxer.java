@@ -98,15 +98,13 @@ public class SurfaceMuxer {
 		private final int[] textures = new int[1];
 		private boolean initialized = false;
 		public int width = 1, height = 1;
-		public int drawMode; // TODO this should be an argument to draw() instead, perhaps
 		public boolean rotate = false, mirror = false, rotate90 = false;
 		public float scale_x = 1.0f, scale_y = 1.0f;
 		public float translate_x = 0.0f, translate_y = 0.0f;
 		public float sharpening = 0.0f;
 
-		public InputSurface(SurfaceMuxer muxer, int dm) {
+		public InputSurface(SurfaceMuxer muxer) {
 			this.muxer = muxer;
-			drawMode = dm;
 			muxer.surfaces.add(this);
 			init();
 		}
@@ -170,7 +168,7 @@ public class SurfaceMuxer {
 			surfaceTexture = null;
 		}
 
-		public void draw(OutputSurface os, int x, int y, int w, int h) {
+		public void draw(OutputSurface os, int drawMode, int x, int y, int w, int h) {
 			if (muxer.eglContext == EGL14.EGL_NO_CONTEXT)
 				return;
 			os.makeCurrent(); /* We need the context to be current before updateTexImage(). */
@@ -207,10 +205,16 @@ public class SurfaceMuxer {
 			GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
 		}
 
-		public void draw(OutputSurface os) { draw(os, 0, 0, os.width, os.height); }
-		public void draw(ThroughSurface ts) { draw(ts.outputSurface); }
-		public void draw(ThroughSurface ts, int x, int y, int w, int h) {
-			draw(ts.outputSurface, x, y, w, h);
+		public void draw(OutputSurface os, int drawMode) {
+			draw(os, drawMode, 0, 0, os.width, os.height);
+		}
+
+		public void draw(ThroughSurface ts, int drawMode) {
+			draw(ts.outputSurface, drawMode);
+		}
+
+		public void draw(ThroughSurface ts, int drawMode, int x, int y, int w, int h) {
+			draw(ts.outputSurface, drawMode, x, y, w, h);
 		}
 	}
 
@@ -345,8 +349,8 @@ public class SurfaceMuxer {
 	public static class ThroughSurface extends InputSurface {
 		private final OutputSurface outputSurface;
 
-		public ThroughSurface(SurfaceMuxer muxer, int dm) {
-			super(muxer, dm);
+		public ThroughSurface(SurfaceMuxer muxer) {
+			super(muxer);
 			outputSurface = new OutputSurface(muxer, surface, false);
 		}
 

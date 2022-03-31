@@ -54,7 +54,7 @@ public class MainActivity extends BaseActivity {
 	private Overlay overlayScreen, overlayRecord, overlayPicture;
 	private SurfaceMuxer.OutputSurface outScreen, outRecord;
 	private final Overlay.Data overlayData = new Overlay.Data();
-	private int range = 0;
+	private int range = 0, iMode;
 
 	private UsbDevice device;
 	private UsbDeviceConnection usbConnection;
@@ -335,9 +335,9 @@ public class MainActivity extends BaseActivity {
 	private void drawFrame(SurfaceMuxer.OutputSurface os, Overlay overlay, boolean swap) {
 		getRect(rect, os.width, os.height);
 		os.clear(0, 0, 0, 1);
-		thruSurface.draw(os, rect.left, rect.top, rect.width(), rect.height());
+		thruSurface.draw(os, iMode, rect.left, rect.top, rect.width(), rect.height());
 		overlay.draw(overlayData, rect);
-		overlay.surface.draw(os);
+		overlay.surface.draw(os, SurfaceMuxer.DM_LINEAR);
 		// TODO draw normal video if needed
 		if (swap) {
 			os.setPresentationTime(inputSurface.surfaceTexture.getTimestamp());
@@ -357,7 +357,7 @@ public class MainActivity extends BaseActivity {
 			 *   meaning what's in the SurfaceTexture buffers after the updateTexImage() calls
 			 *   surfaceMuxer should do.
 			 */
-			inputSurface.draw(thruSurface);
+			inputSurface.draw(thruSurface, SurfaceMuxer.DM_SHARPEN);
 			thruSurface.swapBuffers();
 
 			if (takePic && imgCompressThread == null) {
@@ -402,22 +402,22 @@ public class MainActivity extends BaseActivity {
 		surfaceMuxer = new SurfaceMuxer(this);
 
 		/* Create and set up the InputSurface for thermal image, imode setting is not final. */
-		inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.DM_SHARPEN);
-		thruSurface = new SurfaceMuxer.ThroughSurface(surfaceMuxer, SurfaceMuxer.DM_LINEAR);
+		inputSurface = new SurfaceMuxer.InputSurface(surfaceMuxer);
+		thruSurface = new SurfaceMuxer.ThroughSurface(surfaceMuxer);
 
 		infiCam.setSurface(inputSurface.surface);
 		cameraView.getHolder().addCallback(surfaceHolderCallback);
 
 		/* Create and set up the Overlays. */
 		overlayScreen = new Overlay(this,
-				new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.DM_LINEAR));
+				new SurfaceMuxer.InputSurface(surfaceMuxer));
 		overlayRecord = new Overlay(this,
-				new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.DM_LINEAR));
+				new SurfaceMuxer.InputSurface(surfaceMuxer));
 		overlayPicture = new Overlay(this,
-				new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.DM_LINEAR));
+				new SurfaceMuxer.InputSurface(surfaceMuxer));
 
 		/* We use it later. */
-		videoSurface = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.DM_LINEAR);
+		videoSurface = new SurfaceMuxer.InputSurface(surfaceMuxer);
 
 		/* This one will run every frame. */
 		infiCam.setFrameCallback(frameCallback);
@@ -855,7 +855,7 @@ public class MainActivity extends BaseActivity {
 			handler.postDelayed(timedShutter, shutterInterval);
 	}
 
-	public void setIMode(int value) { thruSurface.drawMode = value; }
+	public void setIMode(int value) { iMode = value; }
 	public void setSharpening(float value) { inputSurface.sharpening = value; }
 
 	public void setRecordAudio(boolean value) { recordAudio = value; }
