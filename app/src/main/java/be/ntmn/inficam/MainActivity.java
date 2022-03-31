@@ -655,7 +655,6 @@ public class MainActivity extends BaseActivity {
 
 	@Override
 	protected void onDestroy() {
-		outScreen.release();
 		surfaceMuxer.release();
 		super.onDestroy();
 	}
