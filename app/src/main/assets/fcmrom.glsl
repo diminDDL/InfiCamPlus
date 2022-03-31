@@ -44,7 +44,7 @@ void main(void) {
 	// Split into whole pixel and subpixel position
 	vec2 src_subpixel = texCoord * texSize + 0.5;
 	vec2 src_pixel = floor(src_subpixel);
-	src_subpixel -= src_pixel;
+	src_subpixel = fract(src_subpixel);
 
 	// Map texel offsets and weights
 	vec4 f = vec4(src_subpixel, 1.0 - src_subpixel);
@@ -56,20 +56,20 @@ void main(void) {
 	vec4 w = ((2.0 * f - 3.5) * f + 0.5) * f + 1.0; // Catmull Rom
 
 	// Texture lookup
-	gl_FragColor.xyz = w.x * w.y * texture2D(sTexture, texpos.xy).xyz;
-	gl_FragColor.xyz -= w.z * w.y * texture2D(sTexture, texpos.zy).xyz;
-	gl_FragColor.xyz += w.z * w.w * texture2D(sTexture, texpos.zw).xyz;
-	gl_FragColor.xyz -= w.x * w.w * texture2D(sTexture, texpos.xw).xyz;
+	vec3 col = w.x * w.y * (texture2D(sTexture, texpos.xy).xyz * 2.0 - 1.0);
+	col -= w.z * w.y * (texture2D(sTexture, texpos.zy).xyz * 2.0 - 1.0);
+	col += w.z * w.w * (texture2D(sTexture, texpos.zw).xyz * 2.0 - 1.0);
+	col -= w.x * w.w * (texture2D(sTexture, texpos.xw).xyz * 2.0 - 1.0);
 
 	// De-checkerboard
 	float z = mod(src_pixel.x + src_pixel.y, 2.0);
-	if (z > 0.5) gl_FragColor.xyz = -gl_FragColor.xyz;
+	if (z > 0.5) col = -col;
 
 	// Catmull-Rom can ring, so clamp.
 	// It would be nice to clamp to local min/max, but that would require additional
 	// texture reads. If texture reads are done as a textureGather, this would be
 	// possible.
-	gl_FragColor.xyz = clamp(gl_FragColor.xyz, 0.0, 1.0);
+	gl_FragColor.xyz = clamp(col, 0.0, 1.0);
 
 	gl_FragColor.w = 1.;
 }

@@ -27,5 +27,5 @@ void main(void) {
 	flip = flip - floor(flip);
 	if (flip > 0.25) c = -c; // TODO verify this is different than 0 and why
 
-	gl_FragColor = vec4(c, 1.0);
+	gl_FragColor = vec4(c * 0.5 + 0.5, 1.0);
 }
