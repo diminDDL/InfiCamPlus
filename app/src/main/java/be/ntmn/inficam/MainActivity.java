@@ -13,7 +13,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.hardware.usb.UsbDevice;
@@ -360,14 +362,6 @@ public class MainActivity extends BaseActivity {
 			inputSurface.draw(thruSurface, SurfaceMuxer.DM_SHARPEN);
 			thruSurface.swapBuffers();
 
-			if (iMode == SurfaceMuxer.DM_CMROM) {
-				float tmp = thruSurface.scale_x; // TODO
-				thruSurface.scale_x = thruSurface.scale_y = 1;
-				thruSurface.draw(thruSurface, SurfaceMuxer.DM_CMROM_PRE);
-				thruSurface.swapBuffers();
-				thruSurface.scale_x = thruSurface.scale_y = tmp;
-			}
-
 			if (takePic && imgCompressThread == null) {
 				messageView.showMessage(R.string.msg_permdenied_storage);
 			} else if (takePic && imgCompressThread.lock.tryLock()) {
@@ -621,20 +615,22 @@ public class MainActivity extends BaseActivity {
 		surfaceMuxer.init();
 
 		// TODO this is just test for interpolation
-		/*SurfaceMuxer.InputSurface test = new SurfaceMuxer.InputSurface(surfaceMuxer, SurfaceMuxer.IMODE_SHARPEN);
-		test.getSurfaceTexture().setDefaultBufferSize(8, 6);
-		test.setSize(8, 6);
-		Canvas tcvs = test.getSurface().lockCanvas(null);
+		SurfaceMuxer.InputSurface test = new SurfaceMuxer.InputSurface(surfaceMuxer);
+		test.setSize(80, 60);
+		Canvas tcvs = test.surface.lockCanvas(null);
 		Paint p = new Paint();
+		p.setAntiAlias(true);
 		tcvs.drawColor(Color.YELLOW);
 		p.setColor(Color.BLUE);
-		tcvs.drawLine(0, 6, 8, 0, p);
+		tcvs.drawLine(0, 60, 80, 0, p);
 		p.setColor(Color.RED);
-		tcvs.drawLine(0, 0, 8, 6, p);
-		test.getSurface().unlockCanvasAndPost(tcvs);
-		test.setSharpening(1.0f);
-		surfaceMuxer.inputSurfaces.add(test);
-		handler.postDelayed(() -> surfaceMuxer.onFrameAvailable(test.getSurfaceTexture()), 500);*/
+		tcvs.drawLine(0, 0, 80, 60, p);
+		test.surface.unlockCanvasAndPost(tcvs);
+		test.sharpening = 1.0f;
+		handler.postDelayed(() -> {
+			test.draw(outScreen, SurfaceMuxer.DM_CMROM);
+			outScreen.swapBuffers();
+		}, 500);
 	}
 
 	@Override

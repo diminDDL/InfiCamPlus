@@ -70,15 +70,13 @@ public class SurfaceMuxer {
 	public final static int DM_LINEAR = 1;
 	public final static int DM_CUBIC = 2;
 	public final static int DM_CMROM = 3;
-	public final static int DM_CMROM_PRE = 4;
-	public final static int DM_SHARPEN = 5;
-	public final static int DM_EDGE = 6;
+	public final static int DM_SHARPEN = 4;
+	public final static int DM_EDGE = 5;
 	private final DrawMode[] drawModes = {
 			new DrawMode("fnearest.glsl"),
 			new DrawMode("flinear.glsl"),
 			new DrawMode("fcubic.glsl"),
 			new DrawMode("fcmrom.glsl"),
-			new DrawMode("fcmrom_pre.glsl"),
 			new DrawMode("fsharpen.glsl"),
 			new DrawMode("fedge.glsl")
 	};

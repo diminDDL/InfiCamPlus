@@ -122,7 +122,7 @@ TODO ui stuff
 		* if not outright closing the shutter, we could just warn
 	- should we have to option to apply sharpening before calculating temperature?
 	- for portrait mode put horizontal palette preview under image instead of in the image
-	- this https://www.shadertoy.com/view/NlBXWR
+	- mode to act as streaming endpoint
 
 TODO thermal camera things
 	- more measurement modes (point, line, rect)
