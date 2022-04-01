@@ -10,6 +10,10 @@ uniform vec2 texSize;
 #define FXAA_REDUCE_MIN (0.0) // (1.0 / 128.0) originally
 #define FXAA_REDUCE_MUL (1.0) // (1.0 / 8.0) originally
 
+float luma(vec3 col) {
+	return dot(col, vec3(0.299, 0.587, 0.114));
+}
+
 /* Adapted from: https://www.geeks3d.com/20110405/ */
 void main(void) {
 	vec2 rcpFrame = 1.0 / texSize;
@@ -61,4 +65,25 @@ void main(void) {
 	//vec2 tc = (floor(texCoord * texSize) + 0.5) * rcpFrame;
 	vec3 rgbC  = texture2D(sTexture, tc).xyz;
 	//gl_FragColor = vec4(mix(rgbC, rgbY, clamp(length(fract(texCoord * texSize) - 0.5) /* / sqrt(2.0) */, 0.0, 1.0)), 1.0);
+
+	tc = (floor(texCoord * texSize) + 0.5) * rcpFrame;
+	vec2 offs = fract(texCoord * texSize);
+	vec2 sgn = sign(offs - 0.5);
+	vec2 step = sgn * rcpFrame;
+	vec3 cOrg = texture2D(sTexture, tc).rgb;
+	vec3 cHor = texture2D(sTexture, tc + vec2(1.0, 0.0) * step).rgb;
+	vec3 cVer = texture2D(sTexture, tc + vec2(0.0, 1.0) * step).rgb;
+	vec3 cDia = texture2D(sTexture, tc + vec2(1.0, 1.0) * step).rgb;
+	vec2 grad = vec2(-((luma(cOrg) + luma(cHor)) - (luma(cVer) + luma(cDia))),
+			(luma(cOrg) + luma(cVer)) - (luma(cHor) + luma(cDia)));
+
+	vec3 colH = mix(cOrg, cHor, mod(offs.x - 0.5, 0.5) * 2.0 * sgn.x);
+	vec3 colHV = mix(cVer, cDia, mod(offs.x - 0.5, 0.5) * 2.0 * sgn.x);
+	vec3 col = mix(colH, colHV, mod(offs.y - 0.5, 0.5) * 2.0 * sgn.y);
+	gl_FragColor = vec4(col, 1.0);
+
+	//gl_FragColor = vec4(vec3(offs.y), 1.0);
+
+	/*if (sgn.y > 0.0)
+		gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);*/
 }

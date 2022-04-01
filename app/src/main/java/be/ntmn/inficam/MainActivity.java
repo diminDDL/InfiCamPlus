@@ -625,6 +625,8 @@ public class MainActivity extends BaseActivity {
 		p.setColor(Color.WHITE);
 		tcvs.drawPoint(tcvs.getWidth() / 2, tcvs.getHeight() / 5 * 4, p);
 		p.setAntiAlias(false);
+		p.setColor(Color.CYAN);
+		tcvs.drawLine(tcvs.getWidth() / 3, 0, tcvs.getWidth() / 3, tcvs.getHeight(), p);
 		p.setColor(Color.BLUE);
 		tcvs.drawLine(0, tcvs.getHeight(), tcvs.getWidth(), 0, p);
 		p.setColor(Color.RED);
