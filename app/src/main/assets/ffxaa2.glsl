@@ -66,23 +66,30 @@ void main(void) {
 	vec3 rgbC  = texture2D(sTexture, tc).xyz;
 	//gl_FragColor = vec4(mix(rgbC, rgbY, clamp(length(fract(texCoord * texSize) - 0.5) /* / sqrt(2.0) */, 0.0, 1.0)), 1.0);
 
-	tc = (floor(texCoord * texSize) + 0.5) * rcpFrame;
-	vec2 offs = fract(texCoord * texSize);
-	vec2 sgn = sign(offs - 0.5);
-	vec2 step = sgn * rcpFrame;
-	vec3 cOrg = texture2D(sTexture, tc).rgb;
-	vec3 cHor = texture2D(sTexture, tc + vec2(1.0, 0.0) * step).rgb;
-	vec3 cVer = texture2D(sTexture, tc + vec2(0.0, 1.0) * step).rgb;
-	vec3 cDia = texture2D(sTexture, tc + vec2(1.0, 1.0) * step).rgb;
-	vec2 grad = vec2(-((luma(cOrg) + luma(cHor)) - (luma(cVer) + luma(cDia))),
-			(luma(cOrg) + luma(cVer)) - (luma(cHor) + luma(cDia)));
+	vec3 cOrg = texture2D(sTexture, texCoord).rgb;
+	//vec3 cOrg = texture2D(sTexture, (floor(texCoord * texSize) + 0.5) * rcpFrame).rgb;
+	vec3 cNW = texture2D(sTexture, texCoord + vec2(-1.0, -1.0) * rcpFrame * 0.5).rgb;
+	vec3 cNE = texture2D(sTexture, texCoord + vec2(1.0, -1.0) * rcpFrame * 0.5).rgb;
+	vec3 cSW = texture2D(sTexture, texCoord + vec2(-1.0, 1.0) * rcpFrame * 0.5).rgb;
+	vec3 cSE = texture2D(sTexture, texCoord + vec2(1.0, 1.0) * rcpFrame * 0.5).rgb;
+	vec2 grad = vec2(-((luma(cNW) + luma(cNE)) - (luma(cSW) + luma(cSE))) + ((luma(cSW) + luma(cSE)) - luma(cOrg)) + (luma(cOrg) - (luma(cNW) + luma(cNE))), // TODO can do with less luma calls
+			(luma(cNW) + luma(cSW)) - (luma(cNE) + luma(cSE)) + ((luma(cNW) + luma(cSW)) - luma(cOrg)) + (luma(cOrg) - (luma(cNE) + luma(cSE))));
+	//grad /= /*length(grad) +*/min(abs(grad.x), abs(grad.y)) + (luma(cNW) + luma(cNE) + luma(cSW) + luma(cSE)) * 0.25 * 0.0;
+	//grad /= length(grad);
+	//	grad * 0.5;
+	grad = clamp(grad, -2.0, 2.0);
 
-	vec3 colH = mix(cOrg, cHor, mod(offs.x - 0.5, 0.5) * 2.0 * sgn.x);
-	vec3 colHV = mix(cVer, cDia, mod(offs.x - 0.5, 0.5) * 2.0 * sgn.x);
-	vec3 col = mix(colH, colHV, mod(offs.y - 0.5, 0.5) * 2.0 * sgn.y);
+	/*vec3 colN = mix(cNW, cNE, 0.5 + grad.x);
+	vec3 colS = mix(cSW, cSE, 0.5 + grad.x);
+	vec3 col = mix(colN, colS, 0.5 + grad.y);*/
+	vec3 col = texture2D(sTexture, texCoord + grad * rcpFrame).rgb + texture2D(sTexture, texCoord - grad * rcpFrame).rgb;
+	col += texture2D(sTexture, texCoord + grad * rcpFrame * 2.0 / 3.0).rgb + texture2D(sTexture, texCoord - grad * rcpFrame * 2.0 / 3.0).rgb;
+	col += texture2D(sTexture, texCoord + grad * rcpFrame * 1.0 / 3.0).rgb + texture2D(sTexture, texCoord - grad * rcpFrame * 1.0 / 3.0).rgb;
+	col /= 6.0;
+	//gl_FragColor = vec4(mix(cOrg, col, clamp(length(fract(texCoord * texSize) - 0.5) /* / sqrt(2.0) */, 0.0, 1.0)), 1.0);
 	gl_FragColor = vec4(col, 1.0);
 
-	//gl_FragColor = vec4(vec3(offs.y), 1.0);
+	//gl_FragColor = vec4(vec3(grad.x), 1.0);
 
 	/*if (sgn.y > 0.0)
 		gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);*/
