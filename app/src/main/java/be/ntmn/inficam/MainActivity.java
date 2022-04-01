@@ -615,22 +615,28 @@ public class MainActivity extends BaseActivity {
 		surfaceMuxer.init();
 
 		// TODO this is just test for interpolation
-		/*SurfaceMuxer.InputSurface test = new SurfaceMuxer.InputSurface(surfaceMuxer);
-		test.setSize(8, 6);
+		SurfaceMuxer.InputSurface test = new SurfaceMuxer.InputSurface(surfaceMuxer);
+		test.setSize(16, 12);
 		Canvas tcvs = test.surface.lockCanvas(null);
-		Paint p = new Paint();
-		p.setAntiAlias(true);
 		tcvs.drawColor(Color.YELLOW);
+		Paint p = new Paint();
+		p.setColor(Color.BLACK);
+		tcvs.drawPoint(tcvs.getWidth() / 2, tcvs.getHeight() / 5, p);
+		p.setColor(Color.WHITE);
+		tcvs.drawPoint(tcvs.getWidth() / 2, tcvs.getHeight() / 5 * 4, p);
+		p.setAntiAlias(false);
 		p.setColor(Color.BLUE);
-		tcvs.drawLine(0, 6, 8, 0, p);
+		tcvs.drawLine(0, tcvs.getHeight(), tcvs.getWidth(), 0, p);
 		p.setColor(Color.RED);
-		tcvs.drawLine(0, 0, 8, 6, p);
+		tcvs.drawLine(0, 0, tcvs.getWidth(), tcvs.getHeight(), p);
+		p.setColor(Color.GREEN);
+		tcvs.drawLine(0, tcvs.getHeight() / 2, tcvs.getWidth(), tcvs.getHeight() / 2, p);
 		test.surface.unlockCanvasAndPost(tcvs);
 		test.sharpening = 1.0f;
 		handler.postDelayed(() -> {
-			test.draw(outScreen, SurfaceMuxer.DM_CMROM);
+			test.draw(outScreen, SurfaceMuxer.DM_FXAA);
 			outScreen.swapBuffers();
-		}, 500);*/
+		}, 500);
 	}
 
 	@Override
