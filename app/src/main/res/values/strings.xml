@@ -76,6 +76,7 @@
 	<string name="imode_linear">Linear</string>
 	<string name="imode_cubic">B-spline</string>
 	<string name="imode_cmrom">Catmull-Rom</string>
+	<string name="imode_fxaa">FXAA</string>
 
 	<string name="palette_whitehot">White Hot</string>
 	<string name="palette_blackhot">Black Hot</string>
