@@ -18,7 +18,8 @@ float luma(vec3 col) {
 void main(void) {
 	vec2 rcpFrame = 1.0 / texSize;
 	vec2 pOffset = rcpFrame * FXAA_SUBPIX_DISTANCE;
-	vec2 tc = (floor(texCoord * texSize) + 0.5) * rcpFrame;
+	//vec2 tc = (floor(texCoord * texSize) + 0.5) * rcpFrame;
+	vec2 tc = texCoord;
 	vec3 rgbNW = texture2D(sTexture, tc + vec2(-pOffset.x, -pOffset.y)).xyz;
 	vec3 rgbNE = texture2D(sTexture, tc + vec2(pOffset.x, -pOffset.y)).xyz;
 	vec3 rgbSW = texture2D(sTexture, tc + vec2(-pOffset.x, pOffset.y)).xyz;
@@ -66,25 +67,26 @@ void main(void) {
 	vec3 rgbC  = texture2D(sTexture, tc).xyz;
 	//gl_FragColor = vec4(mix(rgbC, rgbY, clamp(length(fract(texCoord * texSize) - 0.5) /* / sqrt(2.0) */, 0.0, 1.0)), 1.0);
 
-	vec3 cOrg = texture2D(sTexture, texCoord).rgb;
+	vec3 cOrg = texture2D(sTexture, tc).rgb;
 	//vec3 cOrg = texture2D(sTexture, (floor(texCoord * texSize) + 0.5) * rcpFrame).rgb;
-	vec2 span = rcpFrame * 0.5;
-	/*vec3 cW = texture2D(sTexture, texCoord + vec2(-1.0, 0.0) * span).rgb;
-	vec3 cE = texture2D(sTexture, texCoord + vec2(1.0, 0.0) * span).rgb;
-	vec3 cS = texture2D(sTexture, texCoord + vec2(0.0, 1.0) * span).rgb;
-	vec3 cN = texture2D(sTexture, texCoord + vec2(0.0, -1.0) * span).rgb;*/
-	vec3 cNW = texture2D(sTexture, texCoord + vec2(-1.0, -1.0) * span).rgb;
-	vec3 cNE = texture2D(sTexture, texCoord + vec2(1.0, -1.0) * span).rgb;
-	vec3 cSW = texture2D(sTexture, texCoord + vec2(-1.0, 1.0) * span).rgb;
-	vec3 cSE = texture2D(sTexture, texCoord + vec2(1.0, 1.0) * span).rgb;
+	vec2 span = rcpFrame * 1.0;
+	vec3 cW = texture2D(sTexture, tc + vec2(-1.0, 0.0) * span).rgb;
+	vec3 cE = texture2D(sTexture, tc + vec2(1.0, 0.0) * span).rgb;
+	vec3 cS = texture2D(sTexture, tc + vec2(0.0, 1.0) * span).rgb;
+	vec3 cN = texture2D(sTexture, tc + vec2(0.0, -1.0) * span).rgb;
+	vec3 cNW = texture2D(sTexture, tc + vec2(-1.0, -1.0) * span).rgb;
+	vec3 cNE = texture2D(sTexture, tc + vec2(1.0, -1.0) * span).rgb;
+	vec3 cSW = texture2D(sTexture, tc + vec2(-1.0, 1.0) * span).rgb;
+	vec3 cSE = texture2D(sTexture, tc + vec2(1.0, 1.0) * span).rgb;
 	/*vec2 grad = vec2(-((luma(cNW) + luma(cNE)) - (luma(cSW) + luma(cSE))) + ((luma(cSW) + luma(cSE)) - luma(cOrg)) + (luma(cOrg) - (luma(cNW) + luma(cNE))), // TODO can do with less luma calls
 			(luma(cNW) + luma(cSW)) - (luma(cNE) + luma(cSE)) + ((luma(cNW) + luma(cSW)) - luma(cOrg)) + (luma(cOrg) - (luma(cNE) + luma(cSE))));*/
 	vec2 grad = vec2(-((luma(cNW) + luma(cNE)) - (luma(cSW) + luma(cSE))), // TODO can do with less luma calls
 			(luma(cNW) + luma(cSW)) - (luma(cNE) + luma(cSE)));
 	//grad /= /*length(grad) +*/min(abs(grad.x), abs(grad.y)) + (luma(cNW) + luma(cNE) + luma(cSW) + luma(cSE)) * 0.25 * 0.0;
 	//grad /= length(grad);
-	//grad *= 4.0;
+	grad *= 2.0;
 	grad = clamp(grad, -1.0, 1.0);
+	//grad = vec2(0.0);
 
 	/*vec3 colN = mix(cNW, cNE, 0.5 + grad.x);
 	vec3 colS = mix(cSW, cSE, 0.5 + grad.x);
@@ -92,18 +94,12 @@ void main(void) {
 	//vec3 col = texture2D(sTexture, texCoord + grad * rcpFrame).rgb/* + texture2D(sTexture, texCoord - grad * rcpFrame).rgb*/;
 	//col += texture2D(sTexture, texCoord + grad * rcpFrame * 2.0 / 3.0).rgb + texture2D(sTexture, texCoord - grad * rcpFrame * 2.0 / 3.0).rgb;
 	//col /= 2.0;
-
-	vec2 iuv = (floor(texCoord * texSize) + 0.5) * rcpFrame;
-	vec2 fuv = (fract(texCoord * texSize) - 0.5) * rcpFrame + grad * rcpFrame;
-	/*if (abs(fuv).x > rcpFrame.x) {
-		iuv.x += sign(fuv.x) * rcpFrame.x;
-		fuv.x -= sign(fuv.x) * rcpFrame.x;
-	}
-	if (abs(fuv).y > rcpFrame.y) {
-		iuv.y += sign(fuv.y) * rcpFrame.y;
-		fuv.y -= sign(fuv.y) * rcpFrame.y;
-	}*/
-	vec3 col = texture2D(sTexture, iuv + fuv).rgb;
+	vec3 colA = mix(cN, mix(cNW, cNE, abs(grad.x + 1.0) / 2.0), abs(grad.x));
+	vec3 colB = mix(cS, mix(cSW, cSE, abs(grad.x + 1.0) / 2.0), abs(grad.x));
+	vec3 colC = mix(cW, cE, abs(grad.x + 1.0) / 2.0);
+	vec3 colD = mix(colC, mix(colA, colB, abs(grad.y + 1.0) / 2.0), abs(grad.y));
+	//vec3 col = colD;
+	vec3 col = mix(cOrg, colD, abs(length(grad)) / sqrt(2.0));
 
 	/*float i;
 	for (i = 0.0; i < 6.0; ++i)
