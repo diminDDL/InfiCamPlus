@@ -1,6 +1,6 @@
 #extension GL_OES_EGL_image_external : require
 
-precision highp float; // TODO mediump
+precision mediump float;
 uniform samplerExternalOES sTexture;
 varying vec2 texCoord;
 uniform vec2 texSize;
@@ -19,7 +19,7 @@ vec2 rotate(vec2 v, float a) {
 }
 
 void main(void) {
-	vec2 span = 1.0 / texSize/* * 0.5*/;
+	vec2 span = 1.0 / texSize * 0.5;
 	vec3 cOrg = texture2D(sTexture, texCoord).rgb;
 	//vec3 cNear = texture2D(sTexture, (floor(texCoord * texSize) + 0.5) / texSize).rgb;
 	vec3 cW = texture2D(sTexture, texCoord + vec2(-1.0, 0.0) * span).rgb;
@@ -35,14 +35,22 @@ void main(void) {
 	vec3 edgex = cNW + cN * 2.0 + cNE + -cSW + -cS * 2.0 + -cSE;
 	vec3 edgey = -cNW + -cW * 2.0 + -cSW + cNE + cE * 2.0 + cSE;
 	vec3 sobel = sqrt((edgex * edgex) + (edgey * edgey));
-	vec3 e = abs((cNW + cSE) - (cNE + cSW));
+	float ex = -((luma(cNW) + luma(cNE)) - (luma(cSW) + luma(cSE)));
+	float ey = ((luma(cNW) + luma(cSW)) - (luma(cNE) + luma(cSE)));
 
 	vec2 iuv = floor(texCoord * texSize) + 0.5;
 	vec2 fuv = fract(texCoord * texSize) - 0.5;
 	//fuv = rotate(fuv, M_PI * 0.25);
-	vec3 col = (cOrg * 4.0 + (cW + cE + cN + cS) * 2.0 + (cNW + cNE + cSW + cSE)) / 16.0;
+	//vec3 col = (cOrg * 4.0 + (cW + cE + cN + cS) * 2.0 + (cNW + cNE + cSW + cSE)) / 16.0;
 	//vec3 col = (cOrg + (cW + cE + cN + cS) + (cNW + cNE + cSW + cSE)) / 9.0;
 	//col = mix(cOrg, col, clamp(luma(e), 0.0, 1.0));
+	//vec2 off = vec2(ex, ey) / texSize;
+	vec2 off = vec2(ex, ey) / texSize;
+	//off = vec2(luma(edgex), luma(edgey)) / texSize;
+	vec3 col = texture2D(sTexture, texCoord + off).rgb + texture2D(sTexture, texCoord - off).rgb;
+	col += texture2D(sTexture, texCoord + off * 0.5).rgb;
+	col += texture2D(sTexture, texCoord - off * 0.5).rgb;
+	col *= 0.25;
 	//gl_FragColor = vec4(vec3(abs(luma(sobel))), 1.0);
 	//gl_FragColor = vec4(cOrg, 1.0);
 	gl_FragColor = vec4(col, 1.0);
