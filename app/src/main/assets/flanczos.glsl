@@ -17,11 +17,7 @@ float lanc2(float x) {
 	return sin(M_PI * x) * sin(M_PI * x / a) / (x * x);
 }
 
-float lanc2(vec2 x) {
-	if (length(x) > 2.5)
-		return 0.0;
-	return lanc2(x.x) * lanc2(x.y);
-}
+float lanc2(vec2 x) { return lanc2(x.x) * lanc2(x.y); }
 
 // Does the aliasing happen because the circular kernel doesn't combine to 1 diagonally?
 // Can we fix this with a squareish kernel?
