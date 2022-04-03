@@ -22,6 +22,8 @@ float lanc2(vec2 x) { return lanc2(x.x) * lanc2(x.y); }
 // Does the aliasing happen because the circular kernel doesn't combine to 1 diagonally?
 // Can we fix this with a squareish kernel?
 // Or do we just need to bandlimit or upscale in multiple steps?
+//   Scaling in multiple steps in gimp seems to avoid aliasing, but also adds some blur.
+//   Median filter really helps with that blur. Is there an optimum step size with least blur?
 
 void main(void) {
 	vec2 ts = 1.0 / texSize;
