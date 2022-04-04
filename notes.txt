@@ -124,6 +124,7 @@ TODO ui stuff
 	- for portrait mode put horizontal palette preview under image instead of in the image
 	- mode to act as streaming endpoint
 	- more permanent test picture when not connected, to test interpolation modes etc
+	- the nearest neighbor interpolation sucks for smaller sizes, fix it
 
 TODO thermal camera things
 	- more measurement modes (point, line, rect)

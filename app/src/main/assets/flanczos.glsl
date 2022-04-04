@@ -26,6 +26,7 @@ float lanc2(vec2 x) { return lanc2(x.x) * lanc2(x.y); }
 //   Median filter really helps with that blur. Is there an optimum step size with least blur?
 // Are the higher frequency components introduced only diagonal? should we blur only diagonally?
 // Is 3x the right amount to scale in steps? 1.5 seems to give best results in gimp
+//   1.5x still gives aliasing, what about sqrt(2)?
 
 void main(void) {
 	vec2 ts = 1.0 / texSize;
