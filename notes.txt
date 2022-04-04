@@ -125,6 +125,7 @@ TODO ui stuff
 	- mode to act as streaming endpoint
 	- more permanent test picture when not connected, to test interpolation modes etc
 	- the nearest neighbor interpolation sucks for smaller sizes, fix it
+	- shutterless mode? cmd 0x8002 may help https://www.researchgate.net/publication/292188068_Shutter-less_calibration_of_uncooled_infrared_cameras
 
 TODO thermal camera things
 	- more measurement modes (point, line, rect)
@@ -230,7 +231,10 @@ Things i learned about the protocol these thermal cameras talk:
 
 	CTRL_ZOOM_ABS is used with the following commands:
 		- < 0x80 in the high byte as an adress to write the low byte in user area
-		- 0x8000 to click the shutter
+		- 0x8000 to click the shutter and do a darkframe calibration
+		- 0x8001 do a darkframe calibration without clicking the shutter
+		- 0x8002 sets the camera to raw frame output mode, without darkframe compensation
+		- 0x8003 some other mode, not sure what
 		- 0x8004 called on start, not sure what it does, "切换数据输出8004原始8005yuv,80ff保存"
 			* 8005 sets a different mode, the camera seems to default to 0x8004
 				... or the camera remembers the last mode... maybe 0x80FF saves this too?
@@ -240,6 +244,7 @@ Things i learned about the protocol these thermal cameras talk:
 		- 0x80FF (as before) to store user area in non-volatile storage
 		- 0xEC.., 0xEE.. Mark dead pixel with x, y to low bytes? "用户盲元表" (MainActivity from
 		    the original SDK suggests as much)
+	NOTE the user manuals apparently mention some of these commands
 
 Some maybe useful trivia:
 	* Generating an ironbow palette:
