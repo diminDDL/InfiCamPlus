@@ -35,7 +35,7 @@ void main(void) {
 	vec2 fuv = fract(uv); /* How far off the top left of that we are. */
 
 	vec2 w0 = fuv * (-0.5 + fuv * (1.0 - 0.5 * fuv));
-	vec2 w1 = 1.0f + fuv * fuv * (-2.5 + 1.5 * fuv);
+	vec2 w1 = 1.0 + fuv * fuv * (-2.5 + 1.5 * fuv);
 	vec2 w2 = fuv * (0.5 + fuv * (2.0 - 1.5 * fuv));
 	vec2 w3 = fuv * fuv * (-0.5 + 0.5 * fuv);
 
