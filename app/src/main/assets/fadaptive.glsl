@@ -54,8 +54,8 @@ float G(vec3 c[16], int o) {
 }
 
 float W(vec3 c[16], int o) {
-	float mu = 0.95; /* Should be a positive value close to and lower than one. */
-	float n = 3.0; /* Should be positive value. */
+	float mu = 0.5; /* Should be a positive value close to and lower than one. */
+	float n = 1.5; /* Should be positive value. */
 	return pow(1.0 - mu * G(c, o), n);
 }
 
@@ -96,7 +96,7 @@ void main() {
 	for (int i = 0; i < 4; ++i)
 		wts[i] /= wtot;
 
-	gl_FragColor = vec4(c[5] * wts[0] + c[6] * wts[1] + c[9] * wts[2] + c[10] * wts[3], 1.0);
-	//gl_FragColor = texture2D(sTexture, (floor(texCoord * texSize) + vec2(wts[0] + wts[3], wts[2] + wts[3])) * ts);
-	//gl_FragColor = vec4(cmrom2d(c, vec2(wts[1] + wts[3], wts[2] + wts[3])), 1.0);
+	//gl_FragColor = vec4(c[5] * wts[0] + c[6] * wts[1] + c[9] * wts[2] + c[10] * wts[3], 1.0);
+	//gl_FragColor = texture2D(sTexture, (floor(texCoord * texSize) + vec2(wts[1] + wts[3], wts[2] + wts[3])) * ts);
+	gl_FragColor = vec4(cmrom2d(c, vec2(wts[1] + wts[3], wts[2] + wts[3])), 1.0);
 }
