@@ -94,7 +94,7 @@ public class SettingsMain extends Settings {
 				R.string.imode_linear,
 				R.string.imode_cubic,
 				R.string.imode_cmrom,
-				R.string.imode_fxaa
+				R.string.imode_adaptive
 			}) {
 			@Override
 			void onSet(int i) {
@@ -103,7 +103,7 @@ public class SettingsMain extends Settings {
 						SurfaceMuxer.DM_LINEAR,
 						SurfaceMuxer.DM_CUBIC,
 						SurfaceMuxer.DM_CMROM,
-						SurfaceMuxer.DM_FXAA
+						SurfaceMuxer.DM_FADAPTIVE
 				};
 				act.setIMode(imodes[i]);
 			}

@@ -69,7 +69,7 @@ public class SurfaceMuxer {
 	public final static int DM_LINEAR = 1;
 	public final static int DM_CUBIC = 2;
 	public final static int DM_CMROM = 3;
-	public final static int DM_FXAA = 4;
+	public final static int DM_FADAPTIVE = 4;
 	public final static int DM_SHARPEN = 5;
 	public final static int DM_EDGE = 6;
 	private final DrawMode[] drawModes = {
