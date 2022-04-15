@@ -1,3 +1,4 @@
+/* See: https://ieeexplore.ieee.org/document/924383 */
 #extension GL_OES_EGL_image_external : require
 
 precision mediump float;
