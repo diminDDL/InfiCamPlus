@@ -616,7 +616,7 @@ public class MainActivity extends BaseActivity {
 
 		// TODO this is just test for interpolation
 		SurfaceMuxer.InputSurface test = new SurfaceMuxer.InputSurface(surfaceMuxer);
-		test.setSize(16, 12);
+		test.setSize(80, 60);
 		Canvas tcvs = test.surface.lockCanvas(null);
 		tcvs.drawColor(Color.YELLOW);
 		Paint p = new Paint();
