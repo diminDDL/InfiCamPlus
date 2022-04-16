@@ -56,12 +56,13 @@ float G(vec3 c[16], int o) {
 
 float W(vec3 c[16], int o) {
 	float mu = 0.5; /* Should be a positive value close to and lower than one. */
-	float n = 1.5; /* Should be positive value. */
+	float n = 2.0; /* Should be positive value. */
 	return pow(1.0 - mu * G(c, o), n);
 }
 
 float D(vec2 d) {
 	return (1.0 - d.x) * (1.0 - d.y);
+	//return 1.0 - clamp(length(d), 0.0, 1.0);
 }
 
 void main() {
