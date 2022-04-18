@@ -615,7 +615,7 @@ public class MainActivity extends BaseActivity {
 		surfaceMuxer.init();
 
 		// TODO this is just test for interpolation
-		/*SurfaceMuxer.InputSurface test = new SurfaceMuxer.InputSurface(surfaceMuxer);
+		SurfaceMuxer.InputSurface test = new SurfaceMuxer.InputSurface(surfaceMuxer);
 		test.setSize(80, 60);
 		Canvas tcvs = test.surface.lockCanvas(null);
 		tcvs.drawColor(Color.YELLOW);
@@ -638,7 +638,7 @@ public class MainActivity extends BaseActivity {
 		handler.postDelayed(() -> {
 			test.draw(outScreen, SurfaceMuxer.DM_FADAPTIVE);
 			outScreen.swapBuffers();
-		}, 500);*/
+		}, 500);
 	}
 
 	@Override

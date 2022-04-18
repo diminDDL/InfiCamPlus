@@ -77,7 +77,7 @@ public class SurfaceMuxer {
 			new DrawMode("flinear.glsl"),
 			new DrawMode("fcubic.glsl"),
 			new DrawMode("fcmrom.glsl"),
-			new DrawMode("fadaptive.glsl"),
+			new DrawMode("fadaptive2.glsl"),
 			new DrawMode("fsharpen.glsl"),
 			new DrawMode("fedge.glsl")
 	};
