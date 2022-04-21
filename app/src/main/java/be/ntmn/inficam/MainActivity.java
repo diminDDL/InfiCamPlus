@@ -13,9 +13,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.hardware.usb.UsbDevice;
@@ -39,6 +37,8 @@ import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.List;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -398,6 +398,22 @@ public class MainActivity extends BaseActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		// TODO this is probably bad
+		Thread.setDefaultUncaughtExceptionHandler((paramThread, paramThrowable) -> {
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter(sw);
+			paramThrowable.printStackTrace(pw);
+			Intent sendIntent = new Intent();
+			sendIntent.setAction(Intent.ACTION_SEND);
+			sendIntent.putExtra(Intent.EXTRA_TEXT, sw.toString());
+			sendIntent.setType("text/plain");
+			Intent shareIntent = Intent.createChooser(sendIntent,
+					"Inficam has crashed, share crash dump?");
+			startActivity(shareIntent);
+			System.exit(2);
+		});
+
 		setContentView(R.layout.activity_main);
 		cameraView = findViewById(R.id.cameraView);
 		messageView = findViewById(R.id.message);
@@ -615,7 +631,7 @@ public class MainActivity extends BaseActivity {
 		surfaceMuxer.init();
 
 		// TODO this is just test for interpolation
-		SurfaceMuxer.InputSurface test = new SurfaceMuxer.InputSurface(surfaceMuxer);
+		/*SurfaceMuxer.InputSurface test = new SurfaceMuxer.InputSurface(surfaceMuxer);
 		test.setSize(80, 60);
 		Canvas tcvs = test.surface.lockCanvas(null);
 		tcvs.drawColor(Color.YELLOW);
@@ -638,7 +654,7 @@ public class MainActivity extends BaseActivity {
 		handler.postDelayed(() -> {
 			test.draw(outScreen, SurfaceMuxer.DM_FADAPTIVE);
 			outScreen.swapBuffers();
-		}, 500);
+		}, 500);*/
 	}
 
 	@Override
