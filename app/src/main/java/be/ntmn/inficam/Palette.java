@@ -59,6 +59,20 @@ public abstract class Palette {
 		}
 	};
 
+	private static final Palette GreenHot = new Palette(R.string.palette_greenhot) {
+		@Override
+		public Pixel func(double x) {
+			return new Pixel(0, x, 0);
+		}
+	};
+
+	private static final Palette GreenCold = new Palette(R.string.palette_greencold) {
+		@Override
+		public Pixel func(double x) {
+			return new Pixel(0, 1 - x, 0);
+		}
+	};
+
 	private static final Palette Ironbow = new Palette(R.string.palette_ironbow) {
 		@Override
 		public Pixel func(double x) {
@@ -81,7 +95,7 @@ public abstract class Palette {
 	};
 
 	public static Palette[] palettes = new Palette[] {
-			WhiteHot, BlackHot, RedHot, RedCold, Ironbow, Rainbow, Rainbow2
+			WhiteHot, BlackHot, RedHot, RedCold, GreenHot, GreenCold, Ironbow, Rainbow, Rainbow2
 	};
 
 	private static Pixel hsvPixel(double h, double s, double v) {
