@@ -80,6 +80,8 @@
 
 	<string name="palette_whitehot">White Hot</string>
 	<string name="palette_blackhot">Black Hot</string>
+	<string name="palette_redhot">Red Hot</string>
+	<string name="palette_redcold">Red Cold</string>
 	<string name="palette_ironbow">Ironbow</string>
 	<string name="palette_rainbow">Rainbow</string>
 	<string name="palette_rainbow2">Rainbow 2</string>
