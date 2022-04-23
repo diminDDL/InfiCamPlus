@@ -11,6 +11,7 @@
 	<string name="msg_permdenied_storage">Storage permission denied.</string>
 	<string name="msg_failrecord">Failed to start recording.</string>
 	<string name="msg_zoom">Zoom: %d%%</string>
+	<string name="msg_overtemp">Warning! Do not point at very hot objects!</string>
 
 	<!-- The difference between err_ and msg_ that are errors is that the err_ signify exceptions
 	       thrown by classes other than MainActivity that may or may not be shown to user but are
@@ -44,6 +45,7 @@
 	<string name="set_shutinterval">Shutter interval (%d seconds)</string>
 	<string name="set_shutinterval_never">Shutter interval (never)</string>
 	<string name="set_firstshutdelay">Initial shutter delay (%d ms)</string>
+	<string name="set_overtemplock">Overtemperature Protection</string>
 	<string name="set_rotate180">Turn image upside down</string>
 	<string name="set_mirror">Mirror image</string>
 	<string name="set_swap_controls">Swap left and right buttons</string>

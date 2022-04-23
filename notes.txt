@@ -217,7 +217,7 @@ Things i learned about the protocol these thermal cameras talk:
 		 48 -  64 | 16 byte string  | Firmware version
 		 64 -  80 | 16 byte string  | Serial number
 		 80 -  95 | 16 byte string  | Product name
-		 95 - 254 | ???             | ??? (unused bgy software)
+		 95 - 254 | ???             | ??? (unused by software)
 		---User area, writeable by ABS_ZOOM command-----------
 		254 - 258 | float (32bit)   | Correction
 		258 - 262 | float (32bit)   | Reflected temperature

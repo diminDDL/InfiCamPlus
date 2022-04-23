@@ -81,6 +81,10 @@ public class SettingsMain extends Settings {
 				act.setShutterInterval((long) i * 1000);
 			}
 		},
+		new SettingBool("overtemplock", R.string.set_overtemplock, true) {
+			@Override
+			void onSet(boolean value) { act.setOverTempLockTime(value ? 5000 : 0); }
+		},
 		new SettingBool("rotate180", R.string.set_rotate180, false) {
 			@Override
 			void onSet(boolean value) { act.setRotate(value); }

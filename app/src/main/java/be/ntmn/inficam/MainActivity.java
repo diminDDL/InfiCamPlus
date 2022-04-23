@@ -57,6 +57,9 @@ public class MainActivity extends BaseActivity {
 	private SurfaceMuxer.OutputSurface outScreen, outRecord;
 	private final Overlay.Data overlayData = new Overlay.Data();
 	private int range = 0, iMode;
+	private long overTempTime = 0;
+	private long overTempLockTime = 0;
+	private int earlyFrame = 0;
 
 	private UsbDevice device;
 	private UsbDeviceConnection usbConnection;
@@ -167,6 +170,7 @@ public class MainActivity extends BaseActivity {
 						device = dev;
 						usbConnection = conn;
 						disconnecting = false;
+						earlyFrame = 0;
 						try {
 							infiCam.connect(conn.getFileDescriptor());
 							/* Size is only important for cubic interpolation. */
@@ -279,6 +283,14 @@ public class MainActivity extends BaseActivity {
 				overlayData.temp = temp;
 				float rangeMin = overlayData.rangeMin;
 				float rangeMax = overlayData.rangeMax;
+
+				if (overTempLockTime > 0 && !isNaN(fi.max) && overTempTime == 0 && fi.max > range
+					&& earlyFrame > 50) {
+					overTempTime = System.currentTimeMillis();
+					handler.post(() -> overTempLockout());
+				}
+				if (earlyFrame < 65535)
+					++earlyFrame;
 
 				/* If the range isn't locked and we're zoomed in, find the min/max. */
 				if ((isNaN(rangeMin) || isNaN(rangeMax)) && scale > 1.0f) {
@@ -395,12 +407,20 @@ public class MainActivity extends BaseActivity {
 		}
 	}
 
+	private void overTempLockout() {
+		messageView.showMessage(R.string.msg_overtemp);
+		infiCam.calibrate();
+		if (System.currentTimeMillis() - overTempTime < overTempLockTime)
+			handler.postDelayed(() -> overTempLockout(), 250);
+		else overTempTime = 0;
+	}
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
 		// TODO this is probably bad
-		Thread.setDefaultUncaughtExceptionHandler((paramThread, paramThrowable) -> {
+		/*Thread.setDefaultUncaughtExceptionHandler((paramThread, paramThrowable) -> {
 			StringWriter sw = new StringWriter();
 			PrintWriter pw = new PrintWriter(sw);
 			paramThrowable.printStackTrace(pw);
@@ -412,7 +432,7 @@ public class MainActivity extends BaseActivity {
 					"Inficam has crashed, share crash dump?");
 			startActivity(shareIntent);
 			System.exit(2);
-		});
+		});*/
 
 		setContentView(R.layout.activity_main);
 		cameraView = findViewById(R.id.cameraView);
@@ -892,6 +912,7 @@ public class MainActivity extends BaseActivity {
 			return;
 		this.range = range;
 		infiCam.setRange(range);
+		earlyFrame = 0;
 		requestReinit();
 	}
 
@@ -991,5 +1012,9 @@ public class MainActivity extends BaseActivity {
 		settingsTherm.setTempUnit(i);
 		settingsMeasure.setTempUnit(i);
 		settingsPalette.setTempUnit(i);
+	}
+
+	public void setOverTempLockTime(long time) {
+		overTempLockTime = time;
 	}
 }
