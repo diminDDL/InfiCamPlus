@@ -124,6 +124,8 @@ TODO ui stuff
 	- more permanent test picture when not connected, to test interpolation modes etc
 	- the nearest neighbor interpolation sucks for smaller sizes, fix it
 	- shutterless mode? cmd 0x8002 may help https://www.researchgate.net/publication/292188068_Shutter-less_calibration_of_uncooled_infrared_cameras
+	- user setting for protection max temp, default to something a bit higher than the range
+	- + and - buttons for precise adjustment of sliders perhaps
 
 TODO thermal camera things
 	- more measurement modes (point, line, rect)

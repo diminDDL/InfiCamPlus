@@ -420,7 +420,7 @@ public class MainActivity extends BaseActivity {
 		super.onCreate(savedInstanceState);
 
 		// TODO this is probably bad
-		/*Thread.setDefaultUncaughtExceptionHandler((paramThread, paramThrowable) -> {
+		Thread.setDefaultUncaughtExceptionHandler((paramThread, paramThrowable) -> {
 			StringWriter sw = new StringWriter();
 			PrintWriter pw = new PrintWriter(sw);
 			paramThrowable.printStackTrace(pw);
@@ -432,7 +432,7 @@ public class MainActivity extends BaseActivity {
 					"Inficam has crashed, share crash dump?");
 			startActivity(shareIntent);
 			System.exit(2);
-		});*/
+		});
 
 		setContentView(R.layout.activity_main);
 		cameraView = findViewById(R.id.cameraView);
