@@ -126,6 +126,7 @@ TODO ui stuff
 	- shutterless mode? cmd 0x8002 may help https://www.researchgate.net/publication/292188068_Shutter-less_calibration_of_uncooled_infrared_cameras
 	- user setting for protection max temp, default to something a bit higher than the range
 	- + and - buttons for precise adjustment of sliders perhaps
+	- fix the flickering that occurs when aimed at say a tree or grass as shown in video from vicky
 
 TODO thermal camera things
 	- more measurement modes (point, line, rect)
