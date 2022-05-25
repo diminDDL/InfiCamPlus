@@ -127,7 +127,7 @@ TODO ui stuff
 	- user setting for protection max temp, default to something a bit higher than the range
 	- + and - buttons for precise adjustment of sliders perhaps
 	- fix the flickering that occurs when aimed at say a tree or grass as shown in video from vicky
-    - video recorded allegedly comes out as wrong orientation (MIUI on Mi11)
+	- 7silver7 has instant crash on start (with or without camera) on Samsung S9, Android 10
 
 TODO thermal camera things
 	- more measurement modes (point, line, rect)
