@@ -11,7 +11,7 @@ public class SettingsPalette extends Settings {
 
 	public class SettingPalette extends SettingRadio {
 		SettingPalette() {
-			super("palette", R.string.set_palette, 2, new int[] {});
+			super("palette", R.string.set_palette, 6, new int[] {});
 			items = new int[Palette.palettes.length];
 			for (int i = 0; i < Palette.palettes.length; ++i)
 				items[i] = Palette.palettes[i].name;
