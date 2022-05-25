@@ -737,7 +737,6 @@ public class MainActivity extends BaseActivity {
 			buttonsRight.setLayoutParams(buttonsRightLayout);
 			buttonsLeft.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
 			buttonsRight.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
-			rlp.topToBottom = ConstraintLayout.LayoutParams.UNSET;
 			rlp.rightToLeft = ConstraintLayout.LayoutParams.UNSET;
 			rlp.topToTop = ConstraintLayout.LayoutParams.UNSET;
 			rlp.topToBottom = R.id.buttonsLeft;
@@ -857,10 +856,16 @@ public class MainActivity extends BaseActivity {
 	/* Request audio permission first when necessary! */
 	private void _startRecording(boolean recordAudio) {
 		try {
-			Surface rsurface = recorder.start(this, vidWidth, vidHeight, recordAudio);
+			int w = vidWidth, h = vidHeight;
+			if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180) {
+				h ^= w;
+				w ^= h;
+				h ^= w;
+			}
+			Surface rsurface = recorder.start(this, w, h, recordAudio);
 			outRecord = new SurfaceMuxer.OutputSurface(surfaceMuxer, rsurface);
-			outRecord.setSize(vidWidth, vidHeight);
-			overlayRecord.setSize(vidWidth, vidHeight);
+			outRecord.setSize(w, h);
+			overlayRecord.setSize(w, h);
 			ImageButton buttonVideo = findViewById(R.id.buttonVideo);
 			buttonVideo.setColorFilter(Color.RED);
 		} catch (IOException e) {
