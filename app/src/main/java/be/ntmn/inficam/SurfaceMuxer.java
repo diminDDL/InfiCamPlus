@@ -488,7 +488,8 @@ public class SurfaceMuxer {
 			/* Destroying the context will also delete textures, program, etc. */
 			EGL14.eglDestroyContext(eglDisplay, eglContext);
 			EGL14.eglReleaseThread();
-			EGL14.eglTerminate(eglDisplay);
+			//EGL14.eglTerminate(eglDisplay); // TODO causes samsung crash, is it needed?
+			// TODO what about releaseThread()?
 		}
 		eglDisplay = EGL14.EGL_NO_DISPLAY;
 		eglContext = EGL14.EGL_NO_CONTEXT;
