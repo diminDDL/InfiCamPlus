@@ -7,9 +7,10 @@ android {
 
 	defaultConfig {
 		applicationId "be.ntmn.inficam"
-		minSdkVersion 21
+		minSdkVersion 14
 		versionCode 1
 		versionName "1.0"
+		vectorDrawables.useSupportLibrary true // To support older minSdk
 
 		/* We need targetSdkVersion <= 27 for some Android 10 devices to work:
 		 *   https://issuetracker.google.com/issues/145082934
