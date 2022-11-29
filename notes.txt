@@ -128,6 +128,7 @@ TODO ui stuff
 	- fix the flickering that occurs when aimed at say a tree or grass as shown in video from vicky
 	- 7silver7 has instant crash on start (with or without camera) on Samsung S9, Android 10
 	    * Workaround added in SurfaceMuxer.java, need to investigate further (eglTerminate() triggers the crash)
+    - time-lapse feature
 
 TODO thermal camera things
 	- more measurement modes (point, line, rect)
