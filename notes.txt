@@ -143,6 +143,7 @@ TODO ui stuff
 
 TODO thermal camera things
 	- more measurement modes (point, line, rect)
+		* way to store location of those for next time
 	- 9 point grid rectangle for measuring
 	- store thermometry data in videos and pictures
 	- allow to regenerate images and videos from thermometry data, measure from it
