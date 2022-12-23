@@ -140,6 +140,7 @@ TODO ui stuff
 	- galaxy note 8 orientation somehow not sensed (WHY on discord)
 	- samsung galery on note 8 shows only last image somehow (WHY on discord)
 	- add the pallete i was asked about in pm
+	- indication of already recorded time
 
 TODO thermal camera things
 	- more measurement modes (point, line, rect)
