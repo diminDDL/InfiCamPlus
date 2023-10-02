@@ -141,6 +141,9 @@ TODO ui stuff
 	- samsung galery on note 8 shows only last image somehow (WHY on discord)
 	- add the pallete i was asked about in pm
 	- indication of already recorded time
+	- reproduce and fix crash on android 9 lineage versions (seems to be something shader related, see: discord)
+	- rotation not always correct, devices that only support one rotation for example have problems
+	- some phones (like my poco) have a serious lag between the camera and image
 
 TODO thermal camera things
 	- more measurement modes (point, line, rect)
