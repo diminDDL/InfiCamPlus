@@ -342,6 +342,21 @@ JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_storeParams(JNIEnv *env, jobject 
 	icj->store_params();
 }
 
+JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_closeShutter(JNIEnv *env, jobject self) {
+    InfiCam *cam = getObject(env, self);
+    if (cam != NULL) {
+        cam->close_shutter();
+    }
+}
+
+JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_setRawSensor(JNIEnv *env, jobject self, jboolean raw) {
+    InfiCam *cam = getObject(env, self);
+    if (cam != NULL) {
+        cam->set_raw_sensor(raw);
+        cam->infi.raw_sensor = true;
+    }
+}
+
 JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_updateTable(JNIEnv *env, jobject self) {
 	InfiCamJNI *icj = getObject(env, self);
 	icj->update_table();

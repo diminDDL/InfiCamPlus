@@ -2,6 +2,7 @@ package be.ntmn.inficam;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 
@@ -23,6 +24,15 @@ public class SettingsTherm extends Settings {
 
 	@Override
 	public Setting[] getSettings() { return settings; }
+
+	public void initializeSettings() {
+		// Apply correction variable to the settings on startup
+		// This is needed since the T2S+ V2 doesn't allow you to write settings, at least how it's implemented in the app
+		// TODO: Do this for the rest and in a better way
+		SettingSliderTemp correction = (SettingSliderTemp)settings[5];
+		int storedValue = sp.getInt("correction", 0); // Get the stored value
+		correction.onSet((float)storedValue / correction.div); // Apply the division just like in the normal slider code
+	}
 
 	private final Setting[] settings = {
 		new SettingSliderFloat("emissivity", R.string.set_emissivity, 100, 0, 100, 1, 100) {

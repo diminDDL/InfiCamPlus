@@ -141,6 +141,7 @@ public class MainActivity extends BaseActivity {
 	private final Runnable timedShutter = new Runnable() {
 		@Override
 		public void run() {
+			// TODO: make calibration actually work automatically when connected so the user doesn't need ot hit the calibrate button 4 times to get a good image
 			infiCam.calibrate(); /* No harm when not connected. */
 			if (shutterInterval > 0)
 				handler.postDelayed(timedShutter, shutterInterval);
@@ -154,8 +155,11 @@ public class MainActivity extends BaseActivity {
 			 *   and subclass are checked because older android versions don't filter for us.
 			 */
 			if (device != null || dev.getDeviceClass() != 239 || dev.getDeviceSubclass() != 2 ||
-					dev.getVendorId() != 0x1514)
+					(dev.getVendorId() != 0x1514 && dev.getVendorId() != 0x4B4))
 				return;
+
+			final boolean raw_cam = dev.getVendorId() == 0x4B4;	// For T2S+ A2 raw sensor
+
 			device = dev;
 			/* Connecting to a UVC device needs camera permission. */
 			askPermission(Manifest.permission.CAMERA, granted -> {
@@ -173,6 +177,7 @@ public class MainActivity extends BaseActivity {
 						earlyFrame = 0;
 						try {
 							infiCam.connect(conn.getFileDescriptor());
+							infiCam.setRawSensor(raw_cam);
 							/* Size is only important for cubic interpolation. */
 							inputSurface.setSize(infiCam.getWidth(), infiCam.getHeight());
 							thruSurface.setSize(infiCam.getWidth(), infiCam.getHeight());
@@ -182,6 +187,7 @@ public class MainActivity extends BaseActivity {
 							messageView.clearMessage();
 							messageView.showMessage(getString(R.string.msg_connected,
 									dev.getProductName()));
+							settingsTherm.initializeSettings();
 						} catch (Exception e) {
 							disconnect();
 							messageView.showMessage(e.getMessage());
@@ -409,7 +415,7 @@ public class MainActivity extends BaseActivity {
 
 	private void overTempLockout() {
 		messageView.showMessage(R.string.msg_overtemp);
-		infiCam.calibrate();
+		infiCam.closeShutter();
 		if (System.currentTimeMillis() - overTempTime < overTempLockTime)
 			handler.postDelayed(() -> overTempLockout(), 250);
 		else overTempTime = 0;

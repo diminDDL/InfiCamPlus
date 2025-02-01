@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-	compileSdk 32
+	compileSdk 34
 
 	defaultConfig {
 		applicationId "be.ntmn.inficam"
-		minSdkVersion 14
+		minSdkVersion 21
 		versionCode 1
 		versionName "1.0"
 		vectorDrawables.useSupportLibrary true // To support older minSdk
@@ -36,6 +36,7 @@ android {
 		/* Needed to build releases with low targetSdkVersion */
 		checkReleaseBuilds false
 	}
+	namespace 'be.ntmn.inficam'
 }
 
 dependencies {

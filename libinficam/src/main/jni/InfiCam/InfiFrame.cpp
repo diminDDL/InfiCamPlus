@@ -3,6 +3,12 @@
 #include <cstdint>
 #include <cstdlib> /* NULL */
 #include <cstring> /* memcpy() */
+#include <android/log.h>
+
+#define LOG_TAG "NativeCode"
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
 static const float zeroc = 273.15;
 
@@ -83,23 +89,80 @@ int InfiFrame::init(int width, int height) {
 void InfiFrame::update(uint16_t *frame) {
 	fpa_average = read_u16(frame + s1_offset, 0);
 	uint16_t temp_fpa_raw = read_u16(frame + s1_offset, 1);
-	temp_fpa = 20.0 - ((float) (temp_fpa_raw - fpa_off)) / fpa_div;
-	temp_shutter = read_u16(frame + s2_offset, 1) / 10.0 - zeroc;
-	temp_core = read_u16(frame + s2_offset, 2) / 10.0 - zeroc;
+	temp_fpa = 20.0f - ((float) (temp_fpa_raw - fpa_off)) / fpa_div;
+    uint16_t temp_shutter_u16 = read_u16(frame + s2_offset, 1);
+    float shutter_fix = 0.0f;
+    if(!raw_sensor) {
+        temp_shutter = (float)temp_shutter_u16 / 10.0f - zeroc;
+    }else{
+        float tmp_shutter = 0.0f;
+        float corr_factor = 0.0f;
+        uint16_t shutter_fix_reg = read_u16(frame + (s2_offset + width), 47);
+        shutter_fix = (float)((int8_t)(shutter_fix_reg >> 8)) / 10.0f;
+        if(temp_shutter_u16 < 2049){
+            tmp_shutter = (float)temp_shutter_u16;
+            corr_factor = 0.625f;
+        }else{
+            tmp_shutter =  - (float)(4095 - temp_shutter_u16);
+            corr_factor = -0.625f;
+        }
+        temp_shutter = ((tmp_shutter * corr_factor) / 10.0f) + shutter_fix;
+    }
+    if(!raw_sensor) {
+        temp_core = read_u16(frame + s2_offset, 2) / 10.0f - zeroc;
+    }else{
+        temp_core = temp_shutter - shutter_fix;
+    }
 	float cal_00 = read_u16(frame + s2_offset, 0);
 	cal_01 = read_float(frame + s2_offset, 3);
 	float cal_02 = read_float(frame + s2_offset, 5);
 	float cal_03 = read_float(frame + s2_offset, 7);
 	float cal_04 = read_float(frame + s2_offset, 9);
 	float cal_05 = read_float(frame + s2_offset, 11);
-	temp_max_x = read_u16(frame + s1_offset, 2);
-	temp_max_y = read_u16(frame + s1_offset, 3);
-	temp_max = read_u16(frame + s1_offset, 4);
-	temp_min_x = read_u16(frame + s1_offset, 5);
-	temp_min_y = read_u16(frame + s1_offset, 6);
-	temp_min = read_u16(frame + s1_offset, 7);
-	temp_avg = read_u16(frame + s1_offset, 8);
-	temp_center = read_u16(frame + s1_offset, 12);
+    if(!raw_sensor) {
+        temp_max_x = read_u16(frame + s1_offset, 2);
+        temp_max_y = read_u16(frame + s1_offset, 3);
+        temp_max = read_u16(frame + s1_offset, 4);
+        temp_min_x = read_u16(frame + s1_offset, 5);
+        temp_min_y = read_u16(frame + s1_offset, 6);
+        temp_min = read_u16(frame + s1_offset, 7);
+        temp_avg = read_u16(frame + s1_offset, 8);
+        temp_center = read_u16(frame + s1_offset, 12);
+    }else{
+        temp_max = 0;
+        temp_min = UINT16_MAX;
+        uint32_t sum = 0;
+        uint16_t center_x = width / 2;
+        uint16_t center_y = height / 2;
+
+        for (uint16_t y = 0; y < height; y++) {
+            for (uint16_t x = 0; x < width; x++) {
+                uint16_t value = frame[y * width + x];
+
+                if (value > temp_max) {
+                    temp_max = value;
+                    temp_max_x = x;
+                    temp_max_y = y;
+                }
+
+                if (value < temp_min) {
+                    temp_min = value;
+                    temp_min_x = x;
+                    temp_min_y = y;
+                }
+
+                // Accumulate for average calculation
+                sum += value;
+
+                // Store the value at the center position
+                if (x == center_x && y == center_y) {
+                    temp_center = value;
+                }
+            }
+        }
+
+        temp_avg = sum / (height * width);
+    }
 	temp_user[0] = read_u16(frame + s1_offset, 13);
 	temp_user[1] = read_u16(frame + s1_offset, 14);
 	temp_user[2] = read_u16(frame + s1_offset, 15);
@@ -151,13 +214,18 @@ void InfiFrame::temp(uint16_t *input, float *output, size_t len) {
 
 void InfiFrame::read_params(uint16_t *frame) {
 	/* Presumeably this is just a 128 byte ram+eeprom area. */
-	correction = read_float(frame + s2_offset, 127);
+    if(!raw_sensor) {
+        correction = read_float(frame + s2_offset, 127);
+        /* NOTE Original Infiray software uses a uint16 for distance. */
+        distance = read_float(frame + s2_offset, 137);
+    }else{
+        // TODO: Handling of theve vraibles and user input should be done within the app because writing to these doesn't work on the T2S+ A2
+        distance = (float)read_u16(frame + s2_offset, 137);
+    }
 	temp_reflected = read_float(frame + s2_offset, 129);
 	temp_air = read_float(frame + s2_offset, 131);
 	humidity = read_float(frame + s2_offset, 133);
 	emissivity = read_float(frame + s2_offset, 135);
-	/* NOTE Original Infiray software uses a uint16 for distance. */
-	distance = read_float(frame + s2_offset, 137);
 }
 
 void InfiFrame::read_version(uint16_t *frame, char *product, char *serial, char *fw_version) {

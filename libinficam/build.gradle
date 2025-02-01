@@ -1,10 +1,10 @@
 apply plugin: 'com.android.library'
 
 android {
-	compileSdkVersion 32
+	compileSdkVersion 34
 
 	defaultConfig {
-		minSdkVersion 14
+		minSdkVersion 21
 		//noinspection ExpiredTargetSdkVersion
 		targetSdkVersion 27
 
@@ -39,4 +39,5 @@ android {
 	lintOptions {
 		checkReleaseBuilds false
 	}
+	namespace 'be.ntmn.libinficam'
 }

@@ -5,6 +5,7 @@
 #include "InfiFrame.h"
 #include <cstdint>
 #include <cmath> /* NAN */
+#include <future>
 #include <pthread.h>
 
 /* This one is for actually interacting with the thermal camera, wraps UVCDevice and InfiFrame.
@@ -23,7 +24,20 @@ class InfiCam {
 	void *frame_callback_arg;
 	float *frame_temp = NULL;
 	pthread_mutex_t frame_callback_mutex;
+    pthread_cond_t calibration_cond;
 	int connected = 0, streaming = 0, table_invalid;
+    bool raw_sensor = false;
+    bool calibrating = false;
+    bool calibrated = false;
+    bool* dead_pixel_mask = nullptr;
+    uint32_t dead_pixel_num = 0;
+    uint16_t* intermediary_buffer = nullptr;
+    uint16_t* calibration_frame = nullptr;
+    uint16_t offset_value = 0;
+
+    static std::future<void> calibration_thread_future;
+
+    static const int DATA_ROWS = 4;
 
 	static const int CMD_SHUTTER = 0x8000;
 	static const int CMD_MODE_TEMP = 0x8004;
@@ -31,7 +45,7 @@ class InfiCam {
 	static const int CMD_RANGE_120 = 0x8020;
 	static const int CMD_RANGE_400 = 0x8021;
 	static const int CMD_STORE = 0x80FF;
-
+    // These are just zero on the T2S+ A2 version
 	static const int ADDR_CORRECTION = 0;
 	static const int ADDR_TEMP_REFLECTED = 4;
 	static const int ADDR_TEMP_AIR = 8;
@@ -87,9 +101,12 @@ public:
 	void set_distance(float dist);
 	void set_params(float corr, float t_ref, float t_air, float humi, float emi, float dist);
 	void store_params(); /* Store user memory to camera so values remain when reconnecting. */
+    void set_raw_sensor(bool raw) { raw_sensor = raw; };
 
 	void update_table();
 	void calibrate();
+    void calibration_thread();      /* Since on raw models calibration requires some waiting, it's better to delegate it to a separate thread. */
+    void close_shutter();
 
 	void set_palette(uint32_t *palette); /* Length must be palette_len. */
 };

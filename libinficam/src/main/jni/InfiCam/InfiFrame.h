@@ -19,6 +19,8 @@ class InfiFrame {
 	int table_offset;
 
 public:
+    /* Defines if the camera reports raw sensor readings such as the T2S+ A2 version. */
+    bool raw_sensor = false;
 	/* Dimensions of actual thermographic image, set by init(). */
 	int width = 0, height = 0; /* And set here too for predictability. */
 
@@ -30,7 +32,7 @@ public:
 	float temp_air = 0.0;
 	float humidity = 0.0;
 	float emissivity = 0.0;
-	float distance = 0.0;
+	float distance = 1.0;
 
 	/* Distance multiplier, 3.0 for 6.8mm lens, 1.0 for 13mm lens.
 	 * Changes affect temp_single() only after update() and table dependent things after
