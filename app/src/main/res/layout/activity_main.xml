@@ -135,61 +135,62 @@
 		app:layout_constraintLeft_toRightOf="@id/buttonsLeft" />
 
 	<LinearLayout
+		android:id="@+id/buttonsRight"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
+		android:layout_marginEnd="16dp"
 		android:orientation="vertical"
-		android:id="@+id/buttonsRight"
-		app:layout_constraintTop_toTopOf="parent"
 		app:layout_constraintBottom_toBottomOf="parent"
-		app:layout_constraintEnd_toEndOf="parent">
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintTop_toTopOf="parent">
 
 		<ImageButton
 			android:id="@+id/buttonShutter"
-			android:src="@drawable/ic_baseline_camera_24"
-			android:contentDescription="@string/btn_shutter"
-			android:layout_width="40dp"
-			android:layout_height="40dp"
-			android:scaleType="fitCenter"
+			android:layout_width="60dp"
+			android:layout_height="60dp"
 			android:layout_margin="5dp"
+			android:background="?android:attr/selectableItemBackground"
+			android:contentDescription="@string/btn_shutter"
 			android:hapticFeedbackEnabled="false"
-			app:tint="@color/white"
-			android:background="?android:attr/selectableItemBackground" />
+			android:scaleType="fitCenter"
+			android:src="@drawable/ic_baseline_camera_24"
+			app:tint="@color/white" />
 
 		<ImageButton
 			android:id="@+id/buttonPhoto"
-			android:src="@drawable/ic_baseline_photo_camera_24"
-			android:contentDescription="@string/btn_photo"
 			android:layout_width="60dp"
 			android:layout_height="60dp"
-			android:scaleType="fitCenter"
 			android:layout_margin="5dp"
+			android:background="?android:attr/selectableItemBackground"
+			android:contentDescription="@string/btn_photo"
 			android:hapticFeedbackEnabled="false"
-			app:tint="@color/white"
-			android:background="?android:attr/selectableItemBackground" />
+			android:scaleType="fitCenter"
+			android:src="@drawable/ic_baseline_photo_camera_24"
+			app:tint="@color/white" />
 
 		<ImageButton
 			android:id="@+id/buttonVideo"
-			android:src="@drawable/ic_baseline_videocam_24"
-			android:contentDescription="@string/btn_video"
-			android:layout_width="40dp"
-			android:layout_height="40dp"
-			android:scaleType="fitCenter"
+			android:layout_width="60dp"
+			android:layout_height="60dp"
 			android:layout_margin="5dp"
+			android:background="?android:attr/selectableItemBackground"
+			android:contentDescription="@string/btn_video"
 			android:hapticFeedbackEnabled="false"
-			app:tint="@color/white"
-			android:background="?android:attr/selectableItemBackground" />
+			android:scaleType="fitCenter"
+			android:src="@drawable/ic_baseline_videocam_24"
+			app:tint="@color/white" />
 
 		<ImageButton
 			android:id="@+id/buttonGallery"
-			android:src="@drawable/ic_baseline_photo_library_24"
-			android:contentDescription="@string/btn_gallery"
-			android:layout_width="40dp"
-			android:layout_height="40dp"
-			android:scaleType="fitCenter"
+			android:layout_width="60dp"
+			android:layout_height="60dp"
 			android:layout_margin="5dp"
+			android:background="?android:attr/selectableItemBackground"
+			android:contentDescription="@string/btn_gallery"
 			android:hapticFeedbackEnabled="false"
-			app:tint="@color/white"
-			android:background="?android:attr/selectableItemBackground" />
+			android:scaleType="fitCenter"
+			android:src="@drawable/ic_baseline_photo_library_24"
+			app:tint="@color/white" />
 
 	</LinearLayout>
 

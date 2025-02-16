@@ -164,10 +164,10 @@ public class MainActivity extends BaseActivity {
 			 *   and subclass are checked because older android versions don't filter for us.
 			 */
 			if (device != null || dev.getDeviceClass() != 239 || dev.getDeviceSubclass() != 2 ||
-					(dev.getVendorId() != 0x1514 && dev.getVendorId() != 0x4B4))
+					(dev.getVendorId() != 0x1514 && dev.getVendorId() != 0x4B4 && dev.getVendorId() != 0x3474))
 				return;
 
-			raw_cam = dev.getVendorId() == 0x4B4;	// For T2S+ A2 raw sensor
+			raw_cam = (dev.getVendorId() == 0x4B4) || (dev.getVendorId() == 0x3474);	// For T2S+ A2 raw sensor
 
 			device = dev;
 			/* Connecting to a UVC device needs camera permission. */

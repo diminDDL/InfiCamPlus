@@ -12,7 +12,7 @@
 	<string name="msg_permdenied_storage">Storage permission denied.</string>
 	<string name="msg_failrecord">Failed to start recording.</string>
 	<string name="msg_zoom">Zoom: %d%%</string>
-	<string name="msg_overtemp">Warning! Do not point at very hot objects!</string>
+	<string name="msg_overtemp">Warning! Do not point at very hot objects! (Tap shutter button to reset)</string>
 
 	<!-- The difference between err_ and msg_ that are errors is that the err_ signify exceptions
 	       thrown by classes other than MainActivity that may or may not be shown to user but are
