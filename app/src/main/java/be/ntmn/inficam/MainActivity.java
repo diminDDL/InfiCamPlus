@@ -90,6 +90,9 @@ public class MainActivity extends BaseActivity {
 	private int imgType;
 	private int imgQuality;
 
+	private boolean raw_cam = false;
+	private boolean first_connect = false;
+
 	private Bitmap imgCompressBitmap;
 
 	private class ImgCompressThread extends Thread {
@@ -141,8 +144,14 @@ public class MainActivity extends BaseActivity {
 	private final Runnable timedShutter = new Runnable() {
 		@Override
 		public void run() {
-			// TODO: make calibration actually work automatically when connected so the user doesn't need ot hit the calibrate button 4 times to get a good image
 			infiCam.calibrate(); /* No harm when not connected. */
+			if(raw_cam && first_connect){
+				long wait_time = 8000;
+				messageView.showMessageTimed(getString(R.string.msg_calibrating), wait_time);
+				// Wait for 8 seconds and calibrate again
+				handler.postDelayed(() -> infiCam.calibrate(), wait_time);
+				first_connect = false;
+			}
 			if (shutterInterval > 0)
 				handler.postDelayed(timedShutter, shutterInterval);
 		}
@@ -158,7 +167,7 @@ public class MainActivity extends BaseActivity {
 					(dev.getVendorId() != 0x1514 && dev.getVendorId() != 0x4B4))
 				return;
 
-			final boolean raw_cam = dev.getVendorId() == 0x4B4;	// For T2S+ A2 raw sensor
+			raw_cam = dev.getVendorId() == 0x4B4;	// For T2S+ A2 raw sensor
 
 			device = dev;
 			/* Connecting to a UVC device needs camera permission. */
@@ -188,8 +197,10 @@ public class MainActivity extends BaseActivity {
 							messageView.showMessage(getString(R.string.msg_connected,
 									dev.getProductName()));
 							settingsTherm.initializeSettings();
+							first_connect = true;
 						} catch (Exception e) {
 							disconnect();
+							first_connect = false;
 							messageView.showMessage(e.getMessage());
 						}
 					}
@@ -211,6 +222,7 @@ public class MainActivity extends BaseActivity {
 		public void onDisconnect(UsbDevice dev) {
 			if (dev.equals(device))
 				disconnect();
+			first_connect = false;
 		}
 	};
 
@@ -699,6 +711,7 @@ public class MainActivity extends BaseActivity {
 		displayManager.unregisterDisplayListener(displayListener);
 		stopRecording();
 		disconnect();
+		first_connect = false;
 		usbMonitor.stop();
 		super.onStop();
 	}
@@ -822,6 +835,7 @@ public class MainActivity extends BaseActivity {
 		}
 		infiCam.stopStream();
 		infiCam.disconnect();
+		first_connect = false;
 		if (usbConnection != null)
 			usbConnection.close();
 		usbConnection = null;

@@ -70,6 +70,11 @@ public class MessageView extends androidx.appcompat.widget.AppCompatTextView {
 		_showMessage(false, TIME_LONG);
 	}
 
+	public void showMessageTimed(String str, long time) {
+		setText(str);
+		_showMessage(false, time);
+	}
+
 	public void shortMessage(int res) {
 		setText(res);
 		_showMessage(false, TIME_SHORT);

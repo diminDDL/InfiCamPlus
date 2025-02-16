@@ -3,6 +3,7 @@
 
 	<string name="msg_disconnected">Disconnected.</string>
 	<string name="msg_connected">%s connected.</string>
+	<string name="msg_calibrating">Calibrating…</string>
 	<string name="msg_connect_failed">Failed to connect.</string>
 	<string name="msg_captured">Captured.</string>
 	<string name="msg_permdenied_cam">Camera permission denied.</string>
