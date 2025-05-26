@@ -70,7 +70,9 @@ public class SettingsTherm extends Settings {
 				act.infiCam.updateTable();
 			}
 		},
-		new SettingSliderTemp("correction", R.string.set_correction, 0, -200, 200) {
+			// Correction range of +100.0 to -100.0 degrees Celsius (static offset)
+			// TODO: Make a proper offset calculation thing based on shutter temperature in the C++ code and reduce this range
+		new SettingSliderTemp("correction", R.string.set_correction, 0, -1000, 1000) {
 			@Override
 			void onSet(float f) {
 				act.infiCam.setCorrection(f);

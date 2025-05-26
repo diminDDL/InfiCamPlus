@@ -167,10 +167,10 @@ void InfiFrame::update(uint16_t *frame) {
 	temp_user[1] = read_u16(frame + s1_offset, 14);
 	temp_user[2] = read_u16(frame + s1_offset, 15);
 
-	distance_adjusted = ((distance >= 20.0) ? 20.0 : distance) * distance_multiplier;
+	distance_adjusted = ((distance >= 20.0f) ? 20.0f : distance) * distance_multiplier;
 	float atm = atmt(humidity, temp_air, distance_adjusted);
-	numerator_sub = (1.0 - emissivity) * atm * powf(temp_reflected + zeroc, 4) +
-					(1.0 - atm) * powf(temp_air + zeroc, 4);
+	numerator_sub = (1.0f - emissivity) * atm * powf(temp_reflected + zeroc, 4) +
+					(1.0f - atm) * powf(temp_air + zeroc, 4);
 	denominator = emissivity * atm;
 
 	float ts = temp_shutter + offset_temp_shutter;
