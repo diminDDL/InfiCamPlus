@@ -91,6 +91,7 @@ public class MainActivity extends BaseActivity {
 	private int imgQuality;
 
 	private boolean raw_cam = false;
+    private boolean p2Pro = false;
 	private boolean first_connect = false;
 
 	private Bitmap imgCompressBitmap;
@@ -164,10 +165,12 @@ public class MainActivity extends BaseActivity {
 			 *   and subclass are checked because older android versions don't filter for us.
 			 */
 			if (device != null || dev.getDeviceClass() != 239 || dev.getDeviceSubclass() != 2 ||
-					(dev.getVendorId() != 0x1514 && dev.getVendorId() != 0x4B4 && dev.getVendorId() != 0x3474))
+					(dev.getVendorId() != 0x1514 && dev.getVendorId() != 0x4B4 && dev.getVendorId() != 0x3474 && dev.getVendorId() != 0xBDA))
 				return;
 
 			raw_cam = (dev.getVendorId() == 0x4B4) || (dev.getVendorId() == 0x3474);	// For T2S+ A2 raw sensor
+
+            p2Pro = (dev.getVendorId() == 0xBDA); // flag for P2 Pro
 
 			device = dev;
 			/* Connecting to a UVC device needs camera permission. */
@@ -185,6 +188,7 @@ public class MainActivity extends BaseActivity {
 						disconnecting = false;
 						earlyFrame = 0;
 						try {
+                            infiCam.setP2Pro(p2Pro); // need to set p2Pro flag before connecting otherwise the resolution does not get set properly
 							infiCam.connect(conn.getFileDescriptor());
 							infiCam.setRawSensor(raw_cam);
 							/* Size is only important for cubic interpolation. */
@@ -331,7 +335,29 @@ public class MainActivity extends BaseActivity {
 						fi.max_y = mma.max_y;
 						rangeMax = mma.max;
 					}
-				}
+				} else if (p2Pro) {
+                    // p2Pro does not report min and max through registers so use zoom logic to find min and max
+                    float lost = (1.0f - 1.0f / scale) / 2.0f;
+                    Overlay.mmaRect(mma, temp,
+                            (int) (lost * fi.width),
+                            (int) (lost * fi.height),
+                            (int) ((1.0f - lost) * fi.width),
+                            (int) ((1.0f - lost) * fi.height),
+                            fi.width);
+                    if (isNaN(rangeMin)) {
+                        fi.min = mma.min;
+                        fi.min_x = mma.min_x;
+                        fi.min_y = mma.min_y;
+                        rangeMin = mma.min;
+                    }
+                    if (isNaN(rangeMax)) {
+                        fi.max = mma.max;
+                        fi.max_x = mma.max_x;
+                        fi.max_y = mma.max_y;
+                        rangeMax = mma.max;
+                    }
+                }
+
 
 				infiCam.applyPalette(rangeMin, rangeMax);
 				handler.post(handleFrameRunnable);

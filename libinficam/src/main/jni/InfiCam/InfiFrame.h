@@ -21,6 +21,8 @@ class InfiFrame {
 public:
     /* Defines if the camera reports raw sensor readings such as the T2S+ A2 version. */
     bool raw_sensor = false;
+    /* Defines if the camera is the P2 Pro. */
+    bool p2_pro = false;
 	/* Dimensions of actual thermographic image, set by init(). */
 	int width = 0, height = 0; /* And set here too for predictability. */
 

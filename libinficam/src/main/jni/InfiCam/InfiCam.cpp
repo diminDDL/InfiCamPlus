@@ -16,9 +16,11 @@
 
 
 void InfiCam::uvc_callback(uvc_frame_t *frame, void *user_ptr) {
+    // This function gets called every time a new frame is ready
 	InfiCam *p = (InfiCam *) user_ptr;
 	if (frame->data_bytes < p->dev.width * p->dev.height * 2)
 		return;
+
     if(p->calibrating) {
         size_t frame_size = p->dev.width * (p->dev.height - InfiCam::DATA_ROWS);    // We don't want to calibrate out the data rows
 
@@ -72,7 +74,13 @@ void InfiCam::uvc_callback(uvc_frame_t *frame, void *user_ptr) {
     if (p->intermediary_buffer == nullptr) {
         p->intermediary_buffer = new uint16_t[frame_size];
     }
-    memcpy(p->intermediary_buffer, frame->data, frame_size * sizeof(uint16_t));
+
+    if (p->p2_pro) {
+        memcpy(p->intermediary_buffer, (uint16_t *) frame->data + 256*192, 256*192 * sizeof(uint16_t)); // TODO
+    } else {
+        memcpy(p->intermediary_buffer, frame->data, frame_size * sizeof(uint16_t));
+    }
+
 
     // Apply calibration and dead pixel correction in a single pass
     if(p->raw_sensor && p->calibrated) {
@@ -81,10 +89,11 @@ void InfiCam::uvc_callback(uvc_frame_t *frame, void *user_ptr) {
 
         for(size_t i = 0; i < frame_size_without_data; i++) {
             // First apply offset calibration
-            p->intermediary_buffer[i] = p->intermediary_buffer[i] + p->offset_value - p->calibration_frame[i];
+            //p->intermediary_buffer[i] = p->intermediary_buffer[i] + p->offset_value - p->calibration_frame[i];
+            p->intermediary_buffer[i] = p->intermediary_buffer[i];// + p->offset_value - p->calibration_frame[i];
 
             // Then check if this is a dead pixel
-            if(p->dead_pixel_mask[i] && p->dead_pixel_num > 0) {
+            if(p->dead_pixel_mask[i] && p->dead_pixel_num > 0 && 0) {
                 // Calculate row and column position
                 size_t row = i / width;
                 size_t col = i % width;
@@ -141,6 +150,7 @@ void InfiCam::uvc_callback(uvc_frame_t *frame, void *user_ptr) {
         p->infi.update_table(p->intermediary_buffer);
         p->table_invalid = 0;
     } else p->infi.update(p->intermediary_buffer);
+
     p->infi.temp(p->intermediary_buffer, p->frame_temp);
 
 	/* Unlock before the callback so if it decides to call a function that locks the this callback
@@ -173,15 +183,15 @@ int InfiCam::connect(int fd) {
 	 */
 	if (pthread_mutex_init(&frame_callback_mutex, NULL))
 		return 1;
-	if (dev.connect(fd)) {
+	if (dev.connect(fd, p2_pro)) {
 		pthread_mutex_destroy(&frame_callback_mutex);
 		return 2;
 	}
-	if (infi.init(dev.width, dev.height)) {
-		dev.disconnect();
-		pthread_mutex_destroy(&frame_callback_mutex);
-		return 3;
-	}
+    if (infi.init(dev.width, dev.height)) {
+        dev.disconnect();
+        pthread_mutex_destroy(&frame_callback_mutex);
+        return 3;
+    }
 	dev.set_zoom_abs(CMD_MODE_TEMP);
 	connected = 1;
 	set_range(infi.range);

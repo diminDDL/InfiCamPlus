@@ -43,8 +43,13 @@ static inline float atmt(float h, float t_atm, float d) {
 }
 
 int InfiFrame::init(int width, int height) {
-	this->width = width;
-	this->height = height - 4;
+    if (p2_pro) {
+        this->width = 256;
+        this->height = 192; //384
+    } else {
+        this->width = width;
+        this->height = height - 4;
+    }
 	s1_offset = width * (height - 4);
 
 	cal_00_offset = 390.0;
@@ -119,16 +124,8 @@ void InfiFrame::update(uint16_t *frame) {
 	float cal_03 = read_float(frame + s2_offset, 7);
 	float cal_04 = read_float(frame + s2_offset, 9);
 	float cal_05 = read_float(frame + s2_offset, 11);
-    if(!raw_sensor) {
-        temp_max_x = read_u16(frame + s1_offset, 2);
-        temp_max_y = read_u16(frame + s1_offset, 3);
-        temp_max = read_u16(frame + s1_offset, 4);
-        temp_min_x = read_u16(frame + s1_offset, 5);
-        temp_min_y = read_u16(frame + s1_offset, 6);
-        temp_min = read_u16(frame + s1_offset, 7);
-        temp_avg = read_u16(frame + s1_offset, 8);
-        temp_center = read_u16(frame + s1_offset, 12);
-    }else{
+
+    if (raw_sensor) {
         temp_max = 0;
         temp_min = UINT16_MAX;
         uint32_t sum = 0;
@@ -162,13 +159,24 @@ void InfiFrame::update(uint16_t *frame) {
         }
 
         temp_avg = sum / (height * width);
+    } else if (p2_pro) {
+        temp_center = frame[96 * width + 128]>>2;
+    } else {
+        temp_max_x = read_u16(frame + s1_offset, 2);
+        temp_max_y = read_u16(frame + s1_offset, 3);
+        temp_max = read_u16(frame + s1_offset, 4);
+        temp_min_x = read_u16(frame + s1_offset, 5);
+        temp_min_y = read_u16(frame + s1_offset, 6);
+        temp_min = read_u16(frame + s1_offset, 7);
+        temp_avg = read_u16(frame + s1_offset, 8);
+        temp_center = read_u16(frame + s1_offset, 12);
     }
 	temp_user[0] = read_u16(frame + s1_offset, 13);
 	temp_user[1] = read_u16(frame + s1_offset, 14);
 	temp_user[2] = read_u16(frame + s1_offset, 15);
 
 	distance_adjusted = ((distance >= 20.0f) ? 20.0f : distance) * distance_multiplier;
-	float atm = atmt(humidity, temp_air, distance_adjusted);
+	float atm = 1.0f;//atmt(humidity, temp_air, distance_adjusted); // TODO: this keeps giving NaN
 	numerator_sub = (1.0f - emissivity) * atm * powf(temp_reflected + zeroc, 4) +
 					(1.0f - atm) * powf(temp_air + zeroc, 4);
 	denominator = emissivity * atm;
@@ -191,10 +199,12 @@ float InfiFrame::temp_single(uint16_t x) {
 	/* Temperatures below what we can calculate result in sqrt of a negative number, the absolute
 	 *   lowest temperature we can calculate is the one we get if we set n to 0.
 	 */
-	float n = sqrtf(((float) (x - table_offset) * cal_d + cal_c) / cal_01 + cal_b);
-	float wtot = powf((isfinite(n) ? n : 0.0) - cal_a + zeroc, 4);
-	float ttot = powf((wtot - numerator_sub) / denominator, 0.25) - zeroc;
-	return ttot + (distance_adjusted * 0.85 - 1.125) * (ttot - temp_air) / 100.0 + correction;
+	//float n = sqrtf(((float) (x - table_offset) * cal_d + cal_c) / cal_01 + cal_b);
+	//float wtot = powf((isfinite(n) ? n : 0.0) - cal_a + zeroc, 4);
+	//float ttot = powf((wtot - numerator_sub) / denominator, 0.25) - zeroc;
+	//return ((float) x )*1.0f; //ttot + (distance_adjusted * 0.85 - 1.125) * (ttot - temp_air) / 100.0 + correction; // TODO
+    //return ((float) x )/64.0f-273.15f; //ttot + (distance_adjusted * 0.85 - 1.125) * (ttot - temp_air) / 100.0 + correction; // TODO
+    return ((float) x )/16.0f-273.15f;
 }
 
 void InfiFrame::update_table(uint16_t *frame) {
@@ -209,23 +219,33 @@ void InfiFrame::temp(uint16_t *input, float *output) {
 
 void InfiFrame::temp(uint16_t *input, float *output, size_t len) {
 	for (size_t i = 0; i < len; ++i)
-		output[i] = temp(input[i]);
+		output[i] = temp(input[i]>>2);
 }
 
 void InfiFrame::read_params(uint16_t *frame) {
 	/* Presumeably this is just a 128 byte ram+eeprom area. */
-    if(!raw_sensor) {
-        correction = read_float(frame + s2_offset, 127);
-        /* NOTE Original Infiray software uses a uint16 for distance. */
-        distance = read_float(frame + s2_offset, 137);
-    }else{
-        // TODO: Handling of theve vraibles and user input should be done within the app because writing to these doesn't work on the T2S+ A2
-        distance = (float)read_u16(frame + s2_offset, 137);
+    if (p2_pro) {
+        correction = 0;
+        distance = 0;
+        temp_reflected = 0;
+        temp_air = 0;
+        humidity = 0;
+        emissivity = 1.0;
+    } else {
+        if (!raw_sensor) {
+            correction = read_float(frame + s2_offset, 127);
+            /* NOTE Original Infiray software uses a uint16 for distance. */
+            distance = read_float(frame + s2_offset, 137);
+        } else {
+            // TODO: Handling of theve vraibles and user input should be done within the app because writing to these doesn't work on the T2S+ A2
+            distance = (float) read_u16(frame + s2_offset, 137);
+        }
+        temp_reflected = read_float(frame + s2_offset, 129);
+        temp_air = read_float(frame + s2_offset, 131);
+        humidity = read_float(frame + s2_offset, 133);
+        emissivity = read_float(frame + s2_offset, 135);
     }
-	temp_reflected = read_float(frame + s2_offset, 129);
-	temp_air = read_float(frame + s2_offset, 131);
-	humidity = read_float(frame + s2_offset, 133);
-	emissivity = read_float(frame + s2_offset, 135);
+
 }
 
 void InfiFrame::read_version(uint16_t *frame, char *product, char *serial, char *fw_version) {
@@ -264,7 +284,7 @@ void InfiFrame::palette_appy(float *input, uint32_t *output, size_t len) {
 	palette_appy(input, output, len, temp(temp_min), temp(temp_max));
 }
 
-void InfiFrame::palette_appy(float *input, uint32_t *output, float min, float max) {
+void InfiFrame::palette_appy(float *input, uint32_t *output, float min, float max) { // TODO this palette_appy gets used
 	palette_appy(input, output, width * height, min, max);
 }
 

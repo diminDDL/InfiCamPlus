@@ -126,6 +126,7 @@ public class InfiCam {
 	public native void calibrate();
 	public native void closeShutter();
 	public native void setRawSensor(boolean raw);
+    public native void setP2Pro(boolean p2Pro);
 
 	private native int nativeSetPalette(int[] palette); /* Length must be paletteLen. */
 	public void setPalette(int[] palette) {
