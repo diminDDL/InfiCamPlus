@@ -344,16 +344,18 @@ public class MainActivity extends BaseActivity {
                             (int) ((1.0f - lost) * fi.width),
                             (int) ((1.0f - lost) * fi.height),
                             fi.width);
+
+                    fi.min = mma.min;
+                    fi.min_x = mma.min_x;
+                    fi.min_y = mma.min_y;
                     if (isNaN(rangeMin)) {
-                        fi.min = mma.min;
-                        fi.min_x = mma.min_x;
-                        fi.min_y = mma.min_y;
                         rangeMin = mma.min;
                     }
+
+                    fi.max = mma.max;
+                    fi.max_x = mma.max_x;
+                    fi.max_y = mma.max_y;
                     if (isNaN(rangeMax)) {
-                        fi.max = mma.max;
-                        fi.max_x = mma.max_x;
-                        fi.max_y = mma.max_y;
                         rangeMax = mma.max;
                     }
                 }
