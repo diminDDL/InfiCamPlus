@@ -76,7 +76,7 @@ void InfiCam::uvc_callback(uvc_frame_t *frame, void *user_ptr) {
     }
 
     if (p->p2_pro) {
-        memcpy(p->intermediary_buffer, (uint16_t *) frame->data + 256*192, 256*192 * sizeof(uint16_t)); // TODO
+        memcpy(p->intermediary_buffer, (uint16_t *) frame->data + 256*192, 256*192 * sizeof(uint16_t)); // use only the half of the image with the thermal data
     } else {
         memcpy(p->intermediary_buffer, frame->data, frame_size * sizeof(uint16_t));
     }
@@ -89,11 +89,10 @@ void InfiCam::uvc_callback(uvc_frame_t *frame, void *user_ptr) {
 
         for(size_t i = 0; i < frame_size_without_data; i++) {
             // First apply offset calibration
-            //p->intermediary_buffer[i] = p->intermediary_buffer[i] + p->offset_value - p->calibration_frame[i];
-            p->intermediary_buffer[i] = p->intermediary_buffer[i];// + p->offset_value - p->calibration_frame[i];
+            p->intermediary_buffer[i] = p->intermediary_buffer[i] + p->offset_value - p->calibration_frame[i];
 
             // Then check if this is a dead pixel
-            if(p->dead_pixel_mask[i] && p->dead_pixel_num > 0 && 0) {
+            if(p->dead_pixel_mask[i] && p->dead_pixel_num > 0) {
                 // Calculate row and column position
                 size_t row = i / width;
                 size_t col = i % width;

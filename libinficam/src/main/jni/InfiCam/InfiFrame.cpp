@@ -176,7 +176,7 @@ void InfiFrame::update(uint16_t *frame) {
 	temp_user[2] = read_u16(frame + s1_offset, 15);
 
 	distance_adjusted = ((distance >= 20.0f) ? 20.0f : distance) * distance_multiplier;
-	float atm = 1.0f;//atmt(humidity, temp_air, distance_adjusted); // TODO: this keeps giving NaN
+	float atm = atmt(humidity, temp_air, distance_adjusted);
 	numerator_sub = (1.0f - emissivity) * atm * powf(temp_reflected + zeroc, 4) +
 					(1.0f - atm) * powf(temp_air + zeroc, 4);
 	denominator = emissivity * atm;
@@ -199,12 +199,15 @@ float InfiFrame::temp_single(uint16_t x) {
 	/* Temperatures below what we can calculate result in sqrt of a negative number, the absolute
 	 *   lowest temperature we can calculate is the one we get if we set n to 0.
 	 */
-	//float n = sqrtf(((float) (x - table_offset) * cal_d + cal_c) / cal_01 + cal_b);
-	//float wtot = powf((isfinite(n) ? n : 0.0) - cal_a + zeroc, 4);
-	//float ttot = powf((wtot - numerator_sub) / denominator, 0.25) - zeroc;
-	//return ((float) x )*1.0f; //ttot + (distance_adjusted * 0.85 - 1.125) * (ttot - temp_air) / 100.0 + correction; // TODO
-    //return ((float) x )/64.0f-273.15f; //ttot + (distance_adjusted * 0.85 - 1.125) * (ttot - temp_air) / 100.0 + correction; // TODO
-    return ((float) x )/16.0f-273.15f;
+
+    if (p2_pro) {
+        return ((float) x )/16.0f-273.15f;
+    } else {
+        float n = sqrtf(((float) (x - table_offset) * cal_d + cal_c) / cal_01 + cal_b);
+        float wtot = powf((isfinite(n) ? n : 0.0) - cal_a + zeroc, 4);
+        float ttot = powf((wtot - numerator_sub) / denominator, 0.25) - zeroc;
+        return ttot + (distance_adjusted * 0.85 - 1.125) * (ttot - temp_air) / 100.0 + correction;
+    }
 }
 
 void InfiFrame::update_table(uint16_t *frame) {
