@@ -3,3 +3,4 @@
 build/
 /app/release
 local.properties
+temp
