@@ -18,7 +18,7 @@ UVCDevice::~UVCDevice() {
 	disconnect();
 }
 
-int UVCDevice::connect(int fd) {
+int UVCDevice::connect(int fd, bool p2_pro) {
 	disconnect(); /* Disconnect if connected. */
 	usb_fd = fd;
 	usb_thread_stop = 0;
@@ -55,7 +55,13 @@ int UVCDevice::connect(int fd) {
 		disconnect();
 		return 7;
 	}
-	frame = format->frame_descs;
+
+    if (p2_pro) {
+        frame = format->frame_descs->next; // the next format mode causes the p2pro to send the temperature frame
+    } else {
+        frame = format->frame_descs;
+    }
+
 	if (frame == NULL) {
 		disconnect();
 		return 8;
