@@ -298,6 +298,37 @@ public class MainActivity extends BaseActivity {
 		private final Runnable handleFrameRunnable = () -> handleFrame();
 		Overlay.MinMaxAvg mma = new Overlay.MinMaxAvg();
 
+		private boolean isFinite(float v) {
+			return !isNaN(v) && !isInfinite(v);
+		}
+
+		private void mmaDownsample(Overlay.MinMaxAvg out, float[] temp, int w, int h, int step) {
+			out.min = out.max = NaN;
+			out.avg = 0.0f;
+			out.min_x = out.min_y = out.max_x = out.max_y = 0;
+			int n = 0;
+			for (int y = 0; y < h; y += step) {
+				int row = y * w;
+				for (int x = 0; x < w; x += step) {
+					float t = temp[row + x];
+					if (t < out.min || isNaN(out.min)) {
+						out.min = t;
+						out.min_x = x;
+						out.min_y = y;
+					}
+					if (t > out.max || isNaN(out.max)) {
+						out.max = t;
+						out.max_x = x;
+						out.max_y = y;
+					}
+					out.avg += t;
+					++n;
+				}
+			}
+			if (n > 0)
+				out.avg /= n;
+		}
+
 		@Override
 		public void onFrame(InfiCam.FrameInfo fi, float[] temp) {
 			synchronized (frameLock) { /* Note this is called from another thread. */
@@ -359,6 +390,48 @@ public class MainActivity extends BaseActivity {
                         rangeMax = mma.max;
                     }
                 }
+
+				/*
+				 * avoid passing NaN to native and fall back to computing min/max from the buffer when
+				 * the camera-provided range looks invalid (e.g. clamps everything to the minimum).
+				 */
+				final boolean autoMin = isNaN(overlayData.rangeMin) || isInfinite(overlayData.rangeMin);
+				final boolean autoMax = isNaN(overlayData.rangeMax) || isInfinite(overlayData.rangeMax);
+				if (autoMin && !isFinite(rangeMin))
+					rangeMin = fi.min;
+				if (autoMax && !isFinite(rangeMax))
+					rangeMax = fi.max;
+
+				boolean suspectRange = !isFinite(rangeMin) || !isFinite(rangeMax) || rangeMax <= rangeMin;
+				if (!suspectRange && (autoMin || autoMax) && temp != null && temp.length >= fi.width * fi.height
+						&& fi.width > 0 && fi.height > 0) {
+					int centerIdx = (fi.height / 2) * fi.width + (fi.width / 2);
+					float s0 = temp[0];
+					float sc = temp[centerIdx];
+					float s1 = temp[temp.length - 1];
+					float sampleMin = java.lang.Math.min(s0, java.lang.Math.min(sc, s1));
+					float sampleMax = java.lang.Math.max(s0, java.lang.Math.max(sc, s1));
+					/* If even a few samples fall entirely outside the palette range, it's likely wrong. */
+					if (rangeMin > sampleMax || rangeMax < sampleMin)
+						suspectRange = true;
+				}
+
+				if (suspectRange && (autoMin || autoMax) && temp != null && fi.width > 0 && fi.height > 0) {
+					/* Downsample to keep this cheap; good enough for palette scaling. */
+					mmaDownsample(mma, temp, fi.width, fi.height, 4);
+					if (isFinite(mma.min) && isFinite(mma.max) && mma.max > mma.min) {
+						fi.min = mma.min;
+						fi.min_x = mma.min_x;
+						fi.min_y = mma.min_y;
+						fi.max = mma.max;
+						fi.max_x = mma.max_x;
+						fi.max_y = mma.max_y;
+						if (autoMin)
+							rangeMin = mma.min;
+						if (autoMax)
+							rangeMax = mma.max;
+					}
+				}
 
 
 				infiCam.applyPalette(rangeMin, rangeMax);
@@ -670,7 +743,16 @@ public class MainActivity extends BaseActivity {
 		DisplayManager displayManager = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
 		displayManager.registerDisplayListener(displayListener, handler);
 		IntentFilter batIFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-		Intent batteryStatus = registerReceiver(batteryRecevier, batIFilter);
+		Intent batteryStatus;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+		    batteryStatus = registerReceiver(
+		        batteryRecevier,
+		        batIFilter,
+		        Context.RECEIVER_NOT_EXPORTED
+		    );
+		} else {
+		    batteryStatus = registerReceiver(batteryRecevier, batIFilter);
+		}
 		updateBatLevel(batteryStatus);
 
 		/* Beware that we can't call these in onResume as they'll ask permission with dialogs and

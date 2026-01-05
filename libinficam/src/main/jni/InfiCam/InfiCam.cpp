@@ -182,6 +182,10 @@ int InfiCam::connect(int fd) {
 	 */
 	if (pthread_mutex_init(&frame_callback_mutex, NULL))
 		return 1;
+    if (pthread_cond_init(&calibration_cond, NULL)) {
+        pthread_mutex_destroy(&frame_callback_mutex);
+        return 1;
+    }
 	if (dev.connect(fd, p2_pro)) {
 		pthread_mutex_destroy(&frame_callback_mutex);
 		return 2;
@@ -202,6 +206,7 @@ void InfiCam::disconnect() {
 		stream_stop();
 		dev.disconnect();
 		pthread_mutex_destroy(&frame_callback_mutex);
+        pthread_cond_destroy(&calibration_cond);
 		connected = 0;
 	}
 }

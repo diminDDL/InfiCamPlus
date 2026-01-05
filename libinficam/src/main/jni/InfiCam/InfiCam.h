@@ -25,9 +25,9 @@ class InfiCam {
 	float *frame_temp = NULL;
 	pthread_mutex_t frame_callback_mutex;
     pthread_cond_t calibration_cond;
-	int connected = 0, streaming = 0, table_invalid;
+	int connected = 0, streaming = 0, table_invalid = 1;
     bool raw_sensor = false;
-    bool p2_pro;
+    bool p2_pro = false;
     bool calibrating = false;
     bool calibrated = false;
     bool* dead_pixel_mask = nullptr;

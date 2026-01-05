@@ -7,9 +7,15 @@ LOCAL_C_INCLUDES :=$(LOCAL_PATH)/../libusb/libusb $(LOCAL_PATH)/../libuvc_build
 
 LOCAL_CFLAGS := $(LOCAL_C_INCLUDES:%=-I%)
 LOCAL_CFLAGS += -DANDROID_NDK
-LOCAL_CFLAGS += -DLOG_NDEBUG
 LOCAL_CFLAGS += -DACCESS_RAW_DESCRIPTORS
-LOCAL_CFLAGS += -O3 -fstrict-aliasing -fprefetch-loop-arrays
+
+# Debug vs Release
+ifeq ($(APP_OPTIM),debug)
+    LOCAL_CFLAGS += -O0 -g -fno-inline -fno-omit-frame-pointer
+else
+    LOCAL_CFLAGS += -O3 -fstrict-aliasing -fprefetch-loop-arrays
+    LOCAL_CFLAGS += -DLOG_NDEBUG
+endif
 
 LOCAL_LDLIBS := -ldl -llog -landroid
 

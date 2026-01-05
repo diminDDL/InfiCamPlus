@@ -206,7 +206,8 @@ float InfiFrame::temp_single(uint16_t x) {
         float n = sqrtf(((float) (x - table_offset) * cal_d + cal_c) / cal_01 + cal_b);
         float wtot = powf((isfinite(n) ? n : 0.0) - cal_a + zeroc, 4);
         float ttot = powf((wtot - numerator_sub) / denominator, 0.25) - zeroc;
-        return ttot + (distance_adjusted * 0.85 - 1.125) * (ttot - temp_air) / 100.0 + correction;
+		float temp_single = ttot + (distance_adjusted * 0.85 - 1.125) * (ttot - temp_air) / 100.0 + correction;
+        return temp_single;
     }
 }
 
@@ -222,7 +223,8 @@ void InfiFrame::temp(uint16_t *input, float *output) {
 
 void InfiFrame::temp(uint16_t *input, float *output, size_t len) {
 	for (size_t i = 0; i < len; ++i)
-		output[i] = temp(input[i]>>2);
+//		output[i] = temp(input[i] & table_mask);
+        output[i] = temp(input[i]);
 }
 
 void InfiFrame::read_params(uint16_t *frame) {
