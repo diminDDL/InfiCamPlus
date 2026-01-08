@@ -2,4 +2,5 @@
 .gradle
 build/
 /app/release
-
+local.properties
+temp

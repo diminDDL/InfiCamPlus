@@ -353,7 +353,15 @@ JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_setRawSensor(JNIEnv *env, jobject
     InfiCam *cam = getObject(env, self);
     if (cam != NULL) {
         cam->set_raw_sensor(raw);
-        cam->infi.raw_sensor = true;
+        cam->infi.raw_sensor = raw;
+    }
+}
+
+JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_setP2Pro(JNIEnv *env, jobject self, jboolean p2_pro) {
+    InfiCam *cam = getObject(env, self);
+    if (cam != NULL) {
+        cam->set_p2_pro(p2_pro);
+        cam->infi.p2_pro = p2_pro;
     }
 }
 
@@ -415,3 +423,4 @@ JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_applyPalette(JNIEnv *env, jobject
 }
 
 } /* extern "C" */
+

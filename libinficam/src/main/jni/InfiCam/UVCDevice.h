@@ -28,7 +28,7 @@ public:
 
 	~UVCDevice();
 
-	int connect(int fd); /* Closes the FD on disconnect. */
+	int connect(int fd, bool p2_pro); /* Closes the FD on disconnect. */
 	void disconnect(); /* Opening a new connection will close the previous one if it exists. */
 
 	/* The callback gets called from a dedicated thread (it's ok to block in the callback). */

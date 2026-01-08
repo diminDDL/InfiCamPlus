@@ -25,8 +25,9 @@ class InfiCam {
 	float *frame_temp = NULL;
 	pthread_mutex_t frame_callback_mutex;
     pthread_cond_t calibration_cond;
-	int connected = 0, streaming = 0, table_invalid;
+	int connected = 0, streaming = 0, table_invalid = 1;
     bool raw_sensor = false;
+    bool p2_pro = false;
     bool calibrating = false;
     bool calibrated = false;
     bool* dead_pixel_mask = nullptr;
@@ -102,6 +103,7 @@ public:
 	void set_params(float corr, float t_ref, float t_air, float humi, float emi, float dist);
 	void store_params(); /* Store user memory to camera so values remain when reconnecting. */
     void set_raw_sensor(bool raw) { raw_sensor = raw; };
+    void set_p2_pro(bool p2_pro_dev) { p2_pro = p2_pro_dev; };
 
 	void update_table();
 	void calibrate();

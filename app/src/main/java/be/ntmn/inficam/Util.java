@@ -199,9 +199,9 @@ public class Util {
 		if (tempunit == TEMPUNIT_FAHRENHEIT)
 			sb.append("°F");
 		else if (tempunit == TEMPUNIT_KELVIN)
-			sb.append("°K");
+			sb.append("K"); // Fun Fact: Kelvin does not use degrees
 		else if (tempunit == TEMPUNIT_RANKINE)
-			sb.append("°R");
+			sb.append("°R"); // Funner Fact: Rankine does use degrees
 		else sb.append("°C");
 	}
 
