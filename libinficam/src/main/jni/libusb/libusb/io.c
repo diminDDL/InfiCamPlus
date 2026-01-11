@@ -1338,8 +1338,10 @@ void API_EXPORTED libusb_free_transfer(struct libusb_transfer *transfer)
 	if (!transfer)
 		return;
 
-	usbi_dbg(TRANSFER_CTX(transfer), "transfer %p", transfer);
-	if (transfer->flags & LIBUSB_TRANSFER_FREE_BUFFER)
+    //usbi_dbg(TRANSFER_CTX(transfer), "transfer %p", transfer); // TODO this function segfaults when camera is disconnected
+    // TODO transfer->dev_handle->dev being null seems to trigger the segfault, even checking for null triggers the segfault
+
+    if (transfer->flags & LIBUSB_TRANSFER_FREE_BUFFER)
 		free(transfer->buffer);
 
 	itransfer = LIBUSB_TRANSFER_TO_USBI_TRANSFER(transfer);
