@@ -1703,7 +1703,7 @@ void uvc_free_devh(uvc_device_handle_t *devh) {
     uvc_free_device_info(devh->info);
 
   if (devh->status_xfer)
-    libusb_free_transfer(devh->status_xfer);
+    libusb_free_transfer(devh->status_xfer); // TODO segfaults around here
 
   free(devh);
 
@@ -1741,7 +1741,7 @@ void uvc_close(uvc_device_handle_t *devh) {
 
   DL_DELETE(ctx->open_devices, devh);
 
-  uvc_unref_device(devh->dev);
+  uvc_unref_device(devh->dev); // TODO segfaults here when disconnecting camera
 
   uvc_free_devh(devh);
 

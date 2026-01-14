@@ -137,10 +137,28 @@ uvc_error_t uvc_init(uvc_context_t **pctx, struct libusb_context *usb_ctx) {
  */
 void uvc_exit(uvc_context_t *ctx) {
   uvc_device_handle_t *devh;
-
-  DL_FOREACH(ctx->open_devices, devh) {
-    uvc_close(devh);
+  /*
+  DL_FOREACH(ctx->open_devices, devh) { // TODO segfaults here
+      if (devh != NULL)
+        uvc_close(devh);
   }
+  */
+
+  devh=ctx->open_devices; // TODO figure out why the previous implementation of the uvc_close loop keeps segfaulting
+  do {
+      if (devh->next != NULL) {
+          if (devh)
+              uvc_close(devh);
+          devh = devh->next;
+      }
+      else {
+          if (devh)
+              uvc_close(devh);
+          devh = NULL;
+      }
+
+  } while (devh != NULL);
+
 
   if (ctx->own_usb_ctx)
     libusb_exit(ctx->usb_ctx);

@@ -104,6 +104,7 @@ public class SurfaceMuxer {
 		public float scale_x = 1.0f, scale_y = 1.0f;
 		public float translate_x = 0.0f, translate_y = 0.0f;
 		public float sharpening = 0.0f;
+		private volatile boolean frameAvailable = false;
 
 		public InputSurface(SurfaceMuxer muxer) {
 			this.muxer = muxer;
@@ -136,13 +137,15 @@ public class SurfaceMuxer {
 			GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER,
 					GLES20.GL_LINEAR);
 			if (surfaceTexture == null) {
-				surfaceTexture = new SurfaceTexture(textures[0]);
-				surface = new Surface(surfaceTexture);
-			} else surfaceTexture.attachToGLContext(textures[0]);
-			/* After attaching to a new context we must call updateTexImage() or the
-			 *   OnFrameAvailableListener may stop being called for some reason.
-			 */
-			surfaceTexture.updateTexImage();
+			    surfaceTexture = new SurfaceTexture(textures[0]);
+			    surfaceTexture.setOnFrameAvailableListener(
+			        st -> frameAvailable = true
+			    );
+			    surface = new Surface(surfaceTexture);
+			} else {
+			    surfaceTexture.attachToGLContext(textures[0]);
+			    frameAvailable = true; // force first frame latch after reattach
+			}
 			initialized = true;
 		}
 
@@ -174,7 +177,10 @@ public class SurfaceMuxer {
 			if (muxer.eglContext == EGL14.EGL_NO_CONTEXT)
 				return;
 			os.makeCurrent(); /* We need the context to be current before updateTexImage(). */
-			surfaceTexture.updateTexImage(); /* Call might be redundant, probably don't care. */
+			if (frameAvailable) {
+			    surfaceTexture.updateTexImage();
+			    frameAvailable = false;
+			}
 			GLES20.glViewport(x, y, w, h);
 			int program = muxer.drawModes[drawMode].program;
 			GLES20.glUseProgram(program);

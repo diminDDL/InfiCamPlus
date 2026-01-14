@@ -27,16 +27,26 @@ public abstract class USBMonitor extends BroadcastReceiver {
 	private final HashMap<UsbDevice, ConnectCallback> callbacks = new HashMap<>();
 
 	public void start(Context ctx) { /* Recommended use is in onCreate()/onStart(). */
-		this.ctx = ctx;
-		if (!registered) {
-			manager = (UsbManager) ctx.getSystemService(Context.USB_SERVICE);
-			IntentFilter filter = new IntentFilter();
-			filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
-			filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
-			filter.addAction(ACTION_USB_PERMISSION);
-			ctx.registerReceiver(this, filter);
-			registered = true;
-		}
+	    this.ctx = ctx;
+	    if (!registered) {
+	        manager = (UsbManager) ctx.getSystemService(Context.USB_SERVICE);
+	        IntentFilter filter = new IntentFilter();
+	        filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
+	        filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
+	        filter.addAction(ACTION_USB_PERMISSION);
+	
+	        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+	            ctx.registerReceiver(
+	                this,
+	                filter,
+	                Context.RECEIVER_NOT_EXPORTED
+	            );
+	        } else {
+	            ctx.registerReceiver(this, filter);
+	        }
+	
+	        registered = true;
+	    }
 	}
 
 	public void stop() { /* Call this in onDestroy()/onStop(), matching start() call. */
@@ -66,6 +76,10 @@ public abstract class USBMonitor extends BroadcastReceiver {
 	public void connect(UsbDevice dev, ConnectCallback cb) {
 		if (!manager.hasPermission(dev)) {
 			Intent intent = new Intent(ACTION_USB_PERMISSION);
+			// Targeting Android 14+ (targetSdk 34) forbids FLAG_MUTABLE PendingIntents with
+			// implicit Intents. UsbManager.requestPermission requires a mutable PendingIntent
+			// so the system can add extras; restricting the Intent to our app satisfies both.
+			intent.setPackage(ctx.getPackageName());
 			int flags = PendingIntent.FLAG_ONE_SHOT;
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
 				flags |= PendingIntent.FLAG_MUTABLE;
