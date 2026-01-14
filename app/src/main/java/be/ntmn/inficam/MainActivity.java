@@ -200,7 +200,9 @@ public class MainActivity extends BaseActivity {
 							messageView.clearMessage();
 							messageView.showMessage(getString(R.string.msg_connected,
 									dev.getProductName()));
-							settingsTherm.initializeSettings();
+							settingsTherm.initializeSettings(p2Pro); // settingsTherm needs to have all the initialization rerun to change the displayed temperature range text on the radio button for different thermal camera models
+                            settingsTherm.init(MainActivity.this);
+                            settingsTherm.load();
 							first_connect = true;
 						} catch (Exception e) {
 							disconnect();

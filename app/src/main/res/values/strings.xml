@@ -73,6 +73,8 @@
 	<string name="set_range">Range</string>
 	<string name="set_range_120">–20 – 120°C (–4 – 248°F)</string>
 	<string name="set_range_400">120 – 400°C (248 – 752°F)</string>
+    <string name="set_range_150">–20 – 150°C (–4 – 302°F)</string>
+    <string name="set_range_600">120 – 600°C (302 – 1112°F)</string>
 	<string name="set_palette">Palette</string>
 
 	<string name="imode_nearest">Nearest Neighbor</string>

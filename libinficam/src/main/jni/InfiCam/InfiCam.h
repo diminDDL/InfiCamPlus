@@ -111,6 +111,46 @@ public:
     void close_shutter();
 
 	void set_palette(uint32_t *palette); /* Length must be palette_len. */
+
+
+    // Reference used for P2 Pro commands https://github.com/Pinoerkel/P2Pro-Viewer/blob/main/P2Pro/P2Pro_cmd.py
+
+    typedef enum {
+        SYS_RESET_TO_ROM = 0x0805,
+        SPI_TRANSFER = 0x8201,
+        GET_DEVICE_INFO = 0x8405,
+        PSEUDO_COLOR = 0x8409,
+        SHUTTER_STA_SET = 0x410C,
+        SHUTTER_STA_GET = 0x830C,
+        AUTO_SHUTTER_PARAMS_SET = 0xC214,
+        AUTO_SHUTTER_PARAMS_GET = 0x8214,
+        SHUTTER_SWITCH = 0x420C,
+        SHUTTER_VTEMP = 0x840C,
+        OOC_B_UPDATE = 0xC10D,
+        PROP_TPD_PARAMS = 0x8514,
+        CUR_VTEMP = 0x8B0D,
+        PREVIEW_START = 0xC10F,
+        PREVIEW_STOP = 0x020F,
+        Y16_PREVIEW_START = 0x010A,
+        Y16_PREVIEW_STOP = 0x020A
+    } P2ProCmdCode;
+
+    typedef enum {
+        GET = 0x0000,
+        SET = 0x4000
+    } P2ProCmdDir;
+
+    typedef enum {
+        TPD_PROP_DISTANCE = 0,   // 1/163.835 m, 0-32767, Distance
+        TPD_PROP_TU = 1,         // 1 K, 0-1024, Reflection temperature
+        TPD_PROP_TA = 2,         // 1 K, 0-1024, Atmospheric temperature
+        TPD_PROP_EMS = 3,        // 1/127, 0-127, Emissivity
+        TPD_PROP_TAU = 4,        // 1/127, 0-127, Atmospheric transmittance
+        TPD_PROP_GAIN_SEL = 5    // binary, 0-1, Gain select (0=low -20~150C, 1=high 150~600C)
+    } P2ProPropTpdParams;
+
+    void p2pro_long_cmd_write(uint16_t cmd, uint16_t p1, uint32_t p2, uint32_t p3, uint32_t p4);
+    void p2pro_set_prop_tpd_params(uint16_t tpd_param, uint32_t value);
 };
 
 #endif /* __INFICAM_H__ */
