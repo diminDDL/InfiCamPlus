@@ -119,3 +119,7 @@ int UVCDevice::set_zoom_abs(uint16_t val) {
 		return 1;
 	return uvc_set_zoom_abs(uvc_devh, val);
 }
+
+libusb_device_handle * UVCDevice::get_libusb_handle() {
+    return uvc_get_libusb_handle(uvc_devh);
+}

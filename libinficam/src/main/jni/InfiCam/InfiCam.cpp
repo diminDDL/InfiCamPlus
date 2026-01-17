@@ -237,11 +237,74 @@ void InfiCam::stream_stop() {
 	streaming = 0;
 }
 
+void InfiCam::p2pro_long_cmd_write(uint16_t cmd, uint16_t p1, uint32_t p2, uint32_t p3, uint32_t p4) {
+
+    // used google's ai to convert the _long_cmd_write function from P2Pro/P2Pro_cmd.py to c
+    // too lazy to do the byte packing myself
+
+    uint8_t buffer[8];
+
+    // 1. Pack cmd: Little-endian 16-bit ("<H")
+    // Store least significant byte first
+    buffer[0] = (uint8_t)(cmd & 0xFF);
+    buffer[1] = (uint8_t)((cmd >> 8) & 0xFF);
+
+    // 2. Pack p1: Big-endian 16-bit (">H")
+    // Store most significant byte first
+    buffer[2] = (uint8_t)((p1 >> 8) & 0xFF);
+    buffer[3] = (uint8_t)(p1 & 0xFF);
+
+    // 3. Pack p2: Big-endian 32-bit (">I")
+    buffer[4] = (uint8_t)((p2 >> 24) & 0xFF);
+    buffer[5] = (uint8_t)((p2 >> 16) & 0xFF);
+    buffer[6] = (uint8_t)((p2 >> 8) & 0xFF);
+    buffer[7] = (uint8_t)(p2 & 0xFF);
+
+    uint8_t buffer2[8];
+    // 4. Pack p3: Big-endian 32-bit (">I")
+    buffer2[0] = (uint8_t)((p3 >> 24) & 0xFF);
+    buffer2[1] = (uint8_t)((p3 >> 16) & 0xFF);
+    buffer2[2] = (uint8_t)((p3 >> 8) & 0xFF);
+    buffer2[3] = (uint8_t)(p3 & 0xFF);
+
+    // 5. Pack p4: Big-endian 32-bit (">I")
+    buffer2[4] = (uint8_t)((p4 >> 24) & 0xFF);
+    buffer2[5] = (uint8_t)((p4 >> 16) & 0xFF);
+    buffer2[6] = (uint8_t)((p4 >> 8) & 0xFF);
+    buffer2[7] = (uint8_t)(p4 & 0xFF);
+
+    // Buffer is now fully packed and ready for use
+
+    libusb_control_transfer(dev.get_libusb_handle(), 0x41, 0x45, 0x78,
+                            0x9d00, buffer, 8, 100);
+    libusb_control_transfer(dev.get_libusb_handle(), 0x41, 0x45, 0x78,
+                            0x1d08, buffer2, 8, 100);
+
+    // TODO block until camera ready not implemented
+
+}
+
+void InfiCam::p2pro_set_prop_tpd_params(uint16_t tpd_param, uint32_t value) {
+    p2pro_long_cmd_write(PROP_TPD_PARAMS | SET, tpd_param, value, 0, 0);
+}
+
+
+
 void InfiCam::set_range(int range) {
 	if (connected) {
 		pthread_mutex_lock(&frame_callback_mutex);
 		infi.range = range;
-		dev.set_zoom_abs((range == 400) ? CMD_RANGE_400 : CMD_RANGE_120);
+
+        if (p2_pro) {
+            if (range == 600) {
+                p2pro_set_prop_tpd_params(TPD_PROP_GAIN_SEL, 0);
+            } else {
+                p2pro_set_prop_tpd_params(TPD_PROP_GAIN_SEL, 1);
+            }
+        } else {
+            dev.set_zoom_abs((range == 400) ? CMD_RANGE_400 : CMD_RANGE_120);
+        }
+
 		pthread_mutex_unlock(&frame_callback_mutex);
 	} else infi.range = range;
 }

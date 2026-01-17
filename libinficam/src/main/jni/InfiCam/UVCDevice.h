@@ -36,6 +36,8 @@ public:
 	void stream_stop(); /* Attempting to stop stream is okay even when no stream. */
 
 	int set_zoom_abs(uint16_t val);
+
+    libusb_device_handle * get_libusb_handle(); // libusb handle is used for P2 pro commands which are done with usb control transfers
 };
 
 #endif /* __UVCDEVICE_H__ */

@@ -3,7 +3,6 @@ package be.ntmn.inficam;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
-
 import androidx.annotation.Nullable;
 
 public class SettingsTherm extends Settings {
@@ -16,6 +15,13 @@ public class SettingsTherm extends Settings {
 		super(context, attrs, defStyleAttr);
 	}
 
+    private int[] rangeItems = new int[] {
+            R.string.set_range_120,
+            R.string.set_range_400
+    };
+
+    private boolean p2Pro;
+
 	@Override
 	public String getSPName() { return SP_NAME; }
 
@@ -25,13 +31,31 @@ public class SettingsTherm extends Settings {
 	@Override
 	public Setting[] getSettings() { return settings; }
 
-	public void initializeSettings() {
+	public void initializeSettings(boolean p2Pro) {
 		// Apply correction variable to the settings on startup
 		// This is needed since the T2S+ V2 doesn't allow you to write settings, at least how it's implemented in the app
 		// TODO: Do this for the rest and in a better way
 		SettingSliderTemp correction = (SettingSliderTemp)settings[5];
 		int storedValue = sp.getInt("correction", 0); // Get the stored value
 		correction.onSet((float)storedValue / correction.div); // Apply the division just like in the normal slider code
+        this.p2Pro = p2Pro;
+        if (p2Pro) {
+            /*rangestring = new int[] { // TODO this way of changing rangeItems doesn't work, setting each index manually will work fine until some camera comes along that does not have 2 ranges
+                    R.string.set_range_150,
+                    R.string.set_range_600
+            };*/
+            rangeItems[0] = R.string.set_range_150;
+            rangeItems[1] = R.string.set_range_600;
+
+        } else {
+            /*rangeItems = new int[] {
+                    R.string.set_range_120,
+                    R.string.set_range_400
+            };*/
+            rangeItems[0] = R.string.set_range_120;
+            rangeItems[1] = R.string.set_range_400;
+
+        }
 	}
 
 	private final Setting[] settings = {
@@ -79,20 +103,29 @@ public class SettingsTherm extends Settings {
 				act.infiCam.updateTable();
 			}
 		},
-		new SettingRadio("range", R.string.set_range, 0, new int[] {
-				R.string.set_range_120,
-				R.string.set_range_400
-			}) {
+		new SettingRadio("range", R.string.set_range, 0, rangeItems) {
 			@Override
 			void onSet(int i) {
-				switch (i) {
-					case 0:
-						act.setRange(120);
-						break;
-					case 1:
-						act.setRange(400);
-						break;
-				}
+                if (p2Pro) {
+                    switch (i) {
+                        case 0:
+                            act.setRange(150);
+                            break;
+                        case 1:
+                            act.setRange(600);
+                            break;
+                    }
+                } else {
+                    switch (i) {
+                        case 0:
+                            act.setRange(120);
+                            break;
+                        case 1:
+                            act.setRange(400);
+                            break;
+                    }
+                }
+
 			}
 		},
 		settingDefaults

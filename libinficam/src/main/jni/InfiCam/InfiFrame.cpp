@@ -201,7 +201,7 @@ float InfiFrame::temp_single(uint16_t x) {
 	 */
 
     if (p2_pro) {
-        return ((float) x )/16.0f-273.15f;
+        return ((float) x )/16.0f-273.15f; // convert raw p2pro data to celsius with (input[i] >> 2)/16 - 273.15, the bitshift portion is done elsewhere
     } else {
         float n = sqrtf(((float) (x - table_offset) * cal_d + cal_c) / cal_01 + cal_b);
         float wtot = powf((isfinite(n) ? n : 0.0) - cal_a + zeroc, 4);
@@ -222,14 +222,20 @@ void InfiFrame::temp(uint16_t *input, float *output) {
 }
 
 void InfiFrame::temp(uint16_t *input, float *output, size_t len) {
-	for (size_t i = 0; i < len; ++i)
+	for (size_t i = 0; i < len; ++i) {
+        if (p2_pro) {
+            output[i] = temp(input[i] >> 2); // convert raw p2pro data to celsius with (input[i] >> 2)/16 - 273.15, the /16-273.15 portion is done elsewhere
+        } else {
 //		output[i] = temp(input[i] & table_mask);
-        output[i] = temp(input[i]);
+            output[i] = temp(input[i]);
+        }
+    }
+
 }
 
 void InfiFrame::read_params(uint16_t *frame) {
 	/* Presumeably this is just a 128 byte ram+eeprom area. */
-    if (p2_pro) {
+    if (p2_pro) { // TODO: dummy values for p2pro
         correction = 0;
         distance = 0;
         temp_reflected = 0;
