@@ -9,6 +9,12 @@ https://gitlab.com/netman69/inficam
 Desktop Python Script:
 https://github.com/diminDDL/IR-Py-Thermal
 
+## Contributing
+The primary language of this repository is English.
+Please write issues, discussions, pull requests, and comments in English.
+**Discussions in other languages will be deleted.**
+
+
 ## Camera Model Support Chart
 ### Legend
 ✅ - Fully supported
