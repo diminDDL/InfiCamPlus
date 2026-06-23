@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-	compileSdk 34
+	compileSdk 37
 
 	defaultConfig {
 		applicationId "be.ntmn.inficam"
-		minSdkVersion 21
+		minSdkVersion 24
 		versionCode 4
 		versionName "1.0.3"
 		vectorDrawables.useSupportLibrary true // To support older minSdk
@@ -21,9 +21,13 @@ android {
 	}
 
 	buildTypes {
+		debug {
+			debuggable true
+		}
 		release {
 			minifyEnabled false
 			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+			signingConfig signingConfigs.debug
 		}
 	}
 
@@ -32,11 +36,16 @@ android {
 		targetCompatibility JavaVersion.VERSION_1_8
 	}
 
-	lintOptions {
-		/* Needed to build releases with low targetSdkVersion */
-		checkReleaseBuilds false
+    namespace 'be.ntmn.inficam'
+    lint {
+        checkReleaseBuilds false
+    }
+
+	packaging {
+		jniLibs {
+			keepDebugSymbols += "**/*.so"   // or "**/arm64-v8a/*.so"
+		}
 	}
-	namespace 'be.ntmn.inficam'
 }
 
 dependencies {

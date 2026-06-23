@@ -13,7 +13,6 @@ import android.opengl.EGLSurface;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.view.Surface;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -58,458 +57,628 @@ import java.util.ArrayList;
  *   longer in use.
  */
 public class SurfaceMuxer {
-	private static class DrawMode {
-		private final String file;
-		private String source;
-		private int program;
-		private DrawMode(String file) { this.file = file; }
-	}
 
-	public final static int DM_NEAREST = 0;
-	public final static int DM_LINEAR = 1;
-	public final static int DM_CUBIC = 2;
-	public final static int DM_CMROM = 3;
-	public final static int DM_FADAPTIVE = 4;
-	public final static int DM_SHARPEN = 5;
-	public final static int DM_EDGE = 6;
-	private final DrawMode[] drawModes = {
-			new DrawMode("fnearest.glsl"),
-			new DrawMode("flinear.glsl"),
-			new DrawMode("fcubic.glsl"),
-			new DrawMode("fcmrom.glsl"),
-			new DrawMode("fadaptive.glsl"),
-			new DrawMode("fsharpen.glsl"),
-			new DrawMode("fedge.glsl")
-	};
+    private static class DrawMode {
 
-	private final ArrayList<Object> surfaces = new ArrayList<>();
-	private static final int EGL_RECORDABLE_ANDROID = 0x3142;
-	private EGLDisplay eglDisplay = EGL14.EGL_NO_DISPLAY;
-	private EGLContext eglContext = EGL14.EGL_NO_CONTEXT;
-	private EGLConfig eglConfig;
-	private final String vss;
-	private final FloatBuffer pTexCoord =
-			ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
-	private final FloatBuffer pVertex =
-			ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+        private final String file;
+        private String source;
+        private int program;
 
-	public static class InputSurface {
-		private SurfaceMuxer muxer;
-		public SurfaceTexture surfaceTexture;
-		public Surface surface;
-		private final int[] textures = new int[1];
-		private boolean initialized = false;
-		public int width = 1, height = 1;
-		public boolean rotate = false, mirror = false, rotate90 = false;
-		public float scale_x = 1.0f, scale_y = 1.0f;
-		public float translate_x = 0.0f, translate_y = 0.0f;
-		public float sharpening = 0.0f;
-		private volatile boolean frameAvailable = false;
+        private DrawMode(String file) {
+            this.file = file;
+        }
+    }
 
-		public InputSurface(SurfaceMuxer muxer) {
-			this.muxer = muxer;
-			muxer.surfaces.add(this);
-			init();
-		}
+    public static final int DM_NEAREST = 0;
+    public static final int DM_LINEAR = 1;
+    public static final int DM_CUBIC = 2;
+    public static final int DM_CMROM = 3;
+    public static final int DM_FADAPTIVE = 4;
+    public static final int DM_SHARPEN = 5;
+    public static final int DM_EDGE = 6;
+    private final DrawMode[] drawModes = {
+        new DrawMode("fnearest.glsl"),
+        new DrawMode("flinear.glsl"),
+        new DrawMode("fcubic.glsl"),
+        new DrawMode("fcmrom.glsl"),
+        new DrawMode("fadaptive.glsl"),
+        new DrawMode("fsharpen.glsl"),
+        new DrawMode("fedge.glsl"),
+    };
 
-		public void setSize(int w, int h) {
-			width = w;
-			height = h;
-			surfaceTexture.setDefaultBufferSize(w, h);
-		}
+    private final ArrayList<Object> surfaces = new ArrayList<>();
+    private static final int EGL_RECORDABLE_ANDROID = 0x3142;
+    private EGLDisplay eglDisplay = EGL14.EGL_NO_DISPLAY;
+    private EGLContext eglContext = EGL14.EGL_NO_CONTEXT;
+    private EGLConfig eglConfig;
+    private final String vss;
+    private final FloatBuffer pTexCoord = ByteBuffer.allocateDirect(8 * 4)
+        .order(ByteOrder.nativeOrder())
+        .asFloatBuffer();
+    private final FloatBuffer pVertex = ByteBuffer.allocateDirect(8 * 4)
+        .order(ByteOrder.nativeOrder())
+        .asFloatBuffer();
 
-		private void init() {
-			if (muxer == null || muxer.eglDisplay == EGL14.EGL_NO_DISPLAY)
-				return;
-			deinit();
-			EGL14.eglMakeCurrent(muxer.eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE,
-					muxer.eglContext);
-			muxer.checkEglError("eglMakeCurrent");
-			GLES20.glGenTextures(1, textures, 0);
-			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-			GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textures[0]);
-			GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S,
-					GLES20.GL_CLAMP_TO_EDGE);
-			GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T,
-					GLES20.GL_CLAMP_TO_EDGE);
-			GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER,
-					GLES20.GL_LINEAR);
-			GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER,
-					GLES20.GL_LINEAR);
-			if (surfaceTexture == null) {
-			    surfaceTexture = new SurfaceTexture(textures[0]);
-			    surfaceTexture.setOnFrameAvailableListener(
-			        st -> frameAvailable = true
-			    );
-			    surface = new Surface(surfaceTexture);
-			} else {
-			    surfaceTexture.attachToGLContext(textures[0]);
-			    frameAvailable = true; // force first frame latch after reattach
-			}
-			initialized = true;
-		}
+    public static class InputSurface {
 
-		private void deinit() {
-			if (initialized && muxer != null && muxer.eglDisplay != EGL14.EGL_NO_DISPLAY) {
-				EGL14.eglMakeCurrent(muxer.eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE,
-						muxer.eglContext);
-				muxer.checkEglError("eglMakeCurrent");
-				surfaceTexture.detachFromGLContext();
-				GLES20.glDeleteTextures(1, textures, 0);
-			}
-			initialized = false;
-		}
+        private SurfaceMuxer muxer;
+        public SurfaceTexture surfaceTexture;
+        public Surface surface;
+        private final int[] textures = new int[1];
+        private boolean initialized = false;
+        public int width = 1,
+            height = 1;
+        public boolean rotate = false,
+            mirror = false,
+            rotate90 = false;
+        public float scale_x = 1.0f,
+            scale_y = 1.0f;
+        public float translate_x = 0.0f,
+            translate_y = 0.0f;
+        public float sharpening = 0.0f;
+        private volatile boolean frameAvailable = false;
 
-		public void release() {
-			deinit();
-			if (muxer != null)
-				muxer.surfaces.remove(this);
-			muxer = null;
-			if (surface != null)
-				surface.release();
-			surface = null;
-			if (surfaceTexture != null)
-				surfaceTexture.release();
-			surfaceTexture = null;
-		}
+        public InputSurface(SurfaceMuxer muxer) {
+            this.muxer = muxer;
+            muxer.surfaces.add(this);
+            init();
+        }
 
-		public void draw(OutputSurface os, int drawMode, int x, int y, int w, int h) {
-			if (muxer.eglContext == EGL14.EGL_NO_CONTEXT)
-				return;
-			os.makeCurrent(); /* We need the context to be current before updateTexImage(). */
-			if (frameAvailable) {
-			    surfaceTexture.updateTexImage();
-			    frameAvailable = false;
-			}
-			GLES20.glViewport(x, y, w, h);
-			int program = muxer.drawModes[drawMode].program;
-			GLES20.glUseProgram(program);
-			int ph = GLES20.glGetAttribLocation(program, "vPosition");
-			GLES20.glVertexAttribPointer(ph, 2, GLES20.GL_FLOAT, false, 4 * 2,
-					muxer.pVertex);
-			GLES20.glEnableVertexAttribArray(ph);
-			int tch = GLES20.glGetAttribLocation(program, "vTexCoord");
-			GLES20.glVertexAttribPointer(tch, 2, GLES20.GL_FLOAT, false, 4 * 2,
-					muxer.pTexCoord);
-			GLES20.glEnableVertexAttribArray(tch);
-			int th = GLES20.glGetUniformLocation(program, "sTexture");
-			GLES20.glUniform1i(th, 0); /* Tells the shader what texture to use. */
-			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-			int sc = GLES20.glGetUniformLocation(program, "scale");
-			float sx = scale_x * (mirror ? -1.0f : 1.0f) * (rotate ? -1.0f : 1.0f);
-			float sy = scale_y * (rotate ? -1.0f : 1.0f);
-			GLES20.glUniform2f(sc, sx, sy);
-			int tr = GLES20.glGetUniformLocation(program, "translate");
-			GLES20.glUniform2f(tr, translate_x, translate_y);
-			int r9 = GLES20.glGetUniformLocation(program, "rot90");
-			GLES20.glUniform1i(r9, rotate90 ? 1 : 0);
-			int isc = GLES20.glGetUniformLocation(program, "texSize");
-			GLES20.glUniform2f(isc, width, height);
-			int sh = GLES20.glGetUniformLocation(program, "sharpening");
-			GLES20.glUniform1f(sh, sharpening); /* It's okay if the shader doesn't have this. */
+        public void setSize(int w, int h) {
+            width = w;
+            height = h;
+            surfaceTexture.setDefaultBufferSize(w, h);
+        }
 
-			GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-			GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textures[0]);
-			GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
-		}
+        private void init() {
+            if (
+                muxer == null || muxer.eglDisplay == EGL14.EGL_NO_DISPLAY
+            ) return;
+            deinit();
+            EGL14.eglMakeCurrent(
+                muxer.eglDisplay,
+                EGL14.EGL_NO_SURFACE,
+                EGL14.EGL_NO_SURFACE,
+                muxer.eglContext
+            );
+            muxer.checkEglError("eglMakeCurrent");
+            GLES20.glGenTextures(1, textures, 0);
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+            GLES20.glBindTexture(
+                GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+                textures[0]
+            );
+            GLES20.glTexParameteri(
+                GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+                GLES20.GL_TEXTURE_WRAP_S,
+                GLES20.GL_CLAMP_TO_EDGE
+            );
+            GLES20.glTexParameteri(
+                GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+                GLES20.GL_TEXTURE_WRAP_T,
+                GLES20.GL_CLAMP_TO_EDGE
+            );
+            GLES20.glTexParameteri(
+                GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+                GLES20.GL_TEXTURE_MIN_FILTER,
+                GLES20.GL_LINEAR
+            );
+            GLES20.glTexParameteri(
+                GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+                GLES20.GL_TEXTURE_MAG_FILTER,
+                GLES20.GL_LINEAR
+            );
+            if (surfaceTexture == null) {
+                surfaceTexture = new SurfaceTexture(textures[0]);
+                surfaceTexture.setOnFrameAvailableListener(
+                    st -> frameAvailable = true
+                );
+                surface = new Surface(surfaceTexture);
+            } else {
+                surfaceTexture.attachToGLContext(textures[0]);
+                frameAvailable = true; // force first frame latch after reattach
+            }
+            initialized = true;
+        }
 
-		public void draw(OutputSurface os, int drawMode) {
-			draw(os, drawMode, 0, 0, os.width, os.height);
-		}
+        private void deinit() {
+            if (
+                initialized &&
+                muxer != null &&
+                muxer.eglDisplay != EGL14.EGL_NO_DISPLAY
+            ) {
+                EGL14.eglMakeCurrent(
+                    muxer.eglDisplay,
+                    EGL14.EGL_NO_SURFACE,
+                    EGL14.EGL_NO_SURFACE,
+                    muxer.eglContext
+                );
+                muxer.checkEglError("eglMakeCurrent");
+                surfaceTexture.detachFromGLContext();
+                GLES20.glDeleteTextures(1, textures, 0);
+            }
+            initialized = false;
+        }
 
-		public void draw(ThroughSurface ts, int drawMode) {
-			draw(ts.outputSurface, drawMode);
-		}
+        public void release() {
+            deinit();
+            if (muxer != null) muxer.surfaces.remove(this);
+            muxer = null;
+            if (surface != null) surface.release();
+            surface = null;
+            if (surfaceTexture != null) surfaceTexture.release();
+            surfaceTexture = null;
+        }
 
-		public void draw(ThroughSurface ts, int drawMode, int x, int y, int w, int h) {
-			draw(ts.outputSurface, drawMode, x, y, w, h);
-		}
-	}
+        public void draw(
+            OutputSurface os,
+            int drawMode,
+            int x,
+            int y,
+            int w,
+            int h
+        ) {
+            if (muxer.eglContext == EGL14.EGL_NO_CONTEXT) return;
+            os.makeCurrent(); /* We need the context to be current before updateTexImage(). */
+            if (frameAvailable) {
+                surfaceTexture.updateTexImage();
+                frameAvailable = false;
+            }
+            GLES20.glViewport(x, y, w, h);
+            int program = muxer.drawModes[drawMode].program;
+            GLES20.glUseProgram(program);
+            int ph = GLES20.glGetAttribLocation(program, "vPosition");
+            GLES20.glVertexAttribPointer(
+                ph,
+                2,
+                GLES20.GL_FLOAT,
+                false,
+                4 * 2,
+                muxer.pVertex
+            );
+            GLES20.glEnableVertexAttribArray(ph);
+            int tch = GLES20.glGetAttribLocation(program, "vTexCoord");
+            GLES20.glVertexAttribPointer(
+                tch,
+                2,
+                GLES20.GL_FLOAT,
+                false,
+                4 * 2,
+                muxer.pTexCoord
+            );
+            GLES20.glEnableVertexAttribArray(tch);
+            int th = GLES20.glGetUniformLocation(program, "sTexture");
+            GLES20.glUniform1i(
+                th,
+                0
+            ); /* Tells the shader what texture to use. */
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+            int sc = GLES20.glGetUniformLocation(program, "scale");
+            float sx =
+                scale_x * (mirror ? -1.0f : 1.0f) * (rotate ? -1.0f : 1.0f);
+            float sy = scale_y * (rotate ? -1.0f : 1.0f);
+            GLES20.glUniform2f(sc, sx, sy);
+            int tr = GLES20.glGetUniformLocation(program, "translate");
+            GLES20.glUniform2f(tr, translate_x, translate_y);
+            int r9 = GLES20.glGetUniformLocation(program, "rot90");
+            GLES20.glUniform1i(r9, rotate90 ? 1 : 0);
+            int isc = GLES20.glGetUniformLocation(program, "texSize");
+            GLES20.glUniform2f(isc, width, height);
+            int sh = GLES20.glGetUniformLocation(program, "sharpening");
+            GLES20.glUniform1f(
+                sh,
+                sharpening
+            ); /* It's okay if the shader doesn't have this. */
 
-	public static class OutputSurface {
-		private SurfaceMuxer muxer;
-		private Surface surface;
-		private boolean surfaceOwned;
-		private EGLSurface eglSurface = EGL14.EGL_NO_SURFACE;
-		public int width, height;
+            GLES20.glBlendFunc(
+                GLES20.GL_SRC_ALPHA,
+                GLES20.GL_ONE_MINUS_SRC_ALPHA
+            );
+            GLES20.glBindTexture(
+                GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+                textures[0]
+            );
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+        }
 
-		public OutputSurface(SurfaceMuxer muxer, Surface surf, boolean release, int w, int h) {
-			init(muxer, surf, release, w, h);
-		}
+        public void draw(OutputSurface os, int drawMode) {
+            draw(os, drawMode, 0, 0, os.width, os.height);
+        }
 
-		public OutputSurface(SurfaceMuxer muxer, Surface surf, boolean release) {
-			init(muxer, surf, release, 1, 1);
-		}
+        public void draw(ThroughSurface ts, int drawMode) {
+            draw(ts.outputSurface, drawMode);
+        }
 
-		public OutputSurface(SurfaceMuxer muxer, Surface surf, int w, int h) {
-			init(muxer, surf, false, w, h);
-		}
+        public void draw(
+            ThroughSurface ts,
+            int drawMode,
+            int x,
+            int y,
+            int w,
+            int h
+        ) {
+            draw(ts.outputSurface, drawMode, x, y, w, h);
+        }
+    }
 
-		public OutputSurface(SurfaceMuxer muxer, Surface surf) { init(muxer, surf, false, 1, 1); }
+    public static class OutputSurface {
 
-		/* Give a null surface for buffer surface to get bitmaps. */
-		private void init(SurfaceMuxer muxer, Surface surf, boolean release, int w, int h) {
-			this.muxer = muxer;
-			surface = surf;
-			surfaceOwned = release;
-			muxer.surfaces.add(this);
-			width = w;
-			height = h;
-			init();
-		}
+        private SurfaceMuxer muxer;
+        private Surface surface;
+        private boolean surfaceOwned;
+        private EGLSurface eglSurface = EGL14.EGL_NO_SURFACE;
+        public int width, height;
 
-		private void init() {
-			deinit();
-			if (muxer == null || muxer.eglDisplay == EGL14.EGL_NO_DISPLAY)
-				return;
-			int[] attr = { EGL14.EGL_NONE };
-			if (surface != null) {
-				eglSurface = EGL14.eglCreateWindowSurface(muxer.eglDisplay, muxer.eglConfig,
-						surface, attr, 0);
-				muxer.checkEglError("eglCreateWindowSurface");
-			} else {
-				attr = new int[] {
-						EGL14.EGL_WIDTH, width,
-						EGL14.EGL_HEIGHT, height,
-						EGL14.EGL_NONE
-				};
-				eglSurface = EGL14.eglCreatePbufferSurface(muxer.eglDisplay, muxer.eglConfig, attr,
-						0);
-				muxer.checkEglError("eglCreatePbufferSurface");
-			}
-		}
+        public OutputSurface(
+            SurfaceMuxer muxer,
+            Surface surf,
+            boolean release,
+            int w,
+            int h
+        ) {
+            init(muxer, surf, release, w, h);
+        }
 
-		private void deinit() {
-			if (muxer != null && muxer.eglDisplay != EGL14.EGL_NO_DISPLAY &&
-					eglSurface != EGL14.EGL_NO_SURFACE) {
-				EGL14.eglDestroySurface(muxer.eglDisplay, eglSurface);
-				eglSurface = EGL14.EGL_NO_SURFACE;
-				/* setDefaultBufferSize() requires destroying surface and making it non-current. */
-				EGL14.eglMakeCurrent(muxer.eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE,
-						muxer.eglContext);
-			}
-		}
+        public OutputSurface(
+            SurfaceMuxer muxer,
+            Surface surf,
+            boolean release
+        ) {
+            init(muxer, surf, release, 1, 1);
+        }
 
-		public void setSize(int w, int h) {
-			width = w;
-			height = h;
-			deinit(); /* In case setDefaultBufferSize() happened, this is important. */
-			init();
-		}
+        public OutputSurface(SurfaceMuxer muxer, Surface surf, int w, int h) {
+            init(muxer, surf, false, w, h);
+        }
 
-		public void makeCurrent() {
-			if (muxer.eglContext == EGL14.EGL_NO_CONTEXT)
-				return;
-			EGL14.eglMakeCurrent(muxer.eglDisplay, eglSurface, eglSurface, muxer.eglContext);
-			muxer.checkEglError("eglMakeCurrent");
-		}
+        public OutputSurface(SurfaceMuxer muxer, Surface surf) {
+            init(muxer, surf, false, 1, 1);
+        }
 
-		public void swapBuffers() {
-			if (muxer.eglContext == EGL14.EGL_NO_CONTEXT)
-				return;
-			EGL14.eglSwapBuffers(muxer.eglDisplay, eglSurface);
-			muxer.checkEglError("eglSwapBuffers");
-		}
+        /* Give a null surface for buffer surface to get bitmaps. */
+        private void init(
+            SurfaceMuxer muxer,
+            Surface surf,
+            boolean release,
+            int w,
+            int h
+        ) {
+            this.muxer = muxer;
+            surface = surf;
+            surfaceOwned = release;
+            muxer.surfaces.add(this);
+            width = w;
+            height = h;
+            init();
+        }
 
-		public void setPresentationTime(long nsecs) {
-			if (muxer.eglContext == EGL14.EGL_NO_CONTEXT)
-				return;
-			EGLExt.eglPresentationTimeANDROID(muxer.eglDisplay, eglSurface, nsecs);
-			muxer.checkEglError("eglPresentationTimeANDROID");
-		}
+        private void init() {
+            deinit();
+            if (
+                muxer == null || muxer.eglDisplay == EGL14.EGL_NO_DISPLAY
+            ) return;
+            int[] attr = { EGL14.EGL_NONE };
+            if (surface != null) {
+                eglSurface = EGL14.eglCreateWindowSurface(
+                    muxer.eglDisplay,
+                    muxer.eglConfig,
+                    surface,
+                    attr,
+                    0
+                );
+                muxer.checkEglError("eglCreateWindowSurface");
+            } else {
+                attr = new int[] {
+                    EGL14.EGL_WIDTH,
+                    width,
+                    EGL14.EGL_HEIGHT,
+                    height,
+                    EGL14.EGL_NONE,
+                };
+                eglSurface = EGL14.eglCreatePbufferSurface(
+                    muxer.eglDisplay,
+                    muxer.eglConfig,
+                    attr,
+                    0
+                );
+                muxer.checkEglError("eglCreatePbufferSurface");
+            }
+        }
 
-		public void release() {
-			deinit();
-			if (muxer != null)
-				muxer.surfaces.remove(this);
-			if (surface != null) {
-				if (surfaceOwned)
-					surface.release();
-				muxer = null;
-				surface = null;
-			}
-		}
+        private void deinit() {
+            if (
+                muxer != null &&
+                muxer.eglDisplay != EGL14.EGL_NO_DISPLAY &&
+                eglSurface != EGL14.EGL_NO_SURFACE
+            ) {
+                EGL14.eglDestroySurface(muxer.eglDisplay, eglSurface);
+                eglSurface = EGL14.EGL_NO_SURFACE;
+                /* setDefaultBufferSize() requires destroying surface and making it non-current. */
+                EGL14.eglMakeCurrent(
+                    muxer.eglDisplay,
+                    EGL14.EGL_NO_SURFACE,
+                    EGL14.EGL_NO_SURFACE,
+                    muxer.eglContext
+                );
+            }
+        }
 
-		public void clear(float r, float g, float b, float a) {
-			if (muxer.eglContext == EGL14.EGL_NO_CONTEXT)
-				return;
-			makeCurrent();
-			GLES20.glClearColor(r, g, b, a);
-			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-		}
+        public void setSize(int w, int h) {
+            width = w;
+            height = h;
+            deinit(); /* In case setDefaultBufferSize() happened, this is important. */
+            init();
+        }
 
-		public Bitmap getBitmap() {
-			Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-			ByteBuffer buf = ByteBuffer.allocateDirect(width * height * 4);
-			makeCurrent();
-			GLES20.glFlush();
-			GLES20.glFinish();
-			GLES20.glReadPixels(0, 0, width, height, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buf);
-			bmp.copyPixelsFromBuffer(buf);
-			Matrix matrix = new Matrix();
-			matrix.setScale(1, -1);
-			Bitmap ret = Bitmap.createBitmap(bmp, 0, 0, width, height, matrix, false);
-			bmp.recycle();
-			return ret;
-		}
-	}
+        public void makeCurrent() {
+            if (muxer.eglContext == EGL14.EGL_NO_CONTEXT) return;
+            EGL14.eglMakeCurrent(
+                muxer.eglDisplay,
+                eglSurface,
+                eglSurface,
+                muxer.eglContext
+            );
+            muxer.checkEglError("eglMakeCurrent");
+        }
 
-	public static class ThroughSurface extends InputSurface {
-		private final OutputSurface outputSurface;
+        public void swapBuffers() {
+            if (muxer.eglContext == EGL14.EGL_NO_CONTEXT) return;
+            EGL14.eglSwapBuffers(muxer.eglDisplay, eglSurface);
+            muxer.checkEglError("eglSwapBuffers");
+        }
 
-		public ThroughSurface(SurfaceMuxer muxer) {
-			super(muxer);
-			outputSurface = new OutputSurface(muxer, surface, false);
-		}
+        public void setPresentationTime(long nsecs) {
+            if (muxer.eglContext == EGL14.EGL_NO_CONTEXT) return;
+            EGLExt.eglPresentationTimeANDROID(
+                muxer.eglDisplay,
+                eglSurface,
+                nsecs
+            );
+            muxer.checkEglError("eglPresentationTimeANDROID");
+        }
 
-		@Override
-		public void setSize(int w, int h) {
-			super.setSize(w, h);
-			outputSurface.setSize(w, h);
-		}
+        public void release() {
+            deinit();
+            if (muxer != null) muxer.surfaces.remove(this);
+            if (surface != null) {
+                if (surfaceOwned) surface.release();
+                muxer = null;
+                surface = null;
+            }
+        }
 
-		@Override
-		public void release() {
-			super.release();
-			outputSurface.release();
-		}
+        public void clear(float r, float g, float b, float a) {
+            if (muxer.eglContext == EGL14.EGL_NO_CONTEXT) return;
+            makeCurrent();
+            GLES20.glClearColor(r, g, b, a);
+            GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+        }
 
-		public void swapBuffers() { outputSurface.swapBuffers(); }
-	}
+        public Bitmap getBitmap() {
+            Bitmap bmp = Bitmap.createBitmap(
+                width,
+                height,
+                Bitmap.Config.ARGB_8888
+            );
+            ByteBuffer buf = ByteBuffer.allocateDirect(width * height * 4);
+            makeCurrent();
+            GLES20.glFlush();
+            GLES20.glFinish();
+            GLES20.glReadPixels(
+                0,
+                0,
+                width,
+                height,
+                GLES20.GL_RGBA,
+                GLES20.GL_UNSIGNED_BYTE,
+                buf
+            );
+            bmp.copyPixelsFromBuffer(buf);
+            Matrix matrix = new Matrix();
+            matrix.setScale(1, -1);
+            Bitmap ret = Bitmap.createBitmap(
+                bmp,
+                0,
+                0,
+                width,
+                height,
+                matrix,
+                false
+            );
+            bmp.recycle();
+            return ret;
+        }
+    }
 
-	public SurfaceMuxer(Context ctx) {
-		try {
-			vss = Util.readStringAsset(ctx, "vshader.glsl");
-			for (DrawMode dm : drawModes)
-				dm.source = Util.readStringAsset(ctx, dm.file);
-		} catch (IOException e) {
-			/* Crash to inform the user I done did a stupid. */
-			throw new RuntimeException(e);
-		}
+    public static class ThroughSurface extends InputSurface {
 
-		/* Initialize vertex and texture coords. */
-		float[] ttmp = { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f };
-		pTexCoord.put(ttmp);
-		pTexCoord.rewind();
-		float[] vtmp = { 1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f };
-		pVertex.put(vtmp);
-		pVertex.rewind();
+        private final OutputSurface outputSurface;
 
-		/* Try initializing the context already. */
-		init();
-	}
+        public ThroughSurface(SurfaceMuxer muxer) {
+            super(muxer);
+            outputSurface = new OutputSurface(muxer, surface, false);
+        }
 
-	private void checkEglError(String msg) {
-		int error;
-		if ((error = EGL14.eglGetError()) != EGL14.EGL_SUCCESS)
-			throw new RuntimeException(msg + ": EGL error: 0x" + Integer.toHexString(error));
-	}
+        @Override
+        public void setSize(int w, int h) {
+            super.setSize(w, h);
+            outputSurface.setSize(w, h);
+        }
 
-	private int loadShader(int type, String source) {
-		int shader = GLES20.glCreateShader(type);
-		GLES20.glShaderSource(shader, source);
-		GLES20.glCompileShader(shader);
-		int[] compiled = new int[1];
-		GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compiled, 0);
-		if (compiled[0] == 0)
-			throw new RuntimeException(GLES20.glGetShaderInfoLog(shader));
-		return shader;
-	}
+        @Override
+        public void release() {
+            super.release();
+            outputSurface.release();
+        }
 
-	public void init() { /* Initialize EGL context. */
-		if (eglContext != EGL14.EGL_NO_CONTEXT)
-			deinit();
-		eglDisplay = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
-		if (eglDisplay == EGL14.EGL_NO_DISPLAY)
-			throw new RuntimeException("Unable to get EGL14 display.");
-		int[] version = new int[2];
-		if (!EGL14.eglInitialize(eglDisplay, version, 0, version, 1))
-			throw new RuntimeException("Unable to initialize EGL14.");
+        public void swapBuffers() {
+            outputSurface.swapBuffers();
+        }
+    }
 
-		/* Get an EGL configuration. */
-		int[] cfga = {
-				EGL14.EGL_RED_SIZE, 8,
-				EGL14.EGL_GREEN_SIZE, 8,
-				EGL14.EGL_BLUE_SIZE, 8,
-				EGL14.EGL_ALPHA_SIZE, 8,
-				EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
-				EGL_RECORDABLE_ANDROID, EGL14.EGL_TRUE, /* We need this to be able to record. */
-				EGL14.EGL_NONE
-		};
-		EGLConfig[] configs = new EGLConfig[1];
-		int[] numConfigs = new int[1];
-		EGL14.eglChooseConfig(eglDisplay, cfga, 0, configs, 0, configs.length, numConfigs, 0);
-		checkEglError("eglChooseConfig");
-		eglConfig = configs[0];
+    public SurfaceMuxer(Context ctx) {
+        try {
+            vss = Util.readStringAsset(ctx, "vshader.glsl");
+            for (DrawMode dm : drawModes)
+                dm.source = Util.readStringAsset(ctx, dm.file);
+        } catch (IOException e) {
+            /* Crash to inform the user I done did a stupid. */
+            throw new RuntimeException(e);
+        }
 
-		/* Create an EGL context. */
-		int[] ctxa = {
-				EGL14.EGL_CONTEXT_CLIENT_VERSION, 2,
-				EGL14.EGL_NONE
-		};
-		eglContext = EGL14.eglCreateContext(eglDisplay, eglConfig, EGL14.EGL_NO_CONTEXT, ctxa, 0);
-		checkEglError("eglCreateContext");
+        /* Initialize vertex and texture coords. */
+        float[] ttmp = { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f };
+        pTexCoord.put(ttmp);
+        pTexCoord.rewind();
+        float[] vtmp = { 1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f };
+        pVertex.put(vtmp);
+        pVertex.rewind();
 
-		/* Now we make the context current so creating our shaders etc binds to this context. */
-		EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, eglContext);
-		//Log.i("GLEXT", "Gl extensions: " + GLES20.glGetString(GLES10.GL_EXTENSIONS));
+        /* Try initializing the context already. */
+        init();
+    }
 
-		/* Enable alpha blending. */
-		GLES20.glEnable(GLES20.GL_BLEND);
-		GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+    private void checkEglError(String msg) {
+        int error;
+        if (
+            (error = EGL14.eglGetError()) != EGL14.EGL_SUCCESS
+        ) throw new RuntimeException(
+            msg + ": EGL error: 0x" + Integer.toHexString(error)
+        );
+    }
 
-		/* Compile the shaders. */
-		int vshader = loadShader(GLES20.GL_VERTEX_SHADER, vss);
-		for (DrawMode dm : drawModes) {
-			int fshader = loadShader(GLES20.GL_FRAGMENT_SHADER, dm.source);
-			dm.program = GLES20.glCreateProgram();
-			GLES20.glAttachShader(dm.program, vshader);
-			GLES20.glAttachShader(dm.program, fshader);
-			GLES20.glLinkProgram(dm.program);
-			GLES20.glDeleteShader(fshader); /* Just decreases refcount. */
-		}
-		GLES20.glDeleteShader(vshader); /* Shader will still live until the programs die. */
+    private int loadShader(int type, String source) {
+        int shader = GLES20.glCreateShader(type);
+        GLES20.glShaderSource(shader, source);
+        GLES20.glCompileShader(shader);
+        int[] compiled = new int[1];
+        GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compiled, 0);
+        if (compiled[0] == 0) throw new RuntimeException(
+            GLES20.glGetShaderInfoLog(shader)
+        );
+        return shader;
+    }
 
-		/* Initialize any surfaces we have. */
-		for (Object o : surfaces) {
-			if (o instanceof InputSurface)
-				((InputSurface) o).init();
-			/* OutputSurfaces do not perish with the EGL context but need init if they were created
-			 *   at a time no context existed.
-			 */
-			if (o instanceof OutputSurface)
-				((OutputSurface) o).init();
-		}
-	}
+    public void init() {
+        /* Initialize EGL context. */
+        if (eglContext != EGL14.EGL_NO_CONTEXT) deinit();
+        eglDisplay = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
+        if (eglDisplay == EGL14.EGL_NO_DISPLAY) throw new RuntimeException(
+            "Unable to get EGL14 display."
+        );
+        int[] version = new int[2];
+        if (
+            !EGL14.eglInitialize(eglDisplay, version, 0, version, 1)
+        ) throw new RuntimeException("Unable to initialize EGL14.");
 
-	public void deinit() {
-		for (Object o : surfaces) {
-			if (o instanceof InputSurface)
-				((InputSurface) o).deinit();
-			/* OutputSurfaces don't need deinit, they'll live until next init(). */
-		}
-		if (eglDisplay != EGL14.EGL_NO_DISPLAY) {
-			EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE,
-					EGL14.EGL_NO_CONTEXT);
-			/* Destroying the context will also delete textures, program, etc. */
-			EGL14.eglDestroyContext(eglDisplay, eglContext);
-			EGL14.eglReleaseThread();
-			//EGL14.eglTerminate(eglDisplay); // TODO causes samsung crash, is it needed?
-			// TODO what about releaseThread()?
-		}
-		eglDisplay = EGL14.EGL_NO_DISPLAY;
-		eglContext = EGL14.EGL_NO_CONTEXT;
-	}
+        /* Get an EGL configuration. */
+        int[] cfga = {
+            EGL14.EGL_RED_SIZE,
+            8,
+            EGL14.EGL_GREEN_SIZE,
+            8,
+            EGL14.EGL_BLUE_SIZE,
+            8,
+            EGL14.EGL_ALPHA_SIZE,
+            8,
+            EGL14.EGL_RENDERABLE_TYPE,
+            EGL14.EGL_OPENGL_ES2_BIT,
+            EGL_RECORDABLE_ANDROID,
+            EGL14.EGL_TRUE /* We need this to be able to record. */,
+            EGL14.EGL_NONE,
+        };
+        EGLConfig[] configs = new EGLConfig[1];
+        int[] numConfigs = new int[1];
+        EGL14.eglChooseConfig(
+            eglDisplay,
+            cfga,
+            0,
+            configs,
+            0,
+            configs.length,
+            numConfigs,
+            0
+        );
+        checkEglError("eglChooseConfig");
+        eglConfig = configs[0];
 
-	public void release() {
-		while (surfaces.size() > 0) {
-			Object o = surfaces.get(0);
-			if (o instanceof InputSurface)
-				((InputSurface) o).release();
-			if (o instanceof OutputSurface)
-				((OutputSurface) o).release();
-			surfaces.remove(o);
-		}
-		deinit();
-	}
+        /* Create an EGL context. */
+        int[] ctxa = { EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE };
+        eglContext = EGL14.eglCreateContext(
+            eglDisplay,
+            eglConfig,
+            EGL14.EGL_NO_CONTEXT,
+            ctxa,
+            0
+        );
+        checkEglError("eglCreateContext");
+
+        /* Now we make the context current so creating our shaders etc binds to this context. */
+        EGL14.eglMakeCurrent(
+            eglDisplay,
+            EGL14.EGL_NO_SURFACE,
+            EGL14.EGL_NO_SURFACE,
+            eglContext
+        );
+        //Log.i("GLEXT", "Gl extensions: " + GLES20.glGetString(GLES10.GL_EXTENSIONS));
+
+        /* Enable alpha blending. */
+        GLES20.glEnable(GLES20.GL_BLEND);
+        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+
+        /* Compile the shaders. */
+        int vshader = loadShader(GLES20.GL_VERTEX_SHADER, vss);
+        for (DrawMode dm : drawModes) {
+            int fshader = loadShader(GLES20.GL_FRAGMENT_SHADER, dm.source);
+            dm.program = GLES20.glCreateProgram();
+            GLES20.glAttachShader(dm.program, vshader);
+            GLES20.glAttachShader(dm.program, fshader);
+            GLES20.glLinkProgram(dm.program);
+            GLES20.glDeleteShader(fshader); /* Just decreases refcount. */
+        }
+        GLES20.glDeleteShader(
+            vshader
+        ); /* Shader will still live until the programs die. */
+
+        /* Initialize any surfaces we have. */
+        for (Object o : surfaces) {
+            if (o instanceof InputSurface) ((InputSurface) o).init();
+            /* OutputSurfaces do not perish with the EGL context but need init if they were created
+             *   at a time no context existed.
+             */
+            if (o instanceof OutputSurface) ((OutputSurface) o).init();
+        }
+    }
+
+    public void deinit() {
+        for (Object o : surfaces) {
+            if (o instanceof InputSurface) ((InputSurface) o).deinit();
+            /* OutputSurfaces don't need deinit, they'll live until next init(). */
+        }
+        if (eglDisplay != EGL14.EGL_NO_DISPLAY) {
+            EGL14.eglMakeCurrent(
+                eglDisplay,
+                EGL14.EGL_NO_SURFACE,
+                EGL14.EGL_NO_SURFACE,
+                EGL14.EGL_NO_CONTEXT
+            );
+            /* Destroying the context will also delete textures, program, etc. */
+            EGL14.eglDestroyContext(eglDisplay, eglContext);
+            EGL14.eglReleaseThread();
+            //EGL14.eglTerminate(eglDisplay); // TODO causes samsung crash, is it needed?
+            // TODO what about releaseThread()?
+        }
+        eglDisplay = EGL14.EGL_NO_DISPLAY;
+        eglContext = EGL14.EGL_NO_CONTEXT;
+    }
+
+    public void release() {
+        while (!surfaces.isEmpty()) {
+            Object o = surfaces.get(0);
+            if (o instanceof InputSurface) ((InputSurface) o).release();
+            if (o instanceof OutputSurface) ((OutputSurface) o).release();
+            surfaces.remove(o);
+        }
+        deinit();
+    }
 }

@@ -250,6 +250,17 @@ struct uvc_stream_handle {
   uint32_t pts, hold_pts;
   uint32_t last_scr, hold_last_scr;
   size_t got_bytes, hold_bytes;
+
+  /*
+  *
+  * ==PATCH TO KEEP THE UVC PAYLOAD HEADER==
+  * The UVC payload header indicates which type of data is being sent by the camera.
+  * Our version of libuvc strips it. We need that data to retrieve the calibration frames.
+  *
+  */
+  size_t maxVideoFrameSizePlusHeaders;
+  int enablePatchAddHeader;
+
   uint8_t *outbuf, *holdbuf;
   pthread_mutex_t cb_mutex;
   pthread_cond_t cb_cond;

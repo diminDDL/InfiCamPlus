@@ -8,49 +8,54 @@ import android.view.ScaleGestureDetector;
 import android.view.SurfaceView;
 
 public class CameraView extends SurfaceView {
-	private Context context;
-	ScaleGestureDetector scaleDetector;
 
-	public CameraView(Context context) {
-		super(context);
-		init(context);
-	}
+    private Context context;
+    ScaleGestureDetector scaleDetector;
 
-	public CameraView(Context context, AttributeSet attrs) {
-		super(context, attrs);
-		init(context);
-	}
+    public CameraView(Context context) {
+        super(context);
+        init(context);
+    }
 
-	public CameraView(Context context, AttributeSet attrs, int defStyleAttr) {
-		super(context, attrs, defStyleAttr);
-		init(context);
-	}
+    public CameraView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        init(context);
+    }
 
-	private void init(Context ctx) {
-		context = ctx;
-	}
+    public CameraView(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        init(context);
+    }
 
-	@SuppressLint("ClickableViewAccessibility") /* Don't worry about it. */
-	@Override
-	public boolean onTouchEvent(MotionEvent event) {
-		if (scaleDetector != null) {
-			scaleDetector.onTouchEvent(event);
-			if (scaleDetector.isInProgress()) {
-				setPressed(false);
-				return true;
-			}
-		}
-		return super.onTouchEvent(event);
-	}
+    private void init(Context ctx) {
+        context = ctx;
+    }
 
-	@Override
-	public boolean performClick() {
-		return super.performClick();
-	}
+    @SuppressLint("ClickableViewAccessibility") /* Don't worry about it. */
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (scaleDetector != null) {
+            scaleDetector.onTouchEvent(event);
+            if (scaleDetector.isInProgress()) {
+                setPressed(false);
+                return true;
+            }
+        }
+        return super.onTouchEvent(event);
+    }
 
-	public void setScaleListener(ScaleGestureDetector.OnScaleGestureListener listener) {
-		scaleDetector = null;
-		if (listener != null)
-			scaleDetector = new ScaleGestureDetector(context, listener);
-	}
+    @Override
+    public boolean performClick() {
+        return super.performClick();
+    }
+
+    public void setScaleListener(
+        ScaleGestureDetector.OnScaleGestureListener listener
+    ) {
+        scaleDetector = null;
+        if (listener != null) scaleDetector = new ScaleGestureDetector(
+            context,
+            listener
+        );
+    }
 }

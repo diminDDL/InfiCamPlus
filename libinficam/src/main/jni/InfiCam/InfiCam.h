@@ -1,14 +1,20 @@
-#ifndef __INFICAM_H__
-#define __INFICAM_H__
+#ifndef INFICAM_H_
+#define INFICAM_H_
 
+#include "CameraSettings.h"
 #include "UVCDevice.h"
 #include "InfiFrame.h"
 #include <cstdint>
 #include <cmath> /* NAN */
 #include <future>
 #include <pthread.h>
+#include <sys/types.h>
+#include <chrono>
 
-/* This one is for actually interacting with the thermal camera, wraps UVCDevice and InfiFrame.
+using steady_clock = std::chrono::steady_clock;
+
+/* This one is for actually interacting with the thermal camera.
+ * It represents the camera. Contains UVCDevice and InfiFrame.
  *
  * Note that because Android does not allow libusb to do device discovery related stuff, there is
  *   no way to detect when the device has disconnected here, this has to be implemented separately.
@@ -16,141 +22,105 @@
  * The callback given to stream_start() can block as long as it wants since libuvc has a separate
  *   thread dedicated to calling the user callback, in the worst case a few frames are missed.
  */
+
+typedef struct {
+    bool enable;
+    int interval_min;
+    int interval_max;
+    int next_interval;
+} AutoShutterData;
+
 class InfiCam {
-	typedef void (frame_callback_t)(InfiCam *cam, float *temp, uint16_t *raw, void *user_ptr);
-
-	UVCDevice dev;
-	frame_callback_t *frame_callback;
-	void *frame_callback_arg;
-	float *frame_temp = NULL;
-	pthread_mutex_t frame_callback_mutex;
-    pthread_cond_t calibration_cond;
-	int connected = 0, streaming = 0, table_invalid = 1;
-    bool raw_sensor = false;
-    bool p2_pro = false;
-    bool calibrating = false;
-    bool calibrated = false;
-    bool* dead_pixel_mask = nullptr;
-    uint32_t dead_pixel_num = 0;
-    uint16_t* intermediary_buffer = nullptr;
-    uint16_t* calibration_frame = nullptr;
-    uint16_t offset_value = 0;
-
-    static std::future<void> calibration_thread_future;
-
-    static const int DATA_ROWS = 4;
-
-	static const int CMD_SHUTTER = 0x8000;
+    static const int CMD_SHUTTER = 0x8000;
+    static const int CMD_DOWNLOAD_CAL = 0x8081; //Only for raw sensors. Asks the camera to send the per-pixel calibration data.
 	static const int CMD_MODE_TEMP = 0x8004;
-	static const int CMD_MODE_YUV = 0x8005;
+
 	static const int CMD_RANGE_120 = 0x8020;
 	static const int CMD_RANGE_400 = 0x8021;
-	static const int CMD_STORE = 0x80FF;
-    // These are just zero on the T2S+ A2 version
-	static const int ADDR_CORRECTION = 0;
-	static const int ADDR_TEMP_REFLECTED = 4;
-	static const int ADDR_TEMP_AIR = 8;
-	static const int ADDR_HUMIDITY = 12;
-	static const int ADDR_EMISSIVITY = 16;
-	static const int ADDR_DISTANCE = 20;
 
-	static void uvc_callback(uvc_frame_t *frame, void *user_ptr);
-	void set_float(int addr, float val); /* Write to camera user memory, needs lock. */
+	static const int CMD_STORE = 0x80FF;
+	static const int ADDR_CORRECTION = 0;
+    static const int ADDR_TEMP_REFLECTED = 4;
+    static const int ADDR_TEMP_AIR = 8;
+    static const int ADDR_HUMIDITY = 12;
+    static const int ADDR_EMISSIVITY = 16;
+    static const int ADDR_DISTANCE = 20;
+
+
+    typedef void (frame_callback_t)(const void *inficam_jni, const float *temp, const CameraSettings& p_cam_settings);
+    typedef void (settings_callback_t)(const void *inficam_jni, const CameraSettings& cam_settings);
+
+private:
+    bool exit_all_theads = false;
+
+    //data
+    const void * inficam_jni;
+    UVCDevice dev;
+    InfiFrame * infiframe{};
+    AutoShutterData auto_shut_data{false, 0, 0, 0};
+    steady_clock::time_point calibration_shutter_time; //time since start of last calibration
+    steady_clock::time_point settle_start_time; //time since last upsetting event (startup, range change)
+    uint16_t* packet_reconstruction_buffer = nullptr; //temporary, only used for raw sensor
+    bool is_ready = false; //is camera streaming, initialized and ready to accept commands
+    bool is_calibrating = false; //is in the process of calibrating
+
+    //synchronisation
+    pthread_mutex_t command_mutex{};
+
+    //callbacks
+    frame_callback_t *frame_callback{};
+    settings_callback_t *settings_callback{};
+
+    //shutter
+    pthread_t shutter_thread{};
+    pthread_mutex_t shutter_mutex{};
+    pthread_cond_t shutter_request{};
+    bool keep_shutter_closed = false;
+    static void * shutter_thread_func(void *arg);
+
+
+    static void uvc_frame_callback(uvc_frame_t *frame, void *user_ptr);
+
+    static bool reset_cal_on_bad_data(InfiCam * t, const uint16_t * frame);
+
+    void set_float(const int addr, const float val);
+    void set_ushort(const int addr, const uint16_t val);
+
+    void refresh_auto_shut_interval();
 
 public:
-	static const int palette_len = InfiFrame::palette_len;
-	/* InfiFrame class gets updated before each stream CB with info relevant to the frame.
-	 * The width and height in there are valid after connect().
-	 */
-	InfiFrame infi;
+    InfiCam(const void * inficam_jni);
+    ~InfiCam();
 
-	~InfiCam();
+    //data
+    CameraSettings cam_settings; //to allow JNI to read current settings
 
-	int connect(int fd); /* Closes the FD on disconnect. */
-	void disconnect(); /* Opening a new connection will close the previous one if it exists. */
+    pthread_mutex_t cal_mutex{}; //to allow JNI to wait until calibration is complete
+    pthread_cond_t cal_request{};
 
-	/* Stream CB arguments valid until return, CB runs on it's own thread. Trying to start a stream
-	 *   when already streaming returns an error. Do beware of some possible thread safety issues
-	 *   as set_palette() for example will modify the InfiFrame instance passed to the callback
-	 *   and calling update() on that after set_range()/set_distance_multipler() or changing
-	 *   any of it's parameters from another thread is not guarded against. The update_table()
-	 *   and such done before calling the callback are guarded against the functions below with a
-	 *   mutex so they should be okay to use whenever as long as you don't do something crazy like
-	 *   call infi.update() in a different thread.
-	 */
-	int stream_start(frame_callback_t *cb, void *user_ptr);
+    int connect(int uvc_fd, int & output_width, int & output_height, settings_callback_t * settings_callback);
+    void disconnect();
+
+    int stream_start(frame_callback_t *cb);
 	void stream_stop(); /* Attempting to stop stream is okay even when no stream. */
 
-	/* Set range, valid values are 120 and 400 (see InfiFrame class).
-	 * Changes take effect after update/update_table().
-	 */
-	void set_range(int range);
 
-	/* Distance multiplier, 3.0 for 6.8mm lens, 1.0 for 13mm lens.
-	 * Changes only take effect after update_table().
-	 */
-	void set_distance_multiplier(float dm);
+    void calibrate();
+    void lock_shutter();
+    void unlock_shutter();
 
-	/* Setting parameters, only works while streaming.
-	 * Changes only take effect after update_table().
-	 */
-	void set_correction(float corr);
-	void set_temp_reflected(float t_ref);
-	void set_temp_air(float t_air);
-	void set_humidity(float humi);
-	void set_emissivity(float emi);
-	void set_distance(float dist);
-	void set_params(float corr, float t_ref, float t_air, float humi, float emi, float dist);
+    std::vector<std::array<float,2>> get_ranges();
+    void set_range(const int range);
+    void set_correction(const float corr);
+    void set_temp_reflected(const float t_ref);
+    void set_temp_air(const float t_air);
+    void set_humidity(const float humi);
+    void set_emissivity(const float emi);
+    void set_distance(const uint16_t dist);
 	void store_params(); /* Store user memory to camera so values remain when reconnecting. */
-    void set_raw_sensor(bool raw) { raw_sensor = raw; };
-    void set_p2_pro(bool p2_pro_dev) { p2_pro = p2_pro_dev; };
 
-	void update_table();
-	void calibrate();
-    void calibration_thread();      /* Since on raw models calibration requires some waiting, it's better to delegate it to a separate thread. */
-    void close_shutter();
+    void set_auto_shutter_settings(bool enable, int interval_min, int interval_max);
 
-	void set_palette(uint32_t *palette); /* Length must be palette_len. */
-
-
-    // Reference used for P2 Pro commands https://github.com/Pinoerkel/P2Pro-Viewer/blob/main/P2Pro/P2Pro_cmd.py
-
-    typedef enum {
-        SYS_RESET_TO_ROM = 0x0805,
-        SPI_TRANSFER = 0x8201,
-        GET_DEVICE_INFO = 0x8405,
-        PSEUDO_COLOR = 0x8409,
-        SHUTTER_STA_SET = 0x410C,
-        SHUTTER_STA_GET = 0x830C,
-        AUTO_SHUTTER_PARAMS_SET = 0xC214,
-        AUTO_SHUTTER_PARAMS_GET = 0x8214,
-        SHUTTER_SWITCH = 0x420C,
-        SHUTTER_VTEMP = 0x840C,
-        OOC_B_UPDATE = 0xC10D,
-        PROP_TPD_PARAMS = 0x8514,
-        CUR_VTEMP = 0x8B0D,
-        PREVIEW_START = 0xC10F,
-        PREVIEW_STOP = 0x020F,
-        Y16_PREVIEW_START = 0x010A,
-        Y16_PREVIEW_STOP = 0x020A
-    } P2ProCmdCode;
-
-    typedef enum {
-        GET = 0x0000,
-        SET = 0x4000
-    } P2ProCmdDir;
-
-    typedef enum {
-        TPD_PROP_DISTANCE = 0,   // 1/163.835 m, 0-32767, Distance
-        TPD_PROP_TU = 1,         // 1 K, 0-1024, Reflection temperature
-        TPD_PROP_TA = 2,         // 1 K, 0-1024, Atmospheric temperature
-        TPD_PROP_EMS = 3,        // 1/127, 0-127, Emissivity
-        TPD_PROP_TAU = 4,        // 1/127, 0-127, Atmospheric transmittance
-        TPD_PROP_GAIN_SEL = 5    // binary, 0-1, Gain select (0=low -20~150C, 1=high 150~600C)
-    } P2ProPropTpdParams;
-
-    void p2pro_long_cmd_write(uint16_t cmd, uint16_t p1, uint32_t p2, uint32_t p3, uint32_t p4);
-    void p2pro_set_prop_tpd_params(uint16_t tpd_param, uint32_t value);
 };
 
-#endif /* __INFICAM_H__ */
+#endif /* INFICAM_H_ */

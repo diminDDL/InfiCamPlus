@@ -620,7 +620,16 @@ uvc_error_t uvc_start_streaming(
     uvc_stream_ctrl_t *ctrl,
     uvc_frame_callback_t *cb,
     void *user_ptr,
-    uint8_t flags);
+    uint8_t flags,
+    /*
+    *
+    * ==PATCH TO KEEP THE UVC PAYLOAD HEADER==
+    * The UVC payload header indicates which type of data is being sent by the camera.
+    * Our version of libuvc strips it. We need that data to retrieve the calibration frames.
+    *
+    */
+    int enablePatchAddHeader
+);
 
 uvc_error_t uvc_start_iso_streaming(
     uvc_device_handle_t *devh,

@@ -1,42 +1,63 @@
 package be.ntmn.inficam;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.util.AttributeSet;
-
 import androidx.annotation.Nullable;
 
 public class SettingsPalette extends Settings {
-	private static final String SP_NAME = "PREFS_THERM";
-	private static final int name = R.string.dialog_set_palette;
 
-	public class SettingPalette extends SettingRadio {
-		SettingPalette() {
-			super("palette", R.string.set_palette, 6, new int[] {});
-			items = new int[Palette.palettes.length];
-			for (int i = 0; i < Palette.palettes.length; ++i)
-				items[i] = Palette.palettes[i].name;
-		}
+    public int[] paletteMap;
+    public Bitmap paletteBitmap;
+    private final SettingPalette settingPalette = new SettingPalette();
 
-		@Override
-		void onSet(int i) { act.setPalette(Palette.palettes[i].getData()); }
-	}
+    public SettingsPalette(Context context) {
+        super(context, "PREFS_PALETTE", R.string.dialog_set_palette);
+        init();
+    }
 
-	public SettingsPalette(Context context) { super(context); }
-	public SettingsPalette(Context context, @Nullable AttributeSet attrs) { super(context, attrs); }
-	public SettingsPalette(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-		super(context, attrs, defStyleAttr);
-	}
+    public SettingsPalette(Context context, @Nullable AttributeSet attrs) {
+        super(context, "PREFS_PALETTE", R.string.dialog_set_palette, attrs);
+        init();
+    }
 
-	@Override
-	public String getSPName() { return SP_NAME; }
+    public SettingsPalette(
+        Context context,
+        @Nullable AttributeSet attrs,
+        int defStyleAttr
+    ) {
+        super(
+            context,
+            "PREFS_PALETTE",
+            R.string.dialog_set_palette,
+            attrs,
+            defStyleAttr
+        );
+        init();
+    }
 
-	@Override
-	public int getName() { return name; }
+    private void init() {
+        settings = new Setting[] { settingPalette, settingDefaults };
+    }
 
-	@Override
-	public Setting[] getSettings() { return settings; }
+    public class SettingPalette extends SettingRadio {
 
-	public SettingPalette palette = new SettingPalette();
+        SettingPalette() {
+            super("palette", R.string.set_palette, 6, new int[] {});
+            items = new int[Palette.palettes.length];
+            for (int i = 0; i < Palette.palettes.length; ++i) items[i] =
+                Palette.palettes[i].name;
+        }
 
-	private final Setting[] settings = { palette, settingDefaults };
+        @Override
+        void onSet(int i) {
+            paletteMap = Palette.palettes[i].getMap();
+            paletteBitmap = Palette.palettes[i].getBitmap();
+        }
+    }
+
+    SettingPalette getPalette(){
+        return settingPalette;
+    }
+
 }
