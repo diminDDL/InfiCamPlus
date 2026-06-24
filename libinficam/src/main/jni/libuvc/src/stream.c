@@ -778,13 +778,32 @@ void _uvc_process_payload(uvc_stream_handle_t *strmh, uint8_t *payload, size_t p
   }
 
   if (data_len > 0) {
-    if (strmh->got_bytes + data_len > strmh->cur_ctrl.dwMaxVideoFrameSize)
-      data_len = strmh->cur_ctrl.dwMaxVideoFrameSize - strmh->got_bytes; /* Avoid overflow. */
-    memcpy(strmh->outbuf + strmh->got_bytes, payload + header_len, data_len);
-    strmh->got_bytes += data_len;
-    if (header_info & (1 << 1) || strmh->got_bytes == strmh->cur_ctrl.dwMaxVideoFrameSize) {
-      /* The EOF bit is set, so publish the complete frame */
-      _uvc_swap_buffers(strmh);
+
+    /*
+    *
+    * ==PATCH TO KEEP THE UVC PAYLOAD HEADER==
+    * The UVC payload header indicates which type of data is being sent by the camera.
+    * Our version of libuvc strips it. We need that data to retrieve the calibration frames.
+    *
+    */
+    if(strmh->enablePatchAddHeader){
+        if (strmh->got_bytes + payload_len > strmh->maxVideoFrameSizePlusHeaders)
+          payload_len = strmh->maxVideoFrameSizePlusHeaders - strmh->got_bytes; /* Avoid overflow. */
+        memcpy(strmh->outbuf + strmh->got_bytes, payload, payload_len);
+        strmh->got_bytes += payload_len;
+        if (header_info & (1 << 1)) {
+          /* The EOF bit is set, so publish the complete frame */
+          _uvc_swap_buffers(strmh);
+        }
+    } else {
+        if (strmh->got_bytes + data_len > strmh->cur_ctrl.dwMaxVideoFrameSize)
+          data_len = strmh->cur_ctrl.dwMaxVideoFrameSize - strmh->got_bytes; /* Avoid overflow. */
+        memcpy(strmh->outbuf + strmh->got_bytes, payload + header_len, data_len);
+        strmh->got_bytes += data_len;
+        if (header_info & (1 << 1) || strmh->got_bytes == strmh->cur_ctrl.dwMaxVideoFrameSize) {
+          /* The EOF bit is set, so publish the complete frame */
+          _uvc_swap_buffers(strmh);
+        }
     }
   }
 }
@@ -863,7 +882,7 @@ void LIBUSB_CALL _uvc_stream_callback(struct libusb_transfer *transfer) {
     UVC_DEBUG("retrying transfer, status = %d", transfer->status);
     break;
   }
-  
+
   if ( resubmit ) {
     if ( strmh->running ) {
       int libusbRet = libusb_submit_transfer(transfer);
@@ -928,7 +947,16 @@ uvc_error_t uvc_start_streaming(
     uvc_stream_ctrl_t *ctrl,
     uvc_frame_callback_t *cb,
     void *user_ptr,
-    uint8_t flags
+    uint8_t flags,
+
+    /*
+    *
+    * ==PATCH TO KEEP THE UVC PAYLOAD HEADER==
+    * The UVC payload header indicates which type of data is being sent by the camera.
+    * Our version of libuvc strips it. We need that data to retrieve the calibration frames.
+    *
+    */
+    int enablePatchAddHeader
 ) {
   uvc_error_t ret;
   uvc_stream_handle_t *strmh;
@@ -936,6 +964,15 @@ uvc_error_t uvc_start_streaming(
   ret = uvc_stream_open_ctrl(devh, &strmh, ctrl);
   if (ret != UVC_SUCCESS)
     return ret;
+
+  /*
+  *
+  * ==PATCH TO KEEP THE UVC PAYLOAD HEADER==
+  * The UVC payload header indicates which type of data is being sent by the camera.
+  * Our version of libuvc strips it. We need that data to retrieve the calibration frames.
+  *
+  */
+  strmh->enablePatchAddHeader = enablePatchAddHeader;
 
   ret = uvc_stream_start(strmh, cb, user_ptr, flags);
   if (ret != UVC_SUCCESS) {
@@ -965,7 +1002,7 @@ uvc_error_t uvc_start_iso_streaming(
     uvc_frame_callback_t *cb,
     void *user_ptr
 ) {
-  return uvc_start_streaming(devh, ctrl, cb, user_ptr, 0);
+  return uvc_start_streaming(devh, ctrl, cb, user_ptr, 0, 0);
 }
 
 static uvc_stream_handle_t *_uvc_get_stream_by_interface(uvc_device_handle_t *devh, int interface_idx) {
@@ -1036,8 +1073,16 @@ uvc_error_t uvc_stream_open_ctrl(uvc_device_handle_t *devh, uvc_stream_handle_t 
   // Set up the streaming status and data space
   strmh->running = 0;
 
-  strmh->outbuf = malloc( ctrl->dwMaxVideoFrameSize );
-  strmh->holdbuf = malloc( ctrl->dwMaxVideoFrameSize );
+  /*
+  *
+  * ==PATCH TO KEEP THE UVC PAYLOAD HEADER==
+  * The UVC payload header indicates which type of data is being sent by the camera.
+  * Our version of libuvc strips it. We need that data to retrieve the calibration frames.
+  *
+  */
+  strmh->maxVideoFrameSizePlusHeaders = ctrl->dwMaxVideoFrameSize + LIBUVC_XFER_META_BUF_SIZE; //headroom for inline headers
+  strmh->outbuf = malloc( strmh->maxVideoFrameSizePlusHeaders );
+  strmh->holdbuf = malloc( strmh->maxVideoFrameSizePlusHeaders );
 
   strmh->meta_outbuf = malloc( LIBUVC_XFER_META_BUF_SIZE );
   strmh->meta_holdbuf = malloc( LIBUVC_XFER_META_BUF_SIZE );

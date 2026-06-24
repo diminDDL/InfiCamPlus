@@ -3,8 +3,10 @@ package be.ntmn.inficam;
 import static java.lang.Math.abs;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -15,10 +17,10 @@ import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.MediaStore;
-
 import androidx.core.graphics.ColorUtils;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -27,16 +29,24 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Util {
-	public final static int IMGTYPE_PNG = 0;
-	public final static int IMGTYPE_PNG565 = 1;
-	public final static int IMGTYPE_JPEG = 2;
 
-	public final static int TEMPUNIT_CELSIUS = 0;
-	public final static int TEMPUNIT_FAHRENHEIT = 1;
-	public final static int TEMPUNIT_KELVIN = 2;
-	public final static int TEMPUNIT_RANKINE = 3;
+	public interface ErrorCallback {
+		void onError(String message);
+	}
+	public static final float ABSOLUTE_ZERO = -273.15f; //C
+
+	public static final int IMGTYPE_PNG = 0;
+	public static final int IMGTYPE_PNG565 = 1;
+	public static final int IMGTYPE_JPEG = 2;
+
+	public static final int TEMPUNIT_CELSIUS = 0;
+	public static final int TEMPUNIT_FAHRENHEIT = 1;
+	public static final int TEMPUNIT_KELVIN = 2;
+	public static final int TEMPUNIT_RANKINE = 3;
 
 	public static void scanMedia(Context ctx, Uri uri) {
 		MediaScannerConnection.scanFile(ctx, new String[] { uri.getPath() }, null, null);
@@ -61,6 +71,7 @@ public class Util {
 			cv.put(MediaStore.Images.Media.DATE_TAKEN, System.currentTimeMillis());
 			ContentResolver cr = ctx.getContentResolver();
 			uri = cr.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv);
+			if(uri == null){ throw new IOException();}
 			out = cr.openOutputStream(uri);
 		} else {
 			int num = 0;
@@ -68,15 +79,17 @@ public class Util {
 			File dcim = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
 			File dir = new File(dcim, dirname);
 			if (!dir.exists())
-				dir.mkdirs();
+				if(!dir.mkdirs()){ throw new IOException(); }
 			File file = new File(dir, fname);
 			while (file.exists()) { /* Avoid overwriting existing files. */
 				fname = "img_" + timeStamp + "_" + ++num + ext;
 				file = new File(fname);
 			}
+			//noinspection IOStreamConstructor
 			out = new FileOutputStream(file);
 			uri = Uri.fromFile(file);
 		}
+		if(out == null){ throw new IOException();}
 		bmp.compress(format, quality, out);
 		out.flush();
 		out.close();
@@ -103,66 +116,134 @@ public class Util {
 		}
 	}
 
+	/*
+	AI generated
+	 */
+	/**
+	 * Opens the most recently modified image OR video that lives in the app's
+	 * MediaStore bucket. Runs the MediaStore queries off the UI thread and posts
+	 * the resulting view intent back to the main thread.
+	 *
+	 * Call from the UI thread. Errors are delivered via the supplied callback.
+	 */
 	/* Note that we need permission to read external storage requested first. */
-	public static void openGallery(Context ctx) throws Exception {
-		String bucketName = ctx.getString(R.string.app_name);
-		Uri uri = null;
-		long date = 0;
-		Cursor cursor = ctx.getContentResolver().query(
-				MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-				new String[] {
-					MediaStore.Images.Media._ID,
-					MediaStore.Images.Media.DATE_MODIFIED
-				},
-				MediaStore.Images.Media.BUCKET_DISPLAY_NAME + "='" + bucketName + "'",
-				null,
-				MediaStore.Images.Media.DATE_MODIFIED + " DESC");
-		if (cursor != null && cursor.moveToFirst()) {
-			int id = cursor.getInt(0);
-			date = cursor.getLong(1);
-			uri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "" + id);
-		}
-		if (cursor != null)
-			cursor.close();
-		cursor = ctx.getContentResolver().query(
-				MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
-				new String[] {
-					MediaStore.Video.Media._ID,
-					MediaStore.Video.Media.DATE_MODIFIED
-				},
-				MediaStore.Video.Media.BUCKET_DISPLAY_NAME + "='" + bucketName + "'",
-				null,
-				MediaStore.Video.Media.DATE_MODIFIED + " DESC");
-		if (cursor != null && cursor.moveToFirst()) {
-			if (cursor.getLong(1) > date) {
-				int id = cursor.getInt(0);
-				uri = Uri.withAppendedPath(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, "" + id);
-			}
-		}
-		if (cursor != null)
-			cursor.close();
+	private static final ExecutorService IO_EXECUTOR = Executors.newSingleThreadExecutor();
 
-		if (false && uri != null) {
-			try { /* Some gallery apps crash when this intent is sent without data. */
-				Intent intent = new Intent("com.android.camera.action.REVIEW");
-				intent.setDataAndType(uri, "image/*");
-				//intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-				ctx.startActivity(intent);
-				return;
-			} catch (Exception e) { /* Empty */ }
-		}
+	public static void openGallery(Context ctx, ErrorCallback onError) {
+		// Hold an application context for the background work to avoid leaking an Activity.
+		final Context appCtx = ctx.getApplicationContext();
+		final Context startCtx = ctx; // used only on the UI thread to startActivity
+		final String bucketName = appCtx.getString(R.string.app_name);
+		final Handler main = new Handler(Looper.getMainLooper());
 
-		try {
-			Intent intent = new Intent(Intent.ACTION_VIEW);
-			if (uri != null)
-				intent.setDataAndType(uri, "image/*");
-			else intent.setType("image/*");
-			//intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-			ctx.startActivity(intent);
-		} catch (ActivityNotFoundException anfe) {
-			throw new Exception(ctx.getString(R.string.err_nogallery));
+		IO_EXECUTOR.execute(() -> {
+			MediaItem item = findLatestMedia(appCtx, bucketName);
+
+			main.post(() -> {
+				try {
+					launchViewer(startCtx, item);
+				} catch (ActivityNotFoundException anfe) {
+					if (onError != null) {
+						onError.onError(appCtx.getString(R.string.err_nogallery));
+					}
+				}
+			});
+		});
+	}
+
+	/** Small holder so we keep the URI and its real MIME type together. */
+	private static final class MediaItem {
+		final Uri uri;
+		final String mimeType; // "image/*" or "video/*"
+		MediaItem(Uri uri, String mimeType) {
+			this.uri = uri;
+			this.mimeType = mimeType;
 		}
 	}
+
+	private static MediaItem findLatestMedia(Context ctx, String bucketName) {
+		final String selection = MediaStore.MediaColumns.BUCKET_DISPLAY_NAME + "=?";
+		final String[] selectionArgs = { bucketName };
+
+		Uri bestUri = null;
+		String bestType = null;
+		long bestDate = Long.MIN_VALUE;
+
+		// --- Latest image ---
+		final String[] imageProjection = {
+				MediaStore.Images.Media._ID,
+				MediaStore.Images.Media.DATE_MODIFIED,
+		};
+		try (Cursor c = ctx.getContentResolver().query(
+				MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+				imageProjection,
+				selection,
+				selectionArgs,
+				MediaStore.Images.Media.DATE_MODIFIED + " DESC")) {
+			if (c != null && c.moveToFirst()) {
+				long id = c.getLong(0);
+				long date = c.getLong(1);
+				bestUri = ContentUris.withAppendedId(
+						MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
+				bestType = "image/*";
+				bestDate = date;
+			}
+		}
+
+		// --- Latest video (wins only if strictly newer) ---
+		final String[] videoProjection = {
+				MediaStore.Video.Media._ID,
+				MediaStore.Video.Media.DATE_MODIFIED,
+		};
+		try (Cursor c = ctx.getContentResolver().query(
+				MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+				videoProjection,
+				selection,
+				selectionArgs,
+				MediaStore.Video.Media.DATE_MODIFIED + " DESC")) {
+			if (c != null && c.moveToFirst()) {
+				long id = c.getLong(0);
+				long date = c.getLong(1);
+				if (date > bestDate) {
+					bestUri = ContentUris.withAppendedId(
+							MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id);
+					bestType = "video/*";
+					bestDate = date;
+				}
+			}
+		}
+		return bestUri == null ? null : new MediaItem(bestUri, bestType);
+	}
+
+	private static void launchViewer(Context ctx, MediaItem item)
+	throws ActivityNotFoundException {
+
+		Intent intent = new Intent(Intent.ACTION_VIEW);
+
+		if (item != null) {
+			// Correct MIME type per item (fixes the video-shown-as-image bug)
+			// and grant the target app read access to the content URI.
+			intent.setDataAndType(item.uri, item.mimeType);
+			intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+		} else {
+			// Nothing authored by this app yet: open the device gallery instead of
+			// sending a data-less ACTION_VIEW (which generally won't resolve).
+			// ACTION_PICK on the images collection reliably opens a gallery/picker.
+			intent = new Intent(Intent.ACTION_PICK,
+					MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+		}
+
+		// If this is ever called from a non-Activity Context, a new task is required.
+		if (!(ctx instanceof Activity)) {
+			intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		}
+
+		ctx.startActivity(intent); // may throw ActivityNotFoundException
+	}
+
+	/*
+	end of AI generated
+	 */
 
 	public static String readStringAsset(Context ctx, String filename) throws IOException {
 		InputStream input = ctx.getAssets().open(filename);

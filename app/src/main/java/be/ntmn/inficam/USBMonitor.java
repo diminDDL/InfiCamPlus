@@ -9,7 +9,6 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
 import android.os.Build;
-
 import java.util.HashMap;
 
 public abstract class USBMonitor extends BroadcastReceiver {
@@ -27,26 +26,26 @@ public abstract class USBMonitor extends BroadcastReceiver {
 	private final HashMap<UsbDevice, ConnectCallback> callbacks = new HashMap<>();
 
 	public void start(Context ctx) { /* Recommended use is in onCreate()/onStart(). */
-	    this.ctx = ctx;
-	    if (!registered) {
-	        manager = (UsbManager) ctx.getSystemService(Context.USB_SERVICE);
-	        IntentFilter filter = new IntentFilter();
-	        filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
-	        filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
-	        filter.addAction(ACTION_USB_PERMISSION);
-	
-	        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-	            ctx.registerReceiver(
-	                this,
-	                filter,
-	                Context.RECEIVER_NOT_EXPORTED
-	            );
-	        } else {
-	            ctx.registerReceiver(this, filter);
-	        }
-	
-	        registered = true;
-	    }
+		this.ctx = ctx;
+		if (!registered) {
+			manager = (UsbManager) ctx.getSystemService(Context.USB_SERVICE);
+			IntentFilter filter = new IntentFilter();
+			filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
+			filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
+			filter.addAction(ACTION_USB_PERMISSION);
+
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+				ctx.registerReceiver(
+					this,
+					filter,
+					Context.RECEIVER_NOT_EXPORTED
+				);
+			} else {
+				ctx.registerReceiver(this, filter);
+			}
+
+			registered = true;
+		}
 	}
 
 	public void stop() { /* Call this in onDestroy()/onStop(), matching start() call. */
@@ -92,6 +91,7 @@ public abstract class USBMonitor extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		UsbDevice dev = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+		if(intent.getAction() == null) { return; }
 		switch (intent.getAction()) {
 			case UsbManager.ACTION_USB_DEVICE_ATTACHED:
 				scan();

@@ -1,12 +1,11 @@
 apply plugin: 'com.android.library'
 
 android {
-	compileSdkVersion 34
+	compileSdkVersion 37
 
 	defaultConfig {
 		minSdkVersion 21
 		//noinspection ExpiredTargetSdkVersion
-		targetSdkVersion 27
 
 		ndk {
 			moduleName "libinficam"
@@ -16,11 +15,21 @@ android {
 	buildTypes {
 		release {
 			minifyEnabled false
-			proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+			externalNativeBuild {
+				ndkBuild {
+					arguments "APP_OPTIM := release"
+				}
+			}
 		}
 		debug {
 			minifyEnabled false
-			proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+			debuggable true
+			jniDebuggable true
+			externalNativeBuild {
+				ndkBuild {
+					arguments "APP_OPTIM := debug"
+				}
+			}
 		}
 	}
 
@@ -34,10 +43,21 @@ android {
 		ndkBuild {
 			path file('src/main/jni/Android.mk')
 		}
+
 	}
 
-	lintOptions {
-		checkReleaseBuilds false
+    namespace 'be.ntmn.libinficam'
+    lint {
+        checkReleaseBuilds false
+		targetSdk 27
 	}
-	namespace 'be.ntmn.libinficam'
+	testOptions {
+		targetSdk 27
+	}
+	packaging {
+		jniLibs {
+			keepDebugSymbols += "**/*.so"
+		}
+	}
+
 }

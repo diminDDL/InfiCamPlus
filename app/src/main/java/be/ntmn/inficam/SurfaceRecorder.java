@@ -17,7 +17,6 @@ import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.view.Surface;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -71,7 +70,9 @@ public class SurfaceRecorder implements Runnable {
 			cv.put(MediaStore.Images.Media.DATE_TAKEN, System.currentTimeMillis());
 			ContentResolver cr = ctx.getContentResolver();
 			fileUri = cr.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, cv);
+			if(fileUri == null) {throw new IOException();}
 			fileDescriptor = cr.openFileDescriptor(fileUri, "rw");
+			if(fileDescriptor == null) {throw new IOException();}
 			muxer = new MediaMuxer(fileDescriptor.getFileDescriptor(),
 					MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
 		} else {
@@ -79,8 +80,9 @@ public class SurfaceRecorder implements Runnable {
 			String fname = "vid_" + timeStamp + "_" + num + MUX_EXT;
 			File dcim = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
 			File dir = new File(dcim, dirname);
-			if (!dir.exists())
-				dir.mkdirs();
+			if (!dir.exists()){
+				if(!dir.mkdirs()) {throw new IOException();}
+			}
 			File file = new File(dir, fname);
 			while (file.exists()) { /* Avoid overwriting existing files. */
 				fname = "vid_" + timeStamp + "_" + ++num + MUX_EXT;
@@ -216,6 +218,7 @@ public class SurfaceRecorder implements Runnable {
 				if (!muxerStarted)
 					continue;
 				ByteBuffer encodedData = videoEncoder.getOutputBuffer(encoderStatus);
+				assert(encodedData != null);
 				if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0)
 					bufferInfo.size = 0;
 				if (bufferInfo.size != 0)
@@ -232,6 +235,7 @@ public class SurfaceRecorder implements Runnable {
 				int index = audioEncoder.dequeueInputBuffer(DEQUEUE_TIMEOUT);
 				if (index >= 0) { /* Won't be >= 0 after BUFFER_FLAG_END_OF_STREAM. */
 					ByteBuffer buffer = audioEncoder.getInputBuffer(index);
+					assert(buffer != null);
 					buffer.clear();
 					int len = audioRecord.read(buffer, audioBufferSize);
 					if (len > 0)
@@ -253,6 +257,7 @@ public class SurfaceRecorder implements Runnable {
 					if (!muxerStarted)
 						continue;
 					ByteBuffer encodedData = audioEncoder.getOutputBuffer(encoderStatus);
+					assert(encodedData != null);
 					if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0)
 						bufferInfo.size = 0;
 					if (bufferInfo.size != 0)

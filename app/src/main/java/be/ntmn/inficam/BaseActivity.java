@@ -1,8 +1,5 @@
 package be.ntmn.inficam;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -11,11 +8,12 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import java.util.ArrayList;
 
 /* This is where I've hidden the cruft to make the app go into immersive mode and for requesting
- *   permissions.
+ *	 permissions.
  */
 public class BaseActivity extends AppCompatActivity {
 	final Handler handler = new Handler();
@@ -85,19 +83,18 @@ public class BaseActivity extends AppCompatActivity {
 	}
 
 	public void askPermission(String perm, PermissionCallback callback) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-			if (checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED) {
-				callback.onPermission(true);
-			} else {
-				permissionCallbacks.add(callback);
-				requestPermissions(new String[]{perm}, permissionCallbacks.size());
-			}
-		} else callback.onPermission(true);
+		if (checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED) {
+			callback.onPermission(true);
+		} else {
+			permissionCallbacks.add(callback);
+			requestPermissions(
+				new String[]{perm},
+				permissionCallbacks.size()
+			);
+		}
 	}
 
 	public boolean checkPermission(String perm) {
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
-			return true;
 		return checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED;
 	}
 

@@ -1,471 +1,481 @@
 #include "InfiCam.h"
-#include "UVCDevice.h"
+#include "CameraSettings.h"
 #include "InfiFrame.h"
+#include "Utils.h"
 
 #include <cstdint>
 #include <pthread.h>
-#include <cstdlib> /* NULL */
 #include <cstring> /* memcpy() */
-#include <cmath> /* isnan() */
 #include <android/log.h>
-
-#define LOG_TAG "NativeCode"
-#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+#include <sys/types.h>
 
 
-void InfiCam::uvc_callback(uvc_frame_t *frame, void *user_ptr) {
-    // This function gets called every time a new frame is ready
-	InfiCam *p = (InfiCam *) user_ptr;
-	if (frame->data_bytes < p->dev.width * p->dev.height * 2)
-		return;
-
-    if(p->calibrating) {
-        size_t frame_size = p->dev.width * (p->dev.height - InfiCam::DATA_ROWS);    // We don't want to calibrate out the data rows
-
-        if (p->calibration_frame == nullptr) {
-            p->calibration_frame = new uint16_t[frame_size];
-        }
-
-        memcpy(p->calibration_frame, frame->data, frame_size * sizeof(uint16_t));
-        // Calculate mean
-        uint32_t sum = 0;
-        auto* frame_data = (uint16_t*)frame->data;
-        for(size_t i = 0; i < frame_size; i++) {
-            sum += frame_data[i];
-        }
-        p->offset_value = sum / frame_size;
-
-        // Dead pixel mask calculation
-        if(p->dead_pixel_mask == nullptr) {
-            p->dead_pixel_mask = new bool[frame_size];
-        }
-
-        float min = 65535.0f;
-        float max = 0.0f;
-        for(size_t i = 0; i < frame_size; i++) {
-            if((float)frame_data[i] < min) {
-                min = frame_data[i];
-            }
-            if((float)frame_data[i] > max) {
-                max = frame_data[i];
-            }
-        }
-        float threshold = min + (max - min) * 0.05f;    // 5% threshold
-        p->dead_pixel_num = 0;
-        for(size_t i = 0; i < frame_size; i++) {
-            p->dead_pixel_mask[i] = (float)frame_data[i] < threshold;
-            if(p->dead_pixel_mask[i]) {
-                p->dead_pixel_num++;
-            }
-        }
-
-        p->calibrating = false;
-        p->calibrated = true;
-        pthread_cond_signal(&p->calibration_cond);
-        return;
-    }
-
-	pthread_mutex_lock(&p->frame_callback_mutex);
-
-    // Store the frame into intermediary buffer
-    size_t frame_size = p->dev.width * p->dev.height;
-    if (p->intermediary_buffer == nullptr) {
-        p->intermediary_buffer = new uint16_t[frame_size];
-    }
-
-    if (p->p2_pro) {
-        memcpy(p->intermediary_buffer, (uint16_t *) frame->data + 256*192, 256*192 * sizeof(uint16_t)); // use only the half of the image with the thermal data
-    } else {
-        memcpy(p->intermediary_buffer, frame->data, frame_size * sizeof(uint16_t));
-    }
+/*
+ * DATA OWNERSHIP:
+ *
+ * Raw sensors:
+ *	InfiCam owns the data. Commands to change data trigger the "settings_callback" immediately.
+ *
+ * Non-raw sensors:
+ *	Camera owns the data. InfiCam has a snapshot of the data updated when a new frame comes.
+ *	If the new frame shows the settings have changed, we trigger the "settings_callback".
+ *
+ */
 
 
-    // Apply calibration and dead pixel correction in a single pass
-    if(p->raw_sensor && p->calibrated) {
-        size_t frame_size_without_data = p->dev.width * (p->dev.height - InfiCam::DATA_ROWS);
-        size_t width = p->dev.width;
-
-        for(size_t i = 0; i < frame_size_without_data; i++) {
-            // First apply offset calibration
-            p->intermediary_buffer[i] = p->intermediary_buffer[i] + p->offset_value - p->calibration_frame[i];
-
-            // Then check if this is a dead pixel
-            if(p->dead_pixel_mask[i] && p->dead_pixel_num > 0) {
-                // Calculate row and column position
-                size_t row = i / width;
-                size_t col = i % width;
-
-                uint32_t sum = 0;
-                uint8_t valid_neighbors = 0;
-
-                // Check all 8 neighboring pixels
-                for(int dy = -1; dy <= 1; dy++) {
-                    for(int dx = -1; dx <= 1; dx++) {
-                        if(dx == 0 && dy == 0) continue;
-
-                        int neighbor_row = static_cast<int>(row) + dy;
-                        int neighbor_col = static_cast<int>(col) + dx;
-
-                        if(neighbor_row >= 0 && neighbor_row < (p->dev.height - InfiCam::DATA_ROWS) &&
-                           neighbor_col >= 0 && neighbor_col < p->dev.width) {
-
-                            size_t neighbor_idx = neighbor_row * width + neighbor_col;
-
-                            if(!p->dead_pixel_mask[neighbor_idx]) {
-                                // Use the already calibrated value from the neighbor
-                                if(neighbor_idx < i) {
-                                    // If we've already processed this neighbor, use its calibrated value
-                                    sum += p->intermediary_buffer[neighbor_idx];
-                                } else {
-                                    // If we haven't processed this neighbor yet, apply calibration to it first
-                                    sum += p->intermediary_buffer[neighbor_idx] + p->offset_value - p->calibration_frame[neighbor_idx];
-                                }
-                                valid_neighbors++;
-                            }
-                        }
-                    }
-                }
-
-                if(valid_neighbors > 0) {
-                    p->intermediary_buffer[i] = sum / valid_neighbors;
-                } else {
-                    // Fallback if no valid neighbors found
-                    if(i > 0) {
-                        p->intermediary_buffer[i] = p->intermediary_buffer[i-1];
-                    } else if(i < frame_size_without_data - 1) {
-                        // For the first pixel, we need to calibrate the next pixel first
-                        p->intermediary_buffer[i] = p->intermediary_buffer[i+1] + p->offset_value - p->calibration_frame[i+1];
-                    }
-                }
-            }
-        }
-    }
-
-    // Use intermediary buffer
-    p->infi.read_params(p->intermediary_buffer);
-    if (p->table_invalid) {
-        p->infi.update_table(p->intermediary_buffer);
-        p->table_invalid = 0;
-    } else p->infi.update(p->intermediary_buffer);
-
-    p->infi.temp(p->intermediary_buffer, p->frame_temp);
-
-	/* Unlock before the callback so if it decides to call a function that locks the this callback
-	 *   we don't end up in a deadlock.
-	 */
-	pthread_mutex_unlock(&p->frame_callback_mutex);
-    p->frame_callback(p, p->frame_temp, p->intermediary_buffer, p->frame_callback_arg);
+InfiCam::InfiCam(const void * p_inficam_jni): inficam_jni(p_inficam_jni){
+	if(pthread_mutex_init(&shutter_mutex, nullptr) ||
+	   pthread_cond_init(&shutter_request, nullptr) ||
+	   pthread_create(&shutter_thread, nullptr, shutter_thread_func, (void *) this) ||
+	   pthread_mutex_init(&command_mutex, nullptr) ||
+		pthread_mutex_init(&cal_mutex, nullptr) ||
+		pthread_cond_init(&cal_request, nullptr))
+	{
+		__android_log_assert(nullptr, LOG_TAG,"pthread did big bad"); // *kaboom*
+	}
 }
 
-void InfiCam::set_float(int addr, float val) {
-	uint8_t *p = (uint8_t *) &val;
-	dev.set_zoom_abs((((addr + 0) & 0x7F) << 8) | p[0]);
-	dev.set_zoom_abs((((addr + 1) & 0x7F) << 8) | p[1]);
-	dev.set_zoom_abs((((addr + 2) & 0x7F) << 8) | p[2]);
-	dev.set_zoom_abs((((addr + 3) & 0x7F) << 8) | p[3]);
+InfiCam::~InfiCam(){
+	exit_all_theads = true;
+	pthread_join(shutter_thread, nullptr);
 }
 
-InfiCam::~InfiCam() {
-	dev.disconnect();
-    delete[] calibration_frame;
-    delete[] intermediary_buffer;
-    delete[] frame_temp;
-    delete[] dead_pixel_mask;
-}
 
-int InfiCam::connect(int fd) {
-	disconnect();
-	/* We initialize the mutex here because we can't use exceptions with JNI and the constructor
-	 *   thus isn't able to fail.
-	 */
-	if (pthread_mutex_init(&frame_callback_mutex, NULL))
-		return 1;
-    if (pthread_cond_init(&calibration_cond, NULL)) {
-        pthread_mutex_destroy(&frame_callback_mutex);
-        return 1;
-    }
-	if (dev.connect(fd, p2_pro)) {
-		pthread_mutex_destroy(&frame_callback_mutex);
+
+
+
+int InfiCam::connect(const int uvc_fd, int & output_width, int & output_height, settings_callback_t * p_settings_callback) {
+	int width, height;
+	bool use_raw_logic;
+	if (dev.connect(uvc_fd, width, height, use_raw_logic)) {
 		return 2;
 	}
-    if (infi.init(dev.width, dev.height)) {
-        dev.disconnect();
-        pthread_mutex_destroy(&frame_callback_mutex);
-        return 3;
-    }
-	dev.set_zoom_abs(CMD_MODE_TEMP);
-	connected = 1;
-	set_range(infi.range);
+	if(!use_raw_logic) __android_log_assert(nullptr, nullptr,"WTF");
+	cam_settings.use_raw_logic = use_raw_logic; //atomics, so we have to do it here
+
+	infiframe = new InfiFrame(cam_settings, width, height);
+	packet_reconstruction_buffer = new uint16_t[infiframe->width*infiframe->stream_height];
+
+	output_width = infiframe->width;
+	output_height = infiframe->vision_height;
+	this->settings_callback = p_settings_callback;
+
+	LOGD("Connected\n");
 	return 0;
 }
 
-void InfiCam::disconnect() {
-	if (connected) {
-		stream_stop();
-		dev.disconnect();
-		pthread_mutex_destroy(&frame_callback_mutex);
-        pthread_cond_destroy(&calibration_cond);
-		connected = 0;
-	}
+void InfiCam::disconnect(){
+	if(infiframe == nullptr) return; //already disconnected
+	stream_stop();
+	dev.disconnect();
+
+	delete infiframe;
+	infiframe = nullptr;
+	delete packet_reconstruction_buffer;
+	packet_reconstruction_buffer = nullptr;
 }
 
-int InfiCam::stream_start(frame_callback_t *cb, void *user_ptr) {
-	if (streaming)
-		return 1;
-	frame_temp = (float *) calloc(infi.width * infi.height, sizeof(float));
-	if (frame_temp == NULL) {
-		stream_stop();
-		return 2;
-	}
+
+int InfiCam::stream_start(frame_callback_t *cb) {
+	LOGD("Attempting to start stream\n");
 	frame_callback = cb;
-	frame_callback_arg = user_ptr;
-	table_invalid = 1;
-	if (dev.stream_start(uvc_callback, this)) {
-		stream_stop();
-		return 3;
+	if (dev.stream_start(uvc_frame_callback, this,
+						 infiframe->width, infiframe->stream_height,
+						 cam_settings.use_raw_logic)) {
+		dev.stream_stop();
+		return 1;
 	}
-	streaming = 1;
+
+	Utils::sleep(300); //from official implementation
+
+	pthread_mutex_lock(&command_mutex);
+	if(cam_settings.use_raw_logic){
+		LOGD("Sending sensor calibration download request.\n");
+		dev.set_zoom_abs(CMD_DOWNLOAD_CAL);
+	}
+
+	LOGD("Sending temp mode command\n");
+	dev.set_zoom_abs(CMD_MODE_TEMP);
+
+	//If the calibration isn't fully loaded after a while, try again from zero. Modified from the official implementation.
+	if(cam_settings.use_raw_logic){
+		steady_clock::time_point download_start = steady_clock::now();
+		int attempts = 1; //we already sent one request
+		while(infiframe->gain_k_line_counter != infiframe->vision_height){
+			if(attempts > 3){
+				dev.stream_stop();
+				pthread_mutex_unlock(&command_mutex);
+				return 2;
+			}
+			Utils::sleep(100);
+			int elapsed = Utils::ms_since(download_start);
+			if(elapsed > 5000){//5000ms (7*25 lines per sec, should be plenty of times)
+				LOGW("Timeout. Sending sensor calibration download request again.\n");
+				infiframe->gain_k_line_counter = 0;
+				dev.set_zoom_abs(CMD_DOWNLOAD_CAL);
+				download_start = steady_clock::now();
+				attempts += 1;
+			}
+		}
+	}
+	pthread_mutex_unlock(&command_mutex);
+
+	settle_start_time = steady_clock::now();
+	refresh_auto_shut_interval();
+
+	LOGD("Stream started successfully.\n");
+	is_ready = true;
 	return 0;
 }
 
 void InfiCam::stream_stop() {
+	if(!is_ready) { return; } //not running
+	is_ready = false;
 	dev.stream_stop();
-	free(frame_temp);
-	frame_temp = NULL;
-	streaming = 0;
-}
-
-void InfiCam::p2pro_long_cmd_write(uint16_t cmd, uint16_t p1, uint32_t p2, uint32_t p3, uint32_t p4) {
-
-    // used google's ai to convert the _long_cmd_write function from P2Pro/P2Pro_cmd.py to c
-    // too lazy to do the byte packing myself
-
-    uint8_t buffer[8];
-
-    // 1. Pack cmd: Little-endian 16-bit ("<H")
-    // Store least significant byte first
-    buffer[0] = (uint8_t)(cmd & 0xFF);
-    buffer[1] = (uint8_t)((cmd >> 8) & 0xFF);
-
-    // 2. Pack p1: Big-endian 16-bit (">H")
-    // Store most significant byte first
-    buffer[2] = (uint8_t)((p1 >> 8) & 0xFF);
-    buffer[3] = (uint8_t)(p1 & 0xFF);
-
-    // 3. Pack p2: Big-endian 32-bit (">I")
-    buffer[4] = (uint8_t)((p2 >> 24) & 0xFF);
-    buffer[5] = (uint8_t)((p2 >> 16) & 0xFF);
-    buffer[6] = (uint8_t)((p2 >> 8) & 0xFF);
-    buffer[7] = (uint8_t)(p2 & 0xFF);
-
-    uint8_t buffer2[8];
-    // 4. Pack p3: Big-endian 32-bit (">I")
-    buffer2[0] = (uint8_t)((p3 >> 24) & 0xFF);
-    buffer2[1] = (uint8_t)((p3 >> 16) & 0xFF);
-    buffer2[2] = (uint8_t)((p3 >> 8) & 0xFF);
-    buffer2[3] = (uint8_t)(p3 & 0xFF);
-
-    // 5. Pack p4: Big-endian 32-bit (">I")
-    buffer2[4] = (uint8_t)((p4 >> 24) & 0xFF);
-    buffer2[5] = (uint8_t)((p4 >> 16) & 0xFF);
-    buffer2[6] = (uint8_t)((p4 >> 8) & 0xFF);
-    buffer2[7] = (uint8_t)(p4 & 0xFF);
-
-    // Buffer is now fully packed and ready for use
-
-    libusb_control_transfer(dev.get_libusb_handle(), 0x41, 0x45, 0x78,
-                            0x9d00, buffer, 8, 100);
-    libusb_control_transfer(dev.get_libusb_handle(), 0x41, 0x45, 0x78,
-                            0x1d08, buffer2, 8, 100);
-
-    // TODO block until camera ready not implemented
-
-}
-
-void InfiCam::p2pro_set_prop_tpd_params(uint16_t tpd_param, uint32_t value) {
-    p2pro_long_cmd_write(PROP_TPD_PARAMS | SET, tpd_param, value, 0, 0);
 }
 
 
 
-void InfiCam::set_range(int range) {
-	if (connected) {
-		pthread_mutex_lock(&frame_callback_mutex);
-		infi.range = range;
+/*
+ * "shutter_request" activates shutter immediately.
+ * "shutter_request" is guaranteed to close the shutter, at worst we keep it closed longer than expected.
+ */
+void * InfiCam::shutter_thread_func(void * arg){
+	auto * t = (InfiCam*) arg; //t -> this
+	while(!t->exit_all_theads){
+		pthread_mutex_lock(&t->shutter_mutex);
+		pthread_cond_wait(&t->shutter_request, &t->shutter_mutex);
 
-        if (p2_pro) {
-            if (range == 600) {
-                p2pro_set_prop_tpd_params(TPD_PROP_GAIN_SEL, 0);
-            } else {
-                p2pro_set_prop_tpd_params(TPD_PROP_GAIN_SEL, 1);
-            }
-        } else {
-            dev.set_zoom_abs((range == 400) ? CMD_RANGE_400 : CMD_RANGE_120);
-        }
+		t->dev.set_zoom_abs(CMD_SHUTTER);
 
-		pthread_mutex_unlock(&frame_callback_mutex);
-	} else infi.range = range;
+		while(t->keep_shutter_closed){
+			pthread_mutex_unlock(&t->shutter_mutex);
+			Utils::sleep(100);
+			t->dev.set_zoom_abs(CMD_SHUTTER);
+			pthread_mutex_lock(&t->shutter_mutex);
+		}
+
+		pthread_mutex_unlock(&t->shutter_mutex);
+	}
+	return nullptr;
 }
 
-void InfiCam::set_distance_multiplier(float dm) {
-	if (connected) {
-		pthread_mutex_lock(&frame_callback_mutex);
-		infi.distance_multiplier = dm;
-		pthread_mutex_unlock(&frame_callback_mutex);
-	} else infi.distance_multiplier = dm;
+
+void InfiCam::calibrate(){
+	if(!is_ready) { return; }
+	is_calibrating = true;
+	pthread_mutex_lock(&shutter_mutex);
+	pthread_cond_signal(&shutter_request);
+	pthread_mutex_unlock(&shutter_mutex);
+	calibration_shutter_time = steady_clock::now();
+	infiframe->start_calibration();
 }
 
-void InfiCam::set_correction(float corr) {
-	if (!streaming)
+
+
+void InfiCam::lock_shutter(){
+	if(!is_ready) { return; }
+	pthread_mutex_lock(&shutter_mutex);
+	keep_shutter_closed = true;
+	pthread_cond_signal(&shutter_request);
+	pthread_mutex_unlock(&shutter_mutex);
+}
+
+void InfiCam::unlock_shutter(){
+	if(!is_ready) { return; }
+	pthread_mutex_lock(&shutter_mutex);
+	keep_shutter_closed = false;
+	pthread_mutex_unlock(&shutter_mutex);
+}
+
+
+/*
+ * Checks if the sensor output is outside of the normal range. Only use when shutter is closed.
+ * On startup and range change, the sensor outputs garbage for a little while. Restart calibration from scratch if so.
+ */
+bool InfiCam::reset_cal_on_bad_data(InfiCam * t, const uint16_t * frame){
+	double avg = 0;
+	for(int i = 0 ; i < t->infiframe->width*t->infiframe->vision_height ; i++){
+		avg += frame[i];
+	}
+	avg /= (t->infiframe->width*t->infiframe->vision_height);
+	//Detection of the sensor not being ready and outputting bad data.
+	if(avg>0x4000*0.75 || avg<0x4000*0.01){	 //We are looking at the shutter and know it's at ambient temperature. //TODO: clean up
+		t->calibrate(); //reset calibration to the beginning
+		return true;
+	}
+	return false;
+}
+
+/*
+ * Receives the raw UVC frames.
+ * If non-raw sensor, simply passes it along.
+ * If raw sensor, decodes the packets, then applies calibration and pre-processing.
+ *
+ * Note: Packet decoding is only used by a single sensor with a known resolution. It uses hardcoded values.
+ */
+void InfiCam::uvc_frame_callback(uvc_frame_t *frame, void *user_ptr){
+	auto * t = (InfiCam*) user_ptr;
+	uint16_t * final_frame;
+
+
+	if(t->cam_settings.use_raw_logic){ //Only the T2x V2 generation has this. Decoding uses fixed sizes.
+		const int PREAMBLE = 6; //starts at offset 6
+		const int HEADER = 6; //offset from marker to data
+		const int STRIDE =	0x380C; //marker to marker distance
+		const int PAYLOAD = 0x3800; //normal data size
+
+		if(frame->data_bytes < 7*STRIDE){ //We may have junk left-over on connect
+			LOGW("Ignoring partial frame (%d/%d)\n",frame->data_bytes,STRIDE*7-1);
+			return;
+		}
+		for(int i = 0 ; i < 7 ; i++){
+			int current_marker_offset = PREAMBLE+i*STRIDE;
+			uint16_t val = ((uint8_t*)frame->data)[current_marker_offset];
+			if(val == 1) { //normal image
+				memcpy((uint8_t*)t->packet_reconstruction_buffer+i*PAYLOAD,
+					   (uint8_t*)frame->data+current_marker_offset+HEADER,
+					   PAYLOAD);
+			} else if (val == 2) { //k calibration data packet
+				LOGD("Received calibration packet %d/%d\n",t->infiframe->gain_k_line_counter+1,t->infiframe->vision_height);
+				if(t->infiframe->gain_k_line_counter < t->infiframe->vision_height){ //calibration data is not fully downloaded
+					memcpy((uint8_t*)t->infiframe->gain_k_buffer+(t->infiframe->gain_k_line_counter * t->infiframe->width*sizeof(uint16_t)),
+						   (uint8_t*)frame->data + current_marker_offset + HEADER,
+						   t->infiframe->width * sizeof(uint16_t));
+					t->infiframe->gain_k_line_counter++;
+				} else {
+					LOGE("Ignoring extra calibration data !\n");
+				}
+			} else {
+				LOGW("Corrupted data packet ! marker %d at position %d\n",val,current_marker_offset);
+			}
+		}
+
+		final_frame = t->packet_reconstruction_buffer;
+	} else {
+		final_frame = (uint16_t *)frame->data;
+
+		CameraSettings ref_cam_settings = t->cam_settings;
+		t->infiframe->updateSettings(final_frame); //Check registers in the frame to see if camera settings changed
+		if(ref_cam_settings != t->cam_settings){ //Signal the app that the camera has new settings.
+			t->settings_callback(t->inficam_jni, t->cam_settings);
+		}
+	}
+
+
+	if(t->is_calibrating){ //calibration result is not used on non-raw sensors
+		int ms_since_shutter = Utils::ms_since(t->calibration_shutter_time);
+		if(ms_since_shutter >= 800){ //Shutter is reopening
+			LOGI("Calibration complete\n");
+			t->infiframe->end_calibration();
+			t->is_calibrating = false;
+			//tell anyone waiting that cal is done
+			pthread_mutex_lock(&t->cal_mutex);
+			pthread_cond_signal(&t->cal_request);
+			pthread_mutex_unlock(&t->cal_mutex);
+		}
+		else if (ms_since_shutter >= 350) { //Shutter is closed
+			if(reset_cal_on_bad_data(t, final_frame)){
+				LOGD("Received improbable image. Restarting calibration as sensor has not yet stabilized.\n");
+				return;
+			}
+			CameraSettings ref_cam_settings = t->cam_settings;
+
+			//we update table on every frame during calibration. Simpler to keep code clean that way. Also handles frame drops better by not depending on end_calibration being on time.
+			t->infiframe->calibrate_on_frame(final_frame); //For non-raw, we receive the new settings from the camera during the table update.
+
+			if(ref_cam_settings != t->cam_settings){ // Signal the app that the camera has new settings. (Only happens on non-raw)
+				t->settings_callback(t->inficam_jni, t->cam_settings);
+			}
+		}
+	} else {
+		if(t->auto_shut_data.enable && Utils::ms_since(t->calibration_shutter_time) > t->auto_shut_data.next_interval){
+			t->calibrate();
+			t->refresh_auto_shut_interval();
+		}
+
+		float temp_array[t->infiframe->width*t->infiframe->vision_height];
+		if(t->cam_settings.use_raw_logic){
+			if(t->infiframe->gain_k_line_counter < t->infiframe->vision_height){ //calibration data is not fully downloaded
+				LOGW("Skipping frame. We won't have the K calibration data.\n");
+				return;
+			}
+			uint16_t calibrated_frame[t->infiframe->width*t->infiframe->vision_height];
+			t->infiframe->apply_calibration(final_frame, calibrated_frame);
+			t->infiframe->destripe(calibrated_frame);
+			t->infiframe->fix_dead_pixels(calibrated_frame);
+			t->infiframe->frame_to_temp(calibrated_frame,temp_array);
+		} else { //no processing required
+			t->infiframe->frame_to_temp(final_frame,temp_array);
+		}
+
+		t->frame_callback(t->inficam_jni, temp_array, t->cam_settings); //callback the app with the temperature frame
+	}
+}
+
+
+
+
+void InfiCam::set_float(const int addr, const float val){
+	LOGD("Sending float command addr=%d val=%f\n",addr,val);
+
+	auto *p = (uint8_t *) &val;
+	pthread_mutex_lock(&command_mutex);
+	dev.set_zoom_abs((((addr + 0) & 0xFF) << 8) | p[0]);
+	dev.set_zoom_abs((((addr + 1) & 0xFF) << 8) | p[1]);
+	dev.set_zoom_abs((((addr + 2) & 0xFF) << 8) | p[2]);
+	dev.set_zoom_abs((((addr + 3) & 0xFF) << 8) | p[3]);
+	pthread_mutex_lock(&command_mutex);
+}
+
+void InfiCam::set_ushort(const int addr, const uint16_t val) {
+	LOGD("Sending ushort command addr=%d val=%d\n",addr,val);
+
+	auto *p = (uint8_t *) &val;
+	pthread_mutex_lock(&command_mutex);
+	dev.set_zoom_abs((((addr + 0) & 0xFF) << 8) | p[0]);
+	dev.set_zoom_abs((((addr + 1) & 0xFF) << 8) | p[1]);
+	dev.set_zoom_abs((((addr + 2) & 0xFF) << 8) | p[2]);
+	dev.set_zoom_abs((((addr + 3) & 0xFF) << 8) | p[3]);
+	pthread_mutex_lock(&command_mutex);
+}
+
+
+std::vector<std::array<float,2>> InfiCam::get_ranges(){
+	return cam_settings.get_temperature_ranges();
+}
+
+
+void InfiCam::set_range(const int range) {
+	if(!is_ready) { return; }
+
+	LOGD("set_range %d\n",(int)cam_settings.temperature_range);
+
+	if(range < 0 || range > 1){ __android_log_assert(nullptr,"libinficam","BAD temperature range");}
+	if(cam_settings.use_raw_logic && range == cam_settings.temperature_range){
+		LOGD("Ignoring.");
 		return;
-    if(!raw_sensor) {
-        pthread_mutex_lock(&frame_callback_mutex);
-        set_float(ADDR_CORRECTION, corr);
-        pthread_mutex_unlock(&frame_callback_mutex);
-    }else{
-        this->infi.correction = corr;
-    }
+	}
+
+	pthread_mutex_lock(&command_mutex);
+	dev.set_zoom_abs((range == CameraTemperatureRange::RANGE_120_400) ? CMD_RANGE_400 : CMD_RANGE_120);
+	pthread_mutex_unlock(&command_mutex);
+
+	settle_start_time = steady_clock::now();
+	refresh_auto_shut_interval();
+
+	if(cam_settings.use_raw_logic){
+		if(cam_settings.temperature_range != (CameraTemperatureRange)range){
+			cam_settings.temperature_range = (CameraTemperatureRange)range;
+			settings_callback(inficam_jni, cam_settings);
+		}
+	}
 }
 
-void InfiCam::set_temp_reflected(float t_ref) {
-	if (!streaming)
-		return;
-	pthread_mutex_lock(&frame_callback_mutex);
-	set_float(ADDR_TEMP_REFLECTED, t_ref);
-	pthread_mutex_unlock(&frame_callback_mutex);
+
+void InfiCam::set_correction(const float corr) {
+	if(!is_ready) { return; }
+	LOGD("set_correction %f (cur %f)\n",corr,(float)cam_settings.temperature_correction);
+	if(cam_settings.use_raw_logic){
+		if(cam_settings.temperature_correction != corr){
+			cam_settings.temperature_correction = corr;
+			settings_callback(inficam_jni, cam_settings);
+		} else {LOGD("Ignoring\n");}
+	} else {
+		set_float(ADDR_CORRECTION, corr);
+	}
 }
 
-void InfiCam::set_temp_air(float t_air) {
-	if (!streaming)
-		return;
-	pthread_mutex_lock(&frame_callback_mutex);
-	set_float(ADDR_TEMP_AIR, t_air);
-	pthread_mutex_unlock(&frame_callback_mutex);
+void InfiCam::set_temp_reflected(const float t_ref) {
+	if(!is_ready) { return; }
+	LOGD("set_temp_reflected %f (cur %f)f\n",t_ref,(float)cam_settings.reflection_temperature);
+	if(cam_settings.use_raw_logic){
+		if(cam_settings.reflection_temperature != t_ref){
+			cam_settings.reflection_temperature = t_ref;
+			settings_callback(inficam_jni, cam_settings);
+		} else {LOGD("Ignoring\n");}
+	} else {
+		set_float(ADDR_TEMP_REFLECTED, t_ref);
+	}
 }
 
-void InfiCam::set_humidity(float humi) {
-	if (!streaming)
-		return;
-	pthread_mutex_lock(&frame_callback_mutex);
-	set_float(ADDR_HUMIDITY, humi);
-	pthread_mutex_unlock(&frame_callback_mutex);
+void InfiCam::set_temp_air(const float t_air) {
+	if(!is_ready) { return; }
+	LOGD("set_temp_air %f (cur %f)\n",t_air,(float)cam_settings.air_temperature);
+	if(cam_settings.use_raw_logic){
+		if(cam_settings.air_temperature != t_air){
+			cam_settings.air_temperature = t_air;
+			settings_callback(inficam_jni, cam_settings);
+		} else {LOGD("Ignoring\n");}
+	} else {
+		set_float(ADDR_TEMP_AIR, t_air);
+	}
 }
 
-void InfiCam::set_emissivity(float emi) {
-	if (!streaming)
-		return;
-	pthread_mutex_lock(&frame_callback_mutex);
-	set_float(ADDR_EMISSIVITY, emi);
-	pthread_mutex_unlock(&frame_callback_mutex);
+void InfiCam::set_humidity(const float humi) {
+	if(!is_ready) { return; }
+	LOGD("set_humidity %f (cur %f)\n",humi,(float)cam_settings.humidity);
+	if(cam_settings.use_raw_logic){
+		if(cam_settings.humidity != humi){
+			cam_settings.humidity = humi;
+			settings_callback(inficam_jni, cam_settings);
+		} else {LOGD("Ignoring\n");}
+	} else {
+		set_float(ADDR_HUMIDITY, humi);
+	}
 }
 
-void InfiCam::set_distance(float dist) {
-	if (!streaming)
-		return;
-	pthread_mutex_lock(&frame_callback_mutex);
-	set_float(ADDR_DISTANCE, dist);
-	pthread_mutex_unlock(&frame_callback_mutex);
+void InfiCam::set_emissivity(const float emi) {
+	if(!is_ready) { return; }
+	LOGD("set_emissivity %f (cur %f)\n",emi,(float) cam_settings.emissivity);
+	if(cam_settings.use_raw_logic){
+		if(cam_settings.emissivity != emi){
+			cam_settings.emissivity = emi;
+			settings_callback(inficam_jni, cam_settings);
+		} else {LOGD("Ignoring\n");}
+	} else {
+		set_float(ADDR_EMISSIVITY, emi);
+	}
 }
 
-void InfiCam::set_params(float corr, float t_ref, float t_air, float humi, float emi, float dist) {
-	if (!streaming)
-		return;
-	pthread_mutex_lock(&frame_callback_mutex);
-	set_float(ADDR_CORRECTION, corr);
-	set_float(ADDR_TEMP_REFLECTED, t_ref);
-	set_float(ADDR_TEMP_AIR, t_air);
-	set_float(ADDR_HUMIDITY, humi);
-	set_float(ADDR_EMISSIVITY, emi);
-	set_float(ADDR_DISTANCE, dist);
-	pthread_mutex_unlock(&frame_callback_mutex);
+void InfiCam::set_distance(const uint16_t dist) {
+	if(!is_ready) { return; }
+	LOGD("set_distance %d (cur %d)\n",dist,(int)cam_settings.distance);
+	if(cam_settings.use_raw_logic){
+		if(cam_settings.distance != dist){
+			cam_settings.distance = dist;
+			settings_callback(inficam_jni, cam_settings);
+		} else {LOGD("Ignoring\n");}
+	} else {
+		set_ushort(ADDR_DISTANCE, dist);
+	}
 }
 
-void InfiCam::store_params() {
-	dev.set_zoom_abs(CMD_STORE);
+void InfiCam::store_params(){
+	if(!is_ready) { return; }
+	if(cam_settings.use_raw_logic){
+		LOGE("Saving parameters to RAW sensors is not possible.");
+	} else {
+		LOGD("Saving parameters to camera.");
+		pthread_mutex_lock(&command_mutex);
+		dev.set_zoom_abs(CMD_STORE);
+		pthread_mutex_unlock(&command_mutex);
+	}
 }
 
-void InfiCam::update_table() {
-	table_invalid = 1;
+void InfiCam::refresh_auto_shut_interval(){
+	long settle_time = Utils::ms_since(settle_start_time);
+
+	int interval = (int)((float)(auto_shut_data.interval_max-auto_shut_data.interval_min) *
+						 pow(std::clamp((float)settle_time / (float)auto_shut_data.interval_max,0.0f,1.0f),1.3f) +
+						 (float)auto_shut_data.interval_min);
+	LOGD("Shutter interval will be %d ms. Sensor has been settling for %ld ms\n",interval,settle_time);
+	auto_shut_data.next_interval = interval;
 }
 
-void InfiCam::close_shutter() {
-    if (!streaming)
-        return;
-    if(!infi.raw_sensor){
-        calibrate();
-    }else{
-        dev.set_zoom_abs(CMD_SHUTTER);
-    }
-}
-
-std::future<void> InfiCam::calibration_thread_future;
-void InfiCam::calibration_thread() {
-    dev.set_zoom_abs(CMD_SHUTTER);
-    pthread_mutex_lock(&frame_callback_mutex);
-    update_table();
-    this->calibrating = true;
-
-    // Wait for 500ms to let the shutter close
-    struct timespec wait_time = {0, 500000000};
-    nanosleep(&wait_time, NULL);
-
-    struct timespec timeout = {0, 0};
-    clock_gettime(CLOCK_REALTIME, &timeout);
-    timeout.tv_sec += 2;  // 2 second timeout
-
-    this->calibrating = true;
-    int ret = 0;
-    // Wait until calibration is done or timeout
-    while(this->calibrating && ret == 0) {
-        ret = pthread_cond_timedwait(&calibration_cond, &frame_callback_mutex, &timeout);
-    }
-
-    // If we timed out, reset the flags
-    if(ret == ETIMEDOUT) {
-        LOGD("Calibration timed out");
-        this->calibrating = false;
-        this->calibrated = false;
-    } else {
-        this->calibrated = true;
-    }
-    pthread_mutex_unlock(&frame_callback_mutex);
-}
-
-void InfiCam::calibrate() {
-    if (!streaming)
-        return;
-    if(!(this->raw_sensor)) {
-        dev.set_zoom_abs(CMD_SHUTTER);
-        pthread_mutex_lock(&frame_callback_mutex);
-        update_table();
-        pthread_mutex_unlock(&frame_callback_mutex);
-    } else {
-        if(calibration_thread_future.valid()) {
-            // Check if the future is actually done
-            std::future_status status = calibration_thread_future.wait_for(std::chrono::seconds(0));
-            if(status == std::future_status::ready) {
-                // Thread is done, get the result to clear the future
-                calibration_thread_future.get();
-                // Start new calibration
-                calibration_thread_future = std::async(std::launch::async,
-                                                       &InfiCam::calibration_thread, this);
-            } else {
-                LOGD("Calibration thread already running");
-            }
-        } else {
-            // Start new calibration
-            calibration_thread_future = std::async(std::launch::async,
-                                                   &InfiCam::calibration_thread, this);
-        }
-    }
-}
-
-void InfiCam::set_palette(uint32_t *palette) {
-	if (streaming)
-		pthread_mutex_lock(&frame_callback_mutex);
-	memcpy(infi.palette, palette, palette_len * sizeof(uint32_t));
-	if (streaming)
-		pthread_mutex_unlock(&frame_callback_mutex);
+void InfiCam::set_auto_shutter_settings(bool enable, int interval_min, int interval_max){
+	auto_shut_data.enable = enable;
+	auto_shut_data.interval_min = interval_min;
+	auto_shut_data.interval_max = interval_max;
+	refresh_auto_shut_interval();
 }

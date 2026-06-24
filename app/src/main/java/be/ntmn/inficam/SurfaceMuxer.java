@@ -13,7 +13,6 @@ import android.opengl.EGLSurface;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.view.Surface;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -137,14 +136,14 @@ public class SurfaceMuxer {
 			GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER,
 					GLES20.GL_LINEAR);
 			if (surfaceTexture == null) {
-			    surfaceTexture = new SurfaceTexture(textures[0]);
-			    surfaceTexture.setOnFrameAvailableListener(
-			        st -> frameAvailable = true
-			    );
-			    surface = new Surface(surfaceTexture);
+				surfaceTexture = new SurfaceTexture(textures[0]);
+				surfaceTexture.setOnFrameAvailableListener(
+					st -> frameAvailable = true
+				);
+				surface = new Surface(surfaceTexture);
 			} else {
-			    surfaceTexture.attachToGLContext(textures[0]);
-			    frameAvailable = true; // force first frame latch after reattach
+				surfaceTexture.attachToGLContext(textures[0]);
+				frameAvailable = true; // force first frame latch after reattach
 			}
 			initialized = true;
 		}
@@ -178,8 +177,8 @@ public class SurfaceMuxer {
 				return;
 			os.makeCurrent(); /* We need the context to be current before updateTexImage(). */
 			if (frameAvailable) {
-			    surfaceTexture.updateTexImage();
-			    frameAvailable = false;
+				surfaceTexture.updateTexImage();
+				frameAvailable = false;
 			}
 			GLES20.glViewport(x, y, w, h);
 			int program = muxer.drawModes[drawMode].program;
@@ -502,7 +501,7 @@ public class SurfaceMuxer {
 	}
 
 	public void release() {
-		while (surfaces.size() > 0) {
+		while (!surfaces.isEmpty()) {
 			Object o = surfaces.get(0);
 			if (o instanceof InputSurface)
 				((InputSurface) o).release();

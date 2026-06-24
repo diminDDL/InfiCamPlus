@@ -8,24 +8,37 @@ import static java.lang.Math.round;
 import static java.lang.Math.sin;
 import static java.lang.Math.sqrt;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.IntBuffer;
+import android.graphics.Bitmap;
 
-import be.ntmn.libinficam.InfiCam;
 
 public abstract class Palette {
+
+	public static final int paletteSize = 65535;
+
 	public int name;
 
 	public Palette(int name) { this.name = name; }
 
-	private static class Pixel {
-		double r, g, b;
+	public static class Pixel {
 
-		Pixel(double r, double g, double b) {
+		double r, g, b, a;
+
+		Pixel(double r, double g, double b, double a) {
 			this.r = r;
 			this.g = g;
 			this.b = b;
+			this.a = a;
+		}
+	}
+	public static class ScaledPixel {
+
+		int r, g, b, a;
+
+		ScaledPixel(Pixel pixel) {
+			this.r = (int)round(pixel.r*255);
+			this.g = (int)round(pixel.g*255);
+			this.b = (int)round(pixel.b*255);
+			this.a = (int)round(pixel.a*255);
 		}
 	}
 
@@ -34,49 +47,49 @@ public abstract class Palette {
 	private static final Palette WhiteHot = new Palette(R.string.palette_whitehot) {
 		@Override
 		public Pixel func(double x) {
-			return new Pixel(x, x, x);
+			return new Pixel(x, x, x, 1);
 		}
 	};
 
 	private static final Palette BlackHot = new Palette(R.string.palette_blackhot) {
 		@Override
 		public Pixel func(double x) {
-			return new Pixel(1 - x, 1 - x, 1 - x);
+			return new Pixel(1 - x, 1 - x, 1 - x, 1);
 		}
 	};
 
 	private static final Palette RedHot = new Palette(R.string.palette_redhot) {
 		@Override
 		public Pixel func(double x) {
-			return new Pixel(x, 0, 0);
+			return new Pixel(x, 0, 0, 1);
 		}
 	};
 
 	private static final Palette RedCold = new Palette(R.string.palette_redcold) {
 		@Override
 		public Pixel func(double x) {
-			return new Pixel(1 - x, 0, 0);
+			return new Pixel(1 - x, 0, 0, 1);
 		}
 	};
 
 	private static final Palette GreenHot = new Palette(R.string.palette_greenhot) {
 		@Override
 		public Pixel func(double x) {
-			return new Pixel(0, x, 0);
+			return new Pixel(0, x, 0, 1);
 		}
 	};
 
 	private static final Palette GreenCold = new Palette(R.string.palette_greencold) {
 		@Override
 		public Pixel func(double x) {
-			return new Pixel(0, 1 - x, 0);
+			return new Pixel(0, 1 - x, 0, 1);
 		}
 	};
 
 	private static final Palette Ironbow = new Palette(R.string.palette_ironbow) {
 		@Override
 		public Pixel func(double x) {
-			return new Pixel(sqrt(x), pow(x, 3), max(0.0, sin(2.0 * PI * x)));
+			return new Pixel(sqrt(x), pow(x, 3), max(0.0, sin(2.0 * PI * x)), 1);
 		}
 	};
 
@@ -116,22 +129,34 @@ public abstract class Palette {
 		} else {
 			r = c; g = 0; b = y;
 		}
-		return new Pixel(r + m, g + m, b + m);
+		return new Pixel(r + m, g + m, b + m, 1);
 	}
 
-	public int[] getData() {
-		byte[] palette = new byte[InfiCam.paletteLen * 4];
-		for (int i = 0; i + 4 <= palette.length; i += 4) {
+	public int[] getMap() {
+		int[] palette = new int[paletteSize];
+		for (int i = 0; i < palette.length; i++) {
 			double x = (float) i / (float) palette.length;
-			Pixel pixel = func(x);
-			palette[i + 0] = (byte) round(255.0 * pixel.r);
-			palette[i + 1] = (byte) round(255.0 * pixel.g);
-			palette[i + 2] = (byte) round(255.0 * pixel.b);
-			palette[i + 3] = (byte) 255;
+			ScaledPixel pix = new ScaledPixel(func(x));
+			palette[i] = (pix.a << 24) |
+						 (pix.r << 16) |
+						 (pix.g <<	8) |
+						 (pix.b);
 		}
-		IntBuffer ib = ByteBuffer.wrap(palette).order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
-		int[] intPalette = new int[ib.remaining()];
-		ib.get(intPalette);
-		return intPalette;
+		return palette;
+	}
+
+	public Bitmap getBitmap() {
+		Bitmap bitmap = Bitmap.createBitmap(
+			1,
+			paletteSize,
+			Bitmap.Config.ARGB_8888
+		);
+		int[] map = getMap();
+		int[] rawArray = new int[paletteSize * 4];
+		for (int i = 0; i < map.length; ++i) {
+			rawArray[map.length-1-i] = map[i];
+		}
+		bitmap.setPixels(rawArray, 0, 1, 0, 0, 1, paletteSize);
+		return bitmap;
 	}
 }

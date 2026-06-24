@@ -1,13 +1,45 @@
 package be.ntmn.inficam;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.util.AttributeSet;
 
 import androidx.annotation.Nullable;
 
 public class SettingsPalette extends Settings {
-	private static final String SP_NAME = "PREFS_THERM";
-	private static final int name = R.string.dialog_set_palette;
+
+	public int[] paletteMap;
+	public Bitmap paletteBitmap;
+	private final SettingPalette settingPalette = new SettingPalette();
+
+	public SettingsPalette(Context context) {
+		super(context, "PREFS_PALETTE", R.string.dialog_set_palette);
+		init();
+	}
+
+	public SettingsPalette(Context context, @Nullable AttributeSet attrs) {
+		super(context, "PREFS_PALETTE", R.string.dialog_set_palette, attrs);
+		init();
+	}
+
+	public SettingsPalette(
+		Context context,
+		@Nullable AttributeSet attrs,
+		int defStyleAttr
+	) {
+		super(
+			context,
+			"PREFS_PALETTE",
+			R.string.dialog_set_palette,
+			attrs,
+			defStyleAttr
+		);
+		init();
+	}
+
+	private void init() {
+		settings = new Setting[] { settingPalette, settingDefaults };
+	}
 
 	public class SettingPalette extends SettingRadio {
 		SettingPalette() {
@@ -18,25 +50,11 @@ public class SettingsPalette extends Settings {
 		}
 
 		@Override
-		void onSet(int i) { act.setPalette(Palette.palettes[i].getData()); }
+		void onSet(int i) {
+			paletteMap = Palette.palettes[i].getMap();
+			paletteBitmap = Palette.palettes[i].getBitmap();
+		}
 	}
 
-	public SettingsPalette(Context context) { super(context); }
-	public SettingsPalette(Context context, @Nullable AttributeSet attrs) { super(context, attrs); }
-	public SettingsPalette(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-		super(context, attrs, defStyleAttr);
-	}
-
-	@Override
-	public String getSPName() { return SP_NAME; }
-
-	@Override
-	public int getName() { return name; }
-
-	@Override
-	public Setting[] getSettings() { return settings; }
-
-	public SettingPalette palette = new SettingPalette();
-
-	private final Setting[] settings = { palette, settingDefaults };
+	SettingPalette getPalette(){ return settingPalette; }
 }

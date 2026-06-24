@@ -14,16 +14,21 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-
 import androidx.appcompat.content.res.AppCompatResources;
 
 import be.ntmn.libinficam.InfiCam;
 
 public class Overlay {
+	public static class MinMaxAvgCet {
+
+		float min, max, avg, center;
+		int min_x, min_y, max_x, max_y;
+	}
+
 	public static class Data {
 		public InfiCam.FrameInfo fi = new InfiCam.FrameInfo();
+		public MinMaxAvgCet mmac;
 		public float[] temp;
-		public int[] palette;
 		public float rangeMin = NaN, rangeMax = NaN;
 		public boolean rotate = false, mirror = false, rotate90 = false; /* Set by Settings. */
 		public boolean showMin = false; /* Set by SettingsTherm. */
@@ -40,12 +45,8 @@ public class Overlay {
 	private final Paint paintTextOutline;
 	private final Paint paintPalette;
 	private final Drawable lock;
-	private int width, height;
+	private int width;
 	private final Rect vRect = new Rect(), rectTgt = new Rect(); /* Do not alloc each frame! */
-	private int[] paletteCache_palette;
-	private final int[] getPaletteCache_array = new int[InfiCam.paletteLen];
-	private final Bitmap paletteCache_bitmap =
-			Bitmap.createBitmap(1, InfiCam.paletteLen, Bitmap.Config.ARGB_8888);
 
 	/* These sizes are in fractions of the total width of the bitmap drawn. */
 	private final static float smarker = 0.015f; /* Marker size. */
@@ -82,12 +83,12 @@ public class Overlay {
 
 	public void setSize(int w, int h) {
 		width = w;
-		height = h;
 		surface.setSize(w, h);
 	}
 
-	public static void mmaRect(MinMaxAvg out, float[] temp, int left, int top,
+	public static MinMaxAvgCet computeMmacRect(float[] temp, int left, int top,
 							   int right, int bottom, int stride) {
+		MinMaxAvgCet out = new MinMaxAvgCet();
 		out.min = out.max = NaN;
 		out.avg = 0.0f;
 		out.min_x = out.min_y = out.max_x = out.max_y = 0;
@@ -108,6 +109,17 @@ public class Overlay {
 			}
 		}
 		out.avg /= (right - left) * (bottom - top);
+		out.center = temp[(bottom-top)/2 * stride + (right-left)/2];
+
+		//Avoid propagating bad floats
+		if (isNaN(out.min)) out.min = Util.ABSOLUTE_ZERO;
+		if (isNaN(out.max)) out.max = Util.ABSOLUTE_ZERO;
+		if (isNaN(out.avg)) out.avg = Util.ABSOLUTE_ZERO;
+		return out;
+	}
+
+	public static Overlay.MinMaxAvgCet computeMmac(float[] temp, int w, int h) {
+		return computeMmacRect(temp, 0, 0, w, h, w);
 	}
 
 	private void drawText(Canvas cvs, StringBuilder sb, float x, float y, boolean la, boolean ta) {
@@ -119,11 +131,11 @@ public class Overlay {
 	}
 
 	@SuppressLint("DefaultLocale")
-	public void draw(Data d, Rect rect) {
+	public void draw(Data d, SettingsPalette settingsPalette, Rect rect) {
 		Canvas cvs = surface.surface.lockCanvas(null);
 		cvs.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
-		int w = rect.width();
+		int w = d.rotate90?rect.height():rect.width(); //w of the landscape size
 		vRect.set(rect);
 		paint.setStrokeWidth(wmarker * w);
 		paint.setTextSize(textsize * w);
@@ -133,17 +145,17 @@ public class Overlay {
 
 		if (d.showCenter) { // TODO this is off by a pixel and we should check the other points too
 			paint.setColor(Color.rgb(255, 255, 0)); // Yellow.
-			drawTPoint(cvs, d, d.fi.width / 2, d.fi.height / 2, d.fi.center);
+			drawTPoint(cvs, d, d.fi.width / 2, d.fi.height / 2, d.mmac.center);
 		}
 
 		if (d.showMin) {
 			paint.setColor(Color.rgb(0, 127, 255)); // Blue.
-			drawTPoint(cvs, d, d.fi.min_x, d.fi.min_y, d.fi.min);
+			drawTPoint(cvs, d, d.mmac.min_x, d.mmac.min_y, d.mmac.min);
 		}
 
 		if (d.showMax) {
 			paint.setColor(Color.rgb(255, 64, 64)); // Red.
-			drawTPoint(cvs, d, d.fi.max_x, d.fi.max_y, d.fi.max);
+			drawTPoint(cvs, d, d.mmac.max_x, d.mmac.max_y, d.mmac.max);
 		}
 
 		if (d.showPalette) {
@@ -158,8 +170,8 @@ public class Overlay {
 						vRect.top + theight + clear * 2,
 						vRect.right - clear,
 						vRect.bottom - theight - clear * 2,
-						d.palette);
-				Util.formatTemp(sb, Float.isNaN(d.rangeMax) ? d.fi.max : d.rangeMax, d.tempUnit);
+						settingsPalette.paletteBitmap);
+				Util.formatTemp(sb, Float.isNaN(d.rangeMax) ? d.mmac.max : d.rangeMax, d.tempUnit);
 				drawText(cvs, sb, vRect.right - clear, vRect.top + clear, false, true);
 				if (!Float.isNaN(d.rangeMax)) {
 					int off = (int) paintTextOutline.measureText(sb, 0, sb.length());
@@ -167,7 +179,7 @@ public class Overlay {
 							vRect.right - clear - off, vRect.top + iclear + isize);
 					lock.draw(cvs);
 				}
-				Util.formatTemp(sb, Float.isNaN(d.rangeMin) ? d.fi.min : d.rangeMin, d.tempUnit);
+				Util.formatTemp(sb, Float.isNaN(d.rangeMin) ? d.mmac.min : d.rangeMin, d.tempUnit);
 				drawText(cvs, sb, vRect.right - clear, vRect.bottom - clear, false, false);
 				if (!Float.isNaN(d.rangeMin)) {
 					int off = (int) paintTextOutline.measureText(sb, 0, sb.length());
@@ -181,8 +193,8 @@ public class Overlay {
 						vRect.top + theight + clear * 2,
 						(int) (vRect.right + clear + pwidth * vRect.width()),
 						vRect.bottom - theight - clear * 2,
-						d.palette);
-				Util.formatTemp(sb, Float.isNaN(d.rangeMax) ? d.fi.max : d.rangeMax, d.tempUnit);
+						settingsPalette.paletteBitmap);
+				Util.formatTemp(sb, Float.isNaN(d.rangeMax) ? d.mmac.max : d.rangeMax, d.tempUnit);
 				drawText(cvs, sb, vRect.right + clear, vRect.top + clear, true, true);
 				if (!Float.isNaN(d.rangeMax)) {
 					int off = (int) paintTextOutline.measureText(sb, 0, sb.length());
@@ -190,7 +202,7 @@ public class Overlay {
 							vRect.right + clear + off + isize, vRect.top + iclear + isize);
 					lock.draw(cvs);
 				}
-				Util.formatTemp(sb, Float.isNaN(d.rangeMin) ? d.fi.min : d.rangeMin, d.tempUnit);
+				Util.formatTemp(sb, Float.isNaN(d.rangeMin) ? d.mmac.min : d.rangeMin, d.tempUnit);
 				drawText(cvs, sb, vRect.right + clear, vRect.bottom - clear, true, false);
 				if (!Float.isNaN(d.rangeMin)) {
 					int off = (int) paintTextOutline.measureText(sb, 0, sb.length());
@@ -204,22 +216,15 @@ public class Overlay {
 		surface.surface.unlockCanvasAndPost(cvs);
 	}
 
-	private void drawPalette(Canvas cvs, int x1, int y1, int x2, int y2, int[] palette) {
+	private void drawPalette(Canvas cvs, int x1, int y1, int x2, int y2, Bitmap bitmap) {
 		if (y2 - y1 <= 0)
 			return;
-		if (paletteCache_palette != palette) {
-			for (int i = 0; i < palette.length; ++i)
-				getPaletteCache_array[i] =
-						Integer.reverseBytes(palette[palette.length - i - 1]) >> 8 | 0xFF000000;
-			paletteCache_bitmap.setPixels(getPaletteCache_array, 0, 1, 0, 0, 1, palette.length);
-			paletteCache_palette = palette;
-		}
 		cvs.drawRect(x1, y1, x2, y2, paintOutline);
 		rectTgt.set(x1, y1, x2, y2);
 		/* We use the paintPalette for the bitmap to make doubly sure antialias is off, having it
-		 *   on causes our 1px line to go transparent.
+		 *	 on causes our 1px line to go transparent.
 		 */
-		cvs.drawBitmap(paletteCache_bitmap, null, rectTgt, paintPalette);
+		cvs.drawBitmap(bitmap, null, rectTgt, paintPalette);
 	}
 
 	private void drawTPoint(Canvas cvs, Data d, int tx, int ty, float temp) {
