@@ -46,7 +46,7 @@ InfiCam::~InfiCam(){
 
 int InfiCam::connect(const int uvc_fd, int & output_width, int & output_height, settings_callback_t * p_settings_callback) {
 	int width, height;
-	bool use_raw_logic;
+	bool use_raw_logic = false;
 	if (dev.connect(uvc_fd, width, height, use_raw_logic)) {
 		return 2;
 	}
