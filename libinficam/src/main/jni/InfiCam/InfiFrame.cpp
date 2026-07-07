@@ -19,7 +19,7 @@ InfiFrame::InfiFrame(CameraSettings & p_cam_settings, const int stream_width, co
 }
 
 InfiFrame::~InfiFrame(){
-	delete gain_k_buffer;
+	delete[] gain_k_buffer;
 	gain_k_buffer = nullptr;
 	delete offset_b_buffer_accu;
 	offset_b_buffer_accu = nullptr;
