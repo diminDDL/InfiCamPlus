@@ -98,6 +98,9 @@ int UVCDevice::connect(int fd, int & width, int & height, bool & use_raw_logic) 
 		use_raw_logic = true;
 	}
 	if(vendorId == 0xBDA){ //p2pro
+        free(manufacturerName);
+        free(productName);
+        disconnect();
 		return 99; //TODO: Not supported right now. Fix this.
 	}
 
