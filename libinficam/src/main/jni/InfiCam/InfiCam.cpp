@@ -8,6 +8,36 @@
 #include <cstring> /* memcpy() */
 #include <android/log.h>
 #include <sys/types.h>
+#include <algorithm>
+
+static constexpr int RAW_RANGE_AUTO_SHUTTER_SETTLE_MS = 20000;
+static constexpr int RAW_RANGE_VALIDATION_SHUTTER_SETTLE_MS = 300;
+static constexpr int RAW_RANGE_VALIDATION_OBSERVE_MS = 1000;
+static constexpr int RAW_RANGE_VALIDATION_RETRY_SPACING_MS = 1000;
+static constexpr int RAW_RANGE_VALIDATION_MAX_RETRIES = 3;
+static constexpr float RAW_RANGE_MIN_VALID_VARIANCE = 0.001f;
+static constexpr float RAW_RANGE_VARIANCE_DELTA_ABS = 0.025f; // 0.05C stddev squared delta
+static constexpr float RAW_RANGE_VARIANCE_DELTA_REL = 0.025f;
+
+static float temperature_variance(const float *temp, const int count, int &valid_count){
+	double mean = 0.0;
+	double m2 = 0.0;
+	valid_count = 0;
+	for(int i = 0 ; i < count ; i++){
+		if(!std::isfinite(temp[i])){
+			continue;
+		}
+		valid_count++;
+		double delta = (double)temp[i] - mean;
+		mean += delta / (double)valid_count;
+		double delta2 = (double)temp[i] - mean;
+		m2 += delta * delta2;
+	}
+	if(valid_count <= 1){
+		return 0.0f;
+	}
+	return (float)(m2 / (double)valid_count);
+}
 
 
 /*
@@ -37,6 +67,9 @@ InfiCam::InfiCam(const void * p_inficam_jni): inficam_jni(p_inficam_jni){
 
 InfiCam::~InfiCam(){
 	exit_all_theads = true;
+	pthread_mutex_lock(&shutter_mutex);
+	pthread_cond_signal(&shutter_request);
+	pthread_mutex_unlock(&shutter_mutex);
 	pthread_join(shutter_thread, nullptr);
 }
 
@@ -73,6 +106,33 @@ void InfiCam::disconnect(){
 	infiframe = nullptr;
 	delete packet_reconstruction_buffer;
 	packet_reconstruction_buffer = nullptr;
+}
+
+void InfiCam::start_raw_frame_validation(){
+	if(!cam_settings.use_raw_logic || !smart_calibration_enabled.load()){
+		is_calibrating = false;
+		return;
+	}
+	range_validation_active = true;
+	range_validation_started = false;
+	range_validation_retry_count = 0;
+	range_validation_retry_not_before = steady_clock::now();
+	range_validation_start_variance = NAN;
+	range_validation_start_valid_count = 0;
+	is_calibrating = true;
+}
+
+void InfiCam::set_raw_validation_shutter(bool closed){
+	pthread_mutex_lock(&shutter_mutex);
+	if(closed){
+		range_validation_holds_shutter = true;
+		keep_shutter_closed = true;
+		pthread_cond_signal(&shutter_request);
+	} else if(range_validation_holds_shutter){
+		range_validation_holds_shutter = false;
+		keep_shutter_closed = false;
+	}
+	pthread_mutex_unlock(&shutter_mutex);
 }
 
 
@@ -125,7 +185,7 @@ int InfiCam::stream_start(frame_callback_t *cb) {
 				attempts += 1;
 			}
 		}
-		is_calibrating = false;
+		start_raw_frame_validation();
 	}
 
 	settle_start_time = steady_clock::now();
@@ -142,6 +202,10 @@ void InfiCam::stream_stop() {
 	is_shutter_calibrating = false;
 	suppress_calibration = false;
 	suppressed_calibration_pending = false;
+	range_validation_active = false;
+	range_validation_started = false;
+	range_validation_retry_count = 0;
+	set_raw_validation_shutter(false);
 	dev.stream_stop();
 }
 
@@ -156,7 +220,10 @@ void * InfiCam::shutter_thread_func(void * arg){
 	while(!t->exit_all_theads){
 		pthread_mutex_lock(&t->shutter_mutex);
 		pthread_cond_wait(&t->shutter_request, &t->shutter_mutex);
-
+		if(t->exit_all_theads){
+			pthread_mutex_unlock(&t->shutter_mutex);
+			break;
+		}
 		t->dev.set_zoom_abs(CMD_SHUTTER);
 
 		while(t->keep_shutter_closed){
@@ -186,6 +253,7 @@ void InfiCam::calibrate(){
 	pthread_mutex_unlock(&shutter_mutex);
 	calibration_shutter_time = steady_clock::now();
 	infiframe->start_calibration();
+	refresh_auto_shut_interval();
 }
 
 bool InfiCam::isCalibrating(){
@@ -198,6 +266,22 @@ bool InfiCam::setCalibrationSuppressed(bool suppress){
 		return true;
 	}
 	return false;
+}
+
+void InfiCam::setSmartCalibrationEnabled(bool enabled){
+	smart_calibration_enabled = enabled;
+	if(!enabled){
+		range_validation_active = false;
+		range_validation_started = false;
+		range_validation_retry_count = 0;
+		set_raw_validation_shutter(false);
+		if(!is_shutter_calibrating.load()){
+			is_calibrating = false;
+			pthread_mutex_lock(&cal_mutex);
+			pthread_cond_signal(&cal_request);
+			pthread_mutex_unlock(&cal_mutex);
+		}
+	}
 }
 
 void InfiCam::lock_shutter(){
@@ -300,11 +384,22 @@ void InfiCam::uvc_frame_callback(uvc_frame_t *frame, void *user_ptr){
 			}
 			LOGI("Calibration complete\n");
 			t->is_shutter_calibrating = false;
-			t->is_calibrating = false;
-			//tell anyone waiting that cal is done
-			pthread_mutex_lock(&t->cal_mutex);
-			pthread_cond_signal(&t->cal_request);
-			pthread_mutex_unlock(&t->cal_mutex);
+			if(t->range_validation_active.load() && t->cam_settings.use_raw_logic){
+				LOGI("Starting closed-shutter raw frame validation after calibration %d/%d.\n",
+					 t->range_validation_retry_count.load(), RAW_RANGE_VALIDATION_MAX_RETRIES);
+				t->set_raw_validation_shutter(true);
+				t->range_validation_start_time = steady_clock::now();
+				t->range_validation_started = true;
+				t->range_validation_start_variance = NAN;
+				t->range_validation_start_valid_count = 0;
+				t->is_calibrating = true;
+			} else {
+				t->is_calibrating = false;
+				//tell anyone waiting that cal is done
+				pthread_mutex_lock(&t->cal_mutex);
+				pthread_cond_signal(&t->cal_request);
+				pthread_mutex_unlock(&t->cal_mutex);
+			}
 		}
 		else if (ms_since_shutter >= 350) { //Shutter is closed
 			if(reset_cal_on_bad_data(t, final_frame)){
@@ -324,7 +419,13 @@ void InfiCam::uvc_frame_callback(uvc_frame_t *frame, void *user_ptr){
 			}
 		}
 	} else {
-		if(t->auto_shut_data.enable && Utils::ms_since(t->calibration_shutter_time) > t->auto_shut_data.next_interval){
+		long range_settle_time = Utils::ms_since(t->settle_start_time);
+		bool range_is_settling = t->cam_settings.use_raw_logic &&
+				range_settle_time < RAW_RANGE_AUTO_SHUTTER_SETTLE_MS;
+		if(!t->is_calibrating.load() &&
+		   !range_is_settling &&
+		   t->auto_shut_data.enable &&
+		   Utils::ms_since(t->calibration_shutter_time) > t->auto_shut_data.next_interval){
 			t->calibrate();
 			t->refresh_auto_shut_interval();
 		}
@@ -342,6 +443,110 @@ void InfiCam::uvc_frame_callback(uvc_frame_t *frame, void *user_ptr){
 			t->infiframe->frame_to_temp(calibrated_frame,temp_array);
 		} else { //no processing required
 			t->infiframe->frame_to_temp(final_frame,temp_array);
+		}
+
+		if(t->range_validation_active.load() && t->cam_settings.use_raw_logic){
+			if(!t->range_validation_started.load()){
+				int wait_ms = Utils::ms_since(t->range_validation_retry_not_before);
+				if(t->range_validation_retry_count.load() > 0 &&
+				   wait_ms >= 0 &&
+				   t->range_validation_retry_count.load() <= RAW_RANGE_VALIDATION_MAX_RETRIES){
+					LOGW("Raw range validation retry %d/%d starting after spacing delay.\n",
+						 t->range_validation_retry_count.load(), RAW_RANGE_VALIDATION_MAX_RETRIES);
+					t->calibrate();
+				}
+				return;
+			}
+			int elapsed = Utils::ms_since(t->range_validation_start_time);
+			int valid_count = 0;
+			float variance = temperature_variance(temp_array,
+												  t->infiframe->width*t->infiframe->vision_height,
+												  valid_count);
+			if(elapsed < RAW_RANGE_VALIDATION_SHUTTER_SETTLE_MS){
+				return;
+			}
+			if(std::isnan(t->range_validation_start_variance)){
+				t->range_validation_start_variance = variance;
+				t->range_validation_start_valid_count = valid_count;
+				LOGI("Raw frame validation start variance=%f valid=%d.\n",
+					 variance, valid_count);
+				return;
+			}
+			if(elapsed < RAW_RANGE_VALIDATION_SHUTTER_SETTLE_MS +
+					   RAW_RANGE_VALIDATION_OBSERVE_MS){
+				return;
+			}
+			bool too_few_pixels =
+					valid_count < (t->infiframe->width*t->infiframe->vision_height) / 2 ||
+					t->range_validation_start_valid_count <
+					(t->infiframe->width*t->infiframe->vision_height) / 2;
+			bool implausibly_uniform =
+					variance < RAW_RANGE_MIN_VALID_VARIANCE ||
+					t->range_validation_start_variance < RAW_RANGE_MIN_VALID_VARIANCE;
+			float variance_delta = fabsf(variance - t->range_validation_start_variance);
+			float variance_limit = std::max(RAW_RANGE_VARIANCE_DELTA_ABS,
+											std::max(variance,
+													 t->range_validation_start_variance) *
+											RAW_RANGE_VARIANCE_DELTA_REL);
+			bool unstable = too_few_pixels || implausibly_uniform ||
+					variance_delta > variance_limit;
+			if(unstable){
+				int retry_count = t->range_validation_retry_count.load();
+				if(retry_count < RAW_RANGE_VALIDATION_MAX_RETRIES){
+					t->range_validation_retry_count = retry_count + 1;
+					LOGW("Raw frame validation failed after %d ms: start_variance=%f end_variance=%f delta=%f limit=%f start_valid=%d end_valid=%d uniform=%d. Scheduling recalibration %d/%d.\n",
+						 elapsed,
+						 t->range_validation_start_variance,
+						 variance,
+						 variance_delta,
+						 variance_limit,
+						 t->range_validation_start_valid_count,
+						 valid_count,
+						 implausibly_uniform,
+						 retry_count + 1, RAW_RANGE_VALIDATION_MAX_RETRIES);
+					t->range_validation_started = false;
+					t->set_raw_validation_shutter(false);
+					t->range_validation_retry_not_before =
+							steady_clock::now() +
+							std::chrono::milliseconds(RAW_RANGE_VALIDATION_RETRY_SPACING_MS);
+					return;
+				}
+				LOGW("Raw frame validation still failed after %d retries: start_variance=%f end_variance=%f delta=%f limit=%f start_valid=%d end_valid=%d uniform=%d. Releasing frame.\n",
+					 retry_count,
+					 t->range_validation_start_variance,
+					 variance,
+					 variance_delta,
+					 variance_limit,
+					 t->range_validation_start_valid_count,
+					 valid_count,
+					 implausibly_uniform);
+				t->range_validation_active = false;
+				t->range_validation_started = false;
+				t->set_raw_validation_shutter(false);
+				t->is_calibrating = false;
+				pthread_mutex_lock(&t->cal_mutex);
+				pthread_cond_signal(&t->cal_request);
+				pthread_mutex_unlock(&t->cal_mutex);
+				return;
+			}
+			LOGI("Raw frame validation accepted after %d ms: start_variance=%f end_variance=%f delta=%f limit=%f start_valid=%d end_valid=%d uniform=%d retries=%d.\n",
+				 elapsed,
+				 t->range_validation_start_variance,
+				 variance,
+				 variance_delta,
+				 variance_limit,
+				 t->range_validation_start_valid_count,
+				 valid_count,
+				 implausibly_uniform,
+				 t->range_validation_retry_count.load());
+			t->range_validation_active = false;
+			t->range_validation_started = false;
+			t->set_raw_validation_shutter(false);
+			t->is_calibrating = false;
+			pthread_mutex_lock(&t->cal_mutex);
+			pthread_cond_signal(&t->cal_request);
+			pthread_mutex_unlock(&t->cal_mutex);
+			return;
 		}
 
 		t->frame_callback(t->inficam_jni, temp_array, t->cam_settings); //callback the app with the temperature frame
@@ -402,6 +607,7 @@ void InfiCam::set_range(const int range) {
 	if(cam_settings.use_raw_logic){
 		if(cam_settings.temperature_range != (CameraTemperatureRange)range){
 			cam_settings.temperature_range = (CameraTemperatureRange)range;
+			start_raw_frame_validation();
 			settings_callback(inficam_jni, cam_settings);
 		}
 	}

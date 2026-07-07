@@ -93,6 +93,7 @@ public class MainActivity extends BaseActivity {
 	private volatile boolean suppressCalibrationRequest = false;
 	private boolean pendingCalibrationAfterThermDialog = false;
 	private boolean calibrationUiActive = false;
+	private volatile boolean overTempLockoutActive = false;
 	private int calibrationMessageStep = 0;
 	private float scale = 1.0f;
 	private int imgType;
@@ -306,7 +307,9 @@ public class MainActivity extends BaseActivity {
 						overlayData.mmac = Overlay.computeMmac(temp, fi.width, fi.height);
 					}
 
-					if (!isNaN(overlayData.mmac.max) && overlayData.mmac.max > settingsTherm.getRange()[1] && //over max of the range
+					if (!overTempLockoutActive &&
+							!infiCam.isCalibrating() &&
+							!isNaN(overlayData.mmac.max) && overlayData.mmac.max > settingsTherm.getRange()[1] && //over max of the range
 							settings.overtempEnabled){ //setting enabled
 						Log.e("inficam", "Over temperature protection triggered at "+ overlayData.mmac.max + "C");
 						handler.post(() -> overTempLockout());
@@ -581,6 +584,9 @@ public class MainActivity extends BaseActivity {
 	}
 
 	private void overTempLockout() {
+		if (overTempLockoutActive)
+			return;
+		overTempLockoutActive = true;
 		messageView.showMessage(R.string.msg_overtemp);
 		infiCam.lockShutter();
 	}
@@ -671,6 +677,7 @@ public class MainActivity extends BaseActivity {
 		ImageButton buttonShutter = findViewById(R.id.buttonShutter);
 
 		buttonShutter.setOnClickListener(view -> {
+			overTempLockoutActive = false;
 			buttonShutter.setColorFilter(Color.RED);
 			view.postDelayed(() -> buttonShutter.setColorFilter(null), 500);
 			infiCam.unlockShutter(); //unlock shutter if locked
@@ -992,6 +999,7 @@ public class MainActivity extends BaseActivity {
 	private void disconnect() {
 		connectGeneration++;
 		setCalibrationUi(false);
+		overTempLockoutActive = false;
 		stopRecording();
 		infiCam.setFrameCallback(null); //disable frames coming in
 		disconnecting = true;

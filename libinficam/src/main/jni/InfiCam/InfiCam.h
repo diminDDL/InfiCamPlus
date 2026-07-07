@@ -66,6 +66,15 @@ private:
 	std::atomic_bool is_shutter_calibrating = false; //manual/auto shutter calibration is running
 	std::atomic_bool suppress_calibration = false; //temporarily delay calibration requests
 	std::atomic_bool suppressed_calibration_pending = false;
+	std::atomic_bool smart_calibration_enabled = true;
+	std::atomic_bool range_validation_active = false;
+	std::atomic_bool range_validation_started = false;
+	std::atomic_int range_validation_retry_count = 0;
+	steady_clock::time_point range_validation_start_time;
+	steady_clock::time_point range_validation_retry_not_before;
+	float range_validation_start_variance = NAN;
+	int range_validation_start_valid_count = 0;
+	bool range_validation_holds_shutter = false;
 
 	//synchronisation
 	pthread_mutex_t command_mutex{};
@@ -90,6 +99,8 @@ private:
 	void set_ushort(const int addr, const uint16_t val);
 
 	void refresh_auto_shut_interval();
+	void start_raw_frame_validation();
+	void set_raw_validation_shutter(bool closed);
 
 public:
 	InfiCam(const void * inficam_jni);
@@ -111,6 +122,7 @@ public:
 	void calibrate();
 	bool isCalibrating();
 	bool setCalibrationSuppressed(bool suppress);
+	void setSmartCalibrationEnabled(bool enabled);
 	void lock_shutter();
 	void unlock_shutter();
 

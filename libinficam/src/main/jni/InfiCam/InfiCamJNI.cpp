@@ -474,6 +474,11 @@ extern "C" {
 		return t->cam.setCalibrationSuppressed(suppress);
 	}
 
+	JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_setSmartCalibrationEnabled(JNIEnv *env, jobject self, jboolean enabled) {
+		InfiCamJNI *t = getObject(env, self);
+		t->cam.setSmartCalibrationEnabled(enabled);
+	}
+
 	JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_setAutoShutterSettings(JNIEnv *env, jobject self, jboolean enable, jint interval_min, jint interval_max) {
 		InfiCamJNI *t = getObject(env, self);
 		t->cam.set_auto_shutter_settings(enable, interval_min, interval_max);

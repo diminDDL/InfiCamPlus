@@ -102,6 +102,12 @@ public class SettingsMain extends Settings {
 						overtempEnabled = value; //TODO: clean up
 					}
 				},
+				new SettingBool("smartcalibration", R.string.set_smartcalibration, true) {
+					@Override
+					void onSet(boolean value) {
+						act.infiCam.setSmartCalibrationEnabled(value);
+					}
+				},
 				new SettingBool("rotate180", R.string.set_rotate180, false) {
 					@Override
 					void onSet(boolean value) {

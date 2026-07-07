@@ -47,6 +47,7 @@
 	<string name="set_maxshutinterval_never">Stable shutter interval (never)</string>
 	<string name="set_minshutinterval">Initial shutter interval (%d ms)</string>
 	<string name="set_overtemplock">Overtemperature Protection</string>
+	<string name="set_smartcalibration">Smart Calibration Recovery</string>
 	<string name="set_rotate180">Turn image upside down</string>
 	<string name="set_mirror">Mirror image</string>
 	<string name="set_swap_controls">Swap left and right buttons</string>
