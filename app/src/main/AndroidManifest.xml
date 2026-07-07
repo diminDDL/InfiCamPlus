@@ -5,6 +5,7 @@
 	<uses-permission android:name="android.permission.CAMERA" />
 	<uses-permission android:name="android.permission.RECORD_AUDIO" />
 	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+	<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
 		android:maxSdkVersion="28" />
 
@@ -27,6 +28,7 @@
 			  not restart the activity. The internet also suggested directBootAware for this, I do
 			  not know if this actually makes a difference.
 		-->
+<!--		<profileable android:shell="true" />-->
 		<activity
 			android:name=".MainActivity"
 			android:exported="true"

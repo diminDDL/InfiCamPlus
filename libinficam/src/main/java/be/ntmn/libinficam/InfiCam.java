@@ -1,11 +1,11 @@
 package be.ntmn.libinficam;
 
-import android.view.Surface;
-
 public class InfiCam {
+
 	/* We start with a bit of fluff to make JNI work. */
 	private final long instance;
 	private FrameCallback userFrameCallback = null;
+	private SettingsCallback userSettingsCallback = null;
 
 	static {
 		System.loadLibrary("usb1.0");
@@ -17,8 +17,7 @@ public class InfiCam {
 	private native static void nativeDelete(long ptr);
 
 	public InfiCam() {
-		if ((instance = nativeNew(this)) == 0)
-			throw new OutOfMemoryError();
+		if ((instance = nativeNew(this)) == 0) { throw new OutOfMemoryError(); }
 	}
 
 	public void release() { nativeDelete(instance); }
@@ -35,61 +34,73 @@ public class InfiCam {
 	/* The actual class starts here. */
 	public interface FrameCallback { void onFrame(FrameInfo fi, float[] temp); }
 
-	/* C++ fills this one and passes it to callback, do not rename or modify without also looking
+	public interface SettingsCallback { void onSettings(CamSettings cs); }
+
+	/* C++ fills these and passes them to callbacks, do not rename or modify without also looking
 	 *   at the C++ side.
 	 */
-	public static class FrameInfo {
-		public float min, max, avg, center;
-		public int min_x, min_y, max_x, max_y;
-		public int width, height;
+	public static class CamSettings {
 
-		public float correction, temp_reflected, temp_air, humidity, emissivity, distance;
+		public int range; //ID of the range
+		public float max_temp_clipping; //maximum temperature the sensor can see
+
+		public float correction, temp_reflected, temp_air, humidity, emissivity;
+		public short distance;
 	}
-
-	public static final int paletteLen = 0x4000;
+	public static class FrameInfo {
+		public int width, height;
+		@SuppressWarnings({"unused","FieldMayBeFinal"})
+		public//from C++
+		CamSettings settings = new CamSettings();
+	}
 
 	/* These are what get passed to the frameCallback, so that we don't have to allocate a new one
 	 *   for every frame. The way we make sure they won't get overwritten is that frameCallback()
 	 *   only runs again if the last frameCallback() has finished.
 	 */
-	private FrameInfo frameInfo = new FrameInfo();
-	private float[] temp;
+	@SuppressWarnings({"unused","FieldMayBeFinal"}) //from C++
+	private FrameInfo framcb_frameInfo = new FrameInfo();
+	@SuppressWarnings({"unused","FieldMayBeFinal"}) //from C++
+	private float[] framcb_temp = new float[0];
+	/*
+	 * Like the above, but for the settings callback
+	 */
+	@SuppressWarnings({"unused","FieldMayBeFinal"}) //from C++
+	private CamSettings setcb_camSettings = new CamSettings();
 
 	/* Called by the C++ code, do not rename. */
 	private void frameCallback(FrameInfo fi, float[] temp) {
 		synchronized (this) {
-			if (userFrameCallback != null)
-				userFrameCallback.onFrame(fi, temp);
+			if (userFrameCallback != null) userFrameCallback.onFrame(fi, temp);
+		}
+	}
+
+	/* Called by the C++ code, do not rename. */
+	private void settingsCallback(CamSettings cs) {
+		synchronized (this) {
+			if (userSettingsCallback != null) userSettingsCallback.onSettings(cs);
 		}
 	}
 
 	private native int nativeConnect(int fd);
-	/* Make sure surface is either valid, not set or null before calling connect. */
+
 	public void connect(int fd) {
-		if (nativeConnect(fd) != 0)
-			throw new RuntimeException("Failed to connect to camera.");
+		if (nativeConnect(fd) != 0) { throw new RuntimeException( "Failed to connect to camera." ); }
 	}
+
 	public native void disconnect();
 
 	public native int getWidth();
+
 	public native int getHeight();
 
-	/* Be aware that when streaming is started, the output surface has to flip buffers or following
-	 *   calls to setSurface() or else the frame callback will get stuck. Also do NOT block the CB
-	 *   during startStream/stopStream/connect/disconnect!
-	 */
 	private native int nativeStartStream();
-	public void startStream() {
-		if (nativeStartStream() != 0)
-			throw new RuntimeException("Failed to start stream.");
-	}
-	public native void stopStream();
 
-	private native int nativeSetSurface(Surface surface);
-	public void setSurface(Surface surface) {
-		if (nativeSetSurface(surface) != 0)
-			throw new RuntimeException("Failed to set surface.");
+	public void startStream() {
+		if (nativeStartStream() != 0) { throw new RuntimeException("Failed to start stream."); }
 	}
+
+	public native void stopStream();
 
 	/* Note that the frame callback is called from a separate thread. */
 	public void setFrameCallback(FrameCallback fcb) {
@@ -98,42 +109,51 @@ public class InfiCam {
 		}
 	}
 
-	/* Set range, valid values are 120 and 400 (see InfiFrame class).
-	 * Changes take effect after update/update_table().
-	 */
-	public native void setRange(int range);
-
-	/* Distance multiplier, 3.0 for 6.8mm lens, 1.0 for 13mm lens.
-	 * Changes only take effect after update_table().
-	 */
-	public native void setDistanceMultiplier(float dm);
-
-	/* Setting parameters, only works while streaming.
-	 * Changes only take effect after update_table().
-	 */
-	public native void setCorrection(float corr);
-	public native void setTempReflected(float t_ref);
-	public native void setTempAir(float t_air);
-	public native void setHumidity(float humi);
-	public native void setEmissivity(float emi);
-	public native void setDistance(float dist);
-	public native void setParams(float corr, float t_ref, float t_air, float humi, float emi,
-								 float dist);
-	/* Store user memory to camera so values remain when reconnecting. */
-	public native void storeParams();
-
-	public native void updateTable();
-	public native void calibrate();
-	public native void closeShutter();
-	public native void setRawSensor(boolean raw);
-    public native void setP2Pro(boolean p2Pro);
-
-	private native int nativeSetPalette(int[] palette); /* Length must be paletteLen. */
-	public void setPalette(int[] palette) {
-		if (nativeSetPalette(palette) != 0)
-			throw new IllegalArgumentException();
+	/* Note that the frame callback is called from a separate thread. */
+	public void setSettingsCallback(SettingsCallback scb) {
+		synchronized (this) {
+			userSettingsCallback = scb;
+		}
 	}
 
-	/* Applies the set palette to the surface given with setSurface(). */
-	public native void applyPalette(float min, float max);
+	//set the range identifier corresponding to the desired range
+	public native void setRange(int range);
+
+	//Get the ranges, in the {{-20,120},{120,400}} format.
+	public native float[][] getRanges();
+
+	public native void setCorrection(float corr);
+
+	public native float getCorrection();
+
+	public native void setTempReflected(float t_ref);
+
+	public native float getTempReflected();
+
+	public native void setTempAir(float t_air);
+
+	public native float getTempAir();
+
+	public native void setHumidity(float humi);
+
+	public native float getHumidity();
+
+	public native void setEmissivity(float emi);
+
+	public native float getEmissivity();
+
+	public native void setDistance(short dist);
+
+	public native short getDistance();
+
+	public native void storeParams(); /* Store user memory to camera so values remain when reconnecting. */
+
+	public native void lockShutter();
+
+	public native void unlockShutter();
+
+	public native void calibrate();
+	public native void calibrateBlocking();
+
+	public native void setAutoShutterSettings(boolean enable, int interval_min, int interval_max);
 }

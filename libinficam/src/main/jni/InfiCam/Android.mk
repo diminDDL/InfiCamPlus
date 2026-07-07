@@ -11,10 +11,10 @@ LOCAL_CFLAGS += -DACCESS_RAW_DESCRIPTORS
 
 # Debug vs Release
 ifeq ($(APP_OPTIM),debug)
-    LOCAL_CFLAGS += -O0 -g -fno-inline -fno-omit-frame-pointer
+    LOCAL_CFLAGS += -O0 -g -fno-inline -fno-omit-frame-pointer -DDEBUG
 else
     LOCAL_CFLAGS += -O3 -fstrict-aliasing -fprefetch-loop-arrays
-    LOCAL_CFLAGS += -DLOG_NDEBUG
+    LOCAL_CFLAGS += -DLOG_NDEBUG  -DRELEASE
 endif
 
 LOCAL_LDLIBS := -ldl -llog -landroid
@@ -24,7 +24,10 @@ LOCAL_SRC_FILES := \
 		UVCDevice.cpp \
 		InfiFrame.cpp \
 		InfiCam.cpp \
-		InfiCamJNI.cpp
+		InfiCamJNI.cpp \
+		Utils.cpp \
+		CameraSettings.cpp \
 
 LOCAL_MODULE := InfiCam
 include $(BUILD_SHARED_LIBRARY)
+

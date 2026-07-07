@@ -7,12 +7,9 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
 import com.google.android.material.slider.RangeSlider;
-
 import java.util.List;
 
 /* RangeSlider is annoying as fuck, throwing exceptions if you don't baby it, I try to fix it and
@@ -83,8 +80,7 @@ public class SliderDouble extends RangeSlider {
 	/* We can't override superclass method, it uses it -_-. */
 	public List<Float> getValuesCorrected() {
 		List<Float> values = super.getValues();
-		for (int i = 0; i < values.size(); ++i)
-			values.set(i, (invert ? -values.get(i) : values.get(i)) + from);
+		values.replaceAll(aFloat -> (invert ? -aFloat : aFloat) + from);
 		return values;
 	}
 
@@ -96,6 +92,7 @@ public class SliderDouble extends RangeSlider {
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 		if (vertical) {
+			//noinspection SuspiciousNameCombination
 			super.onMeasure(heightMeasureSpec, widthMeasureSpec);
 			setMeasuredDimension(getMeasuredHeight(), getMeasuredWidth());
 		} else super.onMeasure(widthMeasureSpec, heightMeasureSpec);

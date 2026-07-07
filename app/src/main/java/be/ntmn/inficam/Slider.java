@@ -35,13 +35,13 @@ public class Slider extends androidx.appcompat.widget.AppCompatSeekBar {
 	}
 
 	private void init(Context ctx) {
-		TypedArray ta = ctx.obtainStyledAttributes(new int[] {
+		try(TypedArray ta = ctx.obtainStyledAttributes(new int[] {
 				android.R.attr.colorControlHighlight,
 				android.R.attr.colorControlActivated
-		});
-		colorBg = ta.getColor(0, Color.RED);
-		colorAccent = ta.getColor(1, Color.RED);
-		ta.recycle();
+		})) {
+			colorBg = ta.getColor(0, Color.RED);
+			colorAccent = ta.getColor(1, Color.RED);
+		}
 		paint.setAntiAlias(true);
 		super.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 			@Override
