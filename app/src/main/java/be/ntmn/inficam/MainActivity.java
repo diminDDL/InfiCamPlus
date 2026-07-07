@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -59,6 +60,7 @@ public class MainActivity extends BaseActivity {
 	private Overlay overlayScreen, overlayRecord, overlayPicture;
 	private SurfaceMuxer.OutputSurface outScreen, outRecord;
 	private final Overlay.Data overlayData = new Overlay.Data();
+	private final Overlay.Data renderOverlayData = new Overlay.Data();
 	private int iMode;
 
 	private volatile UsbDevice usb_device;
@@ -98,6 +100,27 @@ public class MainActivity extends BaseActivity {
 	private float scale = 1.0f;
 	private int imgType;
 	private int imgQuality;
+	private float[] latestTempBuffer = new float[0];
+	private float[] renderTempBuffer = new float[0];
+	private final InfiCam.FrameInfo latestFrameInfo = new InfiCam.FrameInfo();
+	private Overlay.MinMaxAvgCet latestMmac = null;
+	private float latestSensorMax = NaN;
+	private long latestFrameSequence = 0;
+	private boolean renderPending = false;
+	private static final boolean RENDER_TIMING_LOGS = false; /* Set to true to log render timing stats every second. */
+	private long renderStatsStartNs = System.nanoTime();
+	private long incomingFrameCount = 0;
+	private long renderedFrameCount = 0;
+	private long coalescedFrameCount = 0;
+	private long renderPaletteTotalNs = 0;
+	private long renderLockCanvasTotalNs = 0;
+	private long renderUnlockCanvasTotalNs = 0;
+	private long renderInputDrawTotalNs = 0;
+	private long renderThruSwapTotalNs = 0;
+	private long renderScreenSwapTotalNs = 0;
+	private long renderRecordSwapTotalNs = 0;
+	private long renderScreenSwapCount = 0;
+	private long renderRecordSwapCount = 0;
 
 	private final Runnable calibrationMessageRunnable = new Runnable() {
 		@Override
@@ -277,26 +300,29 @@ public class MainActivity extends BaseActivity {
 	/* This is called by infiCam to run every frame, it calls the thermal renderer which writes
 	 *   the surface, it's good to do the work like applying palette and doing
 	 *   complicated measurements here to avoid blocking the main thread. Once this is done we fill
-	 *   overlayData with the info needed to draw the overlays and then post handleFrame() to run
-	 *   on the main UI thread to do the work that should happen there (everything involving the
-	 *   EGL context we've created there).
+	 *   overlayData with the info needed to draw the overlays and then post a single coalesced UI
+	 *   render job to do the work that should happen there (everything involving the EGL context
+	 *   we've created there).
 	 */
 	private final InfiCam.FrameCallback frameCallback = new InfiCam.FrameCallback() {
-			/* To avoid creating a new lambda object every frame we store one here. */
-			private final Runnable handleFrameRunnable = () -> handleFrame();
-
 			@Override
 			public void onFrame(InfiCam.FrameInfo fi, float[] temp) {
 				/* Note this is called from another thread. */
 				synchronized (frameLock) {
-					applyLocalCorrection(temp);
-					overlayData.fi = fi;
-					overlayData.temp = temp;
+					if (latestTempBuffer.length != temp.length)
+						latestTempBuffer = new float[temp.length];
+					System.arraycopy(temp, 0, latestTempBuffer, 0, temp.length);
+					applyLocalCorrection(latestTempBuffer);
+					copyFrameInfo(fi, latestFrameInfo);
+					overlayData.fi = latestFrameInfo;
+					overlayData.temp = latestTempBuffer;
+					incomingFrameCount++;
+					latestFrameSequence++;
 
 					if (scale > 1.0f) {
 						float lost = (1.0f - 1.0f / scale) / 2.0f;
-						overlayData.mmac = Overlay.computeMmacRect(
-							temp,
+						latestMmac = Overlay.computeMmacRect(
+							latestTempBuffer,
 							(int) (lost * fi.width),
 							(int) (lost * fi.height),
 							(int) ((1.0f - lost) * fi.width) + 1,
@@ -304,37 +330,164 @@ public class MainActivity extends BaseActivity {
 							fi.width
 						);
 					} else {
-						overlayData.mmac = Overlay.computeMmac(temp, fi.width, fi.height);
+						latestMmac = Overlay.computeMmac(latestTempBuffer, fi.width, fi.height);
 					}
+					overlayData.mmac = latestMmac;
+					latestSensorMax = getCorrectedMaxTempClipping(fi.settings.max_temp_clipping);
 
 					if (!overTempLockoutActive &&
 							!infiCam.isCalibrating() &&
-							!isNaN(overlayData.mmac.max) && overlayData.mmac.max > settingsTherm.getRange()[1] && //over max of the range
+							!isNaN(latestMmac.max) && latestMmac.max > settingsTherm.getRange()[1] && //over max of the range
 							settings.overtempEnabled){ //setting enabled
-						Log.e("inficam", "Over temperature protection triggered at "+ overlayData.mmac.max + "C");
+						Log.e("inficam", "Over temperature protection triggered at "+ latestMmac.max + "C");
 						handler.post(() -> overTempLockout());
 					}
 
 					if(inputSurface.surface == null) { return; } //We exited the app
 
-					handler.post(() -> thermalRenderer.renderTemperatures(inputSurface.surface,
-							settingsPalette.paletteMap,
-							temp,
-							Float.isNaN(overlayData.rangeMin) ? overlayData.mmac.min : overlayData.rangeMin,
-							Float.isNaN(overlayData.rangeMax) ? overlayData.mmac.max : overlayData.rangeMax,
-							getCorrectedMaxTempClipping(fi.settings.max_temp_clipping))
-					);
-					handler.post(handleFrameRunnable);
-
+					if (renderPending) {
+						coalescedFrameCount++;
+					} else {
+						renderPending = true;
+						handler.post(renderFrameRunnable);
+					}
 				}
 			}
 		};
+
+	private final Runnable renderFrameRunnable = new Runnable() {
+		@Override
+		public void run() {
+			long sequence;
+			float sensorMax;
+			synchronized (frameLock) {
+				if (latestMmac == null || inputSurface.surface == null) {
+					renderPending = false;
+					return;
+				}
+				if (renderTempBuffer.length != latestTempBuffer.length)
+					renderTempBuffer = new float[latestTempBuffer.length];
+				System.arraycopy(latestTempBuffer, 0, renderTempBuffer, 0,
+						latestTempBuffer.length);
+				copyFrameInfo(latestFrameInfo, renderOverlayData.fi);
+				renderOverlayData.temp = renderTempBuffer;
+				renderOverlayData.mmac = latestMmac;
+				renderOverlayData.rangeMin = overlayData.rangeMin;
+				renderOverlayData.rangeMax = overlayData.rangeMax;
+				renderOverlayData.rotate = overlayData.rotate;
+				renderOverlayData.mirror = overlayData.mirror;
+				renderOverlayData.rotate90 = overlayData.rotate90;
+				renderOverlayData.showMin = overlayData.showMin;
+				renderOverlayData.showMax = overlayData.showMax;
+				renderOverlayData.showCenter = overlayData.showCenter;
+				renderOverlayData.showPalette = overlayData.showPalette;
+				renderOverlayData.scale = overlayData.scale;
+				renderOverlayData.tempUnit = overlayData.tempUnit;
+				sequence = latestFrameSequence;
+				sensorMax = latestSensorMax;
+			}
+
+			float rangeMin = Float.isNaN(renderOverlayData.rangeMin) ?
+					renderOverlayData.mmac.min : renderOverlayData.rangeMin;
+			float rangeMax = Float.isNaN(renderOverlayData.rangeMax) ?
+					renderOverlayData.mmac.max : renderOverlayData.rangeMax;
+			thermalRenderer.renderTemperatures(inputSurface.surface,
+					settingsPalette.paletteMap, renderTempBuffer, rangeMin, rangeMax, sensorMax);
+
+			RenderTimings timings = handleFrame(renderOverlayData);
+			logRenderTimings(sequence, timings);
+		}
+	};
 
 	private void applyLocalCorrection(float[] temp) {
 		if (!applyLocalCorrection || localCorrection == 0.0f)
 			return;
 		for (int i = 0; i < temp.length; ++i)
 			temp[i] += localCorrection;
+	}
+
+	private static class RenderTimings {
+		long inputDrawNs;
+		long thruSwapNs;
+		long screenSwapNs;
+		long recordSwapNs;
+	}
+
+	private static double avgMs(long totalNs, long count) {
+		if (count <= 0)
+			return 0.0;
+		return totalNs / 1000000.0 / count;
+	}
+
+	private void copyFrameInfo(InfiCam.FrameInfo src, InfiCam.FrameInfo dst) {
+		dst.width = src.width;
+		dst.height = src.height;
+		dst.settings.range = src.settings.range;
+		dst.settings.max_temp_clipping = src.settings.max_temp_clipping;
+		dst.settings.correction = src.settings.correction;
+		dst.settings.temp_reflected = src.settings.temp_reflected;
+		dst.settings.temp_air = src.settings.temp_air;
+		dst.settings.humidity = src.settings.humidity;
+		dst.settings.emissivity = src.settings.emissivity;
+		dst.settings.distance = src.settings.distance;
+	}
+
+	private void logRenderTimings(long renderedSequence, RenderTimings timings) {
+		synchronized (frameLock) {
+			renderedFrameCount++;
+			renderPaletteTotalNs += thermalRenderer.lastPaletteNs;
+			renderLockCanvasTotalNs += thermalRenderer.lastLockCanvasNs;
+			renderUnlockCanvasTotalNs += thermalRenderer.lastUnlockCanvasNs;
+			renderInputDrawTotalNs += timings.inputDrawNs;
+			renderThruSwapTotalNs += timings.thruSwapNs;
+			if (timings.screenSwapNs > 0) {
+				renderScreenSwapTotalNs += timings.screenSwapNs;
+				renderScreenSwapCount++;
+			}
+			if (timings.recordSwapNs > 0) {
+				renderRecordSwapTotalNs += timings.recordSwapNs;
+				renderRecordSwapCount++;
+			}
+
+			long nowNs = System.nanoTime();
+			long elapsedNs = nowNs - renderStatsStartNs;
+			if (RENDER_TIMING_LOGS && elapsedNs >= 1000000000L) {
+				double seconds = elapsedNs / 1000000000.0;
+				Log.d("inficam", String.format(Locale.US,
+						"Render stats: incoming=%.1ffps rendered=%.1ffps coalesced=%d " +
+								"palette=%.2fms lockCanvas=%.2fms unlockCanvas=%.2fms " +
+								"inputDraw=%.2fms thruSwap=%.2fms screenSwap=%.2fms recordSwap=%.2fms",
+						incomingFrameCount / seconds,
+						renderedFrameCount / seconds,
+						coalescedFrameCount,
+						avgMs(renderPaletteTotalNs, renderedFrameCount),
+						avgMs(renderLockCanvasTotalNs, renderedFrameCount),
+						avgMs(renderUnlockCanvasTotalNs, renderedFrameCount),
+						avgMs(renderInputDrawTotalNs, renderedFrameCount),
+						avgMs(renderThruSwapTotalNs, renderedFrameCount),
+						avgMs(renderScreenSwapTotalNs, renderScreenSwapCount),
+						avgMs(renderRecordSwapTotalNs, renderRecordSwapCount)));
+				renderStatsStartNs = nowNs;
+				incomingFrameCount = 0;
+				renderedFrameCount = 0;
+				coalescedFrameCount = 0;
+				renderPaletteTotalNs = 0;
+				renderLockCanvasTotalNs = 0;
+				renderUnlockCanvasTotalNs = 0;
+				renderInputDrawTotalNs = 0;
+				renderThruSwapTotalNs = 0;
+				renderScreenSwapTotalNs = 0;
+				renderRecordSwapTotalNs = 0;
+				renderScreenSwapCount = 0;
+				renderRecordSwapCount = 0;
+			}
+
+			if (latestFrameSequence != renderedSequence && inputSurface.surface != null) {
+				handler.post(renderFrameRunnable);
+			} else {
+				renderPending = false;
+			}
+		}
 	}
 
 	private float getCorrectedMaxTempClipping(float maxTempClipping) {
@@ -518,7 +671,8 @@ public class MainActivity extends BaseActivity {
 	}
 
 
-	private void drawFrame(SurfaceMuxer.OutputSurface os, Overlay overlay, boolean swap) {
+	private long drawFrame(SurfaceMuxer.OutputSurface os, Overlay overlay, boolean swap,
+						   Overlay.Data data) {
 		getRect(rect, os.width, os.height);
 		os.clear(0, 0, 0, 1);
 		thruSurface.draw(
@@ -529,22 +683,23 @@ public class MainActivity extends BaseActivity {
 			rect.width(),
 			rect.height()
 		);
-		overlay.draw(overlayData, settingsPalette, rect);
+		overlay.draw(data, settingsPalette, rect);
 		overlay.surface.draw(os, SurfaceMuxer.DM_LINEAR);
 		// TODO draw normal video if needed
 		if (swap) {
 			os.setPresentationTime(inputSurface.surfaceTexture.getTimestamp());
+			long startNs = System.nanoTime();
 			os.swapBuffers();
+			return System.nanoTime() - startNs;
 		}
+		return 0;
 	}
 
-	/*
-	must be called ONLY when frameLock in locked
-	 */
-	private void handleFrame() {
+	private RenderTimings handleFrame(Overlay.Data data) {
+		RenderTimings timings = new RenderTimings();
 		if (disconnecting) {
 			/* Don't try stuff when disconnected. */
-			return;
+			return timings;
 		}
 
 		/* At this point we are certain the frame and the overlayData are matched up with
@@ -552,8 +707,12 @@ public class MainActivity extends BaseActivity {
 		 *   meaning what's in the SurfaceTexture buffers after the updateTexImage() calls
 		 *   surfaceMuxer should do.
 		 */
+		long startNs = System.nanoTime();
 		inputSurface.draw(thruSurface, SurfaceMuxer.DM_SHARPEN);
+		timings.inputDrawNs = System.nanoTime() - startNs;
+		startNs = System.nanoTime();
 		thruSurface.swapBuffers();
+		timings.thruSwapNs = System.nanoTime() - startNs;
 
 		if (takePic && imgCompressThread == null) {
 			messageView.showMessage(R.string.msg_permdenied_storage);
@@ -567,7 +726,7 @@ public class MainActivity extends BaseActivity {
 			SurfaceMuxer.OutputSurface outPicture =
 				new SurfaceMuxer.OutputSurface(surfaceMuxer, null, w, h);
 			overlayPicture.setSize(w, h);
-			drawFrame(outPicture, overlayPicture, false);
+			drawFrame(outPicture, overlayPicture, false, data);
 			imgCompressBitmap = outPicture.getBitmap();
 			outPicture.release();
 			imgCompressThread.cond.signal();
@@ -578,9 +737,12 @@ public class MainActivity extends BaseActivity {
 			buttonPhoto.setColorFilter(Color.RED);
 		}
 
-		if (outScreen != null) drawFrame(outScreen, overlayScreen, true);
-		if (outRecord != null) drawFrame(outRecord, overlayRecord, true);
+		if (outScreen != null)
+			timings.screenSwapNs = drawFrame(outScreen, overlayScreen, true, data);
+		if (outRecord != null)
+			timings.recordSwapNs = drawFrame(outRecord, overlayRecord, true, data);
 
+		return timings;
 	}
 
 	private void overTempLockout() {

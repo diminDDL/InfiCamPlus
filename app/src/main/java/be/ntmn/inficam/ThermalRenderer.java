@@ -16,6 +16,10 @@ import android.view.Surface;
 public class ThermalRenderer {
 
 	private final int[] canvasDrawBuffer; /* Used to draw the palettized frame into our cavas. */
+	private final Bitmap frameBitmap;
+	private final BitmapShader barberShader;
+	private final Matrix shaderMatrix = new Matrix();
+	private final Rect dstRect = new Rect();
 	private final int width;
 	private final int height;
 	private final int stripeWidth;
@@ -23,15 +27,20 @@ public class ThermalRenderer {
 	private final float speed;
 	private float phase = 0f; //animation X offset
 	private final Paint barberPaint = new Paint();
+	public long lastPaletteNs = 0;
+	public long lastLockCanvasNs = 0;
+	public long lastUnlockCanvasNs = 0;
 
 	ThermalRenderer(int width, int height){
 		this.width = width;
 		this.height = height;
 		canvasDrawBuffer = new int[width * height];
+		frameBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 
-		stripeWidth = max(width,height)/50;
+		stripeWidth = max(1, max(width,height)/50);
 		period = stripeWidth*2;
 		speed = stripeWidth /5.0f;
+		barberShader = buildBarberTile();
 	}
 
 
@@ -66,16 +75,14 @@ public class ThermalRenderer {
 	}
 
 	private void drawFrame(Canvas canvas, int viewWidth, int viewHeight) {
-		final BitmapShader barberShader = buildBarberTile(); //called only once
-
 		phase = (phase + speed) % period;
-		Matrix shaderMatrix = new Matrix();
 		shaderMatrix.setTranslate(phase, 0);
 		barberShader.setLocalMatrix(shaderMatrix);
 
 		//draw tbe tiles
 		barberPaint.setShader(barberShader);
-		canvas.drawRect(new Rect(0, 0, canvas.getWidth(), canvas.getHeight()), barberPaint);
+		dstRect.set(0, 0, canvas.getWidth(), canvas.getHeight());
+		canvas.drawRect(dstRect, barberPaint);
 		barberPaint.setShader(null); //important
 	}
 
@@ -106,18 +113,23 @@ public class ThermalRenderer {
 							float range_min,
 							float range_max,
 							float sensor_max){
+		long startNs = System.nanoTime();
 		applyPaletteMap(paletteMap,temp,range_min,range_max,sensor_max);
+		lastPaletteNs = System.nanoTime() - startNs;
 
+		startNs = System.nanoTime();
 		Canvas canvas = surface.lockCanvas(null);
+		lastLockCanvasNs = System.nanoTime() - startNs;
 		try {
 			drawFrame(canvas,canvas.getWidth(),canvas.getHeight());
-			Bitmap bitmap = Bitmap.createBitmap(canvasDrawBuffer, width, height, Bitmap.Config.ARGB_8888);
-			canvas.drawBitmap(bitmap, null, new Rect(0, 0, canvas.getWidth(), canvas.getHeight()), null);
-			bitmap.recycle();
+			frameBitmap.setPixels(canvasDrawBuffer, 0, width, 0, 0, width, height);
+			dstRect.set(0, 0, canvas.getWidth(), canvas.getHeight());
+			canvas.drawBitmap(frameBitmap, null, dstRect, null);
 		} finally {
+			startNs = System.nanoTime();
 			surface.unlockCanvasAndPost(canvas);
+			lastUnlockCanvasNs = System.nanoTime() - startNs;
 		}
 	}
 
 }
-
