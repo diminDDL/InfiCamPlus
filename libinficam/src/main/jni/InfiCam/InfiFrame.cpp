@@ -23,7 +23,7 @@ InfiFrame::~InfiFrame(){
 	gain_k_buffer = nullptr;
 	delete[] offset_b_buffer_accu;
 	offset_b_buffer_accu = nullptr;
-	delete offset_b_buffer;
+	delete[] offset_b_buffer;
 	offset_b_buffer = nullptr;
 }
 
