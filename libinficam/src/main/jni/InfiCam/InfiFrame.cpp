@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <cmath>
 #include <sys/types.h>
 
 
@@ -45,7 +46,7 @@ int InfiFrame::rangeToDeviceRange(const CameraTemperatureRange t) {
 }
 
 
-void InfiFrame::updateTable(const uint16_t * frame){
+bool InfiFrame::updateTable(const uint16_t * frame){
 	float floatFpaTmp;
 	float temperature_correction = cam_settings.temperature_correction;
 	float reflection_temperature = cam_settings.reflection_temperature;
@@ -53,41 +54,54 @@ void InfiFrame::updateTable(const uint16_t * frame){
 	float humidity = cam_settings.humidity;
 	float emissivity = cam_settings.emissivity;
 	uint16_t distance = cam_settings.distance;
+	float new_temperature_table[0x4000]{};
 	//technically, this function could update the cam_settings, but it's already done by the time this is called
-	thermometryT4Line(width,
-						stream_height,
-						temperature_table,
-						frame+(width*vision_height),
-						&floatFpaTmp,
-						&temperature_correction,
-						&reflection_temperature,
-						&air_temperature,
-						&humidity,
-						&emissivity,
-						&distance,
-						cam_settings.lens,
-						0.0f, // "shutter_fix", must be set manually but never used by the app, exists only for non-raw devices.
-						InfiFrame::rangeToDeviceRange(cam_settings.temperature_range),
-						cam_settings.use_raw_logic,
-						false);
+	if(!thermometryT4Line(width,
+						  stream_height,
+						  new_temperature_table,
+						  frame+(width*vision_height),
+						  &floatFpaTmp,
+						  &temperature_correction,
+						  &reflection_temperature,
+						  &air_temperature,
+						  &humidity,
+						  &emissivity,
+						  &distance,
+						  cam_settings.lens,
+						  0.0f, // "shutter_fix", must be set manually but never used by the app, exists only for non-raw devices.
+						  InfiFrame::rangeToDeviceRange(cam_settings.temperature_range),
+						  cam_settings.use_raw_logic,
+						  false)){
+		return false;
+	}
+	memcpy(temperature_table, new_temperature_table, sizeof(temperature_table));
 	cam_settings.max_temperature_clipping = temperature_table[0x3FFF];
+	return true;
 }
 
-void InfiFrame::calibrate_on_frame(const uint16_t * frame){
+bool InfiFrame::calibrate_on_frame(const uint16_t * frame){
+	if(!updateTable(frame)){
+		return false;
+	}
 	for(int i = 0 ; i < width*vision_height ; i++){
 		offset_b_buffer_accu[i] += frame[i];
 	}
 	offset_b_buffer_counter++;
-	updateTable(frame);
+	return true;
 }
 
 
 
-void InfiFrame::end_calibration(){
+bool InfiFrame::end_calibration(){
+	if(offset_b_buffer_counter <= 0){
+		LOGW("No valid calibration frames collected.\n");
+		return false;
+	}
 	for(int i = 0 ; i < width*vision_height ; i++){
 		offset_b_buffer[i] = (uint32_t)round((float)offset_b_buffer_accu[i]/(float)offset_b_buffer_counter);
 	}
 	destripe(offset_b_buffer);
+	return true;
 }
 
 void InfiFrame::frame_to_temp(const uint16_t * frame, float * temp) const {
@@ -144,7 +158,7 @@ void InfiFrame::updateSettings(const uint16_t *fourLinePara){
 		cam_settings.distance = fourLinePara[offset_cal + 0x89];
 	}
 
-void InfiFrame::thermometryT4Line(int width, int height,
+bool InfiFrame::thermometryT4Line(int width, int height,
 								  float *temperatureTable, //output, post-nuc sensor value to temperature table
 								  const uint16_t *fourLinePara, //input, pointer to last 4 lines of the frame
 								  float *floatFpaTmp, //output, sensor or shutter temp (not sure)
@@ -217,6 +231,11 @@ void InfiFrame::thermometryT4Line(int width, int height,
 	float kc = *(float *)(fourLinePara + offset_kc);
 
 	LOGD("a=%f b=%f ka=%f kb=%f kc=%f\n",a,b,ka,kb,kc);
+	if(!std::isfinite(a) || !std::isfinite(b) || !std::isfinite(ka) ||
+	   !std::isfinite(kb) || !std::isfinite(kc) || a == 0.0f){
+		LOGW("Invalid thermometry coefficients, skipping calibration table update.\n");
+		return false;
+	}
 
 
 	float float_shut_temp = (float)shut_temp / 10.0f + -273.15f;
@@ -268,7 +287,7 @@ void InfiFrame::thermometryT4Line(int width, int height,
 	LOGD("raw_offset_cal=%d\n",raw_offset_cal);
 
 
-	uint16_t adjusted_ref_pixel = ref_pixel - raw_offset_cal;
+	int adjusted_ref_pixel = (int)ref_pixel - raw_offset_cal;
 	float q_completethesquare = (b * b) / (a * a * 4.0f);
 	float r_completethesquare = b / (a + a);
 	float rad_factor = 1.0f / (*emiss * atmo_trans);
@@ -277,6 +296,12 @@ void InfiFrame::thermometryT4Line(int width, int height,
 	float gain = kc + kb * *floatFpaTmp + ka * *floatFpaTmp * *floatFpaTmp;
 
 	LOGD("adjusted_ref_pixel=%d gain=%f\n",adjusted_ref_pixel,gain);
+	if(!std::isfinite(*floatFpaTmp) || !std::isfinite(rad_factor) ||
+	   !std::isfinite(rad_offset) || !std::isfinite(signal_shutter_temp) ||
+	   !std::isfinite(gain)){
+		LOGW("Invalid thermometry table inputs, skipping calibration table update.\n");
+		return false;
+	}
 
 
 	for(int i = 0 ; i <	 0x4000 ; i++){
@@ -296,14 +321,16 @@ void InfiFrame::thermometryT4Line(int width, int height,
 		temperatureTable[i] = calibrate_correct + t_rad + dist_correction;
 
 		if(std::isnan(temperatureTable[i])){
-			__android_log_assert(nullptr, "libinficam","We got a nan %f at %d with v=%f t_raw=%f t_rad=%f, dist_correction=%f\n",temperatureTable[i],i,v,t_raw,t_raw,dist_correction);
+			LOGW("Invalid thermometry table value at %d with v=%f t_raw=%f t_rad=%f, dist_correction=%f\n",i,v,t_raw,t_rad,dist_correction);
+			return false;
 		}
 		if(i > 0 && temperatureTable[i-1] > temperatureTable[i]){ //temperature should increase when signal increases
 			//TODO: Investigate if we need to send this to the app or not. The only way this can happens is a bug or an incompatible camera model.
-			__android_log_assert(nullptr, LOG_TAG,
-								 "Bad sensor temperature table calculation, %f should be greater than %f",	temperatureTable[i], temperatureTable[i-1]);
+			LOGW("Bad sensor temperature table calculation, %f should be greater than %f\n", temperatureTable[i], temperatureTable[i-1]);
+			return false;
 		}
 	}
+	return true;
 }
 void InfiFrame::ComparePN(const int width,
 						  const uint16_t *fourLinePara,
@@ -545,4 +572,3 @@ void InfiFrame::fix_dead_pixels(uint16_t * frame) const{
 		}
 	}
 }
-

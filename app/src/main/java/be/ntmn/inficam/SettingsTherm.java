@@ -6,6 +6,9 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import androidx.annotation.Nullable;
 
 import java.util.Arrays;
@@ -28,6 +31,10 @@ import java.util.Arrays;
 public class SettingsTherm extends Settings {
 
 	public float[][] thermal_ranges;
+	private boolean deferCameraUpdates = false;
+	private boolean hasDeferredCameraUpdates = false;
+	private boolean displayOnlyChange = false;
+	private boolean applyLocalCorrection = true;
 
 	public SettingsTherm(Context context) {
 		super(context, "PREFS_THERM", R.string.dialog_set_therm);
@@ -57,6 +64,41 @@ public class SettingsTherm extends Settings {
 		return thermal_ranges[((SettingRadioDynamic)getSetting("range")).get()];
 	}
 
+	private boolean shouldApplyCameraUpdate() {
+		if (deferCameraUpdates) {
+			hasDeferredCameraUpdates = true;
+			return false;
+		}
+		return true;
+	}
+
+	public void beginDeferredCameraUpdates() {
+		deferCameraUpdates = true;
+		hasDeferredCameraUpdates = false;
+	}
+
+	public boolean endDeferredCameraUpdates() {
+		if (!deferCameraUpdates)
+			return false;
+		deferCameraUpdates = false;
+		if (!hasDeferredCameraUpdates)
+			return false;
+		applyCameraSettings();
+		hasDeferredCameraUpdates = false;
+		return true;
+	}
+
+	private void applyCameraSettings() {
+		act.infiCam.setEmissivity(((SettingSliderFloat)getSetting("emissivity")).get());
+		act.infiCam.setTempReflected(((SettingSliderTemp)getSetting("temp_reflected")).get());
+		act.infiCam.setTempAir(((SettingSliderTemp)getSetting("temp_air")).get());
+		act.infiCam.setHumidity(((SettingSliderInt)getSetting("humidity")).get() / 100.0f);
+		act.infiCam.setDistance((short)(int)((SettingSliderInt)getSetting("distance")).get());
+		if (!applyLocalCorrection)
+			act.infiCam.setCorrection(((SettingSliderTemp)getSetting("correction")).get());
+		act.infiCam.setRange(((SettingRadioDynamic)getSetting("range")).get());
+	}
+
 	//Triggers when the settings have been taken into account by the camera
 	public void setSettings(
 		float emissivity,
@@ -67,6 +109,8 @@ public class SettingsTherm extends Settings {
 		float correction,
 		int range
 	) {
+		if (deferCameraUpdates)
+			return;
 		if (((SettingSliderFloat)getSetting("emissivity")).get() != emissivity) {
 			Log.d("inficam","emissivity change "+((SettingSliderFloat)getSetting("emissivity")).get() +" to "+ emissivity);
 			((SettingSliderFloat)getSetting("emissivity")).setTo(emissivity);
@@ -90,7 +134,7 @@ public class SettingsTherm extends Settings {
 			Log.d("inficam","distance change "+((SettingSliderInt)getSetting("distance")).get() +" to "+ distance);
 			((SettingSliderInt)getSetting("distance")).setTo(distance);
 		}
-		if (((SettingSliderTemp)getSetting("correction")).get() != correction) {
+		if (!applyLocalCorrection && ((SettingSliderTemp)getSetting("correction")).get() != correction) {
 			Log.d("inficam","correction change "+((SettingSliderTemp)getSetting("correction")).get() +" to "+ correction);
 			Log.d("inficam","correction delta "+(((SettingSliderTemp)getSetting("correction")).get() - correction));
 			((SettingSliderTemp)getSetting("correction")).setTo(correction);
@@ -104,6 +148,7 @@ public class SettingsTherm extends Settings {
 	@SuppressLint("DefaultLocale")
 	public void init(MainActivity act, float[][] p_thermal_ranges) {
 		thermal_ranges = p_thermal_ranges;
+		final SettingSliderTemp[] correctionSetting = new SettingSliderTemp[1];
 		String[] range_text = Arrays.stream(thermal_ranges)
 			.map(
 				x -> String.format("%.0fC - %.0fC (%.0fF - %.0fF)", x[0], x[1], //TODO: fix IDE complaining
@@ -124,7 +169,8 @@ public class SettingsTherm extends Settings {
 			) {
 				@Override
 				void onSet(float f) {
-					act.infiCam.setEmissivity(f);
+					if (shouldApplyCameraUpdate())
+						act.infiCam.setEmissivity(f);
 				}
 			},
 			new SettingSliderTemp(
@@ -136,7 +182,8 @@ public class SettingsTherm extends Settings {
 			) {
 				@Override
 				void onSet(float f) {
-					act.infiCam.setTempReflected(f);
+					if (shouldApplyCameraUpdate())
+						act.infiCam.setTempReflected(f);
 				}
 			},
 			new SettingSliderTemp(
@@ -148,7 +195,8 @@ public class SettingsTherm extends Settings {
 			) {
 				@Override
 				void onSet(float f) {
-					act.infiCam.setTempAir(f);
+					if (shouldApplyCameraUpdate())
+						act.infiCam.setTempAir(f);
 				}
 			},
 			new SettingSliderInt(
@@ -161,7 +209,8 @@ public class SettingsTherm extends Settings {
 			) {
 				@Override
 				void onSet(int i) {
-					act.infiCam.setHumidity((float) i/100);
+					if (shouldApplyCameraUpdate())
+						act.infiCam.setHumidity((float) i/100);
 				}
 			},
 			new SettingSliderInt(
@@ -174,10 +223,11 @@ public class SettingsTherm extends Settings {
 			) {
 				@Override
 				void onSet(int i) {
-					act.infiCam.setDistance((short) i);
+					if (shouldApplyCameraUpdate())
+						act.infiCam.setDistance((short) i);
 				}
 			},
-			new SettingSliderTemp(
+			correctionSetting[0] = new SettingSliderTemp(
 				"correction",
 				R.string.set_correction,
 				0,
@@ -185,14 +235,80 @@ public class SettingsTherm extends Settings {
 				1000
 			) {
 				@Override
-				void onSet(float f) {
-					act.infiCam.setCorrection(f);
+				void setText(int i) {
+					title.setText(getContext().getString(res,
+							Util.formatTemp((float) i / div, Util.TEMPUNIT_CELSIUS)));
 				}
+
+				@Override
+				void onSet(float f) {
+					act.setLocalCorrection(f);
+					if (applyLocalCorrection) {
+						displayOnlyChange = true;
+					} else if (shouldApplyCameraUpdate()) {
+						act.infiCam.setCorrection(f);
+					}
+				}
+			},
+			new SettingBool("apply_correction_local", R.string.set_apply_correction_local, true) {
+				@Override
+				void onSet(boolean value) {
+					applyLocalCorrection = value;
+					act.setApplyLocalCorrection(value);
+					act.setLocalCorrection(correctionSetting[0].get());
+					displayOnlyChange = true;
+					if (!value && shouldApplyCameraUpdate())
+						act.infiCam.setCorrection(correctionSetting[0].get());
+				}
+			},
+			new Setting(null, R.string.set_correction) {
+				@Override
+				void init(Settings set) {
+					LinearLayout buttons = new LinearLayout(getContext());
+					buttons.setOrientation(LinearLayout.HORIZONTAL);
+					buttons.setLayoutParams(new LayoutParams(
+							ViewGroup.LayoutParams.MATCH_PARENT,
+							ViewGroup.LayoutParams.WRAP_CONTENT));
+
+					Button minus = new Button(getContext());
+					minus.setText(R.string.set_correction_minus);
+					minus.setLayoutParams(new LinearLayout.LayoutParams(
+							0,
+							ViewGroup.LayoutParams.WRAP_CONTENT,
+							1.0f));
+					minus.setOnClickListener(view -> adjustCorrection(-0.5f));
+					buttons.addView(minus);
+
+					Button plus = new Button(getContext());
+					plus.setText(R.string.set_correction_plus);
+					plus.setLayoutParams(new LinearLayout.LayoutParams(
+							0,
+							ViewGroup.LayoutParams.WRAP_CONTENT,
+							1.0f));
+					plus.setOnClickListener(view -> adjustCorrection(0.5f));
+					buttons.addView(plus);
+
+					set.addView(buttons);
+				}
+
+				private void adjustCorrection(float delta) {
+					float next = Math.max(-100.0f,
+							Math.min(100.0f, correctionSetting[0].get() + delta));
+					correctionSetting[0].setTo(next);
+					SettingsTherm.this.handleChange();
+				}
+
+				@Override
+				void load() { /* Empty. */ }
+
+				@Override
+				void setDefault() { /* Empty. */ }
 			},
 			new SettingRadioDynamic("range", R.string.set_range, 0, range_text) {
 				@Override
 				void onSet(int i) {
-					act.infiCam.setRange(i);
+					if (shouldApplyCameraUpdate())
+						act.infiCam.setRange(i);
 				}
 			},
 			settingDefaults,
@@ -201,6 +317,12 @@ public class SettingsTherm extends Settings {
 	}
 
 	public void handleChange(){
-		act.calibrate(false);
+		if (displayOnlyChange) {
+			displayOnlyChange = false;
+		} else if (deferCameraUpdates) {
+			hasDeferredCameraUpdates = true;
+		} else {
+			act.calibrate(false);
+		}
 	}
 }

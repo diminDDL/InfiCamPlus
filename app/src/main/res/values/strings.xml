@@ -3,7 +3,7 @@
 
 	<string name="msg_disconnected">Disconnected.</string>
 	<string name="msg_connected">%s connected.</string>
-	<string name="msg_calibrating">Calibrating…</string>
+	<string name="msg_calibrating">Calibrating</string>
 	<string name="msg_connect_failed">Failed to connect.</string>
 	<string name="msg_captured">Captured.</string>
 	<string name="msg_permdenied_cam">Camera permission denied.</string>
@@ -70,6 +70,9 @@
 	<string name="set_humidity">Humidity (%d%%)</string>
 	<string name="set_distance">Distance (%dm)</string>
 	<string name="set_correction">Correction (%s)</string>
+	<string name="set_apply_correction_local">Apply correction in app</string>
+	<string name="set_correction_minus">-0.5</string>
+	<string name="set_correction_plus">+0.5</string>
 	<string name="set_range">Range</string>
 	<string name="set_range_120">–20 – 120°C (–4 – 248°F)</string>
 	<string name="set_range_400">120 – 400°C (248 – 752°F)</string>

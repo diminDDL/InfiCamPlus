@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -60,8 +61,8 @@ public class MainActivity extends BaseActivity {
 	private final Overlay.Data overlayData = new Overlay.Data();
 	private int iMode;
 
-	private UsbDevice usb_device;
-	private UsbDeviceConnection usbConnection;
+	private volatile UsbDevice usb_device;
+	private volatile UsbDeviceConnection usbConnection;
 	public final Object frameLock = new Object();
 	private int picWidth = 1024, picHeight = 768;
 	private int vidWidth = 1024, vidHeight = 768;
@@ -74,6 +75,7 @@ public class MainActivity extends BaseActivity {
 	private CameraView cameraView;
 	private MessageView messageView;
 	private ViewGroup dialogBackground;
+	private Settings activeSettingsDialog;
 	private SettingsMain settings;
 	private SettingsTherm settingsTherm;
 	private SettingsMeasure settingsMeasure;
@@ -85,9 +87,29 @@ public class MainActivity extends BaseActivity {
 	private boolean rotate = false;
 	private int orientation = 0;
 	private boolean swapControls = false;
+	private volatile boolean applyLocalCorrection = true;
+	private volatile float localCorrection = 0.0f;
+	private volatile int connectGeneration = 0;
+	private volatile boolean suppressCalibrationRequest = false;
+	private boolean pendingCalibrationAfterThermDialog = false;
+	private boolean calibrationUiActive = false;
+	private int calibrationMessageStep = 0;
 	private float scale = 1.0f;
 	private int imgType;
 	private int imgQuality;
+
+	private final Runnable calibrationMessageRunnable = new Runnable() {
+		@Override
+		public void run() {
+			if (!calibrationUiActive)
+				return;
+			calibrationMessageStep = (calibrationMessageStep + 1) % 3;
+			String dots = calibrationMessageStep == 0 ? "." :
+					calibrationMessageStep == 1 ? ".." : "...";
+			messageView.setMessage(getString(R.string.msg_calibrating) + dots);
+			handler.postDelayed(this, 400);
+		}
+	};
 
 	private Bitmap imgCompressBitmap;
 
@@ -187,32 +209,9 @@ public class MainActivity extends BaseActivity {
 							usb_device = dev;
 							usbConnection = conn;
 							disconnecting = false;
-							try {
-								infiCam.connect(conn.getFileDescriptor());
-								/* Size is only important for cubic interpolation. */
-								inputSurface.setSize(infiCam.getWidth(),infiCam.getHeight());
-								thruSurface.setSize(infiCam.getWidth(),infiCam.getHeight());
-
-								float[][] ranges = infiCam.getRanges();
-								settingsTherm.init(MainActivity.this, ranges);
-
-								thermalRenderer = new ThermalRenderer(infiCam.getWidth(),infiCam.getHeight());
-
-								infiCam.startStream();
-
-								settingsTherm.load(); //we load AFTER the stream started because we need to communicate with the camera
-								calibrate(true);
-
-								messageView.clearMessage();
-								messageView.showMessage(getString(R.string.msg_connected,
-										dev.getProductName()));
-								/* We are ready to accept frames */
-								infiCam.setFrameCallback(frameCallback);
-							} catch (Exception e) {
-								disconnect();
-
-								messageView.showMessage(e.getMessage());
-							}
+							int token = ++connectGeneration;
+							setCalibrationUi(true);
+							startCameraConnectThread(dev, conn, token);
 						}
 
 					@Override
@@ -289,6 +288,7 @@ public class MainActivity extends BaseActivity {
 			public void onFrame(InfiCam.FrameInfo fi, float[] temp) {
 				/* Note this is called from another thread. */
 				synchronized (frameLock) {
+					applyLocalCorrection(temp);
 					overlayData.fi = fi;
 					overlayData.temp = temp;
 
@@ -319,13 +319,26 @@ public class MainActivity extends BaseActivity {
 							temp,
 							Float.isNaN(overlayData.rangeMin) ? overlayData.mmac.min : overlayData.rangeMin,
 							Float.isNaN(overlayData.rangeMax) ? overlayData.mmac.max : overlayData.rangeMax,
-							fi.settings.max_temp_clipping)
+							getCorrectedMaxTempClipping(fi.settings.max_temp_clipping))
 					);
 					handler.post(handleFrameRunnable);
 
 				}
 			}
 		};
+
+	private void applyLocalCorrection(float[] temp) {
+		if (!applyLocalCorrection || localCorrection == 0.0f)
+			return;
+		for (int i = 0; i < temp.length; ++i)
+			temp[i] += localCorrection;
+	}
+
+	private float getCorrectedMaxTempClipping(float maxTempClipping) {
+		if (!applyLocalCorrection)
+			return maxTempClipping;
+		return maxTempClipping + localCorrection;
+	}
 
 	private final InfiCam.SettingsCallback settingsCallback =
 		new InfiCam.SettingsCallback() {
@@ -349,6 +362,142 @@ public class MainActivity extends BaseActivity {
 				}
 			}
 		};
+
+	private boolean isCurrentConnection(int token, UsbDeviceConnection conn) {
+		return connectGeneration == token && usbConnection == conn && !disconnecting;
+	}
+
+	private void runOnUiThreadSync(Runnable runnable) throws InterruptedException {
+		CountDownLatch latch = new CountDownLatch(1);
+		RuntimeException[] exception = new RuntimeException[1];
+		handler.post(() -> {
+			try {
+				runnable.run();
+			} catch (RuntimeException e) {
+				exception[0] = e;
+			} finally {
+				latch.countDown();
+			}
+		});
+		latch.await();
+		if (exception[0] != null)
+			throw exception[0];
+	}
+
+	private void startCameraConnectThread(UsbDevice dev, UsbDeviceConnection conn, int token) {
+		new Thread(() -> {
+			try {
+				infiCam.connect(conn.getFileDescriptor());
+				int width = infiCam.getWidth();
+				int height = infiCam.getHeight();
+				float[][] ranges = infiCam.getRanges();
+
+				runOnUiThreadSync(() -> {
+					if (!isCurrentConnection(token, conn))
+						return;
+					/* Size is only important for cubic interpolation. */
+					inputSurface.setSize(width, height);
+					thruSurface.setSize(width, height);
+					settingsTherm.init(MainActivity.this, ranges);
+					thermalRenderer = new ThermalRenderer(width, height);
+				});
+				if (!isCurrentConnection(token, conn))
+					return;
+
+				infiCam.startStream();
+				if (!isCurrentConnection(token, conn))
+					return;
+
+				suppressCalibrationRequest = true;
+				try {
+					runOnUiThreadSync(() -> {
+						if (isCurrentConnection(token, conn))
+							settingsTherm.load(); //needs stream to communicate with the camera
+					});
+				} finally {
+					suppressCalibrationRequest = false;
+				}
+				if (!isCurrentConnection(token, conn))
+					return;
+
+				infiCam.calibrateBlocking();
+				handler.post(() -> {
+					if (!isCurrentConnection(token, conn))
+						return;
+					setCalibrationUi(false);
+					messageView.clearMessage();
+					messageView.showMessage(getString(R.string.msg_connected,
+							dev.getProductName()));
+					/* We are ready to accept frames */
+					infiCam.setFrameCallback(frameCallback);
+				});
+			} catch (Exception e) {
+				String message = e.getMessage() == null ? getString(R.string.msg_connect_failed) :
+						e.getMessage();
+				handler.post(() -> {
+					if (!isCurrentConnection(token, conn))
+						return;
+					disconnect();
+					messageView.showMessage(message);
+				});
+			}
+		}, "InfiCam connect").start();
+	}
+
+	private void setViewTreeEnabled(View view, boolean enabled) {
+		if (view == null)
+			return;
+		view.setEnabled(enabled);
+		if (view instanceof ViewGroup) {
+			ViewGroup group = (ViewGroup) view;
+			for (int i = 0; i < group.getChildCount(); ++i)
+				setViewTreeEnabled(group.getChildAt(i), enabled);
+		}
+	}
+
+	private void setCalibrationUi(boolean active) {
+		if (calibrationUiActive == active)
+			return;
+		calibrationUiActive = active;
+		handler.removeCallbacks(calibrationMessageRunnable);
+
+		setViewTreeEnabled(buttonsLeft, !active);
+		setViewTreeEnabled(buttonsRight, !active);
+		setViewTreeEnabled(rangeSlider, !active);
+		setViewTreeEnabled(dialogBackground, !active);
+		if (cameraView != null)
+			cameraView.setEnabled(!active);
+		if (dialogBackground != null && active)
+			hideSettingsDialog();
+		if (buttonsLeft != null)
+			buttonsLeft.setAlpha(active ? 0.35f : 1.0f);
+		if (buttonsRight != null)
+			buttonsRight.setAlpha(active ? 0.35f : 1.0f);
+		if (rangeSlider != null)
+			rangeSlider.setAlpha(active ? 0.35f : 1.0f);
+
+		if (active) {
+			calibrationMessageStep = 2;
+			calibrationMessageRunnable.run();
+		} else if (messageView != null) {
+			messageView.clearMessage();
+		}
+	}
+
+	private void waitForCalibrationDone() {
+		new Thread(() -> {
+			try {
+				while (infiCam.isCalibrating())
+					Thread.sleep(50);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+			handler.post(() -> {
+				if (!infiCam.isCalibrating())
+					setCalibrationUi(false);
+			});
+		}, "InfiCam calibration wait").start();
+	}
 
 	private void getRect(Rect r, int w, int h) { /* Git rekt! */
 		int sw = w, sh = h, iw = infiCam.getWidth(), ih = infiCam.getHeight();
@@ -598,7 +747,7 @@ public class MainActivity extends BaseActivity {
 		buttonVideo.setOnClickListener(view -> toggleRecording());
 
 		dialogBackground = findViewById(R.id.dialogBackground);
-		dialogBackground.setOnClickListener(view -> dialogBackground.setVisibility(View.GONE));
+		dialogBackground.setOnClickListener(view -> hideSettingsDialog());
 		settings = findViewById(R.id.settings);
 		settings.init(this);
 		settingsTherm = findViewById(R.id.settingsTherm); //This one has to be initialized later when we know the camera model
@@ -708,7 +857,7 @@ public class MainActivity extends BaseActivity {
 	@Override
 	public void onBackPressed() {
 		if (dialogBackground.getVisibility() == View.VISIBLE)
-			dialogBackground.setVisibility(View.GONE);
+			hideSettingsDialog();
 		else super.onBackPressed();
 	}
 
@@ -801,17 +950,48 @@ public class MainActivity extends BaseActivity {
 		}
 	}
 
+	private void hideSettingsDialog() {
+		boolean wasThermDialog = activeSettingsDialog == settingsTherm;
+		activeSettingsDialog = null;
+		dialogBackground.setVisibility(View.GONE);
+		boolean changedThermSettings = wasThermDialog && settingsTherm.endDeferredCameraUpdates();
+		boolean pendingNativeCalibration = wasThermDialog &&
+				infiCam.setCalibrationSuppressed(false);
+		if (changedThermSettings || pendingCalibrationAfterThermDialog ||
+				pendingNativeCalibration) {
+			pendingCalibrationAfterThermDialog = false;
+			calibrate(false);
+		}
+	}
+
 	private void showSettings(Settings settings) {
+		if (activeSettingsDialog == settingsTherm && activeSettingsDialog != settings) {
+			activeSettingsDialog = null;
+			boolean changedThermSettings = settingsTherm.endDeferredCameraUpdates();
+			boolean pendingNativeCalibration = infiCam.setCalibrationSuppressed(false);
+			if (changedThermSettings || pendingCalibrationAfterThermDialog ||
+					pendingNativeCalibration) {
+				pendingCalibrationAfterThermDialog = false;
+				calibrate(false);
+			}
+		}
 		FrameLayout dialogs = dialogBackground.findViewById(R.id.dialogs);
 		for (int i = 0; i < dialogs.getChildCount(); ++i)
 			dialogs.getChildAt(i).setVisibility(View.GONE);
 		settings.setVisibility(View.VISIBLE);
+		activeSettingsDialog = settings;
+		if (settings == settingsTherm) {
+			settingsTherm.beginDeferredCameraUpdates();
+			infiCam.setCalibrationSuppressed(true);
+		}
 		dialogBackground.setVisibility(View.VISIBLE);
 		TextView title = findViewById(R.id.dialogTitle);
 		title.setText(settings.getName());
 	}
 
 	private void disconnect() {
+		connectGeneration++;
+		setCalibrationUi(false);
 		stopRecording();
 		infiCam.setFrameCallback(null); //disable frames coming in
 		disconnecting = true;
@@ -908,6 +1088,14 @@ public class MainActivity extends BaseActivity {
 		updateOrientation();
 	}
 
+	public void setApplyLocalCorrection(boolean value) {
+		applyLocalCorrection = value;
+	}
+
+	public void setLocalCorrection(float value) {
+		localCorrection = value;
+	}
+
 	public void setShowBatLevel(boolean value) {
 		BatteryLevel batLevel = findViewById(R.id.batLevel);
 		batLevel.setVisibility(value ? View.VISIBLE : View.GONE);
@@ -994,7 +1182,15 @@ public class MainActivity extends BaseActivity {
 		if(blocking){
 			infiCam.calibrateBlocking();
 		} else {
+			if (suppressCalibrationRequest)
+				return;
+			if (activeSettingsDialog == settingsTherm) {
+				pendingCalibrationAfterThermDialog = true;
+				return;
+			}
+			setCalibrationUi(true);
 			infiCam.calibrate();
+			waitForCalibrationDone();
 		}
 	}
 }

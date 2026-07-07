@@ -24,8 +24,8 @@ public:
 	 *   it is not a very fast function.
 	 */
 	void start_calibration();
-	void calibrate_on_frame(const uint16_t * frame);
-	void end_calibration();
+	bool calibrate_on_frame(const uint16_t * frame);
+	bool end_calibration();
 
 	//for raw sensors
 	void apply_calibration(const uint16_t * source_frame, uint16_t * calibrated_frame); //raw only
@@ -64,7 +64,7 @@ private:
 	float temperature_table[0x4000]{};
 
 	static int rangeToDeviceRange(CameraTemperatureRange t);
-	void updateTable(const uint16_t * frame);
+	bool updateTable(const uint16_t * frame);
 
 	void destripe_standard(uint16_t * frame) const;
 #if defined(__aarch64__) || defined(__arm__)
@@ -72,7 +72,7 @@ private:
 #endif
 
 	/* Create the conversion table, also reads the settings from the camera. Perfect re-creation of the official function (but with float calculations). Multiple very similar functions were merged into one. The mess is expected. */
-	static void thermometryT4Line(int width, int height,
+	static bool thermometryT4Line(int width, int height,
 						   float *temperatureTable, //output, post-nuc sensor value to temperature table
 						   const uint16_t *fourLinePara, //input, pointer to last 4 lines of the frame
 						   float *floatFpaTmp, //output, sensor or shutter temp (not sure)

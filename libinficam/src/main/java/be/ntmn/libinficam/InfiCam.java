@@ -154,6 +154,8 @@ public class InfiCam {
 
 	public native void calibrate();
 	public native void calibrateBlocking();
+	public native boolean isCalibrating();
+	public native boolean setCalibrationSuppressed(boolean suppress);
 
 	public native void setAutoShutterSettings(boolean enable, int interval_min, int interval_max);
 }

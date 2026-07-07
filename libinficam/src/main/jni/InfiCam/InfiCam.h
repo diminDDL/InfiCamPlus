@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include <sys/types.h>
 #include <chrono>
+#include <atomic>
 
 using steady_clock = std::chrono::steady_clock;
 
@@ -61,7 +62,10 @@ private:
 	steady_clock::time_point settle_start_time; //time since last upsetting event (startup, range change)
 	uint16_t* packet_reconstruction_buffer = nullptr; //temporary, only used for raw sensor
 	bool is_ready = false; //is camera streaming, initialized and ready to accept commands
-	bool is_calibrating = false; //is in the process of calibrating
+	std::atomic_bool is_calibrating = false; //is in the process of calibrating
+	std::atomic_bool is_shutter_calibrating = false; //manual/auto shutter calibration is running
+	std::atomic_bool suppress_calibration = false; //temporarily delay calibration requests
+	std::atomic_bool suppressed_calibration_pending = false;
 
 	//synchronisation
 	pthread_mutex_t command_mutex{};
@@ -105,6 +109,8 @@ public:
 
 
 	void calibrate();
+	bool isCalibrating();
+	bool setCalibrationSuppressed(bool suppress);
 	void lock_shutter();
 	void unlock_shutter();
 

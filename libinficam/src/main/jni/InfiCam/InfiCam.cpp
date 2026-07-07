@@ -85,17 +85,22 @@ int InfiCam::stream_start(frame_callback_t *cb) {
 		dev.stream_stop();
 		return 1;
 	}
+	is_ready = true;
 
 	Utils::sleep(300); //from official implementation
 
-	pthread_mutex_lock(&command_mutex);
 	if(cam_settings.use_raw_logic){
+		is_calibrating = true;
 		LOGD("Sending sensor calibration download request.\n");
+		pthread_mutex_lock(&command_mutex);
 		dev.set_zoom_abs(CMD_DOWNLOAD_CAL);
+		pthread_mutex_unlock(&command_mutex);
 	}
 
 	LOGD("Sending temp mode command\n");
+	pthread_mutex_lock(&command_mutex);
 	dev.set_zoom_abs(CMD_MODE_TEMP);
+	pthread_mutex_unlock(&command_mutex);
 
 	//If the calibration isn't fully loaded after a while, try again from zero. Modified from the official implementation.
 	if(cam_settings.use_raw_logic){
@@ -104,7 +109,8 @@ int InfiCam::stream_start(frame_callback_t *cb) {
 		while(infiframe->gain_k_line_counter != infiframe->vision_height){
 			if(attempts > 3){
 				dev.stream_stop();
-				pthread_mutex_unlock(&command_mutex);
+				is_ready = false;
+				is_calibrating = false;
 				return 2;
 			}
 			Utils::sleep(100);
@@ -112,25 +118,30 @@ int InfiCam::stream_start(frame_callback_t *cb) {
 			if(elapsed > 5000){//5000ms (7*25 lines per sec, should be plenty of times)
 				LOGW("Timeout. Sending sensor calibration download request again.\n");
 				infiframe->gain_k_line_counter = 0;
+				pthread_mutex_lock(&command_mutex);
 				dev.set_zoom_abs(CMD_DOWNLOAD_CAL);
+				pthread_mutex_unlock(&command_mutex);
 				download_start = steady_clock::now();
 				attempts += 1;
 			}
 		}
+		is_calibrating = false;
 	}
-	pthread_mutex_unlock(&command_mutex);
 
 	settle_start_time = steady_clock::now();
 	refresh_auto_shut_interval();
 
 	LOGD("Stream started successfully.\n");
-	is_ready = true;
 	return 0;
 }
 
 void InfiCam::stream_stop() {
 	if(!is_ready) { return; } //not running
 	is_ready = false;
+	is_calibrating = false;
+	is_shutter_calibrating = false;
+	suppress_calibration = false;
+	suppressed_calibration_pending = false;
 	dev.stream_stop();
 }
 
@@ -163,7 +174,13 @@ void * InfiCam::shutter_thread_func(void * arg){
 
 void InfiCam::calibrate(){
 	if(!is_ready) { return; }
+	if(suppress_calibration.load()){
+		suppressed_calibration_pending = true;
+		return;
+	}
+	suppressed_calibration_pending = false;
 	is_calibrating = true;
+	is_shutter_calibrating = true;
 	pthread_mutex_lock(&shutter_mutex);
 	pthread_cond_signal(&shutter_request);
 	pthread_mutex_unlock(&shutter_mutex);
@@ -171,7 +188,17 @@ void InfiCam::calibrate(){
 	infiframe->start_calibration();
 }
 
+bool InfiCam::isCalibrating(){
+	return is_calibrating.load();
+}
 
+bool InfiCam::setCalibrationSuppressed(bool suppress){
+	bool was_suppressed = suppress_calibration.exchange(suppress);
+	if(!suppress && was_suppressed && suppressed_calibration_pending.exchange(false)){
+		return true;
+	}
+	return false;
+}
 
 void InfiCam::lock_shutter(){
 	if(!is_ready) { return; }
@@ -263,11 +290,16 @@ void InfiCam::uvc_frame_callback(uvc_frame_t *frame, void *user_ptr){
 	}
 
 
-	if(t->is_calibrating){ //calibration result is not used on non-raw sensors
+	if(t->is_shutter_calibrating.load()){ //calibration result is not used on non-raw sensors
 		int ms_since_shutter = Utils::ms_since(t->calibration_shutter_time);
 		if(ms_since_shutter >= 800){ //Shutter is reopening
+			if(!t->infiframe->end_calibration()){
+				LOGD("Calibration table was invalid. Restarting calibration.\n");
+				t->calibrate();
+				return;
+			}
 			LOGI("Calibration complete\n");
-			t->infiframe->end_calibration();
+			t->is_shutter_calibrating = false;
 			t->is_calibrating = false;
 			//tell anyone waiting that cal is done
 			pthread_mutex_lock(&t->cal_mutex);
@@ -282,7 +314,10 @@ void InfiCam::uvc_frame_callback(uvc_frame_t *frame, void *user_ptr){
 			CameraSettings ref_cam_settings = t->cam_settings;
 
 			//we update table on every frame during calibration. Simpler to keep code clean that way. Also handles frame drops better by not depending on end_calibration being on time.
-			t->infiframe->calibrate_on_frame(final_frame); //For non-raw, we receive the new settings from the camera during the table update.
+			if(!t->infiframe->calibrate_on_frame(final_frame)){ //For non-raw, we receive the new settings from the camera during the table update.
+				LOGD("Skipping invalid calibration frame.\n");
+				return;
+			}
 
 			if(ref_cam_settings != t->cam_settings){ // Signal the app that the camera has new settings. (Only happens on non-raw)
 				t->settings_callback(t->inficam_jni, t->cam_settings);

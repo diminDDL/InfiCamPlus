@@ -316,6 +316,7 @@ public abstract class Settings extends LinearLayout {
 		}
 
 		void setTo(int value) {
+			this.value = value;
 			slider.setProgress(value);
 			setText(value);
 			onSet(value);

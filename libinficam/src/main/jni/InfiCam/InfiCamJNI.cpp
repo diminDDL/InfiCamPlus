@@ -458,8 +458,20 @@ extern "C" {
 		InfiCamJNI *t = getObject(env, self);
 		pthread_mutex_lock(&t->cam.cal_mutex);
 		t->cam.calibrate();
-		pthread_cond_wait(&t->cam.cal_request, &t->cam.cal_mutex);
+		while(t->cam.isCalibrating()){
+			pthread_cond_wait(&t->cam.cal_request, &t->cam.cal_mutex);
+		}
 		pthread_mutex_unlock(&t->cam.cal_mutex);
+	}
+
+	JNIEXPORT jboolean Java_be_ntmn_libinficam_InfiCam_isCalibrating(JNIEnv *env, jobject self) {
+		InfiCamJNI *t = getObject(env, self);
+		return t->cam.isCalibrating();
+	}
+
+	JNIEXPORT jboolean Java_be_ntmn_libinficam_InfiCam_setCalibrationSuppressed(JNIEnv *env, jobject self, jboolean suppress) {
+		InfiCamJNI *t = getObject(env, self);
+		return t->cam.setCalibrationSuppressed(suppress);
 	}
 
 	JNIEXPORT void Java_be_ntmn_libinficam_InfiCam_setAutoShutterSettings(JNIEnv *env, jobject self, jboolean enable, jint interval_min, jint interval_max) {

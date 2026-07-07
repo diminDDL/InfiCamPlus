@@ -14,6 +14,7 @@ import android.graphics.Bitmap;
 public abstract class Palette {
 
 	public static final int paletteSize = 65535;
+	private static final int bitmapHeight = 512;
 
 	public int name;
 
@@ -148,15 +149,17 @@ public abstract class Palette {
 	public Bitmap getBitmap() {
 		Bitmap bitmap = Bitmap.createBitmap(
 			1,
-			paletteSize,
+			bitmapHeight,
 			Bitmap.Config.ARGB_8888
 		);
 		int[] map = getMap();
-		int[] rawArray = new int[paletteSize * 4];
-		for (int i = 0; i < map.length; ++i) {
-			rawArray[map.length-1-i] = map[i];
+		int[] rawArray = new int[bitmapHeight];
+		for (int y = 0; y < rawArray.length; ++y) {
+			float pos = 1.0f - (float)y / (float)(rawArray.length - 1);
+			int mapIndex = (int)(pos * (map.length - 1) + 0.5f);
+			rawArray[y] = map[mapIndex];
 		}
-		bitmap.setPixels(rawArray, 0, 1, 0, 0, 1, paletteSize);
+		bitmap.setPixels(rawArray, 0, 1, 0, 0, 1, bitmapHeight);
 		return bitmap;
 	}
 }
