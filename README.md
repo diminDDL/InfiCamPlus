@@ -14,6 +14,7 @@ The primary language of this repository is English.
 Please write issues, discussions, pull requests, and comments in English.
 **Discussions in other languages will be deleted.**
 
+If you wish to add support for a camera that is not yet supported, please provide the VID and PID as well as any other information in an issue. Ideally you should be ready to work on the code yourself to add support for something as we can't work on cameras we don't have physically.
 
 ## Camera Model Support Chart
 ### Legend
