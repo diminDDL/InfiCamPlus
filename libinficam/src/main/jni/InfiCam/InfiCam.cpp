@@ -101,6 +101,8 @@ int InfiCam::connect(const int uvc_fd, int & output_width, int & output_height, 
 	packet_reconstruction_buffer = new uint16_t[infiframe->width*infiframe->stream_height];
 	nonraw_frames_ready = false;
 	nonraw_table_ready = false;
+	raw_range_confirmed = false;
+	raw_range_requested = false;
 
 	output_width = infiframe->width;
 	output_height = infiframe->vision_height;
@@ -171,6 +173,8 @@ int InfiCam::stream_start(frame_callback_t *cb) {
 	delivered_frame_count = 0;
 	nonraw_frames_ready = false;
 	nonraw_table_ready = false;
+	raw_range_confirmed = false;
+	raw_range_requested = false;
 	if (dev.stream_start(uvc_frame_callback, this,
 						 infiframe->width, infiframe->stream_height,
 						 cam_settings.use_raw_logic)) {
@@ -241,6 +245,8 @@ void InfiCam::stream_stop() {
 	is_ready = false;
 	nonraw_frames_ready = false;
 	nonraw_table_ready = false;
+	raw_range_confirmed = false;
+	raw_range_requested = false;
 	is_calibrating = false;
 	is_shutter_calibrating = false;
 	suppress_calibration = false;
@@ -489,6 +495,31 @@ void InfiCam::uvc_frame_callback(uvc_frame_t *frame, void *user_ptr){
 		}
 	}
 
+	if(t->cam_settings.use_raw_logic){
+		// The supported V2 protocol uses 6000/2000 reference counts in its
+		// low/high range metadata. Do not interpret a transition frame using
+		// the requested range before the camera has actually switched.
+		const uint16_t reference = final_frame[t->infiframe->width*t->infiframe->vision_height + 256];
+		const uint16_t expected = t->cam_settings.temperature_range == CameraTemperatureRange::RANGE_120_400 ? 2000 : 6000;
+		if(reference != expected){
+			t->raw_range_confirmed = false;
+			// Allow the app to load its saved mode after stream startup, and
+			// allow the firmware's observed ~4 s transition to finish.
+			if(t->raw_range_requested.load() && Utils::ms_since(t->settle_start_time) >= 5000 &&
+			   Utils::ms_since(t->raw_range_retry_time) >= 5000){
+				LOGW("Raw range mismatch: requested=%d metadata_reference=%u expected=%u; re-sending range command.\n",
+					 (int)t->cam_settings.temperature_range, reference, expected);
+				pthread_mutex_lock(&t->command_mutex);
+				t->dev.set_zoom_abs(expected == 2000 ? CMD_RANGE_400 : CMD_RANGE_120);
+				pthread_mutex_unlock(&t->command_mutex);
+				t->raw_range_retry_time = steady_clock::now();
+			}
+			return;
+		}
+		if(!t->raw_range_confirmed.exchange(true)){
+			LOGI("Raw range confirmed: range=%d metadata_reference=%u\n", (int)t->cam_settings.temperature_range, reference);
+		}
+	}
 
 	if(t->is_shutter_calibrating.load()){ //calibration result is not used on non-raw sensors
 		int ms_since_shutter = Utils::ms_since(t->calibration_shutter_time);
@@ -547,6 +578,7 @@ void InfiCam::uvc_frame_callback(uvc_frame_t *frame, void *user_ptr){
 		}
 
 		float temp_array[t->infiframe->width*t->infiframe->vision_height];
+		int extrapolated_pixels = 0;
 		if(t->cam_settings.use_raw_logic){
 			if(t->infiframe->gain_k_line_counter < t->infiframe->vision_height){ //calibration data is not fully downloaded
 				LOGW("Skipping frame. We won't have the K calibration data.\n");
@@ -556,9 +588,9 @@ void InfiCam::uvc_frame_callback(uvc_frame_t *frame, void *user_ptr){
 			t->infiframe->apply_calibration(final_frame, calibrated_frame);
 			t->infiframe->destripe(calibrated_frame);
 			t->infiframe->fix_dead_pixels(calibrated_frame);
-			t->infiframe->frame_to_temp(calibrated_frame,temp_array);
+			extrapolated_pixels = t->infiframe->frame_to_temp(calibrated_frame,temp_array);
 		} else { //no processing required
-			t->infiframe->frame_to_temp(final_frame,temp_array);
+			extrapolated_pixels = t->infiframe->frame_to_temp(final_frame,temp_array);
 		}
 
 		if(t->range_validation_active.load() && t->cam_settings.use_raw_logic){
@@ -666,7 +698,7 @@ void InfiCam::uvc_frame_callback(uvc_frame_t *frame, void *user_ptr){
 		}
 
 		t->delivered_frame_count++;
-		t->frame_callback(t->inficam_jni, temp_array, t->cam_settings); //callback the app with the temperature frame
+		t->frame_callback(t->inficam_jni, temp_array, t->cam_settings, extrapolated_pixels); //callback the app with the temperature frame
 	}
 }
 
@@ -709,12 +741,14 @@ void InfiCam::set_range(const int range) {
 	}
 
 	const auto requested_range = (CameraTemperatureRange)range;
+	raw_range_requested = true;
 	LOGD("set_range %d (cur %d)\n", range, (int)cam_settings.temperature_range);
-	if(cam_settings.use_raw_logic && requested_range == cam_settings.temperature_range){
+	if(cam_settings.use_raw_logic && raw_range_confirmed.load() && requested_range == cam_settings.temperature_range){
 		LOGD("Ignoring.\n");
 		return;
 	}
 
+	raw_range_confirmed = false;
 	pthread_mutex_lock(&command_mutex);
 	dev.set_zoom_abs((requested_range == CameraTemperatureRange::RANGE_120_400) ? CMD_RANGE_400 : CMD_RANGE_120);
 	pthread_mutex_unlock(&command_mutex);

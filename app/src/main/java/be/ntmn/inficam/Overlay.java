@@ -45,6 +45,8 @@ public class Overlay {
 	private final Paint paintTextOutline;
 	private final Paint paintPalette;
 	private final Drawable lock;
+	private final String calibrationNoticeLabel;
+	private final Paint calibrationNoticePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 	private int width;
 	private final Rect vRect = new Rect(), rectTgt = new Rect(); /* Do not alloc each frame! */
 
@@ -67,6 +69,9 @@ public class Overlay {
 
 	public Overlay(Context ctx, SurfaceMuxer.InputSurface is) {
 		surface = is;
+		calibrationNoticeLabel = ctx.getString(R.string.outside_calibration);
+		calibrationNoticePaint.setColor(Color.rgb(255, 200, 64));
+		calibrationNoticePaint.setTextAlign(Paint.Align.CENTER);
 		paint = new Paint();
 		paintPalette = new Paint();
 		paintPalette.setAntiAlias(false);
@@ -143,6 +148,9 @@ public class Overlay {
 		paintTextOutline.setStrokeWidth(woutline * w);
 		paintTextOutline.setTextSize(textsize * w);
 
+		if (d.fi.extrapolatedPixels > 0)
+			drawCalibrationNotice(cvs, d, rect);
+
 		if (d.showCenter) { // TODO this is off by a pixel and we should check the other points too
 			paint.setColor(Color.rgb(255, 255, 0)); // Yellow.
 			drawTPoint(cvs, d, d.fi.width / 2, d.fi.height / 2, d.mmac.center);
@@ -214,6 +222,55 @@ public class Overlay {
 		}
 
 		surface.surface.unlockCanvasAndPost(cvs);
+	}
+
+
+	// Letterboxing normally supplies the space. For an exact aspect match,
+	// leave a narrow black margin instead of covering the thermal image.
+	public static void ensureCalibrationNoticeSpace(Rect rect, int width, int height) {
+		if (width <= 0 || height <= 0 || rect.isEmpty()) return;
+		int strip = (int) Math.ceil(0.075f * Math.min(width, height));
+		if (rect.top >= strip || height-rect.bottom >= strip ||
+				rect.left >= strip || width-rect.right >= strip)
+			return;
+		float scale = Math.min(1.0f, (height-2.0f*strip)/rect.height());
+		int w = Math.max(1, Math.round(rect.width()*scale));
+		int h = Math.max(1, Math.round(rect.height()*scale));
+		rect.set((width-w)/2, (height-h)/2, (width-w)/2+w, (height-h)/2+h);
+	}
+
+	private void drawCalibrationNotice(Canvas canvas, Data data, Rect image) {
+		float base = Math.min(canvas.getWidth(), canvas.getHeight());
+		float padding = base*0.015f;
+		calibrationNoticePaint.setTextSize(base*0.028f);
+		int percent = Math.round(100.0f*data.fi.extrapolatedPixels/(data.fi.width*data.fi.height));
+		sb.setLength(0);
+		sb.append(calibrationNoticeLabel).append(' ');
+		if (percent == 0) sb.append("<1"); else sb.append(percent);
+		sb.append('%');
+		float lineHeight = calibrationNoticePaint.descent()-calibrationNoticePaint.ascent();
+		float needed = lineHeight+2*padding;
+		if (image.top >= needed) {
+			canvas.drawText(sb, 0, sb.length(), canvas.getWidth()/2.0f,
+					image.top-padding-calibrationNoticePaint.descent(), calibrationNoticePaint);
+		} else if (canvas.getHeight()-image.bottom >= needed) {
+			canvas.drawText(sb, 0, sb.length(), canvas.getWidth()/2.0f,
+					image.bottom+padding-calibrationNoticePaint.ascent(), calibrationNoticePaint);
+		} else {
+			// A landscape screen may have only side margins. Keep the notice
+			// beside the image, inward of the outer button columns.
+			boolean left = image.left >= needed;
+			float x = left ? image.left-padding-lineHeight/2 : image.right+padding+lineHeight/2;
+			canvas.save();
+			canvas.translate(x, image.centerY());
+			canvas.rotate(left ? -90 : 90);
+			float textWidth = calibrationNoticePaint.measureText(sb, 0, sb.length());
+			if (textWidth > image.height()-2*padding)
+				calibrationNoticePaint.setTextSize(calibrationNoticePaint.getTextSize()*(image.height()-2*padding)/textWidth);
+			canvas.drawText(sb, 0, sb.length(), 0,
+					-(calibrationNoticePaint.ascent()+calibrationNoticePaint.descent())/2, calibrationNoticePaint);
+			canvas.restore();
+		}
 	}
 
 	private void drawPalette(Canvas cvs, int x1, int y1, int x2, int y2, Bitmap bitmap) {

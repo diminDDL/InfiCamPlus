@@ -49,6 +49,7 @@ public class InfiCam {
 	}
 	public static class FrameInfo {
 		public int width, height;
+		public int extrapolatedPixels; // temperatures below the native model domain
 		@SuppressWarnings({"unused","FieldMayBeFinal"})
 		public//from C++
 		CamSettings settings = new CamSettings();

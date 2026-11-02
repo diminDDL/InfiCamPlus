@@ -1,4 +1,5 @@
 #include "InfiFrame.h"
+#include "TemperatureExtrapolation.h"
 
 #include "CameraSettings.h"
 #include "Utils.h"
@@ -81,7 +82,13 @@ bool InfiFrame::updateTable(const uint16_t * frame){
 						  false)){
 		return false;
 	}
+	TemperatureExtrapolation::Fit fit;
+	if(!TemperatureExtrapolation::fillLowTail(new_temperature_table, 0x4000, fit)){
+		LOGW("Cannot fit a valid lower temperature tail; keeping previous calibration table.\n");
+		return false;
+	}
 	memcpy(temperature_table, new_temperature_table, sizeof(temperature_table));
+	native_signal_min = (int)fit.first_valid;
 	cam_settings.max_temperature_clipping = temperature_table[0x3FFF];
 	return true;
 }
@@ -111,13 +118,14 @@ bool InfiFrame::end_calibration(){
 	return true;
 }
 
-void InfiFrame::frame_to_temp(const uint16_t * frame, float * temp) const {
+int InfiFrame::frame_to_temp(const uint16_t * frame, float * temp) const {
+	int extrapolated = 0;
 	for (size_t i = 0; i < width*vision_height; ++i) {
 		if(frame[i] > 0x3FFF){__android_log_assert(nullptr, nullptr,"Big image processing bug.");}
 		temp[i] = temperature_table[frame[i]];
+		extrapolated += frame[i] < native_signal_min;
 	}
-
-
+	return extrapolated;
 }
 
 void InfiFrame::apply_calibration(const uint16_t * source_frame, uint16_t * calibrated_frame){

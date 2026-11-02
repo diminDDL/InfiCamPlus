@@ -37,7 +37,8 @@ public:
 	bool updateTable(const uint16_t * frame);
 
 	//sensor value to temperature
-	void frame_to_temp(const uint16_t * frame, float * temp) const;
+	int frame_to_temp(const uint16_t * frame, float * temp) const; // returns extrapolated pixel count
+	int nativeSignalMin() const { return native_signal_min; }
 
 
 	/* InifiCam decodes packets into this buffer. Give it direct access for simplicity */
@@ -63,6 +64,7 @@ private:
 	int offset_b_buffer_counter = 0;
 
 	float temperature_table[0x4000]{};
+	int native_signal_min = 0;
 
 	static int rangeToDeviceRange(CameraTemperatureRange t);
 

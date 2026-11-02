@@ -316,8 +316,9 @@ public abstract class Settings extends LinearLayout {
 					ed.putInt(name, i);
 					ed.commit();
 					setText(i);
-					onSet(i);
+					// Callbacks may read this setting together with other settings.
 					value = i;
+					onSet(i);
 					if(b){ //if from user only
 						set.handleChange();
 					}

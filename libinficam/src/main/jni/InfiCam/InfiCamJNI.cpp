@@ -36,6 +36,7 @@ public:
 	pthread_t jthread_frame{};
 	pthread_mutex_t jthread_frame_mutex{};
 	pthread_cond_t jthread_frame_cond{};
+	int jthread_frame_extrapolated_pixels = 0;
 	const float * jthread_frame_temp = nullptr; //for transfer between threads
 	CameraSettings jthread_frame_cam_settings; //for transfer between threads
 
@@ -102,11 +103,12 @@ static void settings_callback(const void* p_InfiCamJNI, const CameraSettings& p_
 }
 
 /* Frame callback that notifies jthread (described later). */
-static void frame_callback(const void* p_InfiCamJNI, const float *p_temp, const CameraSettings& p_cam_settings) {
+static void frame_callback(const void* p_InfiCamJNI, const float *p_temp, const CameraSettings& p_cam_settings, int extrapolated_pixels) {
 	auto* inficam_jni = (InfiCamJNI*) p_InfiCamJNI;
 	pthread_mutex_lock(&inficam_jni->jthread_frame_mutex);
 
 	inficam_jni->jthread_frame_temp = p_temp;
+	inficam_jni->jthread_frame_extrapolated_pixels = extrapolated_pixels;
 	inficam_jni->jthread_frame_cam_settings = p_cam_settings;
 
 	pthread_cond_broadcast(&inficam_jni->jthread_frame_cond);
@@ -147,6 +149,7 @@ static void *jthread_frame_run(void *a) {
 
 		setIntVar(env, fi, "width", t->width);
 		setIntVar(env, fi, "height", t->height);
+		setIntVar(env, fi, "extrapolatedPixels", t->jthread_frame_extrapolated_pixels);
 		setIntVar(env, cm, "range", (int)t->jthread_frame_cam_settings.temperature_range);
 		setFloatVar(env, cm, "max_temp_clipping", t->jthread_frame_cam_settings.max_temperature_clipping);
 		setFloatVar(env, cm, "correction", t->jthread_frame_cam_settings.temperature_correction);

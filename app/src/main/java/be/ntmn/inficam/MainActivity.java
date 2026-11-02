@@ -12,6 +12,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
@@ -270,6 +271,7 @@ public class MainActivity extends BaseActivity {
 		public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int w, int h) {
 			outScreen.setSize(w, h);
 			overlayScreen.setSize(w, h);
+			updateOrientation();
 		}
 
 			@Override
@@ -429,6 +431,7 @@ public class MainActivity extends BaseActivity {
 	private void copyFrameInfo(InfiCam.FrameInfo src, InfiCam.FrameInfo dst) {
 		dst.width = src.width;
 		dst.height = src.height;
+		dst.extrapolatedPixels = src.extrapolatedPixels;
 		dst.settings.range = src.settings.range;
 		dst.settings.max_temp_clipping = src.settings.max_temp_clipping;
 		dst.settings.correction = src.settings.correction;
@@ -693,10 +696,10 @@ public class MainActivity extends BaseActivity {
 		}, "InfiCam calibration wait").start();
 	}
 
-	private void getRect(Rect r, int w, int h) { /* Git rekt! */
+	private void getRect(Rect r, int w, int h, boolean rotate90) {
 		int sw = w, sh = h, iw = infiCam.getWidth(), ih = infiCam.getHeight();
 		if (w == 0 || ih == 0) { iw = 4; ih = 3; }
-		if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180) {
+		if (rotate90) {
 			ih ^= iw;
 			iw ^= ih;
 			ih ^= iw;
@@ -711,7 +714,9 @@ public class MainActivity extends BaseActivity {
 
 	private long drawFrame(SurfaceMuxer.OutputSurface os, Overlay overlay, boolean swap,
 						   Overlay.Data data) {
-		getRect(rect, os.width, os.height);
+		getRect(rect, os.width, os.height, data.rotate90);
+		if (data.fi.extrapolatedPixels > 0)
+			Overlay.ensureCalibrationNoticeSpace(rect, os.width, os.height);
 		os.clear(0, 0, 0, 1);
 		thruSurface.draw(
 			os,
@@ -1068,12 +1073,25 @@ public class MainActivity extends BaseActivity {
 		else super.onBackPressed();
 	}
 
+	@Override
+	public void onConfigurationChanged(@NonNull Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
+		updateOrientation();
+	}
+
 	@SuppressLint("SourceLockedOrientationActivity")
 	private void updateOrientation() { /* Called on start by SettingsMain. */
 		WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
 		orientation = wm.getDefaultDisplay().getRotation();
+		// The manual rotate hint can update the app configuration before the
+		// display callback. Layout must follow the current app window.
+		boolean portrait = getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
+		buttonsLeftLayout.startToStart = ConstraintLayout.LayoutParams.UNSET;
+		buttonsLeftLayout.endToEnd = ConstraintLayout.LayoutParams.UNSET;
+		buttonsRightLayout.startToStart = ConstraintLayout.LayoutParams.UNSET;
+		buttonsRightLayout.endToEnd = ConstraintLayout.LayoutParams.UNSET;
 		ConstraintLayout.LayoutParams rlp = (ConstraintLayout.LayoutParams) rangeSlider.getLayoutParams();
-		if (orientation == Surface.ROTATION_0 || orientation == Surface.ROTATION_180) {
+		if (portrait) {
 			thruSurface.rotate90 = true;
 			buttonsLeft.setOrientation(LinearLayout.HORIZONTAL);
 			buttonsRight.setOrientation(LinearLayout.HORIZONTAL);
@@ -1089,8 +1107,6 @@ public class MainActivity extends BaseActivity {
 			buttonsRightLayout.bottomToBottom = R.id.mainLayout;
 			buttonsRightLayout.leftToLeft = R.id.mainLayout;
 			buttonsRightLayout.rightToRight = R.id.mainLayout;
-			buttonsLeft.setLayoutParams(buttonsLeftLayout);
-			buttonsRight.setLayoutParams(buttonsRightLayout);
 			buttonsLeft.setLayoutParams(buttonsLeftLayout);
 			buttonsRight.setLayoutParams(buttonsRightLayout);
 			buttonsLeft.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
@@ -1114,12 +1130,12 @@ public class MainActivity extends BaseActivity {
 			buttonsLeftLayout.topToTop = ConstraintLayout.LayoutParams.UNSET;
 			buttonsLeftLayout.bottomToBottom = R.id.mainLayout;
 			buttonsLeftLayout.leftToLeft = R.id.mainLayout;
-			buttonsLeftLayout.rightToRight = R.id.mainLayout;
+			buttonsLeftLayout.rightToRight = ConstraintLayout.LayoutParams.UNSET;
 			buttonsRightLayout.width = ViewGroup.LayoutParams.WRAP_CONTENT;
 			buttonsRightLayout.height = ViewGroup.LayoutParams.MATCH_PARENT;
 			buttonsRightLayout.topToTop = R.id.mainLayout;
 			buttonsRightLayout.bottomToBottom = ConstraintLayout.LayoutParams.UNSET;
-			buttonsRightLayout.leftToLeft = R.id.mainLayout;
+			buttonsRightLayout.leftToLeft = ConstraintLayout.LayoutParams.UNSET;
 			buttonsRightLayout.rightToRight = R.id.mainLayout;
 			rlp.topToTop = R.id.mainLayout;
 			rlp.topToBottom = ConstraintLayout.LayoutParams.UNSET;
@@ -1145,8 +1161,7 @@ public class MainActivity extends BaseActivity {
 			rangeSlider.setVertical(true);
 		}
 		synchronized (frameLock) {
-			overlayData.rotate90 = orientation == Surface.ROTATION_0 ||
-					orientation == Surface.ROTATION_180;
+			overlayData.rotate90 = portrait;
 			if (orientation == Surface.ROTATION_270 || orientation == Surface.ROTATION_180) {
 				overlayData.rotate = !rotate;
 				thruSurface.rotate = !rotate;

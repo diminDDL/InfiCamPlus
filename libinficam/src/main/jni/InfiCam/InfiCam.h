@@ -47,7 +47,7 @@ class InfiCam {
 	static const int ADDR_DISTANCE = 20;
 
 
-	typedef void (frame_callback_t)(const void *inficam_jni, const float *temp, const CameraSettings& p_cam_settings);
+	typedef void (frame_callback_t)(const void *inficam_jni, const float *temp, const CameraSettings& p_cam_settings, int extrapolated_pixels);
 	typedef void (settings_callback_t)(const void *inficam_jni, const CameraSettings& cam_settings);
 
 private:
@@ -63,6 +63,9 @@ private:
 	uint16_t* packet_reconstruction_buffer = nullptr; //temporary, only used for raw sensor
 	std::atomic_bool is_ready = false; //is camera streaming, initialized and ready to accept commands
 	std::atomic_bool nonraw_frames_ready = false; //V1 frames are unsafe until temperature mode has settled
+	std::atomic_bool raw_range_requested = false; // app has applied its saved range
+	std::atomic_bool raw_range_confirmed = false; // confirmed against V2 frame metadata
+	steady_clock::time_point raw_range_retry_time{};
 	std::atomic_bool nonraw_table_ready = false; //V1 conversion table is initialized from the first valid frame
 	std::atomic_bool is_calibrating = false; //is in the process of calibrating
 	std::atomic_bool is_shutter_calibrating = false; //manual/auto shutter calibration is running
