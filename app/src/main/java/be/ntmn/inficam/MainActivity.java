@@ -210,6 +210,7 @@ public class MainActivity extends BaseActivity {
 					p_usb_device.getProductName().contains("DV") ||
 					p_usb_device.getProductName().contains("T3S") ||
 					p_usb_device.getProductName().contains("T3H") ||
+					p_usb_device.getProductName().contains("T3-317") ||
 					p_usb_device.getProductName().contains("T3-612") ||
 					p_usb_device.getProductName().contains("T3Pro") ||
 					p_usb_device.getProductName().contains("T3C") ||
